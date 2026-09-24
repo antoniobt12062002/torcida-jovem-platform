@@ -1,0 +1,9 @@
+# Ferramentas de IDE / agentes de IA (config local, não faz parte do projeto)
+.agents/
+.claude/
+.cursor/
+.windsurf/
+
+# Sistema
+.DS_Store
+Thumbs.db
