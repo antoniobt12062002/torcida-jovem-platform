@@ -1850,14 +1850,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Aplica a política de senha por papel e a lista de comprometidas e limpa `must_change_password` ao trocar
-- [ ] Senha atual errada devolve 403 `invalid_current_password` e conta no contador próprio `password_change_attempts`, separado do login
-- [ ] Cinco erros em 15 minutos bloqueiam a troca por 15 minutos (429 `password_change_blocked`, com `Retry-After`); tentativas bloqueadas não contam nem estendem, e o sucesso zera a contagem
-- [ ] Nova senha igual à atual devolve 422 `password_unchanged`
-- [ ] Revoga as outras sessões do usuário (a atual continua) na mesma transação e grava `user.password_change` sem valor de senha
-- [ ] O erro de senha atual grava `user.password_change` com resultado `failure` por `RecordSecurity`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Aplica a política de senha por papel e a lista de comprometidas e limpa `must_change_password` ao trocar
+- [x] Senha atual errada devolve 403 `invalid_current_password` e conta no contador próprio `password_change_attempts`, separado do login
+- [x] Cinco erros em 15 minutos bloqueiam a troca por 15 minutos (429 `password_change_blocked`, com `Retry-After`); tentativas bloqueadas não contam nem estendem, e o sucesso zera a contagem
+- [x] Nova senha igual à atual devolve 422 `password_unchanged`
+- [x] Revoga as outras sessões do usuário (a atual continua) na mesma transação e grava `user.password_change` sem valor de senha
+- [x] O erro de senha atual grava `user.password_change` com resultado `failure` por `RecordSecurity`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
