@@ -2057,7 +2057,7 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap` e sem quem concedeu, e grava `user.bootstrap`
+- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
 - [ ] Recusa se já existir qualquer vínculo administrativo ativo
 - [ ] Recusa senha ausente ou fora da política de administrador (10 caracteres)
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)

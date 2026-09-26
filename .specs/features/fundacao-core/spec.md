@@ -1,6 +1,6 @@
 # Fundação Core Specification
 
-Status: Aprovada com ajustes em 2026-09-26. Feature 1 de 2 da fundação (a outra é `fundacao-documentos`). A modelagem de Identity/RBAC foi revisada em 2026-09-26 com os ajustes do mantenedor (IDN-01, IDN-04, IDN-05, IDN-06, RBAC-01 e RBAC-03) e aguarda nova aprovação antes da implementação. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Aprovada com ajustes em 2026-09-26. Feature 1 de 2 da fundação (a outra é `fundacao-documentos`). A modelagem de Identity/RBAC foi revisada em 2026-09-26 com os ajustes do mantenedor (IDN-01, IDN-04, IDN-05, IDN-06, RBAC-01 e RBAC-03) e foi aprovada em 2026-09-26. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
@@ -51,12 +51,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | `ALLOWED_ORIGINS` vazio | Mantém o comportamento seguro: nenhuma origem é autorizada e requisições de navegador com `Origin` são bloqueadas; em `development` o padrão é `http://localhost:3000` | Aprovado pelo mantenedor; falha fechada em vez de aberta | y |
 | Cadastro de usuários | Sem autocadastro. O primeiro administrador nasce por CLI; os demais usuários são criados por quem tem `identity:user:create`, sempre só com o papel ASSOCIADO, e o acesso administrativo só existe por promoção (IDN-06), um único caminho para conceder poder | Sistema institucional fechado; reduz superfície de ataque e concentra a regra de promoção em um caso de uso | n |
 | Papéis iniciais | ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL e ADMIN_SISTEMA | Lista proposta pelo mantenedor; substitui ADMIN, DIRETOR e FINANCEIRO | y |
-| Matriz inicial de permissões | Provisória e mínima. PRESIDENTE: todas as permissões do catálogo. ADMIN_SISTEMA: `identity:user:read`, `identity:user:create`, `identity:user:update`, `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` e `audit:log:read`, sem permissões institucionais (perfil técnico, sem aprovar contas). DIRETORIA: só `identity:user:read`. CONSELHO_FISCAL: `audit:log:read` e as institucionais. TESOURARIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma da fundação (as de documentos entram em `fundacao-documentos`). Cada spec de módulo amplia a matriz do seu módulo; ADMIN_SISTEMA só concede um papel cujas permissões ele mesmo possua (RBAC-03) | Provisório; `audit:log:read` para o Conselho Fiscal e a ausência de permissões institucionais no ADMIN_SISTEMA são propostas a confirmar | n |
+| Matriz inicial de permissões | Provisória e mínima. PRESIDENTE: todas as permissões do catálogo. ADMIN_SISTEMA: `identity:user:read`, `identity:user:create`, `identity:user:update`, `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` e `audit:log:read`, sem permissões institucionais (nesta matriz provisória). DIRETORIA: só `identity:user:read`. CONSELHO_FISCAL: `audit:log:read` e as institucionais. TESOURARIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma da fundação (as de documentos entram em `fundacao-documentos`). Cada spec de módulo amplia a matriz do seu módulo. A matriz é dado: a autorização decide sempre pelas permissões efetivas, nunca pelo nome do papel | Provisória. `audit:log:read` do Conselho Fiscal aprovado pelo mantenedor, mantendo a possibilidade futura de separar auditoria institucional e técnica | y |
 | Conselho Fiscal | Nunca recebe `create`, `update`, `delete` nem `cancel`. Não é só leitura: recebe as permissões institucionais `financeiro:prestacao_contas:read` (prestação de contas), `financeiro:prestacao_contas:approve` (aprovação) e `financeiro:parecer:opine` (parecer). O catálogo da fundação as declara; os endpoints nascem na spec do financeiro | Decisão do mantenedor (ADR-005, FIN-001 seção 24), ampliada em 2026-09-26 | y |
 | Usuário × Associado | Entidades separadas. O vínculo é `associados.associados.user_id` (o módulo dono do domínio guarda a referência); `identity.users` não tem coluna de associado. O associado pode existir sem usuário, e o usuário administrativo pode não ser associado | Aprovado pelo mantenedor: mantém o vínculo no módulo dono e evita `identity` depender de `associados` | y |
 | Vínculo administrativo × papel | `AdminMembership` responde "por que a pessoa tem acesso administrativo" (motivo, quem concedeu, quando, encerramento); papel responde "o que ela pode fazer". São separados: encerrar um não some com o histórico do outro. Regra: papel diferente de ASSOCIADO exige vínculo ativo; um vínculo ativo por usuário; o histórico nunca é apagado | Aprovado pelo mantenedor | y |
 | Múltiplos papéis | Um usuário pode ter vários papéis ativos; a permissão efetiva é a união; nega por padrão; não há permissão negativa | Aprovado pelo mantenedor | y |
-| Concessão sem escalada | Ninguém concede uma permissão superior à própria: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas, e nunca altera os próprios papéis nem o próprio vínculo | Aprovado pelo mantenedor; consequência: quem administra acesso técnico (ADMIN_SISTEMA) não concede PRESIDENTE nem CONSELHO_FISCAL | y |
+| Concessão sem escalada | Ninguém concede uma permissão superior à própria: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas, e nunca altera os próprios papéis nem o próprio vínculo | Aprovado pelo mantenedor; a regra vale para qualquer ator e decide só pelas permissões efetivas, sem exceção por papel; o que cada papel consegue conceder decorre da matriz | y |
 | Último administrador | O sistema impede desativar, retirar o vínculo ou remover as permissões do último usuário ativo que possui `identity:admin:grant`; a CLI `bootstrap-admin` cria o primeiro (ADMIN_SISTEMA por padrão, ou PRESIDENTE) e só roda sem nenhum vínculo administrativo ativo | Evita ficar sem quem administre acesso; o PRESIDENTE, com todas as permissões, pode conceder qualquer papel | n |
 | Conteúdo do registro de auditoria | Sem endereço IP; com `request_id`; retenção indefinida nesta fase | IP é dado pessoal (LGPD) e não é necessário agora | n |
 | Fuso horário | Tudo em UTC (`timestamptz`); conversão para America/Sao_Paulo na borda | Evita ambiguidade de horário de verão e de servidor | n |
@@ -92,7 +92,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Sem um usuário inicial, nada mais pode ser usado.
 
 **Acceptance Criteria**:
-1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the reason `bootstrap` and no grantor, and record an audit entry with action `user.bootstrap`.
+1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the reason `bootstrap` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
 2. IF an active administrative membership already exists THEN the system SHALL exit with a non-zero status without creating any user.
 3. IF the password is absent or violates the administrator password policy (at least 10 characters) THEN the system SHALL exit with a non-zero status without creating any user.
 4. The system SHALL NOT accept the password as a command-line argument.
@@ -224,7 +224,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 **User Story**: Como mantenedor, quero que ninguém consiga dar a outra pessoa mais poder do que já tem, para que uma conta comprometida ou mal-intencionada não amplie o próprio acesso.
 
-**Why P1**: Sem essa regra, quem administra acesso técnico poderia criar contas com permissões financeiras ou institucionais que nunca deveria ter.
+**Why P1**: Sem essa regra, quem administra acesso poderia criar contas com permissões que ele próprio não possui.
 
 **Acceptance Criteria**:
 1. IF an actor tries to grant, in a promotion or in a role assignment, a role with any permission the actor does not hold THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
@@ -233,7 +233,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 4. The system SHALL evaluate these rules with the effective permissions of the actor at the moment of the request.
 5. WHEN a change is denied by AC 1, 2 or 3 THEN the system SHALL record an audit entry with action `role.change_denied` containing the actor, the target and the requested roles, in its own transaction.
 
-**Independent Test**: Como ADMIN_SISTEMA, tentar promover alguém a CONSELHO_FISCAL e ver 403 `privilege_escalation`; como PRESIDENTE, tentar alterar o próprio papel e ver 403 `self_change_forbidden`.
+**Independent Test**: Como ator cujas permissões efetivas não cobrem CONSELHO_FISCAL, tentar promover alguém a esse papel e ver 403 `privilege_escalation`; como PRESIDENTE, tentar alterar o próprio papel e ver 403 `self_change_forbidden`.
 
 ---
 

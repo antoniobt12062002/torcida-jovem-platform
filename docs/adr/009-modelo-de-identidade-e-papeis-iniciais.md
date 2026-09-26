@@ -1,7 +1,7 @@
 # ADR-009: Modelo de identidade, vínculo administrativo e papéis iniciais
 
 - **Date**: 2026-09-26
-- **Status**: Proposed
+- **Status**: Accepted
 - **Deciders**: @antoniobt12062002
 - **Tags**: security, identity, rbac
 
@@ -44,7 +44,7 @@ Chosen option: **"Separar vínculo administrativo de papel, com oito papéis e a
 
 ### Negative Consequences
 
-- O `ADMIN_SISTEMA` não concede `PRESIDENTE` nem `CONSELHO_FISCAL`; a concessão fica concentrada no `PRESIDENTE`.
+- Com a matriz provisória, quem não possui as permissões de um papel institucional não o concede, o que concentra essa concessão no `PRESIDENTE`; a regra decide só pelas permissões efetivas, sem exceção por papel.
 - Mais uma entidade (`AdminMembership`) e mais um caso de uso a manter.
 - Sem dupla aprovação, uma única pessoa com `identity:admin:grant` promove.
 
@@ -60,7 +60,7 @@ Chosen option: **"Separar vínculo administrativo de papel, com oito papéis e a
 
 - ✅ Rastro, motivo e revogação limpa.
 - ✅ Limita o dano de uma conta comprometida.
-- ❌ Concentra a concessão no `PRESIDENTE`.
+- ❌ Com a matriz provisória, concentra a concessão institucional no `PRESIDENTE`.
 
 ### Motor de políticas
 
