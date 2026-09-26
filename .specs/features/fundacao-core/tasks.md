@@ -670,12 +670,12 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `Allocate(10000,[1,1,1])` devolve 3334, 3333, 3333
-- [ ] `Percent(10000,400)` devolve 400 e `Percent(1,5000)` devolve 1
-- [ ] Teste de propriedade: a soma das partes é sempre o total
-- [ ] Cobertura de instruções do pacote `money` maior ou igual a 95%
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `Allocate(10000,[1,1,1])` devolve 3334, 3333, 3333
+- [x] `Percent(10000,400)` devolve 400 e `Percent(1,5000)` devolve 1
+- [x] Teste de propriedade: a soma das partes é sempre o total
+- [x] Cobertura de instruções do pacote `money` maior ou igual a 95%
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
