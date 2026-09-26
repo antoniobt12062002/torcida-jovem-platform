@@ -1790,13 +1790,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Aplica a política de senha de ASSOCIADO (8) e a lista de comprometidas
-- [ ] O comando não aceita papéis: o usuário criado tem só ASSOCIADO, com `must_change_password` verdadeiro
-- [ ] Exige `identity:user:create` antes de qualquer leitura ou escrita
-- [ ] Grava `user.create` na mesma transação
-- [ ] E-mail repetido devolve erro mapeável para 409 `email_taken`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Aplica a política de senha de ASSOCIADO (8) e a lista de comprometidas
+- [x] O comando não aceita papéis: o usuário criado tem só ASSOCIADO, com `must_change_password` verdadeiro
+- [x] Exige `identity:user:create` antes de qualquer leitura ou escrita
+- [x] Grava `user.create` na mesma transação
+- [x] E-mail repetido devolve erro mapeável para 409 `email_taken`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
