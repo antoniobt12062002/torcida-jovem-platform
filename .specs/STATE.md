@@ -77,10 +77,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 e 2 concluídas (T1 a T13); próxima é a fase 3 (T14 a T16, infraestrutura de testes do front)
-- **Completed**: T1 a T13 (fase 1 no PR #21; fase 2 na branch `feature/fundacao-core-fase-2`, empilhada sobre a fase 1)
+- **Phase / Task**: Fases 1 a 3 concluídas (T1 a T16); a próxima é a fase 4 (dinheiro, T17 a T22)
+- **Completed**: T1 a T16 (fase 1 mesclada em #21; fase 2 no PR #22; fase 3 na branch `feature/fundacao-core-fase-3`, empilhada sobre a fase 2)
 - **In-progress** (file:line): none
-- **Next step**: Após autorização, enviar a branch da fase 2 e abrir o PR; seguir para a fase 3 (Vitest, testes do front no CI)
-- **Blockers**: Autorização para `git push` e PR da fase 2; o PR da fase 1 (#21) precisa ser mesclado antes ou junto
+- **Next step**: Após o merge do PR #22 e autorização, enviar a fase 3 e abrir o PR; a fase 4 (money) é a primeira com regra de negócio da fundação
+- **Blockers**: Autorização para `git push` e PR da fase 3; merge do PR #22
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-2
+- **Branch**: feature/fundacao-core-fase-3
