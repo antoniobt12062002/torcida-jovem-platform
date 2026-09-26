@@ -452,11 +452,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Teste prova que dados de um teste não aparecem em outro
-- [ ] O pool usa `tj_app`, não o dono
-- [ ] Banco do teste é removido ao final
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Teste prova que dados de um teste não aparecem em outro
+- [x] O pool usa `tj_app`, não o dono
+- [x] Banco do teste é removido ao final
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
