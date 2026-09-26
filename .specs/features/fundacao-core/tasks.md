@@ -2063,13 +2063,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:user:reset_password` antes de qualquer leitura ou escrita, e um motivo de ao menos 10 caracteres (422 `reason_required`)
-- [ ] Gera uma senha temporária aleatória que cumpre a política, troca o hash, marca `must_change_password`, revoga as sessões e os tokens de recuperação pendentes do alvo e grava `user.password_reset` com o motivo, tudo na mesma transação
-- [ ] A senha temporária é devolvida uma única vez ao chamador e nunca é gravada, registrada em log nem auditada; nada é enviado por e-mail
-- [ ] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam `user.password_reset` com resultado `denied` por `RecordSecurity`
-- [ ] Alvo inativo devolve 409 `user_inactive`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:user:reset_password` antes de qualquer leitura ou escrita, e um motivo de ao menos 10 caracteres (422 `reason_required`)
+- [x] Gera uma senha temporária aleatória que cumpre a política, troca o hash, marca `must_change_password`, revoga as sessões e os tokens de recuperação pendentes do alvo e grava `user.password_reset` com o motivo, tudo na mesma transação
+- [x] A senha temporária é devolvida uma única vez ao chamador e nunca é gravada, registrada em log nem auditada; nada é enviado por e-mail
+- [x] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam `user.password_reset` com resultado `denied` por `RecordSecurity`
+- [x] Alvo inativo devolve 409 `user_inactive`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

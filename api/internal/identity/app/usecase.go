@@ -35,3 +35,5 @@ type (
 var errNotConfigured = errors.New("identidade: caso de uso mal configurado")
 
 func reasonBlank(reason string) bool { return strings.TrimSpace(reason) == "" }
+
+func trimmed(s string) string { return strings.TrimSpace(s) }

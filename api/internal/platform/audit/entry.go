@@ -68,7 +68,7 @@ var (
 	}
 
 	sensitiveKeys = map[string]struct{}{
-		"password": {}, "password_hash": {}, "token": {}, "session_token": {},
+		"password": {}, "password_hash": {}, "temporary_password": {}, "token": {}, "session_token": {},
 		"csrf_token": {}, "cookie": {}, "authorization": {},
 	}
 )

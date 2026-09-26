@@ -123,7 +123,7 @@ func TestRedactedHidesSensitiveKeysEverywhereWithoutTouchingTheOriginal(t *testi
 		"nested":        map[string]any{"session_token": "SEGREDO-3", "keep": 1},
 		"list":          []any{map[string]any{"csrf_token": "SEGREDO-4"}},
 	}
-	e.Context = map[string]any{"token": "SEGREDO-5", "cookie": "SEGREDO-6", "authorization": "SEGREDO-7", "roles": []string{"a"}}
+	e.Context = map[string]any{"temporary_password": "SEGREDO-8", "token": "SEGREDO-5", "cookie": "SEGREDO-6", "authorization": "SEGREDO-7", "roles": []string{"a"}}
 
 	got := e.Redacted()
 

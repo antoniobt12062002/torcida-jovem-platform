@@ -7,13 +7,14 @@ import (
 )
 
 var sensitiveKeys = map[string]struct{}{
-	"password":      {},
-	"password_hash": {},
-	"token":         {},
-	"session_token": {},
-	"csrf_token":    {},
-	"cookie":        {},
-	"authorization": {},
+	"password":           {},
+	"password_hash":      {},
+	"temporary_password": {},
+	"token":              {},
+	"session_token":      {},
+	"csrf_token":         {},
+	"cookie":             {},
+	"authorization":      {},
 }
 
 func New(level string, w io.Writer) *slog.Logger {
