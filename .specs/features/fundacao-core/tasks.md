@@ -699,10 +699,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Passa no esquema atual
-- [ ] Um esquema de fixture com coluna proibida faz o teste falhar (teste negativo)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Passa no esquema atual
+- [x] Um esquema de fixture com coluna proibida faz o teste falhar (teste negativo)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
