@@ -16,7 +16,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       created: ${{ steps.tag.outputs.created }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: v
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Placeholder de deploy
         run: |
           echo "TODO: deploy de $(cat VERSION) em producao; aprovacao do PO via Environment production"
@@ -58,7 +58,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Abre PR main -> develop e dispara o CI na branch

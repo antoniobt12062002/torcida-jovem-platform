@@ -20,7 +20,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       branch: ${{ steps.v.outputs.branch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: develop
           fetch-depth: 0

@@ -34,7 +34,7 @@ jobs:
       api: ${{ steps.out.outputs.api }}
       web: ${{ steps.out.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: f
         if: github.event_name == 'pull_request'
@@ -70,7 +70,7 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: '**/*.md'
@@ -84,7 +84,7 @@ jobs:
     if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Placeholder
         run: |
           echo "TODO (quando existir /api): go vet ./... && go test ./... && go build ./..."
@@ -94,7 +94,7 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Placeholder
         run: |
           echo "TODO (quando existir /web): npm ci && npm run lint && npx tsc --noEmit && npm run build"
