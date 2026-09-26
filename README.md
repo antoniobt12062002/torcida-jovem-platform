@@ -8,9 +8,5 @@ O projeto nasce dentro de um processo de profissionalização da torcida, substi
 
 ## Documentação
 
-A documentação do produto está em [`docs/`](./docs):
-
-- [00-CONTEXTO-PROJETO.md](./docs/00-CONTEXTO-PROJETO.md) — contexto institucional e objetivos do projeto
-- [01-VISAO-PRODUTO.md](./docs/01-VISAO-PRODUTO.md) — visão do produto e perfis de usuário
-- [02-MODULOS-SISTEMA.md](./docs/02-MODULOS-SISTEMA.md) — módulos do sistema
-- [financeiro/FIN-001-VISAO-GERAL.md](./docs/financeiro/FIN-001-VISAO-GERAL.md) — especificação do módulo financeiro
+- [Como contribuir](./docs/CONTRIBUTING.md) — fluxo de branches, commits e releases
+- A documentação de produto (contexto, visão, módulos e módulo financeiro) está em revisão pelo PO e será publicada em `docs/` após a aprovação.
