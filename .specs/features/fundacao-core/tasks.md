@@ -1354,10 +1354,10 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] O catálogo contém `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed` e `user.password_reset`
-- [ ] Uma entrada `user.password_reset` com resultado `denied` é válida e as ações anteriores continuam válidas
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] O catálogo contém `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed` e `user.password_reset`
+- [x] Uma entrada `user.password_reset` com resultado `denied` é válida e as ações anteriores continuam válidas
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

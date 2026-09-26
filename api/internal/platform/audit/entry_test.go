@@ -40,6 +40,7 @@ func TestCatalogHasTheIdentityAndSecurityActionsOfTheSpec(t *testing.T) {
 		UserCreate, UserBootstrap, UserDeactivate, UserPasswordChange, UserRolesSet,
 		AdminPromote, AdminRevoke, RBACSync, RoleChangeDenied,
 		AuthLogin, AuthLoginFailed, AuthLoginBlocked, AuthLogout, AuthzDenied,
+		AuthPasswordResetRequested, AuthPasswordResetCompleted, AuthPasswordResetFailed, UserPasswordReset,
 	} {
 		if !a.Known() {
 			t.Errorf("a ação %q deveria estar no catálogo", a)
@@ -147,6 +148,30 @@ func TestValidateAcceptsEveryOutcome(t *testing.T) {
 		e.Outcome = o
 		if err := e.Validate(); err != nil {
 			t.Errorf("resultado %s recusado: %v", o, err)
+		}
+	}
+}
+
+// IDN-08.5: a redefinição administrativa negada é um evento de segurança válido.
+func TestPasswordResetActionsAreValidEntries(t *testing.T) {
+	for _, tc := range []struct {
+		action  Action
+		outcome Outcome
+		actor   ActorType
+	}{
+		{UserPasswordReset, OutcomeSuccess, ActorUser},
+		{UserPasswordReset, OutcomeDenied, ActorUser},
+		{AuthPasswordResetRequested, OutcomeSuccess, ActorAnonymous},
+		{AuthPasswordResetFailed, OutcomeFailure, ActorAnonymous},
+		{AuthPasswordResetCompleted, OutcomeSuccess, ActorUser},
+	} {
+		e := validEntry()
+		e.Action, e.Outcome, e.ActorType = tc.action, tc.outcome, tc.actor
+		if tc.actor != ActorUser {
+			e.ActorID = ""
+		}
+		if err := e.Validate(); err != nil {
+			t.Errorf("%s/%s recusada: %v", tc.action, tc.outcome, err)
 		}
 	}
 }
