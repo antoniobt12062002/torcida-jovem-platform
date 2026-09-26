@@ -1381,14 +1381,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `Message.Validate` recusa destinatário inválido, assunto vazio e CR ou LF no destinatário ou no assunto
-- [ ] O remetente `log` registra só o domínio do destinatário e o assunto, nunca o corpo
-- [ ] O remetente `disabled` não envia nada e a fábrica registra um aviso operacional
-- [ ] A fábrica recusa provedor desconhecido nomeando a variável
-- [ ] `emailtest.Recorder` guarda as mensagens enviadas, para os testes de outros módulos
-- [ ] Nenhum código de módulo de negócio importa um provedor específico
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `Message.Validate` recusa destinatário inválido, assunto vazio e CR ou LF no destinatário ou no assunto
+- [x] O remetente `log` registra só o domínio do destinatário e o assunto, nunca o corpo
+- [x] O remetente `disabled` não envia nada e a fábrica registra um aviso operacional
+- [x] A fábrica recusa provedor desconhecido nomeando a variável
+- [x] `emailtest.Recorder` guarda as mensagens enviadas, para os testes de outros módulos
+- [x] Nenhum código de módulo de negócio importa um provedor específico
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
