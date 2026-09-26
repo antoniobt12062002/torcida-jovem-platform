@@ -18,6 +18,8 @@ Define o que cada módulo possui e como os módulos se relacionam. Base: [ADR-00
 
 `platform` não é um módulo de negócio: é o núcleo compartilhado (configuração, HTTP, banco, auditoria, autorização e dinheiro).
 
+`platform/money` é infraestrutura: conhece só valores em centavos e operações sobre eles. Lançamentos, receitas, despesas, plano de contas, produtos e eventos pertencem aos módulos de domínio, que importam `platform/money`, nunca o contrário.
+
 ## Dependências permitidas
 
 ```mermaid

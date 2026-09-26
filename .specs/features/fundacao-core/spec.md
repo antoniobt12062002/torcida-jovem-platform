@@ -23,7 +23,7 @@ A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega ident
 | Telas (login, painel, gestão de usuários) | A fundação entrega API e infraestrutura; a UI de identidade é a feature seguinte |
 | Recuperação de senha por e-mail | Exige provedor de e-mail, ainda não definido |
 | MFA, OAuth e provedor externo de identidade | ADR-005 adia; pede novo ADR |
-| Entidades e regras do financeiro | Feature própria, construída sobre esta fundação |
+| Entidades e regras do financeiro: lançamentos, receitas, despesas, plano de contas, produtos e eventos | Módulos de domínio posteriores; esta feature entrega só o núcleo monetário compartilhado (`platform/money`), que eles importam |
 | Documentos e object storage | Feature `fundacao-documentos`, executada depois desta |
 | Hospedagem e deploy reais | Decisão adiada; ver ADR-002 e o plano de hospedagem |
 | Purga e retenção de auditoria e sessões | Política de retenção depende de definição jurídica e de LGPD |
