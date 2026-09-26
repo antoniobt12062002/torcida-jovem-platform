@@ -289,11 +289,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `Open` recebe o logger e nunca registra valores de parâmetros
-- [ ] Importações em `cmd/api/main.go` atualizadas e o build continua passando
-- [ ] `git mv` preserva o histórico do arquivo
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `Open` recebe o logger e nunca registra valores de parâmetros
+- [x] Importações em `cmd/api/main.go` atualizadas e o build continua passando
+- [x] `git mv` preserva o histórico do arquivo
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

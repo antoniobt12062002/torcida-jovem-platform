@@ -11,8 +11,9 @@ import (
 	"time"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/config"
-	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/database"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/httpapi"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/logx"
 )
 
 func main() {
@@ -20,7 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := database.Open(cfg.DatabaseURL)
+	logger := logx.New(cfg.LogLevel, os.Stdout)
+	db, err := database.Open(cfg.DatabaseURL, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
