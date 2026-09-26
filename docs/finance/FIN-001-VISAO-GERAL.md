@@ -3,7 +3,9 @@
 
 Versão: 1.0
 
-Status: Aprovado para desenvolvimento
+Status: Requisito funcional aprovado para especificação técnica.
+
+Depende ainda de: design técnico, modelagem, tasks e validação SDD.
 
 ---
 
@@ -716,16 +718,21 @@ Visualização e acompanhamento.
 
 ## Conselho fiscal
 
-Consulta:
-
-- documentos;
-- lançamentos;
-- prestação de contas.
-
 Pode:
 
+- visualizar lançamentos;
+- visualizar documentos;
+- acessar relatórios;
+- analisar a prestação anual;
 - emitir parecer;
-- aprovar prestação.
+- aprovar a prestação de contas.
+
+Não pode:
+
+- criar lançamento;
+- editar lançamento;
+- excluir;
+- alterar documentos.
 
 ---
 

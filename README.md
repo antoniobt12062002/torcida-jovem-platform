@@ -9,10 +9,15 @@ O projeto nasce dentro de um processo de profissionalização da torcida, substi
 ## Documentação
 
 - [Como contribuir](./docs/CONTRIBUTING.md) — fluxo de branches, commits e releases
+- [Visão geral da arquitetura](./docs/architecture/architecture-overview.md) e [fronteiras de domínio](./docs/architecture/domain-boundaries.md)
+- [Decisões de arquitetura (ADRs)](./docs/adr/README.md)
+- [Especificações (`.specs/`)](./.specs/README.md) — fluxo Spec Driven
+- [Ambiente de IA](./docs/development/ai-environment.md) — skills usadas
+- [Segurança](./SECURITY.md) e [licença](./LICENSE) (todos os direitos reservados)
 - [00-CONTEXTO-PROJETO.md](./docs/00-CONTEXTO-PROJETO.md) — contexto institucional e objetivos
 - [01-VISAO-PRODUTO.md](./docs/01-VISAO-PRODUTO.md) — visão do produto e perfis de usuário
 - [02-MODULOS-SISTEMA.md](./docs/02-MODULOS-SISTEMA.md) — módulos do sistema
-- [financeiro/FIN-001-VISAO-GERAL.md](./docs/financeiro/FIN-001-VISAO-GERAL.md) — especificação do módulo financeiro
+- [financeiro/FIN-001-VISAO-GERAL.md](./docs/finance/FIN-001-VISAO-GERAL.md) — especificação do módulo financeiro
 
 ## Desenvolvimento local
 
