@@ -24,7 +24,7 @@ var AllRoles = []Role{
 }
 
 var descriptions = map[Role]string{
-	RoleAssociado:      "Usuário autenticado sem acesso administrativo",
+	RoleAssociado:      "Usuário autenticado sem acesso de gestão",
 	RolePresidente:     "Presidência: todas as permissões do catálogo",
 	RoleDiretoria:      "Diretoria",
 	RoleTesouraria:     "Tesouraria",
