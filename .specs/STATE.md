@@ -76,11 +76,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/fundacao-core/` (Feature 1 de 2; a `fundacao-documentos` vem depois)
-- **Phase / Task**: Spec, design e tasks aprovados com ajustes; execução começa na fase 1 (T1 a T5)
-- **Completed**: divisão em duas features, ajustes de sessão (8 h), senha (10/8), bloqueio, arredondamento, documentos e cookie
+- **Feature**: `.specs/features/fundacao-core/`
+- **Phase / Task**: Fase 1 concluída (T1 a T5); próxima é a fase 2 (T6 a T13, infraestrutura de testes de integração)
+- **Completed**: T1, T2, T3, T4, T5
 - **In-progress** (file:line): none
-- **Next step**: Executar a fase 1 da `fundacao-core` (T1 a T5) em lote pequeno, com testes e commits atômicos; registrar AD-010 a AD-013 na tarefa de guardrails
-- **Blockers**: none
+- **Next step**: Após autorização, abrir o PR da fase 1 e seguir para a fase 2; a fase 2 exige Docker (testcontainers) e a tarefa T10 escolhe e fixa versões após checar a documentação vigente
+- **Blockers**: Autorização para `git push` e PR da fase 1 (aprovação local não cobre ações remotas)
 - **Uncommitted files**: none
-- **Branch**: feature/spec-fundacao (docs); a implementação usa `feature/fundacao-core-fase-1`
+- **Branch**: feature/fundacao-core-fase-1
