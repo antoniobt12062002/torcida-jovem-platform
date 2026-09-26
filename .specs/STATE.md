@@ -93,10 +93,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 7 mescladas (T1 a T42). Fase 8 (identidade: base, T43 a T55) em implementação na branch `feature/fundacao-core-fase-8`; a recuperação de acesso por e-mail e a redefinição administrativa entram na fase 9
-- **Completed**: T1 a T42
+- **Phase / Task**: Fases 1 a 7 mescladas (T1 a T42); fase 8 (identidade: base, T43 a T55) implementada no PR da branch `feature/fundacao-core-fase-8`. Próxima: fase 9 (casos de uso: criar, desativar, trocar senha, promover, retirar, papéis, listar, recuperação por e-mail e redefinição administrativa), a apresentar antes de implementar
+- **Completed**: T1 a T55
 - **In-progress** (file:line): none
-- **Next step**: Implementar a fase 8 (T43 a T55), tests-first, um commit por tarefa, e abrir o PR
+- **Next step**: Após o merge da fase 8, apresentar spec/design/decisões abertas da fase 9 e aguardar aprovação
 - **Blockers**: none
 - **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
