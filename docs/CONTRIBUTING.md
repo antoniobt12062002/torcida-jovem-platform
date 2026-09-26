@@ -19,6 +19,10 @@ Padrao Conventional Commits: `feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`.
 5. O workflow **Release** cria a tag e a GitHub Release, pede aprovacao do PO para producao e abre o PR de back-merge `main` -> `develop`.
 6. Faca o merge do back-merge com **Create a merge commit** (nunca squash) **antes** da proxima release.
 
+## Especificações e decisões
+
+Funcionalidades nascem como spec em `.specs/features/` (fluxo Specify, Design, Tasks, Implement, Validate) e decisões de arquitetura viram ADR em `docs/adr/`. Veja o `CLAUDE.md` da raiz e `docs/development/ai-environment.md`.
+
 ## Segredos
 
 O repositorio e publico: nunca comite segredos. Use GitHub Secrets por ambiente (`staging`, `production`).
