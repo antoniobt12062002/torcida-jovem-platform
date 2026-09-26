@@ -2002,14 +2002,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Devolve sempre o mesmo resultado, exista ou não a conta, esteja ela ativa ou não
-- [ ] Conta ativa: cria o token (256 bits, base64url), grava só o hash com validade de 30 minutos e envia o e-mail com o link depois de responder; falha de envio vira incidente no log e não chega ao cliente
-- [ ] Mais de 3 solicitações do mesmo e-mail em uma hora não criam token nem enviam e-mail, com o mesmo resultado
-- [ ] Grava `auth.password_reset_requested` por `RecordSecurity`, com o e-mail só como HMAC e sem token nem link
-- [ ] O envio é assíncrono, então o tempo de resposta não depende de a conta existir
-- [ ] Nem o token nem o link aparecem em log, auditoria ou resposta
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Devolve sempre o mesmo resultado, exista ou não a conta, esteja ela ativa ou não
+- [x] Conta ativa: cria o token (256 bits, base64url), grava só o hash com validade de 30 minutos e envia o e-mail com o link depois de responder; falha de envio vira incidente no log e não chega ao cliente
+- [x] Mais de 3 solicitações do mesmo e-mail em uma hora não criam token nem enviam e-mail, com o mesmo resultado
+- [x] Grava `auth.password_reset_requested` por `RecordSecurity`, com o e-mail só como HMAC e sem token nem link
+- [x] O envio é assíncrono, então o tempo de resposta não depende de a conta existir
+- [x] Nem o token nem o link aparecem em log, auditoria ou resposta
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
