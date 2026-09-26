@@ -149,7 +149,7 @@ Regras de desenho:
 
 - **Purpose**: Permissões, principal e verificação.
 - **Location**: `api/internal/platform/authz/`
-- **Interfaces**: `type Permission string`; `ParsePermission(string) (Permission, error)`; `Principal{UserID, Roles []string, Permissions map[Permission]struct{}}`; `Require(p Principal, perm Permission) error`; `Covers(p Principal, needed []Permission) (missing []Permission)`, usada pela regra de concessão sem escalada.
+- **Interfaces**: `type Permission string`; `ParsePermission(string) (Permission, error)`; `Principal{UserID, Roles []string, Permissions map[Permission]struct{}}`; `Require(p Principal, perm Permission) error`; `Covers(p Principal, needed []Permission) (missing []Permission)`, usada pela regra de concessão sem escalada; `Definition{Permission, Description, CommonRead}`; `Authorizer` (`NewAuthorizer(defs, onDenied)`, `Require(ctx, p, perm) error`) que chama o gancho de negação, injetado na montagem (o `authz` não importa `audit` nem `identity`). A negação vira `ErrForbidden` (403 `forbidden`), sem revelar a existência do recurso.
 - **Dependencies**: nenhuma.
 
 ### platform/password
@@ -163,7 +163,7 @@ Regras de desenho:
 
 - **Purpose**: Usuários, papéis, vínculo administrativo, sessões e casos de uso de acesso.
 - **Location**: `api/internal/identity/{domain,app,infra,http}/`
-- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
+- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` com estado anterior e posterior e o diff, sob `pg_advisory_xact_lock`; só grava quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
 - **Dependencies**: `platform/*`.
 
 ### cmd/bootstrap-admin e cmd/api
@@ -218,7 +218,7 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 ## Auditoria e eventos de segurança
 
 - Dois modos de gravação: **atômico** (`Record`, dentro da transação do caso de uso, para mudanças de dado) e **de segurança** (`RecordSecurity`, transação própria, para telemetria e eventos que não alteram estado crítico: login, falha de login, bloqueio, logout, negação). Falha de gravação: no modo atômico reverte a operação (500 `audit_failed`); no modo de segurança vira incidente operacional e a operação continua.
-- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout`. Cada spec de módulo acrescenta as suas.
+- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout` e `authz.denied` (negação de permissão que não seja leitura comum). Cada spec de módulo acrescenta as suas.
 - Ator (`actor_type` e `actor_user_id`), alvo (`entity_type` e `entity_id`), momento, `request_id`, antes e depois, resultado (`outcome`) e contexto da ação ficam no mesmo registro; nada é alterável nem apagável (trigger e concessões, AUD-02).
 - Segredos nunca entram: as chaves sensíveis são redigidas em `before`, `after` e `context`; o e-mail de uma tentativa de login entra só como hash.
 - **Evoluções futuras, fora desta fase**: armazenamento controlado de IP em eventos de segurança (LGPD), separação entre auditoria institucional e técnica, versionamento dos eventos e encadeamento criptográfico entre registros.
@@ -245,6 +245,8 @@ erDiagram
 - **Vínculo administrativo × papel**: `AdminMembership` diz *por que* a pessoa tem acesso administrativo (motivo, quem concedeu, quando, encerramento); o papel diz *o que* ela pode fazer. Papel diferente de ASSOCIADO exige vínculo ativo. O vínculo nunca é apagado.
 - **Promoção**: `PromoteToAdmin` cria o vínculo, atribui os papéis, marca `must_change_password` (se não havia vínculo), revoga as sessões do alvo e audita, numa transação. `RevokeAdmin` faz o caminho inverso e deixa só ASSOCIADO. Toda conta nasce ASSOCIADO; esse é o único caminho para conceder poder, além da CLI do primeiro administrador.
 - **Sem escalada**: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas (`authz.Covers`), e nunca os próprios. A decisão usa só as permissões efetivas do ator, sem regra por nome de papel; o que cada papel concede decorre da matriz (com a matriz provisória, o PRESIDENTE, que tem todas as permissões, concede qualquer papel).
+- **Matriz modular**: cada módulo entrega uma `Contribution{Module, Permissions []authz.Definition, Grants}`; `identity` agrega em `BuildMatrix`, que valida (formato, permissão declarada, ação proibida ao Conselho Fiscal) e expande o PRESIDENTE em vínculos explícitos, sem curinga. A partida falha se a matriz agregada for inválida. A sincronização grava no banco; permissão que sai do código fica inativa, e o histórico fica no `rbac.sync`.
+- **Decisão por permissão**: `Authorizer.Require` decide só por permissões efetivas. Um teste percorre o código-fonte e falha se houver nome de papel literal fora da definição dos papéis ou leitura de `Principal.Roles` fora de `identity`.
 - **Sessões**: promoção e retirada revogam todas as sessões do alvo; troca de papéis vale na requisição seguinte, pois o `Principal` é lido do banco a cada requisição.
 - **Auditoria de permissões**: `admin.promote`, `admin.revoke`, `user.roles_set`, `rbac.sync` (mudança da matriz na partida, sem ator) e `role.change_denied` (tentativa negada, em transação própria).
 - **Evolução futura**: dupla aprovação para promoção administrativa, fora da V1.
@@ -363,7 +365,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T68 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T69 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |
@@ -373,7 +375,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Suporte do `oapi-codegen` a `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo entre módulos ainda não foi comprovado | não se aplica (ainda não instalado) | Contrato ou geração incompatíveis com as convenções da API | Teste rápido na tarefa T24 antes de fixar a solução; se falhar, volta ao mantenedor |
 | Versões e ferramentas (geradores e linter de OpenAPI, biblioteca de migrações, testcontainers) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão antes de usar |
 | A lista de senhas comprometidas depende de uma fonte externa e de licença compatível | não se aplica (ainda não adicionada) | Lista defasada ou com licença incompatível com um repositório proprietário | A tarefa da lista registra a fonte e a licença; se não houver fonte adequada, gerar uma lista própria de senhas comuns |
-| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T42 confere o OWASP vigente e mede o custo |
+| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T43 confere o OWASP vigente e mede o custo |
 | Pela regra sem escalada, quem não possui as permissões de um papel não o concede; com a matriz provisória isso concentra a concessão de papéis institucionais no PRESIDENTE | `api/internal/platform/authz` (a criar) | Pode surpreender quem administra acesso | Efeito intencional (spec, RBAC-03), sem regra por papel; a matriz de cada módulo decide quem recebe as permissões do módulo |
 | Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T35) |
 | Código gerado versionado gera conflitos de merge | não se aplica | Fricção em PRs | CI recusa diferenças; regenerar é um comando único |

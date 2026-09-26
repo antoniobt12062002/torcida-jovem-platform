@@ -46,6 +46,7 @@ const (
 	AuthLoginFailed    Action = "auth.login_failed"
 	AuthLoginBlocked   Action = "auth.login_blocked"
 	AuthLogout         Action = "auth.logout"
+	AuthzDenied        Action = "authz.denied"
 )
 
 var (
@@ -56,7 +57,7 @@ var (
 	catalog   = map[Action]struct{}{
 		UserCreate: {}, UserBootstrap: {}, UserDeactivate: {}, UserPasswordChange: {}, UserRolesSet: {},
 		AdminPromote: {}, AdminRevoke: {}, RBACSync: {}, RoleChangeDenied: {},
-		AuthLogin: {}, AuthLoginFailed: {}, AuthLoginBlocked: {}, AuthLogout: {},
+		AuthLogin: {}, AuthLoginFailed: {}, AuthLoginBlocked: {}, AuthLogout: {}, AuthzDenied: {},
 	}
 
 	sensitiveKeys = map[string]struct{}{
