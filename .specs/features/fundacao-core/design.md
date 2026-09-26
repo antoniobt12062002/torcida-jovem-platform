@@ -1,7 +1,7 @@
 # Fundação Design
 
 **Spec**: `.specs/features/fundacao-core/spec.md`
-**Status**: Approved (2026-09-27), com os ajustes do mantenedor. Feature 1 de 2; a outra é `fundacao-documentos`.
+**Status**: Approved (2026-09-26), com os ajustes do mantenedor. Feature 1 de 2; a outra é `fundacao-documentos`.
 
 Decisões ativas do projeto respeitadas: AD-001 a AD-009 (`.specs/STATE.md`). Nenhuma é substituída por este design.
 

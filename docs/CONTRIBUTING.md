@@ -23,6 +23,18 @@ Padrao Conventional Commits: `feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`.
 
 Funcionalidades nascem como spec em `.specs/features/` (fluxo Specify, Design, Tasks, Implement, Validate) e decisões de arquitetura viram ADR em `docs/adr/`. Veja o `CLAUDE.md` da raiz e `docs/development/ai-environment.md`.
 
+## Testes de integração
+
+Os testes que usam banco ficam atrás da tag `integration` e exigem Docker (o PostgreSQL 16 sobe por testcontainers):
+
+```bash
+cd api
+go test ./...                    # unidade, sem Docker
+go test -tags=integration ./...  # inclui integração
+```
+
+Para o banco local, copie `.env.example` para `.env`, rode `docker compose up -d db` e depois `docker compose --profile tools run --rm migrate`. Para recriar o banco, use `docker compose down -v`. Versões de ferramentas: [tooling](development/tooling.md).
+
 ## Segredos
 
 O repositorio e publico: nunca comite segredos. Use GitHub Secrets por ambiente (`staging`, `production`).

@@ -1,6 +1,6 @@
 # Fundação Documentos Specification
 
-Status: Aprovada com ajustes em 2026-09-27. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core`. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Aprovada com ajustes em 2026-09-26. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core`. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
