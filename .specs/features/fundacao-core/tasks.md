@@ -2179,13 +2179,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Rota fora da lista pública sem cookie, com cookie malformado ou com sessão desconhecida devolve 401 `unauthenticated`; sessão expirada devolve 401 `session_expired` e limpa o cookie; qualquer outro erro devolve 500 sem detalhe interno
-- [ ] Coloca o `Principal`, o token CSRF e o ator no contexto (o `audit.Recorder` passa a enxergar o ator)
-- [ ] Com `must_change_password`, todas as rotas exceto logout, `me` e troca de senha devolvem 403 `password_change_required`
-- [ ] A lista pública é explícita e injetada; toda rota fora dela é protegida
-- [ ] Helper `SessionCookie` (Set e Clear): HttpOnly, Secure pela configuração, SameSite=Lax, Path=/, domínio configurável e vida igual ao teto absoluto da sessão
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Rota fora da lista pública sem cookie, com cookie malformado ou com sessão desconhecida devolve 401 `unauthenticated`; sessão expirada devolve 401 `session_expired` e limpa o cookie; qualquer outro erro devolve 500 sem detalhe interno
+- [x] Coloca o `Principal`, o token CSRF e o ator no contexto (o `audit.Recorder` passa a enxergar o ator)
+- [x] Com `must_change_password`, todas as rotas exceto logout, `me` e troca de senha devolvem 403 `password_change_required`
+- [x] A lista pública é explícita e injetada; toda rota fora dela é protegida
+- [x] Helper `SessionCookie` (Set e Clear): HttpOnly, Secure pela configuração, SameSite=Lax, Path=/, domínio configurável e vida igual ao teto absoluto da sessão
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
