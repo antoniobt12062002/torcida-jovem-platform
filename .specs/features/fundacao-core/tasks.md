@@ -835,11 +835,11 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Configuração em `api/openapi/codegen/platform.yaml` e código gerado commitado (pacote `platformapi`)
-- [ ] Gerar duas vezes produz zero diferença
-- [ ] O router atual atende `/healthz` pela interface gerada e o teste existente continua passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Configuração em `api/openapi/codegen/platform.yaml` e código gerado commitado (pacote `platformapi`)
+- [x] Gerar duas vezes produz zero diferença
+- [x] O router atual atende `/healthz` pela interface gerada e o teste existente continua passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
