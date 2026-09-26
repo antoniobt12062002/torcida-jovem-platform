@@ -191,7 +191,7 @@ T5 → T6
 ### T5: Criar a migração `documents` com `down` e concessões (sem UPDATE e DELETE)
 
 **What**: Criar a migração `documents` com `down` e concessões (sem UPDATE e DELETE).  
-**Where**: `api/migrations/000004_documents.up.sql`  
+**Where**: `api/migrations/000005_documents.up.sql`  
 **Depends on**: None  
 **Reuses**: Migração 000002 como padrão  
 **Requirement**: DOC-01 (ACs 1, 5, 6)

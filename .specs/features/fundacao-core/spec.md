@@ -21,7 +21,7 @@ A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega ident
 | Feature | Reason |
 |---|---|
 | Telas (login, painel, gestão de usuários) | A fundação entrega API e infraestrutura; a UI de identidade é a feature seguinte |
-| Recuperação de senha por e-mail | Exige provedor de e-mail, ainda não definido |
+| Provedor concreto de e-mail (Resend, SES, SendGrid, SMTP) | A capacidade `platform/email` e a interface de envio são entregues; o adaptador de um provedor real fica para quando ele for escolhido |
 | MFA, OAuth e provedor externo de identidade | ADR-005 adia; pede novo ADR |
 | Entidades e regras do financeiro: lançamentos, receitas, despesas, plano de contas, produtos e eventos | Módulos de domínio posteriores; esta feature entrega só o núcleo monetário compartilhado (`platform/money`), que eles importam |
 | Documentos e object storage | Feature `fundacao-documentos`, executada depois desta |
@@ -47,6 +47,14 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Bloqueio de login | 5 falhas seguidas para o mesmo e-mail em 15 minutos bloqueiam novas tentativas por 15 minutos (HTTP 429); nunca há bloqueio permanente; contadores no PostgreSQL | Aprovado pelo mantenedor; barra força bruta sem trancar a conta de forma definitiva | y |
 | Proteção contra senhas comprometidas | Lista local embutida e versionada de senhas comuns e vazadas, comparada sem diferenciar maiúsculas; fonte e licença verificadas na tarefa. Solução inicial: integração externa (ex.: consulta k-anonymity) permanece como evolução em aberto | Aprovado pelo mantenedor; não cria dependência externa nem envia dados para fora | y |
 | Troca obrigatória de senha | Ao conceder o primeiro vínculo administrativo a um usuário que não tinha vínculo ativo (só ASSOCIADO), o sistema marca `must_change_password=true` e exige a troca no próximo login; até lá o usuário só pode trocar a senha, ver `me` ou sair | Aprovado pelo mantenedor; evita que uma senha de 8 caracteres passe a proteger conta administrativa | y |
+| Capacidade de e-mail | `platform/email`, transversal: interface `Sender` desacoplada do provedor, mensagem validada (destinatário e ausência de quebras de linha nos cabeçalhos), remetente `log` para desenvolvimento e `disabled` para quando não há provedor; nenhum módulo depende de um provedor. O provedor real é definido depois e entra como novo adaptador. O corpo da mensagem nunca é registrado em log | Aprovado pelo mantenedor: e-mail é capacidade da plataforma, não só da autenticação | y |
+| Recuperação de acesso | Por e-mail, com token de recuperação (256 bits, base64url), guardado só como hash SHA-256 em `password_reset_tokens`, válido por 30 minutos (configurável) e de uso único. Não existe senha temporária. A resposta da solicitação é sempre a mesma; o envio é assíncrono, para o tempo de resposta não revelar se a conta existe; no máximo 3 solicitações por e-mail por hora (as demais recebem a mesma resposta e não enviam) | Aprovado pelo mantenedor; o limite de 3 por hora contra spam de e-mail é proposta a confirmar | n |
+| Redefinição administrativa | Alternativa à recuperação: quem tem `identity:user:reset_password` dispara o mesmo fluxo de token para o usuário (o administrador nunca vê senha nem token), com a regra sem escalada e sem redefinir a própria conta; revoga as sessões do alvo | Aprovado pelo mantenedor; a permissão nova é concedida ao ADMIN_SISTEMA junto com as demais de identidade, e o PRESIDENTE a recebe por ter todas | y |
+| Hash de e-mail | HMAC-SHA256 com a chave `AUTH_HASH_KEY` (mínimo 32 bytes, obrigatória fora de `development`) nas tentativas de login e nos eventos de auditoria; o e-mail nunca é gravado em claro nesses lugares | Aprovado pelo mantenedor; um vazamento do banco ou da auditoria não permite descobrir e-mails por dicionário | y |
+| E-mail: normalização | Espaços nas pontas removidos, minúsculas e formato básico (contém `@`, até 254 caracteres); sem normalização de domínios internacionalizados nem de aliases | Aprovado pelo mantenedor | y |
+| Sessões no login | Cada login emite token novo e revoga a sessão apresentada no cookie, se válida; várias sessões simultâneas por usuário são permitidas; todas caem ao trocar ou redefinir a senha, desativar, promover ou retirar o acesso | Aprovado pelo mantenedor | y |
+| Bloqueio de login por e-mail | Limitação conhecida: quem conhece um e-mail pode bloqueá-lo por 15 minutos, mesmo inexistente; tentativas durante o bloqueio não contam nem o estendem; limite por IP fica fora do escopo | Aprovado pelo mantenedor | y |
+| Argon2id e lista de senhas | Parâmetros configuráveis (padrão 19 MiB, 2 iterações, paralelismo 1, conferidos na tarefa com a recomendação vigente do OWASP e o custo medido); lista embutida de senhas comuns com fonte e licença registradas no commit | Aprovado pelo mantenedor | y |
 | Valor padrão de `APP_ENV` | Variável ausente equivale a `production` | Aprovado pelo mantenedor; padrão seguro, e `development` passa a ser explícito | y |
 | `ALLOWED_ORIGINS` vazio | Mantém o comportamento seguro: nenhuma origem é autorizada e requisições de navegador com `Origin` são bloqueadas; em `development` o padrão é `http://localhost:3000` | Aprovado pelo mantenedor; falha fechada em vez de aberta | y |
 | Cadastro de usuários | Sem autocadastro. O primeiro administrador nasce por CLI; os demais usuários são criados por quem tem `identity:user:create`, sempre só com o papel ASSOCIADO, e o acesso administrativo só existe por promoção (IDN-06), um único caminho para conceder poder | Sistema institucional fechado; reduz superfície de ataque e concentra a regra de promoção em um caso de uso | n |
@@ -184,6 +192,62 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 ---
 
+### P1: Capacidade de e-mail
+
+**User Story**: Como desenvolvedor de qualquer módulo, quero enviar e-mails por uma interface única, para não depender de um provedor específico.
+
+**Why P1**: A recuperação de acesso precisa enviar e-mail, e outros módulos (comunicação, eventos) também vão precisar.
+
+**Acceptance Criteria**:
+1. The system SHALL expose an e-mail sending interface in `platform/email` that does not depend on any provider, and modules SHALL depend only on that interface.
+2. IF a message has an invalid recipient address, an empty subject or a CR or LF character in the recipient or the subject THEN the sender SHALL reject it with an error and send nothing.
+3. WHEN `EMAIL_PROVIDER` is `log` THEN the system SHALL log only the recipient domain and the subject of each message and SHALL NOT log the body; WHEN it is `disabled` THEN the system SHALL send nothing and log an operational warning at startup.
+4. IF a delivery fails THEN the system SHALL log an operational incident and SHALL NOT expose the failure to the client.
+5. IF `EMAIL_PROVIDER` has an unknown value THEN the API SHALL refuse to start, naming the variable.
+
+**Independent Test**: Enviar com o remetente de teste e ver a mensagem; enviar com destinatário inválido e com quebra de linha no assunto e ver a recusa.
+
+---
+
+### P1: Recuperação de acesso por e-mail
+
+**User Story**: Como usuário que esqueceu a senha, quero recuperar o acesso por e-mail, para voltar a entrar sem depender de um administrador.
+
+**Why P1**: Sem recuperação, todo esquecimento vira chamado ao administrador.
+
+**Acceptance Criteria**:
+1. WHEN a client calls `POST /api/v1/auth/password-reset/request` with an email THEN the system SHALL respond 202 with the same body, "Se existir uma conta vinculada ao e-mail informado, enviaremos instruções.", whether or not an account exists, and the response SHALL NOT depend on the delivery of the e-mail.
+2. WHEN the account exists and is active THEN the system SHALL create a 256-bit random token, store only its SHA-256 hash in `password_reset_tokens` with an expiry of 30 minutes, invalidate the user's earlier pending tokens and send the instructions with the link through `platform/email`, after the response.
+3. The system SHALL NOT store, log or audit the token, the link or any password.
+4. IF more than 3 requests for the same email hash arrive within one hour THEN the system SHALL respond as in AC 1 without creating a token or sending an e-mail.
+5. WHEN a client calls `POST /api/v1/auth/password-reset/confirm` with a valid token and a new password that satisfies the password policy THEN the system SHALL, in one transaction, update the password hash, mark the token used, invalidate the user's other pending tokens, set `must_change_password` to false, revoke every session of the user and record an audit entry with action `auth.password_reset_completed`.
+6. IF the token is unknown, expired or already used THEN the system SHALL respond 400 with code `invalid_reset_token`, identical for the three cases, and record an audit entry with action `auth.password_reset_failed`.
+7. IF the new password violates the password policy THEN the system SHALL respond 422 with the policy code and SHALL keep the token valid.
+8. WHEN a request or a confirmation is recorded THEN the system SHALL use the actions `auth.password_reset_requested` and `auth.password_reset_failed` as security events, with a context that has no email in clear text, token or link.
+9. IF the user is inactive THEN the system SHALL NOT create a token or send an e-mail and SHALL respond as in AC 1.
+10. The two routes SHALL be public but SHALL apply the origin check of `ALLOWED_ORIGINS`.
+
+**Independent Test**: Solicitar a recuperação de um e-mail existente e de outro inexistente e ver respostas idênticas; usar o link uma vez, entrar com a senha nova e ver que o token não vale mais e que as sessões antigas caíram.
+
+---
+
+### P1: Redefinição administrativa de senha
+
+**User Story**: Como administrador, quero disparar a redefinição de senha de outro usuário, para socorrer quem não consegue recuperar o acesso sozinho.
+
+**Why P1**: Alternativa administrativa à recuperação por e-mail, sob controle de permissão.
+
+**Acceptance Criteria**:
+1. WHEN an actor with `identity:user:reset_password` calls `POST /api/v1/users/{id}/password-reset` THEN the system SHALL, in one transaction, create a recovery token as in IDN-07.2, revoke every session of the target user and record an audit entry with action `user.password_reset`, and SHALL send the instructions to the target user after the commit; the actor SHALL NOT receive any password or token.
+2. IF the actor lacks a permission held by the target user THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
+3. IF the actor targets their own account THEN the system SHALL respond 403 with code `self_change_forbidden`.
+4. IF the target user is inactive THEN the system SHALL respond 409 with code `user_inactive`.
+5. WHEN the request is denied by AC 2 or 3 THEN the system SHALL record an audit entry with action `user.password_reset`, outcome `denied`, as a security event.
+
+**Independent Test**: Como administrador, disparar a redefinição de um usuário e ver as sessões dele caírem e o e-mail sair; tentar com um alvo mais poderoso e ver 403.
+
+---
+
 ### P1: Modelo de permissões e papéis
 
 **User Story**: Como mantenedor, quero permissões granulares agrupadas em papéis, para que a autorização evolua sem reescrever regras.
@@ -293,7 +357,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 2. WHEN a login fails because the email is unknown, the password is wrong or the user is inactive THEN the system SHALL record an entry with action `auth.login_failed`, outcome `failure`, actor type `anonymous`, the user as target when it exists and a context with the failure category and a hash of the email, and SHALL NOT store the password or the plain email.
 3. WHEN a login attempt is refused because of the lockout THEN the system SHALL record an entry with action `auth.login_blocked` and outcome `denied`.
 4. WHEN a user logs out THEN the system SHALL record an entry with action `auth.logout`.
-5. The system SHALL record an audit entry for every change or denied change of roles, permissions or administrative membership: `admin.promote`, `admin.revoke`, `user.roles_set`, `rbac.sync` and `role.change_denied`.
+5. The system SHALL record an audit entry for every change or denied change of roles, permissions or administrative membership: `admin.promote`, `admin.revoke`, `user.roles_set`, `rbac.sync` and `role.change_denied`; and for passwords `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed` and `user.password_reset`.
 6. WHEN a security event is recorded THEN the system SHALL write it in its own transaction; IF that write fails THEN the system SHALL log an operational incident with the action and the `request_id` and SHALL NOT change the response to the client.
 7. IF an entry carries an action that is not in the catalog of actions declared in code THEN the recorder SHALL reject it with an error.
 
@@ -515,6 +579,9 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-04 | P1: Gestão de usuários | In Tasks | Pending |
 | IDN-05 | P1: Política de senha | In Tasks | Implementing |
 | IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
+| IDN-07 | P1: Recuperação de acesso por e-mail | In Tasks | Pending |
+| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Pending |
+| EML-01 | P1: Capacidade de e-mail | In Tasks | Pending |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Implementing |
 | RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Implementing |
@@ -532,7 +599,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | API-02 | P1: Convenções da API | In Tasks | Implementing |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
-**Coverage:** 22 total, 22 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
+**Coverage:** 25 total, 25 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
 ---
 
@@ -541,6 +608,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 - [ ] `go test -tags=integration ./...` e `pnpm test` passam no CI, junto com o lint, o build e as verificações de contrato OpenAPI.
 - [ ] Nas rotas da fundação, um PRESIDENTE cria um usuário, promove com motivo, atribui papel, retira o acesso e desativa, tudo com registro de auditoria consultável pela API.
 - [ ] Ninguém concede permissão que não possui nem altera o próprio acesso, e toda alteração de permissão (promoção, retirada, papéis, sincronização da matriz) fica na auditoria.
+- [ ] Um usuário recupera o acesso por e-mail com token de uso único, e a resposta da solicitação é idêntica para contas existentes e inexistentes; a redefinição administrativa segue a regra sem escalada.
 - [ ] Senhas fora da política (10 para qualquer papel diferente de ASSOCIADO, 8 para associados, lista de comprometidas) são recusadas e a troca obrigatória bloqueia o resto da API.
 - [ ] O teste de invariante confirma que CONSELHO_FISCAL não tem nenhuma permissão `create`, `update`, `delete` ou `cancel` e tem as institucionais de prestação de contas, aprovação e parecer.
 - [ ] O papel de banco da aplicação não consegue fazer UPDATE, DELETE ou TRUNCATE em `audit_log`, provado por teste.

@@ -159,11 +159,18 @@ Regras de desenho:
 - **Interfaces**: `Hash(plain string, p Params) (string, error)`, `Verify(plain, hash string) (bool, error)`, `Denylist.Contains(plain string) bool` (comparação sem diferenciar maiúsculas; lista via `go:embed`).
 - **Dependencies**: `golang.org/x/crypto/argon2`; arquivo da lista, com fonte e licença verificadas na tarefa.
 
+### platform/email
+
+- **Purpose**: Capacidade transversal de envio de e-mail, desacoplada do provedor.
+- **Location**: `api/internal/platform/email/`
+- **Interfaces**: `Message{To, Subject, TextBody}` com `Validate()`; `Sender.Send(ctx, Message) error`; `NewSender(cfg)` escolhe `log` (registra só o domínio do destinatário e o assunto) ou `disabled` (não envia; aviso na partida); `emailtest.Recorder` para testes. Adaptadores de provedor (Resend, SES, SendGrid, SMTP) entram depois, atrás da mesma interface.
+- **Dependencies**: `logx`. Nenhum módulo de negócio.
+
 ### identity
 
 - **Purpose**: Usuários, papéis, vínculo administrativo, sessões e casos de uso de acesso.
 - **Location**: `api/internal/identity/{domain,app,infra,http}/`
-- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` com estado anterior e posterior e o diff, sob `pg_advisory_xact_lock`; só grava quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
+- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `RequestPasswordReset`, `ResetPasswordWithToken`, `AdminResetPassword`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` com estado anterior e posterior e o diff, sob `pg_advisory_xact_lock`; só grava quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
 - **Dependencies**: `platform/*`.
 
 ### cmd/bootstrap-admin e cmd/api
@@ -186,7 +193,7 @@ Aprovado em 2026-09-26 (ADR-008 e AD-010). O contrato é a fonte de verdade da c
 api/openapi/
   common.yaml      componentes compartilhados: Problem, Cents, Limit, Cursor, segurança (cookie e X-CSRF-Token)
   platform.yaml    /healthz e /api/v1/audit-logs
-  identity.yaml    /api/v1/auth/*, /api/v1/users, /api/v1/roles
+  identity.yaml    /api/v1/auth/* (inclui password-reset/request e password-reset/confirm), /api/v1/users, /api/v1/roles
   (financeiro.yaml, estoque.yaml, loja.yaml, associados.yaml, eventos.yaml: nas features de cada módulo)
 api/openapi/codegen/<modulo>.yaml       configuração do oapi-codegen por módulo
 api/internal/platform/api/              código gerado do platform (pacote platformapi)
@@ -218,7 +225,7 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 ## Auditoria e eventos de segurança
 
 - Dois modos de gravação: **atômico** (`Record`, dentro da transação do caso de uso, para mudanças de dado) e **de segurança** (`RecordSecurity`, transação própria, para telemetria e eventos que não alteram estado crítico: login, falha de login, bloqueio, logout, negação). Falha de gravação: no modo atômico reverte a operação (500 `audit_failed`); no modo de segurança vira incidente operacional e a operação continua.
-- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout` e `authz.denied` (negação de permissão que não seja leitura comum). Cada spec de módulo acrescenta as suas.
+- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout`, `authz.denied` (negação de permissão que não seja leitura comum), `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed` e `user.password_reset`. Cada spec de módulo acrescenta as suas.
 - Ator (`actor_type` e `actor_user_id`), alvo (`entity_type` e `entity_id`), momento, `request_id`, antes e depois, resultado (`outcome`) e contexto da ação ficam no mesmo registro; nada é alterável nem apagável (trigger e concessões, AUD-02).
 - Segredos nunca entram: as chaves sensíveis são redigidas em `before`, `after` e `context`; o e-mail de uma tentativa de login entra só como hash.
 - **Evoluções futuras, fora desta fase**: armazenamento controlado de IP em eventos de segurança (LGPD), separação entre auditoria institucional e técnica, versionamento dos eventos e encadeamento criptográfico entre registros.
@@ -255,7 +262,7 @@ erDiagram
 
 ## Data Models
 
-Novas migrações (todas com `down`): `000002_audit_log` e `000003_identity`. A `000004_documents` pertence a `fundacao-documentos`. Cada uma concede ao papel `tj_app` apenas o necessário e falha com mensagem clara se o papel não existir.
+Novas migrações (todas com `down`): `000002_audit_log`, `000003_identity` e `000004_password_reset`. A `000005_documents` pertence a `fundacao-documentos`. Cada uma concede ao papel `tj_app` apenas o necessário e falha com mensagem clara se o papel não existir.
 
 ```sql
 -- 000002_audit_log
@@ -333,6 +340,29 @@ CREATE TABLE login_attempts (
 CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC);
 ```
 
+```sql
+-- 000004_password_reset
+CREATE TABLE password_reset_tokens (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    uuid NOT NULL REFERENCES users,
+  token_hash bytea NOT NULL UNIQUE,            -- só o SHA-256; o token nunca é gravado
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL,
+  used_at    timestamptz,
+  request_id text
+);
+CREATE INDEX password_reset_tokens_user_idx ON password_reset_tokens (user_id) WHERE used_at IS NULL;
+-- GRANT SELECT, INSERT, UPDATE ON password_reset_tokens TO tj_app  (sem DELETE)
+
+CREATE TABLE password_reset_requests (
+  id           bigserial PRIMARY KEY,
+  email_hash   bytea NOT NULL,                 -- HMAC-SHA256; o e-mail nunca é gravado
+  requested_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX password_reset_requests_idx ON password_reset_requests (email_hash, requested_at DESC);
+-- GRANT SELECT, INSERT, DELETE ON password_reset_requests TO tj_app
+```
+
 **Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`; `admin_memberships` guarda o histórico de por que cada usuário teve acesso administrativo (um ativo por usuário). Não há coluna de associado em `users`. `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
 
 **Papéis de banco**: `tj_owner` (migrações e DDL) e `tj_app` (API). `tj_app` tem `SELECT/INSERT/UPDATE/DELETE` nas tabelas de identidade (exceto `admin_memberships`, sem `DELETE`) e só `SELECT/INSERT` em `audit_log`. O script `docker/postgres/init/01-roles.sql` cria os papéis no ambiente local, e o helper de testes faz o mesmo.
@@ -353,6 +383,8 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | JSON malformado ou validação | 400 `invalid_json` ou 422 `validation_failed` com `errors[]` | Corrigir os campos |
 | Conflito (e-mail repetido, último administrador, vínculo administrativo) | 409 `email_taken`, `last_admin`, `already_admin`, `not_admin`, `user_inactive` ou `admin_membership_required` | Mensagem específica |
 | Motivo do vínculo ausente ou curto | 422 `reason_required` | Informar o motivo |
+| Token de recuperação desconhecido, expirado ou usado | 400 `invalid_reset_token`, idêntico nos três casos, com `auth.password_reset_failed` | Pedir uma nova recuperação |
+| Solicitação de recuperação | 202 com corpo fixo, exista ou não a conta; envio assíncrono, e falha de envio é incidente no log | Nenhum efeito visível |
 | Concessão acima do próprio poder ou alteração do próprio acesso | 403 `privilege_escalation` ou `self_change_forbidden`, com auditoria `role.change_denied` | Acesso negado |
 | Falha ao gravar auditoria | Reverte a transação, 500 `audit_failed` | Operação não realizada, sem efeito parcial |
 | Falha ao gravar evento de segurança ou telemetria (login, falha de login, bloqueio, logout, negação) | Não bloqueia: registra incidente operacional e segue com a resposta normal | Nenhum efeito visível |
@@ -365,7 +397,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T69 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T78 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |
@@ -375,7 +407,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Suporte do `oapi-codegen` a `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo entre módulos ainda não foi comprovado | não se aplica (ainda não instalado) | Contrato ou geração incompatíveis com as convenções da API | Teste rápido na tarefa T24 antes de fixar a solução; se falhar, volta ao mantenedor |
 | Versões e ferramentas (geradores e linter de OpenAPI, biblioteca de migrações, testcontainers) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão antes de usar |
 | A lista de senhas comprometidas depende de uma fonte externa e de licença compatível | não se aplica (ainda não adicionada) | Lista defasada ou com licença incompatível com um repositório proprietário | A tarefa da lista registra a fonte e a licença; se não houver fonte adequada, gerar uma lista própria de senhas comuns |
-| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T43 confere o OWASP vigente e mede o custo |
+| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T46 confere o OWASP vigente e mede o custo |
 | Pela regra sem escalada, quem não possui as permissões de um papel não o concede; com a matriz provisória isso concentra a concessão de papéis institucionais no PRESIDENTE | `api/internal/platform/authz` (a criar) | Pode surpreender quem administra acesso | Efeito intencional (spec, RBAC-03), sem regra por papel; a matriz de cada módulo decide quem recebe as permissões do módulo |
 | Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T35) |
 | Código gerado versionado gera conflitos de merge | não se aplica | Fricção em PRs | CI recusa diferenças; regenerar é um comando único |
@@ -393,6 +425,8 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Cursor de paginação | Base64 de `(occurred_at, id)` | Estável sob inserções concorrentes, ao contrário de `OFFSET` |
 | Permissões declaradas em código | Matriz papel-permissão em Go, sincronizada na partida | Revisável em PR e testável; migrações de dados de permissão seriam difíceis de auditar |
 | Vínculo usuário-associado | `associados.associados.user_id`, no módulo dono | `identity` não depende de `associados` (regra de fronteira) |
+| Recuperação por token | Token aleatório de 256 bits, só o hash no banco, uso único, validade de 30 minutos, envio assíncrono e resposta uniforme | Sem senha temporária e sem revelar se a conta existe; o tempo de resposta não depende do envio |
+| Hash de e-mail | HMAC-SHA256 com `AUTH_HASH_KEY` | Vazamento do banco ou da auditoria não expõe e-mails por dicionário |
 | Um caminho para conceder poder | Contas nascem ASSOCIADO; só `PromoteToAdmin` (e a CLI do primeiro administrador) concede papéis administrativos | Concentra motivo, `must_change_password`, revogação de sessões e auditoria em um caso de uso |
 | `audit_log.actor_user_id` sem chave estrangeira | Referência lógica | Evita que uma restrição de FK impeça o registro de auditoria |
 | `Principal` sem cache | Consulta por requisição | Mudança de papel vale de imediato; custo aceitável no volume atual |

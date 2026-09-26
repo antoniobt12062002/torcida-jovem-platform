@@ -93,11 +93,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 6 mescladas (T1 a T35); fase 7 (T36 a T42) no PR da branch `feature/fundacao-core-fase-7`. Próxima: fase 8 (identidade: base, T43 a T52), a apresentar antes de implementar
+- **Phase / Task**: Fases 1 a 7 mescladas (T1 a T42). Fase 8 (identidade: base, T43 a T55) em implementação na branch `feature/fundacao-core-fase-8`; a recuperação de acesso por e-mail e a redefinição administrativa entram na fase 9
 - **Completed**: T1 a T42
 - **In-progress** (file:line): none
-- **Next step**: Após o merge da fase 7, apresentar spec/design/decisões da fase 8 (senha, usuários, vínculo administrativo, sessões, login) e aguardar aprovação
+- **Next step**: Implementar a fase 8 (T43 a T55), tests-first, um commit por tarefa, e abrir o PR
 - **Blockers**: none
-- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-7
+- **Branch**: feature/fundacao-core-fase-8
