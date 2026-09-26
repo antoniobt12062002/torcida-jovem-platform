@@ -259,11 +259,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Panic vira 500 `internal_error` sem detalhes internos e com request_id
-- [ ] Corpo acima de 1 MiB vira 413 `payload_too_large`
-- [ ] Log de acesso é uma linha JSON com método, caminho sem query, status, duração, request_id e user id quando houver
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Panic vira 500 `internal_error` sem detalhes internos e com request_id
+- [x] Corpo acima de 1 MiB vira 413 `payload_too_large`
+- [x] Log de acesso é uma linha JSON com método, caminho sem query, status, duração, request_id e user id quando houver
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
