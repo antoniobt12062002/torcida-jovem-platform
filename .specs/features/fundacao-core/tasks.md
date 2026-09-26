@@ -2209,12 +2209,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Origem: `Origin` fora da lista em método que altera estado devolve 403 `origin_not_allowed`, inclusive no login e nas duas rotas públicas de recuperação; lista vazia bloqueia toda origem
-- [ ] Origem: requisição autenticada que altera estado, sem `Origin` e com `Sec-Fetch-Site: cross-site`, devolve 403 `origin_not_allowed`; a ausência de `Origin` sozinha não bloqueia
-- [ ] CSRF: método que altera estado em rota autenticada sem `X-CSRF-Token` igual ao da sessão (comparação em tempo constante) devolve 403 `csrf_invalid`
-- [ ] GET, HEAD e OPTIONS não exigem token nem checagem de origem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Origem: `Origin` fora da lista em método que altera estado devolve 403 `origin_not_allowed`, inclusive no login e nas duas rotas públicas de recuperação; lista vazia bloqueia toda origem
+- [x] Origem: requisição autenticada que altera estado, sem `Origin` e com `Sec-Fetch-Site: cross-site`, devolve 403 `origin_not_allowed`; a ausência de `Origin` sozinha não bloqueia
+- [x] CSRF: método que altera estado em rota autenticada sem `X-CSRF-Token` igual ao da sessão (comparação em tempo constante) devolve 403 `csrf_invalid`
+- [x] GET, HEAD e OPTIONS não exigem token nem checagem de origem
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

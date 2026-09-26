@@ -85,6 +85,11 @@ type AuthnConfig struct {
 	OnAuthenticated func(ctx context.Context, info SessionInfo) context.Context
 }
 
+const publicRouteKey = "httpx.public_route"
+
+// publicRoute reports whether Authn let the route through as public.
+func publicRoute(c *gin.Context) bool { return c.GetBool(publicRouteKey) }
+
 type sessionKey struct{}
 
 // SessionFrom returns the session Authn stored in the request context.
@@ -116,6 +121,7 @@ func Authn(cfg AuthnConfig) gin.HandlerFunc {
 		}
 		route := c.Request.Method + " " + c.FullPath()
 		if cfg.Public[route] {
+			c.Set(publicRouteKey, true)
 			c.Next()
 			return
 		}

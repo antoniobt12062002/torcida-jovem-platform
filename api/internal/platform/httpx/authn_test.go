@@ -188,7 +188,9 @@ func TestAuthnLetsTheAccessLogKnowTheUser(t *testing.T) {
 func TestOnAuthenticatedContextReachesTheHandler(t *testing.T) {
 	type key struct{}
 	cfg := authnConfig(&fakeValidator{info: validInfo()})
-	cfg.OnAuthenticated = func(ctx context.Context, _ SessionInfo) context.Context { return context.WithValue(ctx, key{}, "enriquecido") }
+	cfg.OnAuthenticated = func(ctx context.Context, _ SessionInfo) context.Context {
+		return context.WithValue(ctx, key{}, "enriquecido")
+	}
 	r := newEngine()
 	r.Use(RequestID(), Authn(cfg))
 	var got any
