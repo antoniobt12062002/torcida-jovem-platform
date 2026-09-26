@@ -85,10 +85,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 4 concluídas (T1 a T22); a próxima é a fase 5 (contrato OpenAPI, T23 a T29)
-- **Completed**: T1 a T22 (fases 1 a 3 mescladas em #21, #22 e #23; fase 4 na branch `feature/fundacao-core-fase-4`)
+- **Phase / Task**: Fase 5 (contrato OpenAPI, T23 a T30) em andamento; spec, design e tasks já atualizados para o contrato por módulo
+- **Completed**: T1 a T22 (fases 1 a 3 mescladas; fase 4 no PR #24); ADR-008 e AD-010 registrados
 - **In-progress** (file:line): none
-- **Next step**: Abrir o PR da fase 4; antes de implementar a fase 5, apresentar a ferramenta de OpenAPI escolhida, a justificativa, o fluxo contract-first e o impacto no backend e no frontend
-- **Blockers**: Aprovação da proposta de OpenAPI antes de iniciar a fase 5. Decisão aprovada: o mapeamento de `money.ErrOutOfRange` para 422 `amount_out_of_range` fica para a primeira feature com endpoint monetário
+- **Next step**: Executar T23 (common.yaml) e T24 (teste rápido do oapi-codegen: problem+json, cookie de sessão, X-CSRF-Token e $ref externo); se houver incompatibilidade, parar e reportar ao mantenedor antes de fixar a solução
+- **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-4
+- **Branch**: feature/fundacao-core-fase-5

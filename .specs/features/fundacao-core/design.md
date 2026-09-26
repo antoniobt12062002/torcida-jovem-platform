@@ -13,7 +13,7 @@ Decisões ativas do projeto respeitadas: AD-001 a AD-009 (`.specs/STATE.md`). Ne
 |---|---|---|---|
 | Autenticação e autorização | Implementação mínima própria em `identity` e `platform/authz` (sessões e permissões em tabelas) | Casbin para políticas; provedor externo de identidade (Ory Kratos, Keycloak) | O ADR-005 fixa sessão própria e adia provedor externo. As regras aqui são um mapa papel-permissão simples, pequeno demais para justificar um motor de políticas e sua DSL |
 | Transação e auditoria | Unidade de trabalho: a transação viaja no `context`, e o registrador de auditoria exige essa transação | Repositórios recebendo `*gorm.DB` explícito; triggers de auditoria no banco | Garante a auditoria na mesma transação (ADR-004) sem passar `tx` por toda assinatura; falha alto se esquecerem a transação. Triggers perdem o contexto de negócio |
-| Contrato de API | Spec-first: `openapi.yaml` gera servidor e tipos TypeScript, ambos versionados | Code-first com anotações; sem contrato | O contrato revisado no PR impede divergência entre servidor e front; a geração versionada deixa a mudança visível |
+| Contrato de API | Spec-first e contract-first: um contrato OpenAPI por módulo em `api/openapi/` gera servidor e tipos TypeScript, ambos versionados | Code-first com anotações; sem contrato | O contrato revisado no PR impede divergência entre servidor e front; a geração versionada deixa a mudança visível |
 
 Aprovando este design, essas escolhas ficam confirmadas.
 
@@ -83,7 +83,7 @@ Regras de desenho:
 | System | Integration Method |
 |---|---|
 | PostgreSQL | GORM com papel de aplicação (`tj_app`); migrações com `golang-migrate` e papel dono (`tj_owner`) |
-| Front (`web/`) | Tipos TypeScript gerados de `openapi.yaml`; formatador de dinheiro em `web/lib/money.ts` |
+| Front (`web/`) | Tipos TypeScript gerados de `api/openapi/*.yaml` em `web/lib/api/<modulo>.d.ts`; formatador de dinheiro em `web/lib/money.ts` |
 
 ---
 
@@ -172,7 +172,44 @@ Regras de desenho:
 ### web/lib/money.ts e web/lib/api
 
 - **Purpose**: Formatador de dinheiro e tipos gerados do contrato.
-- **Location**: `web/lib/money.ts`, `web/lib/api/schema.d.ts`
+- **Location**: `web/lib/money.ts`, `web/lib/api/<modulo>.d.ts`
+
+---
+
+## Contrato OpenAPI (contract-first)
+
+Aprovado em 2026-09-26 (ADR-008 e AD-010). O contrato é a fonte de verdade da comunicação entre API e front.
+
+```
+api/openapi/
+  common.yaml      componentes compartilhados: Problem, Cents, Limit, Cursor, segurança (cookie e X-CSRF-Token)
+  platform.yaml    /healthz e /api/v1/audit-logs
+  identity.yaml    /api/v1/auth/*, /api/v1/users, /api/v1/roles
+  (financeiro.yaml, estoque.yaml, loja.yaml, associados.yaml, eventos.yaml: nas features de cada módulo)
+api/openapi/codegen/<modulo>.yaml       configuração do oapi-codegen por módulo
+api/internal/platform/api/              código gerado do platform (pacote platformapi)
+api/internal/identity/http/             código gerado do identity (pacote identityhttp)
+web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
+```
+
+**Fluxo:** Contrato, Lint, Generate, Implement, Validate.
+
+1. Edita-se o contrato do módulo em `api/openapi/`; a mudança aparece no PR.
+2. `pnpm lint:api` (Redocly) precisa passar.
+3. `go generate` regenera interfaces e modelos do módulo (`go tool oapi-codegen`); `pnpm gen:api` regenera os tipos TypeScript. Ambos versionados.
+4. O handler implementa a interface strict gerada: divergência entre contrato e código não compila.
+5. Testes de integração validam a resposta real contra o contrato do módulo (`kin-openapi`, `ValidateResponse`), e um teste garante que toda rota do Gin existe em algum contrato.
+6. O job de CI `contract` (Go e Node) regenera tudo e falha se houver diferença com o commitado ou se o lint falhar; ele entra no `ci-gate` e é disparado por mudanças em `api/openapi/**`.
+
+**Ferramentas e versões** (conferidas na documentação vigente em 2026-09-26; fixadas na tarefa T24 depois do teste abaixo): `oapi-codegen` v2.8.0 como `tool` do `go.mod` e `oapi-codegen/runtime` v1.7.0; `kin-openapi` v0.149.0; `openapi-typescript` 7.13.0; `@redocly/cli` 2.54.3. O `openapi-fetch` (0.17.0) entra somente na primeira tela real.
+
+**Regras do contrato:**
+
+- **Limite de responsabilidade:** o OpenAPI define contratos de comunicação (caminhos, esquemas, segurança, exemplos) e **não contém regras de negócio**; elas permanecem nas specs e nos módulos de domínio.
+- `Cents` é `integer` `int64` no contrato e mapeia para `money.Cents` (via `x-go-type`), então a validação estrita de JSON do Money vale na API.
+- Segurança: cookie de sessão (`apiKey` em cookie) e cabeçalho `X-CSRF-Token` em operações que alteram estado. Erros são `application/problem+json`.
+
+**Teste rápido na tarefa T24 (antes de fixar a solução):** confirmar que o `oapi-codegen` (a) gera corretamente respostas `application/problem+json` no modo strict, (b) trata o esquema de cookie de sessão, (c) trata o parâmetro `X-CSRF-Token` e (d) resolve `$ref` externo para `common.yaml` a partir de contratos de módulos diferentes (mapeamento de imports). Se houver incompatibilidade, a solução volta ao mantenedor antes de ser fixada.
 
 ---
 
@@ -269,17 +306,18 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T59 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T62 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |
 | Cobertura de testes mínima: só `/healthz` e `config` têm testes | `api/internal/httpapi/router_test.go:12` | Regressões silenciosas ao crescer | Infraestrutura de integração e testes 1:1 com os ACs (Phase 2 em diante) |
 | O CI não roda testes de integração nem tem Docker configurado para eles | `.github/workflows/ci.yml:103` | Garantias de banco não verificadas | Passo `go test -tags=integration ./...` no job `api` (T13); o `ubuntu-latest` já tem Docker |
 | O cookie `SameSite=Lax` (aprovado) só funciona same-site; **a configuração final (domínio do cookie, proxy do Next) depende da estratégia de hospedagem**, ainda não definida | `docs/adr/005-autenticacao-e-rbac.md:30` | O login pode falhar entre domínios distintos em produção | Assumption 1 da spec; `COOKIE_DOMAIN` configurável; validar na feature de UI de identidade e ao decidir a hospedagem |
+| Suporte do `oapi-codegen` a `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo entre módulos ainda não foi comprovado | não se aplica (ainda não instalado) | Contrato ou geração incompatíveis com as convenções da API | Teste rápido na tarefa T24 antes de fixar a solução; se falhar, volta ao mantenedor |
 | Versões e ferramentas (geradores e linter de OpenAPI, biblioteca de migrações, testcontainers) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão antes de usar |
 | A lista de senhas comprometidas depende de uma fonte externa e de licença compatível | não se aplica (ainda não adicionada) | Lista defasada ou com licença incompatível com um repositório proprietário | A tarefa da lista registra a fonte e a licença; se não houver fonte adequada, gerar uma lista própria de senhas comuns |
-| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T40 confere o OWASP vigente e mede o custo |
-| Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T34) |
+| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T41 confere o OWASP vigente e mede o custo |
+| Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T35) |
 | Código gerado versionado gera conflitos de merge | não se aplica | Fricção em PRs | CI recusa diferenças; regenerar é um comando único |
 
 ---
@@ -298,8 +336,8 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | `Principal` sem cache | Consulta por requisição | Mudança de papel vale de imediato; custo aceitável no volume atual |
 | Migrações fora da partida da API | Ferramenta `migrate` separada | Cumpre o ADR-002 (nada de `AutoMigrate`) e o papel sem DDL |
 
-> **Decisões de projeto a registrar em `.specs/STATE.md` após a aprovação deste design** (não gravadas agora):
-> - AD-010: contrato OpenAPI spec-first, com código e tipos gerados versionados e conferidos no CI.
+> **Decisões de projeto a registrar em `.specs/STATE.md`** (AD-011 a AD-013 na tarefa de guardrails):
+> - AD-010 já registrado (contrato OpenAPI contract-first, ADR-008).
 > - AD-011: testes de integração atrás da tag `integration`, com PostgreSQL real via testcontainers.
 > - AD-012: autorização no caso de uso, rotas negadas por padrão, e papéis de banco separados (dono e aplicação).
 > - AD-013: erros em `application/problem+json`, paginação por cursor e identificador de requisição.
