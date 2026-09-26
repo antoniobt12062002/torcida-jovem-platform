@@ -510,12 +510,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
 | IDN-01 | P1: Primeiro administrador | In Tasks | Pending |
-| IDN-02 | P1: Login, sessão e logout | In Tasks | Pending |
+| IDN-02 | P1: Login, sessão e logout | In Tasks | Implementing |
 | IDN-03 | P1: Proteção contra CSRF e origem | In Tasks | Pending |
 | IDN-04 | P1: Gestão de usuários | In Tasks | Pending |
-| IDN-05 | P1: Política de senha | In Tasks | Pending |
-| IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Pending |
-| RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Pending |
+| IDN-05 | P1: Política de senha | In Tasks | Implementing |
+| IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
+| RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Pending |
 | RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Pending |
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Implementing |

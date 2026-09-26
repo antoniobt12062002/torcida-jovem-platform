@@ -1117,15 +1117,15 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] `permissions.name` só aceita o formato `módulo:recurso:ação`; `roles` e `permissions` não são semeadas pela migração (a sincronização as cria)
-- [ ] Coluna `users.must_change_password` (boolean, padrão falso); `users` não tem coluna de associado (o vínculo pertence a `associados`)
-- [ ] Índice único por `lower(email)`
-- [ ] `sessions.token_hash` único
-- [ ] `admin_memberships` com motivo obrigatório, quem concedeu, quando, e os campos de encerramento; índice único parcial garante um vínculo ativo por usuário
-- [ ] `tj_app` com SELECT, INSERT, UPDATE e DELETE nas tabelas de identidade, exceto `admin_memberships`, sem DELETE (o histórico é preservado)
-- [ ] Migração `down` desfaz sem erro
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `permissions.name` só aceita o formato `módulo:recurso:ação`; `roles` e `permissions` não são semeadas pela migração (a sincronização as cria)
+- [x] Coluna `users.must_change_password` (boolean, padrão falso); `users` não tem coluna de associado (o vínculo pertence a `associados`)
+- [x] Índice único por `lower(email)`
+- [x] `sessions.token_hash` único
+- [x] `admin_memberships` com motivo obrigatório, quem concedeu, quando, e os campos de encerramento; índice único parcial garante um vínculo ativo por usuário
+- [x] `tj_app` com SELECT, INSERT, UPDATE e DELETE nas tabelas de identidade, exceto `admin_memberships`, sem DELETE (o histórico é preservado)
+- [x] Migração `down` desfaz sem erro
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
