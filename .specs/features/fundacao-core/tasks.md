@@ -616,10 +616,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] 123456 vira `R$ 1.234,56` e -123456 vira `-R$ 1.234,56` com espaço comum
-- [ ] `Parse` rejeita mais de duas casas decimais e caracteres inválidos
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] 123456 vira `R$ 1.234,56` e -123456 vira `-R$ 1.234,56` com espaço comum
+- [x] `Parse` rejeita mais de duas casas decimais e caracteres inválidos
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

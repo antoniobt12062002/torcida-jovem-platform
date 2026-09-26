@@ -436,7 +436,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | AUD-02 | P1: Auditoria imutável | In Tasks | Pending |
 | AUD-03 | P2: Consulta de auditoria | In Tasks | Pending |
 | MNY-01 | P1: Tipo monetário em centavos | In Tasks | Implementing |
-| MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Pending |
+| MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |
 | MNY-03 | P2: Rateio e percentuais | In Tasks | Pending |
 | TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Pending |
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
