@@ -76,11 +76,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/fundacao/`
-- **Phase / Task**: Specify, Design e Tasks concluídos e validados; aguardando aprovação antes do Execute
-- **Completed**: spec.md (20 requisitos), design.md, tasks.md (72 tarefas em 13 fases)
+- **Feature**: `.specs/features/fundacao-core/` (Feature 1 de 2; a `fundacao-documentos` vem depois)
+- **Phase / Task**: Spec, design e tasks aprovados com ajustes; execução começa na fase 1 (T1 a T5)
+- **Completed**: divisão em duas features, ajustes de sessão (8 h), senha (10/8), bloqueio, arredondamento, documentos e cookie
 - **In-progress** (file:line): none
-- **Next step**: Após a aprovação, executar a fase 1 (T1 a T5) e seguir em lotes por fase; ao aprovar o design, registrar AD-010 a AD-013 (tarefa T70)
-- **Blockers**: Aprovação do mantenedor; confirmação das suposições marcadas com "Confirmed? n" na spec
+- **Next step**: Executar a fase 1 da `fundacao-core` (T1 a T5) em lote pequeno, com testes e commits atômicos; registrar AD-010 a AD-013 na tarefa de guardrails
+- **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feature/spec-fundacao
+- **Branch**: feature/spec-fundacao (docs); a implementação usa `feature/fundacao-core-fase-1`

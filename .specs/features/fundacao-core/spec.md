@@ -1,19 +1,18 @@
-# Fundação Specification
+# Fundação Core Specification
 
-Status: Draft, aguardando aprovação. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Aprovada com ajustes em 2026-09-27. Feature 1 de 2 da fundação (a outra é `fundacao-documentos`). Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
 A plataforma só tem um esqueleto (`/healthz` e uma página de status). Todo módulo de negócio (financeiro, estoque, loja, associados) depende das mesmas capacidades: identificar quem age, verificar permissões, registrar auditoria imutável, tratar dinheiro sem erro de arredondamento, guardar documentos, testar contra um banco real e expor um contrato de API estável. Se cada módulo construir isso por conta própria, as regras dos ADR-003, 004, 005 e 006 divergem e ficam caras de corrigir.
 
-Esta feature entrega essas capacidades uma única vez, em `platform` e `identity`, antes de qualquer módulo de negócio.
+A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega identidade, autorização, auditoria, dinheiro, o contrato OpenAPI e a infraestrutura de testes, em `platform` e `identity`. Documentos e object storage ficam em `fundacao-documentos`, executada depois desta.
 
 ## Goals
 
 - [ ] Um usuário autenticado por sessão com cookie seguro, com autorização por permissão (nunca só por nome de papel) aplicada em todo caso de uso.
 - [ ] Toda alteração de dados auditados grava, na mesma transação, um registro que nem a aplicação consegue alterar ou apagar.
 - [ ] Valores monetários em centavos inteiros, com formatação, serialização, rateio e percentuais exatos no Go e no TypeScript.
-- [ ] Documentos guardados em object storage compatível com S3, imutáveis e versionados, acessados por URL assinada e auditados.
 - [ ] Testes de integração contra PostgreSQL real no CI, verificação automática de fronteiras entre módulos e testes de front.
 - [ ] Contrato OpenAPI como fonte de verdade, com código do servidor e tipos TypeScript gerados e conferidos no CI.
 
@@ -25,9 +24,7 @@ Esta feature entrega essas capacidades uma única vez, em `platform` e `identity
 | Recuperação de senha por e-mail | Exige provedor de e-mail, ainda não definido |
 | MFA, OAuth e provedor externo de identidade | ADR-005 adia; pede novo ADR |
 | Entidades e regras do financeiro | Feature própria, construída sobre esta fundação |
-| Endpoints HTTP de documentos | O serviço é da plataforma; cada módulo expõe o que precisa |
-| Escolha do provedor de object storage | ADR-006 deixa para depois; a fundação usa só o protocolo S3 |
-| Varredura de malware em uploads | Em aberto no ADR-006; entra em feature própria |
+| Documentos e object storage | Feature `fundacao-documentos`, executada depois desta |
 | Hospedagem e deploy reais | Decisão adiada; ver ADR-002 e o plano de hospedagem |
 | Purga e retenção de auditoria e sessões | Política de retenção depende de definição jurídica e de LGPD |
 | Fechamento de ano e ajuste extraordinário | Regras do financeiro (FIN-001, seção 16) |
@@ -41,30 +38,29 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 |---|---|---|---|
-| Como o navegador envia o cookie à API | Web e API no mesmo domínio registrável (ex.: `app.` e `api.`), cookie `SameSite=Lax`, atributo `Domain` configurável; alternativa é o Next fazer proxy | A hospedagem ainda não está definida; `Lax` bloqueia envio entre sites diferentes e é o padrão mais seguro que funciona same-site | n |
+| Como o navegador envia o cookie à API | Cookie `SameSite=Lax` com `Domain` configurável; `Secure` obrigatório fora de `development`. Web e API no mesmo domínio registrável (ex.: `app.` e `api.`), ou o Next faz proxy | Aprovado pelo mantenedor. A configuração final (domínio, proxy) **depende da estratégia de hospedagem**, ainda não definida | y |
 | Formato do token de sessão | 256 bits aleatórios em base64url; no banco só o hash SHA-256 | Vazamento do banco não permite sequestrar sessões | n |
-| Tempo de sessão | Expira após 60 minutos sem uso ou 12 horas absolutas | Equilibra segurança e uso em jogos e eventos; ajustável por configuração | n |
-| Política de senha | 12 a 128 caracteres, sem regras de composição; argon2id com memória 19 MiB, 2 iterações, paralelismo 1, configuráveis | Alinhado às recomendações públicas do OWASP (a validar na tarefa contra a versão vigente) | n |
-| Bloqueio de login | 5 falhas seguidas para o mesmo e-mail em 15 minutos bloqueiam novas tentativas por 15 minutos (HTTP 429); contadores no PostgreSQL | Barra força bruta; o banco evita depender de uma instância única | n |
+| Tempo de sessão | Sessão administrativa expira em 8 horas (teto absoluto) ou após 60 minutos sem uso; a regra para associados será fixada na spec de associados e, até lá, vale a mesma | 8 horas definido pelo mantenedor; 60 minutos de ociosidade é o padrão mantido, ajustável por configuração | n |
+| Política de senha | Quem tem qualquer papel diferente de ASSOCIADO: mínimo 10 caracteres; só ASSOCIADO: mínimo 8; máximo 128 em pontos de código Unicode; sem regras de composição. Hash argon2id com memória 19 MiB, 2 iterações, paralelismo 1, configuráveis | Mínimos definidos pelo mantenedor; parâmetros alinhados às recomendações públicas do OWASP (validar na tarefa contra a versão vigente) | y |
+| Bloqueio de login | 5 falhas seguidas para o mesmo e-mail em 15 minutos bloqueiam novas tentativas por 15 minutos (HTTP 429); nunca há bloqueio permanente; contadores no PostgreSQL | Aprovado pelo mantenedor; barra força bruta sem trancar a conta de forma definitiva | y |
+| Proteção contra senhas comprometidas | Lista embutida de senhas comuns e vazadas, comparada sem diferenciar maiúsculas; a fonte e a licença da lista são verificadas na tarefa. Consulta a serviço externo (k-anonymity) fica como evolução | Não cria dependência externa nem envia dados para fora; o pedido de "manter" a proteção não estava na spec anterior e foi incluído agora | n |
+| Troca obrigatória de senha | Ao acrescentar um papel administrativo a quem só era ASSOCIADO, o usuário é marcado com `must_change_password` e só pode trocar a senha, ver `me` ou sair | Evita que uma senha de 8 caracteres passe a proteger uma conta administrativa | n |
 | Cadastro de usuários | Sem autocadastro; o primeiro ADMIN nasce por CLI e os demais são criados por quem tem permissão | Sistema institucional fechado; reduz superfície de ataque | n |
-| Matriz inicial de permissões | Provisória e mínima: ADMIN e PRESIDENTE com todas as permissões da fundação; DIRETOR só `identity:user:read`; FINANCEIRO `document:file:create` e `document:file:read`; CONSELHO_FISCAL `document:file:read`; ASSOCIADO nenhuma | Cada spec de módulo ampliará a matriz do seu módulo | n |
+| Matriz inicial de permissões | Provisória e mínima: ADMIN e PRESIDENTE com todas as permissões da fundação; DIRETOR só `identity:user:read`; FINANCEIRO, CONSELHO_FISCAL e ASSOCIADO sem permissões da fundação (as de documentos entram em `fundacao-documentos`) | Cada spec de módulo ampliará a matriz do seu módulo | n |
 | Ações que o Conselho Fiscal nunca recebe | `create`, `update`, `delete` e `cancel`; recebe `read`, `approve` e `opine` | Decisão já tomada pelo mantenedor (ADR-005, FIN-001 seção 24) | y |
 | Conteúdo do registro de auditoria | Sem endereço IP; com `request_id`; retenção indefinida nesta fase | IP é dado pessoal (LGPD) e não é necessário agora | n |
 | Fuso horário | Tudo em UTC (`timestamptz`); conversão para America/Sao_Paulo na borda | Evita ambiguidade de horário de verão e de servidor | n |
-| Arredondamento de percentuais | Meio para cima (afastando de zero nos negativos); taxas em pontos-base (1 bp = 0,01%) | Regra comercial usual; a confirmar com o financeiro (ex.: taxa de 4% do Mercado Pago) | n |
+| Arredondamento de percentuais | `ROUND_HALF_UP` (empate arredonda para longe de zero, também nos negativos); taxas em pontos-base (1 bp = 0,01%) | Aprovado pelo mantenedor; segue a semântica de `BigDecimal.ROUND_HALF_UP` | y |
 | Rateio de centavos | O resto é distribuído 1 centavo por parcela, da primeira em diante | Determinístico e reproduzível (ex.: 10000 em 3 partes = 3334, 3333, 3333) | n |
 | Limite de valores na API | Inteiros assinados até 9007199254740991 em módulo | Faixa segura para números do JavaScript no front | n |
-| Documentos aceitos | Até 10 MiB; PDF, JPEG, PNG e WebP, detectados pelo conteúdo e não pela extensão | Cobre nota fiscal, recibo, comprovante e fotos (FIN-001 seção 15) | n |
-| Fluxo de upload e download | Upload passa pela API (streaming para o S3); download por URL assinada com validade de 300 segundos | Permite validar tipo, tamanho e permissão antes de gravar | n |
-| Emulador de S3 local | Um emulador compatível com S3 será escolhido na tarefa correspondente, apenas para desenvolvimento e testes | Não define provedor de produção (ADR-006); a escolha exige checar licença e manutenção atuais | n |
 | Testes de integração | Ficam atrás da tag de build `integration`; `go test ./...` não exige Docker | Mantém o ciclo local rápido | n |
 | Cobertura | Sem meta global; o pacote de dinheiro exige 95% de cobertura de instruções | Lógica pura e crítica, fácil de cobrir | n |
 | Formato de erro | `application/problem+json` (RFC 9457) com `code` e `request_id`; JSON malformado dá 400, validação dá 422 | Padrão aberto e previsível para o cliente gerado | n |
 | Versão da API | Prefixo `/api/v1`; `/healthz` permanece na raiz | Permite evoluir sem quebrar clientes | n |
 | Contrato OpenAPI | OpenAPI 3.0.3, spec-first, código gerado versionado, CI falha com diferença | 3.0.3 tem o melhor suporte nos geradores; versionar o gerado torna a revisão visível | n |
-| Ferramentas de geração e lint | Geradores e linter de OpenAPI são escolhidos e fixados na tarefa T24, após checar as versões atuais | Não fixo versões sem verificar a documentação vigente | n |
+| Ferramentas de geração e lint | Geradores e linter de OpenAPI são escolhidos e fixados na tarefa T24, após checar a documentação vigente | Aprovado: nenhuma versão é fixada sem checar a documentação vigente | y |
 | Limpeza de sessões e tentativas | Registros expirados são ignorados e podem ser removidos de forma oportunista; sem job de purga | Evita infraestrutura de tarefas agendadas nesta fase | n |
-| Papéis de banco | Migrações rodam com o papel dono; a API roda com um papel de aplicação sem DDL e sem UPDATE/DELETE em auditoria e documentos | Defesa em profundidade para o ADR-004 | n |
+| Papéis de banco | Migrações rodam com o papel dono; a API roda com um papel de aplicação sem DDL e sem UPDATE/DELETE em auditoria | Defesa em profundidade para o ADR-004 | n |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -81,7 +77,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Acceptance Criteria**:
 1. WHEN the operator runs `bootstrap-admin` with `--email` and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with the role ADMIN and record an audit entry with action `user.bootstrap`.
 2. IF a user with the role ADMIN already exists THEN the system SHALL exit with a non-zero status without creating any user.
-3. IF the password is absent or violates the password policy THEN the system SHALL exit with a non-zero status without creating any user.
+3. IF the password is absent or violates the administrator password policy (at least 10 characters) THEN the system SHALL exit with a non-zero status without creating any user.
 4. The system SHALL NOT accept the password as a command-line argument.
 
 **Independent Test**: Rodar o comando contra um banco vazio e ver o usuário e o registro de auditoria; rodar de novo e ver a recusa.
@@ -99,16 +95,16 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 2. WHEN a session is created THEN the system SHALL store only the SHA-256 hash of the session token in the database.
 3. IF the email does not exist or the password is wrong THEN the system SHALL respond 401 with code `invalid_credentials` and an identical body for both cases.
 4. IF the user is inactive THEN the system SHALL respond 401 with code `invalid_credentials` and the same body as for a wrong password.
-5. WHILE a session has been idle for more than 60 minutes or is older than 12 hours the system SHALL treat it as expired and respond 401 with code `session_expired`.
+5. WHILE a session has been idle for more than 60 minutes or is older than 8 hours the system SHALL treat it as expired and respond 401 with code `session_expired`.
 6. WHEN a user calls `POST /api/v1/auth/logout` THEN the system SHALL revoke the session and clear the cookie.
 7. WHEN a login succeeds THEN the system SHALL issue a new session token even if a session cookie was sent with the request.
 8. IF a fifth consecutive login failure for the same email occurs within 15 minutes THEN the system SHALL respond 429 with a `Retry-After` header to every login attempt for that email during the following 15 minutes.
-9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions and the CSRF token.
+9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the CSRF token and the flag `must_change_password`.
+10. The system SHALL NOT lock an account permanently as a result of failed logins.
 
 **Independent Test**: Logar com o ADMIN criado pela CLI, chamar `/auth/me`, deslogar e ver que a sessão deixou de valer.
 
 ---
-
 ### P1: Proteção contra CSRF e origem
 
 **User Story**: Como usuário, quero que outro site não consiga agir em meu nome, para que minha sessão não seja abusada.
@@ -147,6 +143,25 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 ---
 
+### P1: Política de senha
+
+**User Story**: Como mantenedor, quero regras de senha diferentes para quem administra e para o associado, e proteção contra senhas fracas, para reduzir o risco de contas invadidas.
+
+**Why P1**: Contas administrativas acessam dados financeiros; a política precisa existir antes do primeiro usuário.
+
+**Acceptance Criteria**:
+1. IF the target user holds any role other than ASSOCIADO and the new password has fewer than 10 characters THEN the system SHALL reject it with 422 and code `password_too_short`.
+2. IF the target user holds only the role ASSOCIADO and the new password has fewer than 8 characters THEN the system SHALL reject it with 422 and code `password_too_short`.
+3. IF a password has more than 128 characters THEN the system SHALL reject it with 422 and code `password_too_long`.
+4. IF a password matches, ignoring letter case, an entry of the embedded list of commonly used or compromised passwords THEN the system SHALL reject it with 422 and code `password_compromised`.
+5. WHEN an actor adds a role other than ASSOCIADO to a user who held only the role ASSOCIADO THEN the system SHALL set `must_change_password` to true for that user.
+6. WHEN a user changes the password successfully THEN the system SHALL set `must_change_password` to false.
+7. The system SHALL measure password length in Unicode code points and SHALL NOT impose composition rules.
+
+**Independent Test**: Criar um usuário FINANCEIRO com senha de 9 caracteres e ver a recusa; promover um ASSOCIADO a DIRETOR e ver a troca de senha obrigatória.
+
+---
+
 ### P1: Modelo de permissões e papéis
 
 **User Story**: Como mantenedor, quero permissões granulares agrupadas em papéis, para que a autorização evolua sem reescrever regras.
@@ -177,6 +192,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 3. WHEN a use case is invoked THEN it SHALL check the required permission through `authz.Require` before performing any read or write.
 4. The test suite SHALL fail if any registered route is neither on the public allowlist nor protected by the authentication middleware.
 5. WHILE a user is inactive the system SHALL treat every session of that user as invalid.
+6. WHILE `must_change_password` is true for the authenticated user the system SHALL respond 403 with code `password_change_required` to every route except `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` and `POST /api/v1/auth/password`.
 
 **Independent Test**: Chamar cada rota sem sessão e ver 401; chamar com um papel sem a permissão e ver 403.
 
@@ -284,44 +300,6 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 6. The test suite SHALL include a property test showing that the parts returned by `Allocate` always sum to `total`.
 
 **Independent Test**: `Allocate(10000, [1,1,1])` retorna 3334, 3333, 3333 e `Percent(10000, 400)` retorna 400.
-
----
-
-### P2: Armazenamento de documentos
-
-**User Story**: Como financeiro, quero anexar comprovantes de forma que não possam ser trocados nem apagados, para sustentar a prestação de contas.
-
-**Why P2**: O financeiro precisa, mas a fundação já se prova sem ele.
-
-**Acceptance Criteria**:
-1. WHEN a document is stored THEN the system SHALL write the object to the private bucket under the key `documents/<uuid>` and insert a metadata row with id, owner type, owner id, original filename, content type, size, SHA-256, storage key, version, superseded id, uploader and upload time.
-2. WHEN a document is stored THEN the system SHALL compute the SHA-256 over the streamed bytes and store it in hexadecimal.
-3. IF the size exceeds 10 MiB THEN the system SHALL reject the document with the error `document_too_large` before writing any metadata.
-4. IF the content type detected from the bytes is not application/pdf, image/jpeg, image/png or image/webp THEN the system SHALL reject the document with the error `document_type_not_allowed`.
-5. WHEN a new version of an existing document is stored THEN the system SHALL set its version to the previous version plus one, reference the previous document as superseded and leave the previous object unchanged.
-6. The system SHALL NOT provide any operation that overwrites or deletes a stored document object or its metadata row.
-7. IF inserting the metadata fails after the object was uploaded THEN the system SHALL delete only the object that was just created and return the error.
-8. WHEN a document is stored THEN the system SHALL record an audit entry with action `document.create` in the same transaction as the metadata.
-9. IF the actor lacks `document:file:create` THEN the system SHALL return a forbidden error and SHALL NOT write to storage.
-
-**Independent Test**: Guardar um PDF, guardar uma nova versão e ver a cadeia de versões com o objeto antigo intacto.
-
----
-
-### P2: Acesso a documentos por URL assinada
-
-**User Story**: Como conselheiro fiscal, quero abrir documentos por link temporário e ter o acesso registrado, para consultar comprovantes sem expor o bucket.
-
-**Why P2**: Completa o ciclo dos documentos com controle de acesso (ADR-006).
-
-**Acceptance Criteria**:
-1. WHEN an actor with `document:file:read` requests access to a document THEN the system SHALL return a presigned GET URL valid for 300 seconds and record an audit entry with action `document.access` naming the document and the actor.
-2. IF the actor lacks `document:file:read` THEN the system SHALL return a forbidden error and SHALL NOT generate a URL.
-3. IF the document id does not exist THEN the system SHALL return a not-found error and SHALL NOT generate a URL.
-4. IF a presigned URL is used after its expiry THEN the storage SHALL reject the request, verified in an integration test with a one-second validity.
-5. IF an object is requested from the bucket without a valid signature THEN the storage SHALL reject the request, verified in an integration test.
-
-**Independent Test**: Gerar a URL, baixar o arquivo, esperar expirar e ver a recusa.
 
 ---
 
@@ -435,9 +413,9 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 - IF two logins for the same user happen concurrently THEN the system SHALL create two independent sessions.
 - IF the session cookie is present but malformed THEN the system SHALL respond 401 with code `unauthenticated` and SHALL NOT raise an internal error.
 - IF the database is unavailable during a request THEN the system SHALL respond 503 with code `service_unavailable`.
+- IF a user is created, or its roles are replaced, with an empty role set THEN the system SHALL respond 422 with code `validation_failed`.
 - WHEN a role is removed from a user THEN the system SHALL stop granting the permissions of that role from the next request.
 - WHEN `Allocate` receives a total of zero THEN the system SHALL return parts that are all zero.
-- WHEN the presigned URL validity is configured to zero or negative THEN the system SHALL return a configuration error at startup.
 
 ---
 
@@ -449,6 +427,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-02 | P1: Login, sessão e logout | In Tasks | Pending |
 | IDN-03 | P1: Proteção contra CSRF e origem | In Tasks | Pending |
 | IDN-04 | P1: Gestão de usuários | In Tasks | Pending |
+| IDN-05 | P1: Política de senha | In Tasks | Pending |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Pending |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Pending |
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Pending |
@@ -457,8 +436,6 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | MNY-01 | P1: Tipo monetário em centavos | In Tasks | Pending |
 | MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Pending |
 | MNY-03 | P2: Rateio e percentuais | In Tasks | Pending |
-| DOC-01 | P2: Armazenamento de documentos | In Tasks | Pending |
-| DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Pending |
 | TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Pending |
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
@@ -466,7 +443,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | API-02 | P1: Convenções da API | In Tasks | Pending |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Pending |
 
-**Coverage:** 20 total, 20 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
+**Coverage:** 19 total, 19 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
 ---
 
@@ -474,7 +451,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 - [ ] `go test -tags=integration ./...` e `pnpm test` passam no CI, junto com o lint, o build e as verificações de contrato OpenAPI.
 - [ ] Nas rotas da fundação, um ADMIN cria um usuário, atribui papel e desativa, tudo com registro de auditoria consultável pela API.
+- [ ] Senhas fora da política (10 para administrativos, 8 para associados, lista de comprometidas) são recusadas e a troca obrigatória bloqueia o resto da API.
 - [ ] O teste de invariante confirma que CONSELHO_FISCAL não tem nenhuma permissão `create`, `update`, `delete` ou `cancel`.
 - [ ] O papel de banco da aplicação não consegue fazer UPDATE, DELETE ou TRUNCATE em `audit_log`, provado por teste.
 - [ ] Os mesmos vetores de dinheiro passam no Go e no TypeScript, e o teste de esquema barra colunas `float`, `double` e `numeric`.
-- [ ] Um documento é guardado, versionado, acessado por URL assinada e o acesso aparece na auditoria.

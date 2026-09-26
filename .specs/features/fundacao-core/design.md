@@ -1,7 +1,7 @@
 # Fundação Design
 
-**Spec**: `.specs/features/fundacao/spec.md`
-**Status**: Draft
+**Spec**: `.specs/features/fundacao-core/spec.md`
+**Status**: Approved (2026-09-27), com os ajustes do mantenedor. Feature 1 de 2; a outra é `fundacao-documentos`.
 
 Decisões ativas do projeto respeitadas: AD-001 a AD-009 (`.specs/STATE.md`). Nenhuma é substituída por este design.
 
@@ -35,7 +35,6 @@ graph TD
     UC --> TX[database.WithTx]
     TX --> REPO[repositórios GORM]
     TX --> AUD[audit.Recorder]
-    UC --> ST[storage S3 - só documentos]
     REPO --> PG[(PostgreSQL)]
     AUD --> PG
 ```
@@ -84,7 +83,6 @@ Regras de desenho:
 | System | Integration Method |
 |---|---|
 | PostgreSQL | GORM com papel de aplicação (`tj_app`); migrações com `golang-migrate` e papel dono (`tj_owner`) |
-| Object storage S3 | Cliente do AWS SDK for Go v2 (a confirmar na tarefa T66) atrás da interface `storage.Storage`, com endpoint configurável |
 | Front (`web/`) | Tipos TypeScript gerados de `openapi.yaml`; formatador de dinheiro em `web/lib/money.ts` |
 
 ---
@@ -153,30 +151,16 @@ Regras de desenho:
 
 ### platform/password
 
-- **Purpose**: Hash e verificação com argon2id.
+- **Purpose**: Hash e verificação com argon2id, e lista embutida de senhas comuns ou comprometidas.
 - **Location**: `api/internal/platform/password/`
-- **Interfaces**: `Hash(plain string, p Params) (string, error)`, `Verify(plain, hash string) (bool, error)`.
-- **Dependencies**: `golang.org/x/crypto/argon2`.
-
-### platform/storage
-
-- **Purpose**: Interface mínima para object storage S3, sem provedor definido.
-- **Location**: `api/internal/platform/storage/`
-- **Interfaces**: `Put(ctx, key string, r io.Reader, size int64, contentType string) error`; `PresignGet(ctx, key string, ttl time.Duration) (string, error)`; `DeleteCreated(ctx, key string) error` (só para desfazer upload órfão).
-- **Dependencies**: SDK S3 (na implementação `s3.go`).
-
-### platform/documents
-
-- **Purpose**: Guardar, versionar e dar acesso a documentos, com permissão e auditoria.
-- **Location**: `api/internal/platform/documents/`
-- **Interfaces**: `Service.Store(ctx, StoreInput) (Document, error)`; `Service.AccessURL(ctx, id uuid.UUID) (string, error)`.
-- **Dependencies**: `storage`, `audit`, `authz`, `database`.
+- **Interfaces**: `Hash(plain string, p Params) (string, error)`, `Verify(plain, hash string) (bool, error)`, `Denylist.Contains(plain string) bool` (comparação sem diferenciar maiúsculas; lista via `go:embed`).
+- **Dependencies**: `golang.org/x/crypto/argon2`; arquivo da lista, com fonte e licença verificadas na tarefa.
 
 ### identity
 
 - **Purpose**: Usuários, papéis, sessões e casos de uso de acesso.
 - **Location**: `api/internal/identity/{domain,app,infra,http}/`
-- **Interfaces**: casos de uso `Authenticate`, `Logout`, `CreateUser`, `DeactivateUser`, `ChangePassword`, `AssignRoles`, `ListUsers`, `SyncRoles`; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
+- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser`, `DeactivateUser`, `ChangePassword`, `AssignRoles`, `ListUsers`, `SyncRoles`; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
 - **Dependencies**: `platform/*`.
 
 ### cmd/bootstrap-admin e cmd/api
@@ -193,7 +177,7 @@ Regras de desenho:
 
 ## Data Models
 
-Novas migrações (todas com `down`): `000002_audit_log`, `000003_identity`, `000004_documents`. Cada uma concede ao papel `tj_app` apenas o necessário e falha com mensagem clara se o papel não existir.
+Novas migrações (todas com `down`): `000002_audit_log` e `000003_identity`. A `000004_documents` pertence a `fundacao-documentos`. Cada uma concede ao papel `tj_app` apenas o necessário e falha com mensagem clara se o papel não existir.
 
 ```sql
 -- 000002_audit_log
@@ -223,6 +207,7 @@ CREATE TABLE users (
   name          text NOT NULL,
   password_hash text NOT NULL,
   is_active     boolean NOT NULL DEFAULT true,
+  must_change_password boolean NOT NULL DEFAULT false,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now()
 );
@@ -254,29 +239,9 @@ CREATE TABLE login_attempts (
 CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC);
 ```
 
-```sql
--- 000004_documents
-CREATE TABLE documents (
-  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_type        text NOT NULL,
-  owner_id          text NOT NULL,
-  original_filename text NOT NULL,
-  content_type      text NOT NULL,
-  size_bytes        bigint NOT NULL CHECK (size_bytes > 0),
-  sha256            char(64) NOT NULL,
-  storage_key       text NOT NULL UNIQUE,
-  version           int NOT NULL CHECK (version >= 1),
-  supersedes_id     uuid UNIQUE REFERENCES documents,
-  uploaded_by       uuid NOT NULL REFERENCES users,
-  uploaded_at       timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
--- GRANT INSERT, SELECT ON documents TO tj_app (sem UPDATE e DELETE)
-```
+**Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`. `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
 
-**Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`. `documents.supersedes_id` forma a cadeia de versões (o `UNIQUE` impede bifurcação). `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
-
-**Papéis de banco**: `tj_owner` (migrações e DDL) e `tj_app` (API). `tj_app` tem `SELECT/INSERT/UPDATE/DELETE` nas tabelas de identidade e só `SELECT/INSERT` em `audit_log` e `documents`. O script `docker/postgres/init/01-roles.sql` cria os papéis no ambiente local, e o helper de testes faz o mesmo.
+**Papéis de banco**: `tj_owner` (migrações e DDL) e `tj_app` (API). `tj_app` tem `SELECT/INSERT/UPDATE/DELETE` nas tabelas de identidade e só `SELECT/INSERT` em `audit_log`. O script `docker/postgres/init/01-roles.sql` cria os papéis no ambiente local, e o helper de testes faz o mesmo.
 
 ---
 
@@ -286,6 +251,8 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 |---|---|---|
 | Credenciais inválidas ou usuário inativo | 401 `invalid_credentials`, corpo idêntico | Mensagem genérica, sem enumeração de e-mails |
 | Sessão ausente, malformada ou expirada | 401 `unauthenticated` ou `session_expired` | Precisa entrar de novo |
+| Senha fora da política ou na lista de comprometidas | 422 `password_too_short`, `password_too_long` ou `password_compromised` | Escolher outra senha |
+| Troca de senha obrigatória pendente | 403 `password_change_required` em todas as rotas, exceto logout, `me` e troca de senha | Trocar a senha para continuar |
 | Permissão insuficiente | 403 `forbidden`, sem revelar existência do recurso | Acesso negado |
 | CSRF ou origem inválidos | 403 `csrf_invalid` ou `origin_not_allowed` | Recarregar a página |
 | Excesso de tentativas de login | 429 com `Retry-After` | Aguardar 15 minutos |
@@ -294,8 +261,6 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Falha ao gravar auditoria | Reverte a transação, 500 `audit_failed` | Operação não realizada, sem efeito parcial |
 | Banco indisponível | 503 `service_unavailable` | Tentar mais tarde |
 | Panic não tratado | 500 `internal_error` com `request_id`, sem detalhes internos | Informar o `request_id` ao suporte |
-| Falha no upload ao storage | Erro antes de gravar metadados | Nenhum documento registrado |
-| Falha ao gravar metadados após upload | Remove só o objeto recém-criado | Nenhum documento registrado, sem órfão |
 
 ---
 
@@ -303,14 +268,15 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefa T5 e T58 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T59 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |
 | Cobertura de testes mínima: só `/healthz` e `config` têm testes | `api/internal/httpapi/router_test.go:12` | Regressões silenciosas ao crescer | Infraestrutura de integração e testes 1:1 com os ACs (Phase 2 em diante) |
 | O CI não roda testes de integração nem tem Docker configurado para eles | `.github/workflows/ci.yml:103` | Garantias de banco não verificadas | Passo `go test -tags=integration ./...` no job `api` (T13); o `ubuntu-latest` já tem Docker |
-| O cookie `SameSite=Lax` só funciona same-site; a hospedagem ainda não existe | `docs/adr/005-autenticacao-e-rbac.md:30` | O login pode falhar entre domínios distintos em produção | Assumption 1 da spec; validar na feature de UI de identidade, antes da hospedagem, ou usar proxy do Next |
-| Versões e ferramentas (geradores OpenAPI, SDK S3, emulador S3) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão (T24, T65, T66) |
+| O cookie `SameSite=Lax` (aprovado) só funciona same-site; **a configuração final (domínio do cookie, proxy do Next) depende da estratégia de hospedagem**, ainda não definida | `docs/adr/005-autenticacao-e-rbac.md:30` | O login pode falhar entre domínios distintos em produção | Assumption 1 da spec; `COOKIE_DOMAIN` configurável; validar na feature de UI de identidade e ao decidir a hospedagem |
+| Versões e ferramentas (geradores e linter de OpenAPI, biblioteca de migrações, testcontainers) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão antes de usar |
+| A lista de senhas comprometidas depende de uma fonte externa e de licença compatível | não se aplica (ainda não adicionada) | Lista defasada ou com licença incompatível com um repositório proprietário | A tarefa da lista registra a fonte e a licença; se não houver fonte adequada, gerar uma lista própria de senhas comuns |
 | Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T40 confere o OWASP vigente e mede o custo |
 | Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T34) |
 | Código gerado versionado gera conflitos de merge | não se aplica | Fricção em PRs | CI recusa diferenças; regenerar é um comando único |
@@ -322,6 +288,7 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Decision | Choice | Rationale |
 |---|---|---|
 | Local do pacote de banco | Mover `internal/database` para `internal/platform/database` | Alinha com `domain-boundaries.md`, onde `platform` é o núcleo compartilhado |
+| Política de senha | Regra por papel no domínio, mais lista embutida e `must_change_password` | Mínimos diferentes por perfil exigem decidir o que acontece na promoção de um associado a papel administrativo |
 | Hash do token de sessão | SHA-256 (não argon2) | O token tem 256 bits aleatórios; hash lento não agrega e custaria a cada requisição |
 | Cursor de paginação | Base64 de `(occurred_at, id)` | Estável sob inserções concorrentes, ao contrário de `OFFSET` |
 | Permissões declaradas em código | Matriz papel-permissão em Go, sincronizada na partida | Revisável em PR e testável; migrações de dados de permissão seriam difíceis de auditar |

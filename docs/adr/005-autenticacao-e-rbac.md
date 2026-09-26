@@ -63,6 +63,11 @@ Chosen option: **sessão no servidor com cookie `httpOnly`**, sem JWT neste mome
 - ✅ Reduz o código de autenticação e oferece MFA pronto
 - ❌ Dependência e custo externos; decisão adiada, reavaliável por um novo ADR
 
+## Notas
+
+- 2026-09-27: `SameSite=Lax` foi confirmado pelo mantenedor. A configuração final (domínio do cookie e uso de proxy pelo Next) depende da estratégia de hospedagem, ainda não definida.
+- 2026-09-27: a sessão administrativa tem teto absoluto de 8 horas. A política de senha usa mínimo de 10 caracteres para papéis administrativos e 8 para associados. Detalhes em `.specs/features/fundacao-core/spec.md`.
+
 ## Links
 
 - [ADR-004](004-auditoria-e-imutabilidade-financeira.md)
