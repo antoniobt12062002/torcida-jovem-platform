@@ -2095,14 +2095,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Rotas: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/password`, `POST /auth/password-reset/request` e `/confirm`, `GET /users`, `POST /users`, `POST /users/{id}/deactivate`, `POST /users/{id}/reactivate`, `PUT /users/{id}/roles`, `POST /users/{id}/admin-membership`, `POST /users/{id}/admin-membership/revoke` (motivo no corpo) e `POST /users/{id}/password-reset`; não existem `DELETE /users/{id}/admin-membership` nem `GET /roles`
-- [ ] Só login e as duas rotas de recuperação são públicas (`security: []`); as demais exigem o cookie de sessão, e as que alteram estado descrevem o cabeçalho `X-CSRF-Token`
-- [ ] O login e o `me` devolvem o mesmo `AuthContext` (usuário, papéis, permissões efetivas, token CSRF, `must_change_password` e `admin_membership` nulo ou com só `reason` e `granted_at`), sem hash nem token interno; o reset administrativo devolve 200 com `Cache-Control: no-store`
-- [ ] Cada rota tem respostas de erro `Problem` e paginação por cursor na lista, com `Retry-After` nos 429
-- [ ] O enum de papéis do contrato é igual aos papéis do domínio (teste), e o contrato não contém regra de negócio
-- [ ] O teste de paridade com o router aceita as operações listadas em `contractPendingRoutes` e falha se a lista guardar operação inexistente ou já registrada; a fase 11 a deixa vazia
-- [ ] Lint passa
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Rotas: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/password`, `POST /auth/password-reset/request` e `/confirm`, `GET /users`, `POST /users`, `POST /users/{id}/deactivate`, `POST /users/{id}/reactivate`, `PUT /users/{id}/roles`, `POST /users/{id}/admin-membership`, `POST /users/{id}/admin-membership/revoke` (motivo no corpo) e `POST /users/{id}/password-reset`; não existem `DELETE /users/{id}/admin-membership` nem `GET /roles`
+- [x] Só login e as duas rotas de recuperação são públicas (`security: []`); as demais exigem o cookie de sessão, e as que alteram estado descrevem o cabeçalho `X-CSRF-Token`
+- [x] O login e o `me` devolvem o mesmo `AuthContext` (usuário, papéis, permissões efetivas, token CSRF, `must_change_password` e `admin_membership` nulo ou com só `reason` e `granted_at`), sem hash nem token interno; o reset administrativo devolve 200 com `Cache-Control: no-store`
+- [x] Cada rota tem respostas de erro `Problem` e paginação por cursor na lista, com `Retry-After` nos 429
+- [x] O enum de papéis do contrato é igual aos papéis do domínio (teste), e o contrato não contém regra de negócio
+- [x] O teste de paridade com o router aceita as operações listadas em `contractPendingRoutes` e falha se a lista guardar operação inexistente ou já registrada; a fase 11 a deixa vazia
+- [x] Lint passa
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
