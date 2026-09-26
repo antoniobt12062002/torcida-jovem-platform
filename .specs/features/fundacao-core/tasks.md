@@ -891,10 +891,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Rota sem operação em nenhum contrato falha o teste
-- [ ] Operação de contrato sem rota também falha (teste negativo com fixture)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Rota sem operação em nenhum contrato falha o teste
+- [x] Operação de contrato sem rota também falha (teste negativo com fixture)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
