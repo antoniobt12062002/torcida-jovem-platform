@@ -93,10 +93,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 9 mescladas (T1 a T68); fase 10 (contrato HTTP de identidade e middlewares, T69 a T73) com spec, design e tarefas aprovados, em implementação na branch `feature/fundacao-core-fase-10`
-- **Completed**: T1 a T68
+- **Phase / Task**: Fases 1 a 9 mescladas (T1 a T68); fase 10 (contrato HTTP de identidade e middlewares, T69 a T73) implementada na branch `feature/fundacao-core-fase-10`, aguardando PR e merge
+- **Completed**: T1 a T73
 - **In-progress** (file:line): none
-- **Next step**: Implementar T69 a T73, tests-first, um commit por tarefa, e abrir o PR
+- **Next step**: Mesclar o PR da fase 10 e apresentar a fase 11 (handlers, roteador, bootstrap-admin, main e e2e, T74 a T82); a fase 11 zera `contractPendingRoutes`
 - **Blockers**: none
 - **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); convite por e-mail, primeiro acesso por link temporário e fluxo de onboarding; `GET /roles` (papéis, descrições e permissões) quando houver interface administrativa; troca de e-mail (`ChangeEmail`, com senha atual, auditoria e possível confirmação por e-mail); rate limit unificado de credenciais, por IP e dispositivo, e MFA na recuperação; impedir `EMAIL_PROVIDER=disabled` em produção; provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
