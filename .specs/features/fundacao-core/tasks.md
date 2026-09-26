@@ -1262,12 +1262,12 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Oito papéis definidos em `identity/domain/role.go`; a matriz provisória da spec vem das contribuições de identidade, de auditoria e das permissões institucionais reservadas ao financeiro
-- [ ] `BuildMatrix` recusa permissão inválida, concessão de permissão não declarada, permissão duplicada com definição diferente e ação `create`, `update`, `delete` ou `cancel` para CONSELHO_FISCAL (testes negativos)
-- [ ] CONSELHO_FISCAL tem `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine` e `audit:log:read`
-- [ ] PRESIDENTE recebe explicitamente todas as permissões do catálogo, inclusive as de uma contribuição nova de teste, sem curinga; as de ADMIN_SISTEMA são subconjunto das do PRESIDENTE
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Oito papéis definidos em `identity/domain/role.go`; a matriz provisória da spec vem das contribuições de identidade, de auditoria e das permissões institucionais reservadas ao financeiro
+- [x] `BuildMatrix` recusa permissão inválida, concessão de permissão não declarada, permissão duplicada com definição diferente e ação `create`, `update`, `delete` ou `cancel` para CONSELHO_FISCAL (testes negativos)
+- [x] CONSELHO_FISCAL tem `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine` e `audit:log:read`
+- [x] PRESIDENTE recebe explicitamente todas as permissões do catálogo, inclusive as de uma contribuição nova de teste, sem curinga; as de ADMIN_SISTEMA são subconjunto das do PRESIDENTE
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
