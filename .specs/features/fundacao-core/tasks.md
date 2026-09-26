@@ -974,13 +974,13 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Colunas `actor_type`, `outcome` e `context` presentes; `actor_user_id` só com `actor_type` igual a `user`, e valores fora dos permitidos são recusados pelo banco
-- [ ] Com o papel dono, UPDATE, DELETE e TRUNCATE falham por trigger
-- [ ] Com `tj_app`, só INSERT e SELECT funcionam
-- [ ] Migração `down` desfaz sem erro
-- [ ] Falha com mensagem clara se o papel `tj_app` não existir
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Colunas `actor_type`, `outcome` e `context` presentes; `actor_user_id` só com `actor_type` igual a `user`, e valores fora dos permitidos são recusados pelo banco
+- [x] Com o papel dono, UPDATE, DELETE e TRUNCATE falham por trigger
+- [x] Com `tj_app`, só INSERT e SELECT funcionam
+- [x] Migração `down` desfaz sem erro
+- [x] Falha com mensagem clara se o papel `tj_app` não existir
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
