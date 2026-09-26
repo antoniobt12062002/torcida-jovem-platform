@@ -1206,11 +1206,11 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Negação grava `authz.denied` com outcome `denied`, o usuário como ator, a permissão como alvo e o request_id
-- [ ] Falha ao gravar não altera a resposta nem devolve erro
-- [ ] O catálogo de auditoria contém `authz.denied`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Negação grava `authz.denied` com outcome `denied`, o usuário como ator, a permissão como alvo e o request_id
+- [x] Falha ao gravar não altera a resposta nem devolve erro
+- [x] O catálogo de auditoria contém `authz.denied`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
