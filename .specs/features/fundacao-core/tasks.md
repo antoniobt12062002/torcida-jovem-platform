@@ -1062,7 +1062,7 @@ T73 → T74 → T75 → T76
 
 - [ ] `Record` sem transação no contexto devolve erro e não grava
 - [ ] O registro contém request_id e ator vindos do contexto
-- [ ] `RecordSecurity` grava em transação própria, sem depender de transação de negócio, e devolve erro se a gravação falhar (mapeável para 500 `audit_failed`)
+- [ ] `RecordSecurity` grava em transação própria, sem depender de transação de negócio, e se a gravação falhar registra incidente operacional (log de erro com ação e request_id), sem devolver erro nem alterar a resposta; `Record` com falha reverte a operação e é mapeável para 500 `audit_failed`
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
@@ -1513,7 +1513,7 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Login bem-sucedido grava `auth.login` na mesma transação da sessão; falha grava `auth.login_failed` (com categoria da falha e hash do e-mail, sem senha nem e-mail em claro) e bloqueio grava `auth.login_blocked`, em transação própria
+- [ ] Login bem-sucedido grava `auth.login` por `RecordSecurity`; falha grava `auth.login_failed` (com categoria da falha e hash do e-mail, sem senha nem e-mail em claro) e bloqueio grava `auth.login_blocked`, também por `RecordSecurity`; falha ao gravar o evento não impede a resposta do login
 - [ ] Nenhuma sequência de falhas bloqueia a conta de forma permanente
 - [ ] Usuário inexistente, senha errada e inativo devolvem o mesmo erro
 - [ ] Quinta falha em 15 minutos bloqueia por 15 minutos

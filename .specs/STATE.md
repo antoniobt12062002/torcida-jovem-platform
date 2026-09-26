@@ -96,8 +96,8 @@
 - **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) e validador de requisições (`platform/httpx`); a fase 5 foi mesclada no PR #25 (bypass administrativo excepcional, autorizado e registrado no PR). Spec, design e tarefas de Identity/RBAC (fases 6 a 11, T31 a T73) aprovados em 2026-09-26
 - **Completed**: T1 a T30
 - **In-progress** (file:line): none
-- **Next step**: Apresentar spec/design da fase 6; após aprovação, implementar T31 a T35 em PR próprio (branch `feature/fundacao-core-fase-6`)
-- **Blockers**: Merge do PR #26 (aguarda aprovação pela interface do GitHub) e aprovação da spec/design da fase 6 (auditoria e eventos de segurança, AUD-04)
-- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado)
+- **Next step**: Implementar a fase 6 (T31 a T35), tests-first, no PR da branch `feature/fundacao-core-fase-6`
+- **Blockers**: none
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
 - **Branch**: feature/fundacao-core-fase-6

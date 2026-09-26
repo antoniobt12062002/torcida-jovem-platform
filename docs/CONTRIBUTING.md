@@ -6,6 +6,10 @@
 - Trabalhe em `feature/<assunto>` a partir da `develop` e abra PR para `develop` (squash).
 - Correcao urgente em producao: `hotfix/<assunto>` a partir da `main`, PR para `main`, depois back-merge na `develop`.
 
+## Politica de merge
+
+Enquanto o repositorio tiver um unico mantenedor/desenvolvedor, o bypass administrativo esta autorizado para o merge de PRs, desde que: o CI esteja verde; a validacao tecnica pelo processo SDD tenha sido feita; as decisoes arquiteturais tenham sido revisadas antes do merge; e o historico fique registrado no PR. Todo uso do bypass e registrado em comentario no PR, informando que ocorreu porque o repositorio possui um unico mantenedor. A politica sera reavaliada quando novos colaboradores ingressarem.
+
 ## Commits e titulo de PR
 
 Padrao Conventional Commits: `feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`. Use `feat!:` ou `BREAKING CHANGE:` para mudanca incompativel. O titulo do PR vira a mensagem do squash e define a versao.

@@ -140,7 +140,7 @@ Regras de desenho:
 - **Location**: `api/internal/platform/audit/`
 - **Interfaces**:
   - `Recorder.Record(ctx context.Context, e Entry) error`: exige a transação de negócio no contexto (atomicidade, AUD-01)
-  - `Recorder.RecordSecurity(ctx context.Context, db *gorm.DB, e Entry) error`: abre transação própria, para eventos que não fazem parte de uma mudança de negócio (falha de login, bloqueio, negação); falha devolve erro e a operação responde `audit_failed`
+  - `Recorder.RecordSecurity(ctx context.Context, db *gorm.DB, e Entry) error`: abre transação própria, para eventos que não fazem parte de uma mudança de negócio (falha de login, bloqueio, negação); não devolve erro: se a gravação falhar, registra um incidente operacional (log de erro com a ação e o `request_id`) e a operação segue
   - Catálogo de ações em código (`audit.Action`), validado em `Entry.Validate`
   - `Query.List(ctx, f Filter, cursor string, limit int) (Page, error)`
 - **Dependencies**: `database.TxFrom`, `authz.Principal`, `httpx` (request id via contexto).
@@ -217,11 +217,11 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 
 ## Auditoria e eventos de segurança
 
-- Dois modos de gravação: **atômico** (`Record`, dentro da transação do caso de uso, para mudanças de dado) e **de segurança** (`RecordSecurity`, transação própria, para o que não muda dado de negócio: falha de login, bloqueio, negação). Login bem-sucedido é atômico com a criação da sessão.
+- Dois modos de gravação: **atômico** (`Record`, dentro da transação do caso de uso, para mudanças de dado) e **de segurança** (`RecordSecurity`, transação própria, para telemetria e eventos que não alteram estado crítico: login, falha de login, bloqueio, logout, negação). Falha de gravação: no modo atômico reverte a operação (500 `audit_failed`); no modo de segurança vira incidente operacional e a operação continua.
 - Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout`. Cada spec de módulo acrescenta as suas.
 - Ator (`actor_type` e `actor_user_id`), alvo (`entity_type` e `entity_id`), momento, `request_id`, antes e depois, resultado (`outcome`) e contexto da ação ficam no mesmo registro; nada é alterável nem apagável (trigger e concessões, AUD-02).
 - Segredos nunca entram: as chaves sensíveis são redigidas em `before`, `after` e `context`; o e-mail de uma tentativa de login entra só como hash.
-- **Evolução possível, fora desta fase**: encadeamento por hash entre registros (detecção de adulteração por quem tem acesso ao banco), e separação entre auditoria institucional e técnica.
+- **Evoluções futuras, fora desta fase**: armazenamento controlado de IP em eventos de segurança (LGPD), separação entre auditoria institucional e técnica, versionamento dos eventos e encadeamento criptográfico entre registros.
 
 ---
 
@@ -353,7 +353,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Motivo do vínculo ausente ou curto | 422 `reason_required` | Informar o motivo |
 | Concessão acima do próprio poder ou alteração do próprio acesso | 403 `privilege_escalation` ou `self_change_forbidden`, com auditoria `role.change_denied` | Acesso negado |
 | Falha ao gravar auditoria | Reverte a transação, 500 `audit_failed` | Operação não realizada, sem efeito parcial |
-| Falha ao gravar evento de segurança (falha de login, bloqueio, negação) | Falha fechada: 500 `audit_failed`, com corpo que não revela se o e-mail existe | Tentar de novo |
+| Falha ao gravar evento de segurança ou telemetria (login, falha de login, bloqueio, logout, negação) | Não bloqueia: registra incidente operacional e segue com a resposta normal | Nenhum efeito visível |
 | Banco indisponível | 503 `service_unavailable` | Tentar mais tarde |
 | Panic não tratado | 500 `internal_error` com `request_id`, sem detalhes internos | Informar o `request_id` ao suporte |
 
