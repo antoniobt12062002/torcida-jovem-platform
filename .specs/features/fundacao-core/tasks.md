@@ -1088,10 +1088,10 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Falha simulada na auditoria deixa o dado alterado intacto
-- [ ] Sucesso grava dado e auditoria juntos
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Falha simulada na auditoria deixa o dado alterado intacto
+- [x] Sucesso grava dado e auditoria juntos
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
