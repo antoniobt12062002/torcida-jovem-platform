@@ -2033,13 +2033,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Token válido e senha dentro da política: troca o hash, consome o token, invalida os outros pendentes, limpa `must_change_password`, revoga todas as sessões e grava `auth.password_reset_completed` na mesma transação
-- [ ] Token desconhecido, expirado ou usado devolve o mesmo erro (400 `invalid_reset_token`) e grava `auth.password_reset_failed` por `RecordSecurity`
-- [ ] Senha fora da política devolve o código da política e mantém o token válido
-- [ ] Se a auditoria falhar, a redefinição é revertida
-- [ ] A auditoria não contém senha nem token
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Token válido e senha dentro da política: troca o hash, consome o token, invalida os outros pendentes, limpa `must_change_password`, revoga todas as sessões e grava `auth.password_reset_completed` na mesma transação
+- [x] Token desconhecido, expirado ou usado devolve o mesmo erro (400 `invalid_reset_token`) e grava `auth.password_reset_failed` por `RecordSecurity`
+- [x] Senha fora da política devolve o código da política e mantém o token válido
+- [x] Se a auditoria falhar, a redefinição é revertida
+- [x] A auditoria não contém senha nem token
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
