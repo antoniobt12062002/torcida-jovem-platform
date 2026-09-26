@@ -508,9 +508,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `pnpm install --frozen-lockfile` passa com o lockfile atualizado
-- [ ] Script `pnpm test` existe
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `pnpm install --frozen-lockfile` passa com o lockfile atualizado
+- [x] Script `pnpm test` existe
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
