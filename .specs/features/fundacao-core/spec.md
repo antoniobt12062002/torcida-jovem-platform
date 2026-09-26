@@ -1,6 +1,6 @@
 # Fundação Core Specification
 
-Status: Aprovada com ajustes em 2026-09-26. Feature 1 de 2 da fundação (a outra é `fundacao-documentos`). Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Aprovada com ajustes em 2026-09-26. Feature 1 de 2 da fundação (a outra é `fundacao-documentos`). A modelagem de Identity/RBAC foi revisada em 2026-09-26 com os ajustes do mantenedor (IDN-01, IDN-04, IDN-05, IDN-06, RBAC-01 e RBAC-03) e foi aprovada em 2026-09-26. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
@@ -28,6 +28,8 @@ A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega ident
 | Hospedagem e deploy reais | Decisão adiada; ver ADR-002 e o plano de hospedagem |
 | Purga e retenção de auditoria e sessões | Política de retenção depende de definição jurídica e de LGPD |
 | Fechamento de ano e ajuste extraordinário | Regras do financeiro (FIN-001, seção 16) |
+| Dupla aprovação para promoção administrativa | Evolução futura, fora da V1: hoje uma pessoa com `identity:admin:grant` promove, sempre com motivo e auditoria |
+| Vínculo entre usuário e associado | Pertence ao módulo dono do domínio: `associados.associados.user_id`, criado na spec de `associados`; `identity` não conhece associados |
 | Rate limiting global da API | Só o bloqueio de tentativas de login está no escopo |
 
 ---
@@ -44,12 +46,18 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Política de senha | Quem tem qualquer papel diferente de ASSOCIADO: mínimo 10 caracteres; só ASSOCIADO: mínimo 8; máximo 128 em pontos de código Unicode; sem regras de composição. Hash argon2id com memória 19 MiB, 2 iterações, paralelismo 1, configuráveis | Mínimos definidos pelo mantenedor; parâmetros alinhados às recomendações públicas do OWASP (validar na tarefa contra a versão vigente) | y |
 | Bloqueio de login | 5 falhas seguidas para o mesmo e-mail em 15 minutos bloqueiam novas tentativas por 15 minutos (HTTP 429); nunca há bloqueio permanente; contadores no PostgreSQL | Aprovado pelo mantenedor; barra força bruta sem trancar a conta de forma definitiva | y |
 | Proteção contra senhas comprometidas | Lista local embutida e versionada de senhas comuns e vazadas, comparada sem diferenciar maiúsculas; fonte e licença verificadas na tarefa. Solução inicial: integração externa (ex.: consulta k-anonymity) permanece como evolução em aberto | Aprovado pelo mantenedor; não cria dependência externa nem envia dados para fora | y |
-| Troca obrigatória de senha | Ao promover um usuário que só era ASSOCIADO a qualquer papel administrativo, o sistema marca `must_change_password=true` e exige a troca no próximo login; até lá o usuário só pode trocar a senha, ver `me` ou sair | Aprovado pelo mantenedor; evita que uma senha de 8 caracteres passe a proteger conta administrativa | y |
+| Troca obrigatória de senha | Ao conceder o primeiro vínculo administrativo a um usuário que não tinha vínculo ativo (só ASSOCIADO), o sistema marca `must_change_password=true` e exige a troca no próximo login; até lá o usuário só pode trocar a senha, ver `me` ou sair | Aprovado pelo mantenedor; evita que uma senha de 8 caracteres passe a proteger conta administrativa | y |
 | Valor padrão de `APP_ENV` | Variável ausente equivale a `production` | Aprovado pelo mantenedor; padrão seguro, e `development` passa a ser explícito | y |
 | `ALLOWED_ORIGINS` vazio | Mantém o comportamento seguro: nenhuma origem é autorizada e requisições de navegador com `Origin` são bloqueadas; em `development` o padrão é `http://localhost:3000` | Aprovado pelo mantenedor; falha fechada em vez de aberta | y |
-| Cadastro de usuários | Sem autocadastro; o primeiro ADMIN nasce por CLI e os demais são criados por quem tem permissão | Sistema institucional fechado; reduz superfície de ataque | n |
-| Matriz inicial de permissões | Provisória e mínima: ADMIN e PRESIDENTE com todas as permissões da fundação; DIRETOR só `identity:user:read`; FINANCEIRO, CONSELHO_FISCAL e ASSOCIADO sem permissões da fundação (as de documentos entram em `fundacao-documentos`) | Cada spec de módulo ampliará a matriz do seu módulo | n |
-| Ações que o Conselho Fiscal nunca recebe | `create`, `update`, `delete` e `cancel`; recebe `read`, `approve` e `opine` | Decisão já tomada pelo mantenedor (ADR-005, FIN-001 seção 24) | y |
+| Cadastro de usuários | Sem autocadastro. O primeiro administrador nasce por CLI; os demais usuários são criados por quem tem `identity:user:create`, sempre só com o papel ASSOCIADO, e o acesso administrativo só existe por promoção (IDN-06), um único caminho para conceder poder | Sistema institucional fechado; reduz superfície de ataque e concentra a regra de promoção em um caso de uso | n |
+| Papéis iniciais | ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL e ADMIN_SISTEMA | Lista proposta pelo mantenedor; substitui ADMIN, DIRETOR e FINANCEIRO | y |
+| Matriz inicial de permissões | Provisória e mínima. PRESIDENTE: todas as permissões do catálogo. ADMIN_SISTEMA: `identity:user:read`, `identity:user:create`, `identity:user:update`, `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` e `audit:log:read`, sem permissões institucionais (nesta matriz provisória). DIRETORIA: só `identity:user:read`. CONSELHO_FISCAL: `audit:log:read` e as institucionais. TESOURARIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma da fundação (as de documentos entram em `fundacao-documentos`). Cada spec de módulo amplia a matriz do seu módulo. A matriz é dado: a autorização decide sempre pelas permissões efetivas, nunca pelo nome do papel | Provisória. `audit:log:read` do Conselho Fiscal aprovado pelo mantenedor, mantendo a possibilidade futura de separar auditoria institucional e técnica | y |
+| Conselho Fiscal | Nunca recebe `create`, `update`, `delete` nem `cancel`. Não é só leitura: recebe as permissões institucionais `financeiro:prestacao_contas:read` (prestação de contas), `financeiro:prestacao_contas:approve` (aprovação) e `financeiro:parecer:opine` (parecer). O catálogo da fundação as declara; os endpoints nascem na spec do financeiro | Decisão do mantenedor (ADR-005, FIN-001 seção 24), ampliada em 2026-09-26 | y |
+| Usuário × Associado | Entidades separadas. O vínculo é `associados.associados.user_id` (o módulo dono do domínio guarda a referência); `identity.users` não tem coluna de associado. O associado pode existir sem usuário, e o usuário administrativo pode não ser associado | Aprovado pelo mantenedor: mantém o vínculo no módulo dono e evita `identity` depender de `associados` | y |
+| Vínculo administrativo × papel | `AdminMembership` responde "por que a pessoa tem acesso administrativo" (motivo, quem concedeu, quando, encerramento); papel responde "o que ela pode fazer". São separados: encerrar um não some com o histórico do outro. Regra: papel diferente de ASSOCIADO exige vínculo ativo; um vínculo ativo por usuário; o histórico nunca é apagado | Aprovado pelo mantenedor | y |
+| Múltiplos papéis | Um usuário pode ter vários papéis ativos; a permissão efetiva é a união; nega por padrão; não há permissão negativa | Aprovado pelo mantenedor | y |
+| Concessão sem escalada | Ninguém concede uma permissão superior à própria: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas, e nunca altera os próprios papéis nem o próprio vínculo | Aprovado pelo mantenedor; a regra vale para qualquer ator e decide só pelas permissões efetivas, sem exceção por papel; o que cada papel consegue conceder decorre da matriz | y |
+| Último administrador | O sistema impede desativar, retirar o vínculo ou remover as permissões do último usuário ativo que possui `identity:admin:grant`; a CLI `bootstrap-admin` cria o primeiro (ADMIN_SISTEMA por padrão, ou PRESIDENTE) e só roda sem nenhum vínculo administrativo ativo | Evita ficar sem quem administre acesso; o PRESIDENTE, com todas as permissões, pode conceder qualquer papel | n |
 | Conteúdo do registro de auditoria | Sem endereço IP; com `request_id`; retenção indefinida nesta fase | IP é dado pessoal (LGPD) e não é necessário agora | n |
 | Fuso horário | Tudo em UTC (`timestamptz`); conversão para America/Sao_Paulo na borda | Evita ambiguidade de horário de verão e de servidor | n |
 | Arredondamento de percentuais | `ROUND_HALF_UP` (empate arredonda para longe de zero, também nos negativos); taxas em pontos-base (1 bp = 0,01%) | Aprovado pelo mantenedor; segue a semântica de `BigDecimal.ROUND_HALF_UP` | y |
@@ -79,17 +87,17 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 ### P1: Primeiro administrador ⭐ MVP
 
-**User Story**: Como operador do sistema, quero criar o primeiro ADMIN por linha de comando, para poder entrar no sistema sem autocadastro.
+**User Story**: Como operador do sistema, quero criar o primeiro administrador por linha de comando, para poder entrar no sistema sem autocadastro.
 
 **Why P1**: Sem um usuário inicial, nada mais pode ser usado.
 
 **Acceptance Criteria**:
-1. WHEN the operator runs `bootstrap-admin` with `--email` and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with the role ADMIN and record an audit entry with action `user.bootstrap`.
-2. IF a user with the role ADMIN already exists THEN the system SHALL exit with a non-zero status without creating any user.
+1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the reason `bootstrap` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
+2. IF an active administrative membership already exists THEN the system SHALL exit with a non-zero status without creating any user.
 3. IF the password is absent or violates the administrator password policy (at least 10 characters) THEN the system SHALL exit with a non-zero status without creating any user.
 4. The system SHALL NOT accept the password as a command-line argument.
 
-**Independent Test**: Rodar o comando contra um banco vazio e ver o usuário e o registro de auditoria; rodar de novo e ver a recusa.
+**Independent Test**: Rodar o comando contra um banco vazio e ver o usuário, o vínculo administrativo e o registro de auditoria; rodar de novo e ver a recusa.
 
 ---
 
@@ -108,10 +116,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 6. WHEN a user calls `POST /api/v1/auth/logout` THEN the system SHALL revoke the session and clear the cookie.
 7. WHEN a login succeeds THEN the system SHALL issue a new session token even if a session cookie was sent with the request.
 8. IF a fifth consecutive login failure for the same email occurs within 15 minutes THEN the system SHALL respond 429 with a `Retry-After` header to every login attempt for that email during the following 15 minutes.
-9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the CSRF token and the flag `must_change_password`.
+9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the active administrative membership (or null), the CSRF token and the flag `must_change_password`.
 10. The system SHALL NOT lock an account permanently as a result of failed logins.
 
-**Independent Test**: Logar com o ADMIN criado pela CLI, chamar `/auth/me`, deslogar e ver que a sessão deixou de valer.
+**Independent Test**: Logar com o administrador criado pela CLI, chamar `/auth/me`, deslogar e ver que a sessão deixou de valer.
 
 ---
 ### P1: Proteção contra CSRF e origem
@@ -138,17 +146,17 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Sem usuários e papéis não há quem use os módulos.
 
 **Acceptance Criteria**:
-1. WHEN an actor with `identity:user:create` calls `POST /api/v1/users` with email, name, initial password and role names THEN the system SHALL create the user, respond 201 and record an audit entry with action `user.create`.
+1. WHEN an actor with `identity:user:create` calls `POST /api/v1/users` with email, name and initial password THEN the system SHALL create an active user holding only the role ASSOCIADO, respond 201 and record an audit entry with action `user.create`.
 2. IF the email already exists, ignoring letter case, THEN the system SHALL respond 409 with code `email_taken`.
 3. WHEN an actor with `identity:user:update` deactivates a user THEN the system SHALL mark the user inactive, revoke all of that user's sessions in the same transaction and record an audit entry with action `user.deactivate`.
-4. IF an actor tries to deactivate the last active ADMIN THEN the system SHALL respond 409 with code `last_admin`.
+4. IF an actor tries to deactivate the last active user that holds `identity:admin:grant` THEN the system SHALL respond 409 with code `last_admin`.
 5. WHEN a user calls `POST /api/v1/auth/password` with the correct current password and a valid new password THEN the system SHALL update the hash, revoke all other sessions of that user and record an audit entry with action `user.password_change` containing no password value.
 6. IF the current password sent to `POST /api/v1/auth/password` is wrong THEN the system SHALL respond 403 with code `invalid_current_password`.
-7. WHEN an actor with `identity:role:assign` sets the roles of a user THEN the system SHALL replace the role set, record the previous and new role names in an audit entry with action `user.roles_set` and apply the new permissions from the next request.
+7. WHEN an actor with `identity:role:assign` sets the roles of a user that has an active administrative membership THEN the system SHALL replace the role set, record the previous and new role names in an audit entry with action `user.roles_set` and apply the new permissions from the next request.
 8. WHEN an actor with `identity:user:read` calls `GET /api/v1/users` THEN the system SHALL return users with cursor pagination.
 9. The system SHALL NOT return password hashes or session tokens in any API response, log line or audit entry.
 
-**Independent Test**: Como ADMIN, criar um usuário FINANCEIRO, atribuir e trocar papéis, desativá-lo e ver as sessões dele caírem; conferir tudo na auditoria.
+**Independent Test**: Como PRESIDENTE, criar um usuário, promovê-lo a TESOURARIA (IDN-06), trocar papéis, desativá-lo e ver as sessões dele caírem; conferir tudo na auditoria.
 
 ---
 
@@ -163,11 +171,11 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 2. IF the target user holds only the role ASSOCIADO and the new password has fewer than 8 characters THEN the system SHALL reject it with 422 and code `password_too_short`.
 3. IF a password has more than 128 characters THEN the system SHALL reject it with 422 and code `password_too_long`.
 4. IF a password matches, ignoring letter case, an entry of the embedded list of commonly used or compromised passwords THEN the system SHALL reject it with 422 and code `password_compromised`.
-5. WHEN an actor adds a role other than ASSOCIADO to a user who held only the role ASSOCIADO THEN the system SHALL set `must_change_password` to true for that user.
+5. WHEN an administrative membership is granted to a user that had no active membership THEN the system SHALL set `must_change_password` to true for that user.
 6. WHEN a user changes the password successfully THEN the system SHALL set `must_change_password` to false.
 7. The system SHALL measure password length in Unicode code points and SHALL NOT impose composition rules.
 
-**Independent Test**: Criar um usuário FINANCEIRO com senha de 9 caracteres e ver a recusa; promover um ASSOCIADO a DIRETOR e ver a troca de senha obrigatória.
+**Independent Test**: Trocar a senha de uma conta administrativa por uma de 9 caracteres e ver a recusa; promover um ASSOCIADO a DIRETORIA e ver a troca de senha obrigatória.
 
 ---
 
@@ -180,12 +188,52 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Acceptance Criteria**:
 1. The system SHALL identify each permission by a string of the form `<module>:<resource>:<action>` matching `^[a-z_]+:[a-z_]+:[a-z_]+$` and SHALL reject the registration of any other form.
 2. WHEN the API starts THEN the system SHALL synchronize the permissions declared in code and the role-to-permission matrix into the database, idempotently.
-3. The system SHALL provision the roles ADMIN, PRESIDENTE, DIRETOR, FINANCEIRO, CONSELHO_FISCAL and ASSOCIADO.
-4. The system SHALL NOT grant the role CONSELHO_FISCAL any permission whose action is `create`, `update`, `delete` or `cancel`.
-5. WHEN a user has more than one role THEN the effective permissions SHALL be the union of the permissions of those roles.
-6. IF a permission stored in the database is no longer declared in code THEN the synchronization SHALL mark it inactive and SHALL NOT delete it.
+3. WHEN the synchronization changes the catalog or the matrix THEN the system SHALL record, in the same transaction, an audit entry with action `rbac.sync`, no actor, and the permissions and role-permission links added and removed; WHEN nothing changes THEN it SHALL record nothing.
+4. The system SHALL provision the roles ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL and ADMIN_SISTEMA.
+5. The system SHALL NOT grant the role CONSELHO_FISCAL any permission whose action is `create`, `update`, `delete` or `cancel`.
+6. The system SHALL grant the role CONSELHO_FISCAL the institutional permissions `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve` and `financeiro:parecer:opine`.
+7. WHEN a user has more than one active role THEN the effective permissions SHALL be the union of the permissions of those roles.
+8. IF a permission stored in the database is no longer declared in code THEN the synchronization SHALL mark it inactive and SHALL NOT delete it.
 
-**Independent Test**: Subir a API duas vezes e ver a matriz idêntica; rodar o teste de invariante do Conselho Fiscal.
+**Independent Test**: Subir a API duas vezes e ver a matriz idêntica e uma única auditoria `rbac.sync`; rodar o teste de invariante do Conselho Fiscal.
+
+---
+
+### P1: Vínculo administrativo e promoção
+
+**User Story**: Como presidente ou administrador de sistema, quero conceder e retirar acesso administrativo com o motivo registrado, separado do que cada papel permite, para saber por que alguém administra e poder retirar isso sem perder o histórico.
+
+**Why P1**: Acesso administrativo é o maior risco de segurança da plataforma; precisa de motivo, rastro e um único caminho de concessão.
+
+**Acceptance Criteria**:
+1. WHEN an actor with `identity:admin:grant` calls `POST /api/v1/users/{id}/admin-membership` with role names and a reason THEN the system SHALL, in one transaction, create an active administrative membership (user, reason, grantor, timestamp), assign the roles, set `must_change_password` according to IDN-05.5, revoke every session of the target user and record an audit entry with action `admin.promote` containing the previous and new role names.
+2. IF the reason is missing or has fewer than 10 characters after trimming THEN the system SHALL respond 422 with code `reason_required` and change nothing.
+3. IF the target user already has an active administrative membership THEN the system SHALL respond 409 with code `already_admin`.
+4. IF the target user is inactive THEN the system SHALL respond 409 with code `user_inactive`.
+5. The system SHALL keep at most one active administrative membership per user, enforced by the database, and SHALL NOT delete membership rows.
+6. WHEN an actor with `identity:admin:revoke` calls `DELETE /api/v1/users/{id}/admin-membership` with a reason THEN the system SHALL, in one transaction, close the membership recording who, when and why, remove every role other than ASSOCIADO, revoke every session of the target user and record an audit entry with action `admin.revoke`.
+7. IF the target user has no active administrative membership THEN the system SHALL respond 409 with code `not_admin`.
+8. IF the operation would leave no active user that holds `identity:admin:grant` THEN the system SHALL respond 409 with code `last_admin` and change nothing.
+9. The system SHALL NOT allow a user to hold a role other than ASSOCIADO without an active administrative membership; adding such a role without one SHALL respond 409 with code `admin_membership_required`.
+
+**Independent Test**: Como PRESIDENTE, promover um usuário a TESOURARIA com motivo, ver a troca de senha obrigatória e as sessões caírem; retirar o acesso e ver o histórico do vínculo preservado.
+
+---
+
+### P1: Concessão sem escalada de privilégio
+
+**User Story**: Como mantenedor, quero que ninguém consiga dar a outra pessoa mais poder do que já tem, para que uma conta comprometida ou mal-intencionada não amplie o próprio acesso.
+
+**Why P1**: Sem essa regra, quem administra acesso poderia criar contas com permissões que ele próprio não possui.
+
+**Acceptance Criteria**:
+1. IF an actor tries to grant, in a promotion or in a role assignment, a role with any permission the actor does not hold THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
+2. IF an actor tries to remove a role, or the administrative membership, of a user when that role holds a permission the actor does not hold THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
+3. IF an actor tries to change their own roles or administrative membership THEN the system SHALL respond 403 with code `self_change_forbidden` and change nothing.
+4. The system SHALL evaluate these rules with the effective permissions of the actor at the moment of the request.
+5. WHEN a change is denied by AC 1, 2 or 3 THEN the system SHALL record an audit entry with action `role.change_denied` containing the actor, the target and the requested roles, in its own transaction.
+
+**Independent Test**: Como ator cujas permissões efetivas não cobrem CONSELHO_FISCAL, tentar promover alguém a esse papel e ver 403 `privilege_escalation`; como PRESIDENTE, tentar alterar o próprio papel e ver 403 `self_change_forbidden`.
 
 ---
 
@@ -422,7 +470,8 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 - IF two logins for the same user happen concurrently THEN the system SHALL create two independent sessions.
 - IF the session cookie is present but malformed THEN the system SHALL respond 401 with code `unauthenticated` and SHALL NOT raise an internal error.
 - IF the database is unavailable during a request THEN the system SHALL respond 503 with code `service_unavailable`.
-- IF a user is created, or its roles are replaced, with an empty role set THEN the system SHALL respond 422 with code `validation_failed`.
+- IF the roles of a user are replaced with an empty role set THEN the system SHALL respond 422 with code `validation_failed`.
+- IF two administrators promote the same user concurrently THEN the system SHALL let exactly one succeed and respond 409 `already_admin` to the other.
 - WHEN a role is removed from a user THEN the system SHALL stop granting the permissions of that role from the next request.
 - WHEN `Allocate` receives a total of zero THEN the system SHALL return parts that are all zero.
 
@@ -437,8 +486,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-03 | P1: Proteção contra CSRF e origem | In Tasks | Pending |
 | IDN-04 | P1: Gestão de usuários | In Tasks | Pending |
 | IDN-05 | P1: Política de senha | In Tasks | Pending |
+| IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Pending |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Pending |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Pending |
+| RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Pending |
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Pending |
 | AUD-02 | P1: Auditoria imutável | In Tasks | Pending |
 | AUD-03 | P2: Consulta de auditoria | In Tasks | Pending |
@@ -452,15 +503,16 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | API-02 | P1: Convenções da API | In Tasks | Implementing |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
-**Coverage:** 19 total, 19 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
+**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
 ---
 
 ## Success Criteria
 
 - [ ] `go test -tags=integration ./...` e `pnpm test` passam no CI, junto com o lint, o build e as verificações de contrato OpenAPI.
-- [ ] Nas rotas da fundação, um ADMIN cria um usuário, atribui papel e desativa, tudo com registro de auditoria consultável pela API.
-- [ ] Senhas fora da política (10 para administrativos, 8 para associados, lista de comprometidas) são recusadas e a troca obrigatória bloqueia o resto da API.
-- [ ] O teste de invariante confirma que CONSELHO_FISCAL não tem nenhuma permissão `create`, `update`, `delete` ou `cancel`.
+- [ ] Nas rotas da fundação, um PRESIDENTE cria um usuário, promove com motivo, atribui papel, retira o acesso e desativa, tudo com registro de auditoria consultável pela API.
+- [ ] Ninguém concede permissão que não possui nem altera o próprio acesso, e toda alteração de permissão (promoção, retirada, papéis, sincronização da matriz) fica na auditoria.
+- [ ] Senhas fora da política (10 para qualquer papel diferente de ASSOCIADO, 8 para associados, lista de comprometidas) são recusadas e a troca obrigatória bloqueia o resto da API.
+- [ ] O teste de invariante confirma que CONSELHO_FISCAL não tem nenhuma permissão `create`, `update`, `delete` ou `cancel` e tem as institucionais de prestação de contas, aprovação e parecer.
 - [ ] O papel de banco da aplicação não consegue fazer UPDATE, DELETE ou TRUNCATE em `audit_log`, provado por teste.
 - [ ] Os mesmos vetores de dinheiro passam no Go e no TypeScript, e o teste de esquema barra colunas `float`, `double` e `numeric`.

@@ -35,7 +35,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 | Documentos aceitos | Até 10 MiB; PDF, JPG, PNG e WebP; extensões fora dessa lista são bloqueadas; o tipo é detectado pelo conteúdo e deve coincidir com a extensão | Definido pelo mantenedor; cobre FIN-001 seção 15 | y |
 | Fluxo de upload e download | Upload passa pela API (streaming para o S3); download por URL assinada com validade de 300 segundos | Permite validar tipo, tamanho e permissão antes de gravar | n |
 | Emulador de S3 local | Um emulador compatível com S3 será escolhido na tarefa correspondente, apenas para desenvolvimento e testes | Não define provedor de produção (ADR-006); a escolha exige checar licença e manutenção atuais | n |
-| Permissões de documentos | ADMIN e PRESIDENTE: `document:file:create` e `document:file:read`; FINANCEIRO: create e read; CONSELHO_FISCAL: só read; DIRETOR e ASSOCIADO: nenhuma | Alinhado a FIN-001 seção 15 e às permissões do Conselho Fiscal aprovadas; revisada na spec do financeiro | n |
+| Permissões de documentos | PRESIDENTE e TESOURARIA: `document:file:create` e `document:file:read`; CONSELHO_FISCAL: só read; ADMIN_SISTEMA (perfil técnico), DIRETORIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma | Alinhado a FIN-001 seção 15 e às permissões do Conselho Fiscal aprovadas; revisada na spec do financeiro | n |
 | Dependências da `fundacao-core` | Usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e o sistema de migrações da core | Evita duplicar infraestrutura | y |
 | SDK de S3 e emulador | Escolhidos e fixados nas tarefas T3 e T4, após checar a documentação vigente | Aprovado: nenhuma versão é fixada sem checar a documentação vigente | y |
 

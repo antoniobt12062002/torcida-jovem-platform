@@ -1,7 +1,7 @@
 # ADR-005: Autenticação por sessão com cookie seguro e RBAC por permissões
 
 - **Date**: 2026-09-26
-- **Status**: Accepted
+- **Status**: Accepted (a lista de papéis iniciais é detalhada e substituída pela [ADR-009](009-modelo-de-identidade-e-papeis-iniciais.md))
 - **Deciders**: @antoniobt12062002
 - **Tags**: security, identity
 

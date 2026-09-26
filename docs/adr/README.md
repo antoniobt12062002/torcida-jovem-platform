@@ -12,5 +12,6 @@ Registro das decisões de arquitetura da TJ Platform. Cada ADR é imutável: uma
 | [006](006-armazenamento-de-documentos.md) | Armazenamento de documentos em object storage S3 | Accepted |
 | [007](007-fonte-de-verdade-do-estoque.md) | Estoque como fonte de verdade baseada em movimentações | Accepted |
 | [008](008-versao-do-contrato-openapi.md) | Versão do contrato OpenAPI | Accepted |
+| [009](009-modelo-de-identidade-e-papeis-iniciais.md) | Modelo de identidade, vínculo administrativo e papéis iniciais | Accepted |
 
 Novos ADRs seguem o formato MADR e a numeração sequencial (`NNN-titulo-em-kebab-case.md`). Decisões de projeto que valem para todas as features também entram como `AD-NNN` em [`.specs/STATE.md`](../../.specs/STATE.md).

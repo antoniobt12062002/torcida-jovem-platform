@@ -35,7 +35,7 @@
 - **Status**: active
 
 ### AD-005
-- **Decision**: Autenticação por sessão no servidor com cookie `httpOnly` e proteção CSRF, sem JWT; autorização RBAC baseada em permissões; papéis iniciais `ADMIN`, `PRESIDENTE`, `DIRETOR`, `FINANCEIRO`, `CONSELHO_FISCAL`, `ASSOCIADO`.
+- **Decision**: Autenticação por sessão no servidor com cookie `httpOnly` e proteção CSRF, sem JWT; autorização RBAC baseada em permissões; papéis iniciais definidos em AD-011 (substituem a lista original `ADMIN`, `PRESIDENTE`, `DIRETOR`, `FINANCEIRO`, `CONSELHO_FISCAL`, `ASSOCIADO`).
 - **Reason**: Revogação imediata, menor superfície de ataque, um único cliente próprio.
 - **Trade-off**: Estado de sessão no servidor; outros tipos de cliente exigirão nova decisão.
 - **Scope**: Toda a API e o frontend. O associado autenticado é distinto do visitante do portal público. Ver `docs/adr/005-autenticacao-e-rbac.md`.
@@ -82,14 +82,22 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-011
+- **Decision**: Usuário e associado são entidades separadas e o vínculo fica em `associados.associados.user_id`. Papéis iniciais: `ASSOCIADO`, `PRESIDENTE`, `DIRETORIA`, `TESOURARIA`, `ESTOQUE_LOJA`, `EVENTOS`, `CONSELHO_FISCAL`, `ADMIN_SISTEMA`. O acesso administrativo é um vínculo (`AdminMembership`, "por que") separado do papel ("o que pode fazer"); ninguém concede permissão que não possui nem altera o próprio acesso; toda alteração de permissão é auditada. Dupla aprovação fica como evolução futura.
+- **Reason**: Rastreabilidade do poder administrativo e menor dano de uma conta comprometida, sem quebrar a fronteira entre módulos.
+- **Trade-off**: A autorização decide só pelas permissões efetivas, sem regra por nome de papel; com a matriz provisória a concessão institucional fica no PRESIDENTE; mais uma entidade e um caso de uso a manter.
+- **Scope**: `identity`, `associados` e todo módulo que declara permissões. Ver `docs/adr/009-modelo-de-identidade-e-papeis-iniciais.md`.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) mais o validador de requisições pelo contrato (`platform/httpx`, sem tarefa numerada própria; a numeração das tarefas segue a de `tasks.md`)
-- **Completed**: T1 a T30 e o validador de requisições (fases 1 a 4 mescladas; fase 5 no PR da branch `feature/fundacao-core-fase-5`)
+- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) e validador de requisições (`platform/httpx`); a fase 5 foi mesclada no PR #25 (bypass administrativo excepcional, autorizado e registrado no PR). Spec, design e tarefas de Identity/RBAC (fases 6 a 11, T31 a T73) aprovados em 2026-09-26
+- **Completed**: T1 a T30
 - **In-progress** (file:line): none
-- **Next step**: Após o merge da fase 5, apresentar o design da modelagem Identity/RBAC (User x Associado, papéis e permissões, sessões, vínculo administrativo, promoção, auditoria de permissões) e aguardar aprovação antes de iniciar a implementação
-- **Blockers**: Aprovação do design de Identity/RBAC
-- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar
+- **Next step**: Após o merge do PR de documentação/design, iniciar a fase 6 (auditoria, T31 a T35), em PR próprio
+- **Blockers**: Merge do PR de documentação/design de Identity/RBAC
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado)
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-5
+- **Branch**: feature/fundacao-core-identidade-design

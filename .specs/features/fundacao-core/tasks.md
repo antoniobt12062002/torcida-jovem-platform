@@ -95,37 +95,37 @@ T31 → T32 → T33 → T34 → T35
 ### Phase 7: Autorização e papéis
 
 ```
-T36 → T37 → T38 → T39 → T40
+T36 → T37 → T38 → T39 → T40 → T41
 ```
 
 ### Phase 8: Identidade: base
 
 ```
-T41 → T42 → T43 → T44 → T45 → T46 → T47 → T48
+T42 → T43 → T44 → T45 → T46 → T47 → T48 → T49 → T50 → T51
 ```
 
 ### Phase 9: Identidade: casos de uso
 
 ```
-T49 → T50 → T51 → T52 → T53
+T52 → T53 → T54 → T55 → T56 → T57 → T58
 ```
 
 ### Phase 10: HTTP: contrato de identidade e middlewares
 
 ```
-T54 → T55 → T56 → T57 → T58
+T59 → T60 → T61 → T62 → T63
 ```
 
 ### Phase 11: HTTP: handlers e fiação
 
 ```
-T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66
+T64 → T65 → T66 → T67 → T68 → T69 → T70 → T71 → T72
 ```
 
 ### Phase 12: Guardrails e documentação
 
 ```
-T67 → T68 → T69 → T70
+T73 → T74 → T75 → T76
 ```
 
 ---
@@ -1098,13 +1098,13 @@ T67 → T68 → T69 → T70
 
 ### Phase 7: Autorização e papéis (tarefas)
 
-### T36: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, sessions e login_attempts, com `down` e concessões
+### T36: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, admin_memberships, sessions e login_attempts, com `down` e concessões
 
-**What**: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, sessions e login_attempts, com `down` e concessões.  
+**What**: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, admin_memberships, sessions e login_attempts, com `down` e concessões.  
 **Where**: `api/migrations/000003_identity.up.sql`  
 **Depends on**: T12  
 **Reuses**: Migração 000002 como padrão  
-**Requirement**: RBAC-01 (ACs 2, 3); IDN-02 (ACs 2); IDN-05 (ACs 5, 6)
+**Requirement**: RBAC-01 (ACs 2); IDN-02 (ACs 2); IDN-05 (ACs 5, 6); IDN-06 (ACs 5)
 
 **Tools**:
 
@@ -1113,10 +1113,11 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Coluna `users.must_change_password` (boolean, padrão falso)
+- [ ] Coluna `users.must_change_password` (boolean, padrão falso); `users` não tem coluna de associado (o vínculo pertence a `associados`)
 - [ ] Índice único por `lower(email)`
 - [ ] `sessions.token_hash` único
-- [ ] `tj_app` com SELECT, INSERT, UPDATE e DELETE nas tabelas de identidade
+- [ ] `admin_memberships` com motivo obrigatório, quem concedeu, quando, e os campos de encerramento; índice único parcial garante um vínculo ativo por usuário
+- [ ] `tj_app` com SELECT, INSERT, UPDATE e DELETE nas tabelas de identidade, exceto `admin_memberships`, sem DELETE (o histórico é preservado)
 - [ ] Migração `down` desfaz sem erro
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
@@ -1182,13 +1183,13 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T39: Criar a matriz papel-permissão em código com o teste de invariante do Conselho Fiscal
+### T39: Criar a verificação de concessão sem escalada: `Covers` devolve as permissões que o ator não possui entre as necessárias
 
-**What**: Criar a matriz papel-permissão em código com o teste de invariante do Conselho Fiscal.  
-**Where**: `api/internal/identity/app/roles_matrix.go`  
+**What**: Criar a verificação de concessão sem escalada: `Covers` devolve as permissões que o ator não possui entre as necessárias.  
+**Where**: `api/internal/platform/authz/escalation.go`  
 **Depends on**: T38  
-**Reuses**: `Permission`  
-**Requirement**: RBAC-01 (ACs 3, 4)
+**Reuses**: `Principal` e `Permission`  
+**Requirement**: RBAC-03 (ACs 1, 2, 4)
 
 **Tools**:
 
@@ -1197,10 +1198,39 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Seis papéis definidos, com a matriz provisória da spec
-- [ ] CONSELHO_FISCAL não tem nenhuma permissão com ação `create`, `update`, `delete` ou `cancel`
+- [ ] Ator que possui todas as permissões pedidas passa; faltando qualquer uma, a função devolve exatamente as que faltam
+- [ ] Conjunto vazio de permissões pedidas sempre passa
+- [ ] Usa apenas as permissões do `Principal` recebido, sem cache próprio
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+
+**Tests**: unit  
+**Gate**: quick
+
+**Commit**: `feat(authz): adiciona verificacao de concessao sem escalada`
+
+---
+
+### T40: Criar o catálogo de permissões e a matriz papel-permissão em código, com os oito papéis e os testes de invariante
+
+**What**: Criar o catálogo de permissões e a matriz papel-permissão em código, com os oito papéis e os testes de invariante.  
+**Where**: `api/internal/identity/app/roles_matrix.go`  
+**Depends on**: T39  
+**Reuses**: `Permission`  
+**Requirement**: RBAC-01 (ACs 4, 5, 6)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Oito papéis definidos (ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL, ADMIN_SISTEMA), com a matriz provisória da spec
+- [ ] CONSELHO_FISCAL não tem nenhuma permissão com ação `create`, `update`, `delete` ou `cancel`, e tem `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine`
 - [ ] Adicionar uma permissão proibida ao Conselho faz o teste falhar (teste negativo)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [ ] PRESIDENTE tem todas as permissões do catálogo e as de ADMIN_SISTEMA são subconjunto das do PRESIDENTE
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
@@ -1210,13 +1240,13 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T40: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas
+### T41: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas
 
 **What**: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas.  
 **Where**: `api/internal/identity/infra/role_repository.go`  
-**Depends on**: T39  
+**Depends on**: T40, T34  
 **Reuses**: `roles_matrix.go`  
-**Requirement**: RBAC-01 (ACs 2, 5, 6)
+**Requirement**: RBAC-01 (ACs 2, 3, 7, 8)
 
 **Tools**:
 
@@ -1226,9 +1256,10 @@ T67 → T68 → T69 → T70
 **Done when**:
 
 - [ ] Sincronizar duas vezes deixa o banco idêntico
+- [ ] Quando a sincronização altera o catálogo ou a matriz, grava `rbac.sync` na mesma transação, sem ator, com as permissões e vínculos papel-permissão adicionados e removidos; sem mudança não grava nada
 - [ ] Permissão removida do código fica inativa e não é apagada
-- [ ] Permissões efetivas são a união dos papéis do usuário
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] Permissões efetivas são a união dos papéis do usuário, que pode ter vários papéis ativos
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1240,7 +1271,7 @@ T67 → T68 → T69 → T70
 
 ### Phase 8: Identidade: base (tarefas)
 
-### T41: Criar hash e verificação de senha com argon2id
+### T42: Criar hash e verificação de senha com argon2id
 
 **What**: Criar hash e verificação de senha com argon2id.  
 **Where**: `api/internal/platform/password/argon2.go`  
@@ -1268,11 +1299,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T42: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas
+### T43: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas
 
 **What**: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas.  
 **Where**: `api/internal/platform/password/denylist.go`  
-**Depends on**: T41  
+**Depends on**: T42  
 **Reuses**: Diretiva `go:embed` sobre `denylist.txt`  
 **Requirement**: IDN-05 (ACs 4)
 
@@ -1296,11 +1327,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T43: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para papéis administrativos, 8 só para ASSOCIADO, máximo 128 pontos de código)
+### T44: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código)
 
-**What**: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para papéis administrativos, 8 só para ASSOCIADO, máximo 128 pontos de código).  
+**What**: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código).  
 **Where**: `api/internal/identity/domain/user.go`  
-**Depends on**: T42  
+**Depends on**: T43  
 **Reuses**: Nenhum (pacote novo)  
 **Requirement**: IDN-01 (ACs 3); IDN-04 (ACs 2); IDN-05 (ACs 1, 2, 3, 7)
 
@@ -1325,11 +1356,40 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T44: Criar o repositório de usuários
+### T45: Criar a entidade `AdminMembership` (por que o usuário tem acesso administrativo) e suas invariantes, separada de papel (o que ele pode fazer)
+
+**What**: Criar a entidade `AdminMembership` (por que o usuário tem acesso administrativo) e suas invariantes, separada de papel (o que ele pode fazer).  
+**Where**: `api/internal/identity/domain/admin_membership.go`  
+**Depends on**: T44  
+**Reuses**: `user.go`  
+**Requirement**: IDN-06 (ACs 2, 3, 9)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Motivo obrigatório, com no mínimo 10 caracteres após remover espaços nas pontas; sem motivo devolve erro mapeável para 422 `reason_required`
+- [ ] Só pode haver um vínculo ativo por usuário
+- [ ] Papel diferente de ASSOCIADO exige vínculo ativo, senão devolve erro mapeável para 409 `admin_membership_required`
+- [ ] Encerrar registra quem, quando e por quê, e não apaga o vínculo
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+
+**Tests**: unit  
+**Gate**: quick
+
+**Commit**: `feat(identity): adiciona vinculo administrativo e suas invariantes`
+
+---
+
+### T46: Criar o repositório de usuários
 
 **What**: Criar o repositório de usuários.  
 **Where**: `api/internal/identity/infra/user_repository.go`  
-**Depends on**: T43  
+**Depends on**: T45  
 **Reuses**: `user.go`  
 **Requirement**: IDN-04 (ACs 1, 2, 3)
 
@@ -1352,11 +1412,39 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T45: Criar o repositório de sessões (hash do token, revogação, expiração)
+### T47: Criar o repositório de vínculos administrativos
+
+**What**: Criar o repositório de vínculos administrativos.  
+**Where**: `api/internal/identity/infra/admin_membership_repository.go`  
+**Depends on**: T46  
+**Reuses**: `admin_membership.go` e `user_repository.go`  
+**Requirement**: IDN-06 (ACs 3, 5)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Conceder dois vínculos ativos ao mesmo usuário ao mesmo tempo deixa exatamente um vencer (teste concorrente)
+- [ ] Encerrar preserva a linha e o histórico de vínculos anteriores continua consultável
+- [ ] O repositório não expõe operação de exclusão
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(identity): adiciona repositorio de vinculos administrativos`
+
+---
+
+### T48: Criar o repositório de sessões (hash do token, revogação, expiração)
 
 **What**: Criar o repositório de sessões (hash do token, revogação, expiração).  
 **Where**: `api/internal/identity/infra/session_repository.go`  
-**Depends on**: T44  
+**Depends on**: T47  
 **Reuses**: `user_repository.go`  
 **Requirement**: IDN-02 (ACs 2, 5, 6)
 
@@ -1379,11 +1467,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T46: Criar o repositório de tentativas de login
+### T49: Criar o repositório de tentativas de login
 
 **What**: Criar o repositório de tentativas de login.  
 **Where**: `api/internal/identity/infra/attempt_repository.go`  
-**Depends on**: T45  
+**Depends on**: T48  
 **Reuses**: `session_repository.go`  
 **Requirement**: IDN-02 (ACs 8)
 
@@ -1406,11 +1494,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T47: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão
+### T50: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão
 
 **What**: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão.  
 **Where**: `api/internal/identity/app/authenticate.go`  
-**Depends on**: T46  
+**Depends on**: T49  
 **Reuses**: Repositórios da fase, `password`, `audit`  
 **Requirement**: IDN-02 (ACs 1, 2, 3, 4, 7, 8, 10)
 
@@ -1435,11 +1523,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T48: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 12 horas), logout e atualização limitada de `last_seen_at`
+### T51: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 8 horas), logout e atualização limitada de `last_seen_at`
 
-**What**: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 12 horas), logout e atualização limitada de `last_seen_at`.  
+**What**: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 8 horas), logout e atualização limitada de `last_seen_at`.  
 **Where**: `api/internal/identity/app/session_service.go`  
-**Depends on**: T47  
+**Depends on**: T50  
 **Reuses**: Repositórios de sessão e de papéis  
 **Requirement**: IDN-02 (ACs 5, 6, 9); RBAC-02 (ACs 5)
 
@@ -1466,13 +1554,13 @@ T67 → T68 → T69 → T70
 
 ### Phase 9: Identidade: casos de uso (tarefas)
 
-### T49: Criar o caso de uso de criação de usuário
+### T52: Criar o caso de uso de criação de usuário; toda conta nasce apenas com o papel ASSOCIADO, e o acesso administrativo só existe por promoção
 
-**What**: Criar o caso de uso de criação de usuário.  
+**What**: Criar o caso de uso de criação de usuário; toda conta nasce apenas com o papel ASSOCIADO, e o acesso administrativo só existe por promoção.  
 **Where**: `api/internal/identity/app/create_user.go`  
 **Depends on**: None  
 **Reuses**: `WithTx`, `audit.Recorder`, `authz.Require`  
-**Requirement**: IDN-04 (ACs 1, 2); RBAC-02 (ACs 3); IDN-05 (ACs 1, 2, 3, 4)
+**Requirement**: IDN-04 (ACs 1, 2); RBAC-02 (ACs 3); IDN-05 (ACs 2, 3, 4)
 
 **Tools**:
 
@@ -1481,11 +1569,12 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Aplica a política de senha por papel e a lista de comprometidas
+- [ ] Aplica a política de senha de ASSOCIADO (8) e a lista de comprometidas
+- [ ] O comando não aceita papéis: o usuário criado tem só ASSOCIADO
 - [ ] Exige `identity:user:create` antes de qualquer leitura ou escrita
 - [ ] Grava `user.create` na mesma transação
 - [ ] E-mail repetido devolve erro mapeável para 409 `email_taken`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1495,11 +1584,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T50: Criar o caso de uso de desativação e reativação de usuário
+### T53: Criar o caso de uso de desativação e reativação de usuário
 
 **What**: Criar o caso de uso de desativação e reativação de usuário.  
 **Where**: `api/internal/identity/app/deactivate_user.go`  
-**Depends on**: T49  
+**Depends on**: T52  
 **Reuses**: `WithTx` e `audit.Recorder`  
 **Requirement**: IDN-04 (ACs 3, 4); RBAC-02 (ACs 3, 5)
 
@@ -1511,7 +1600,7 @@ T67 → T68 → T69 → T70
 **Done when**:
 
 - [ ] Desativar revoga todas as sessões na mesma transação
-- [ ] Desativar o último ADMIN ativo devolve erro mapeável para 409 `last_admin`
+- [ ] Desativar o último usuário ativo que possui `identity:admin:grant` devolve erro mapeável para 409 `last_admin`
 - [ ] Grava `user.deactivate`
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
@@ -1523,11 +1612,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T51: Criar o caso de uso de troca de senha
+### T54: Criar o caso de uso de troca de senha
 
 **What**: Criar o caso de uso de troca de senha.  
 **Where**: `api/internal/identity/app/change_password.go`  
-**Depends on**: T50  
+**Depends on**: T53  
 **Reuses**: `password` e `audit.Recorder`  
 **Requirement**: IDN-04 (ACs 5, 6, 9); IDN-05 (ACs 1, 2, 3, 4, 6)
 
@@ -1552,27 +1641,88 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T52: Criar o caso de uso de atribuição de papéis
+### T55: Criar o caso de uso de promoção administrativa (`PromoteToAdmin`): concede o vínculo administrativo e os papéis numa única transação
 
-**What**: Criar o caso de uso de atribuição de papéis.  
-**Where**: `api/internal/identity/app/assign_roles.go`  
-**Depends on**: T51  
-**Reuses**: Repositório de papéis e `audit.Recorder`  
-**Requirement**: IDN-04 (ACs 7); RBAC-01 (ACs 5); RBAC-02 (ACs 3); IDN-05 (ACs 5)
+**What**: Criar o caso de uso de promoção administrativa (`PromoteToAdmin`): concede o vínculo administrativo e os papéis numa única transação.  
+**Where**: `api/internal/identity/app/promote_admin.go`  
+**Depends on**: T54  
+**Reuses**: `AdminMembership`, repositórios, `WithTx`, `audit.Recorder`, `authz.Covers`  
+**Requirement**: IDN-06 (ACs 1, 2, 3, 4); IDN-05 (ACs 5); RBAC-03 (ACs 1, 3, 4, 5); RBAC-02 (ACs 3)
 
 **Tools**:
 
 - MCP: NONE
-- Skill: NONE
+- Skill: security-best-practices
 
 **Done when**:
 
-- [ ] Acrescentar papel administrativo a quem só era ASSOCIADO marca `must_change_password`
-- [ ] Conjunto vazio de papéis devolve 422 `validation_failed`
+- [ ] Exige `identity:admin:grant` antes de qualquer leitura ou escrita
+- [ ] Cria o vínculo com motivo, atribui os papéis, marca `must_change_password` quando o usuário não tinha vínculo ativo, revoga todas as sessões do alvo e grava `admin.promote` com papéis anteriores e novos, tudo na mesma transação
+- [ ] Ator não concede papel com permissão que ele não possui (403 `privilege_escalation`) nem altera a si mesmo (403 `self_change_forbidden`)
+- [ ] A tentativa negada por escalada ou por autoalteração grava `role.change_denied` em transação própria
+- [ ] Alvo inativo devolve 409 `user_inactive` e vínculo ativo existente devolve 409 `already_admin`
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(identity): adiciona promocao administrativa`
+
+---
+
+### T56: Criar o caso de uso de retirada do acesso administrativo (`RevokeAdmin`)
+
+**What**: Criar o caso de uso de retirada do acesso administrativo (`RevokeAdmin`).  
+**Where**: `api/internal/identity/app/revoke_admin.go`  
+**Depends on**: T55  
+**Reuses**: `AdminMembership`, repositórios, `WithTx`, `audit.Recorder`, `authz.Covers`  
+**Requirement**: IDN-06 (ACs 6, 7, 8); RBAC-03 (ACs 2, 3, 4, 5); RBAC-02 (ACs 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: security-best-practices
+
+**Done when**:
+
+- [ ] Exige `identity:admin:revoke` e motivo
+- [ ] Encerra o vínculo, remove todos os papéis diferentes de ASSOCIADO, revoga as sessões do alvo e grava `admin.revoke`, na mesma transação
+- [ ] Retirar o último usuário ativo com `identity:admin:grant` devolve 409 `last_admin`
+- [ ] Alvo sem vínculo ativo devolve 409 `not_admin`
+- [ ] Ator não retira acesso de quem tem permissões que ele não possui (403 `privilege_escalation`) nem o próprio (403 `self_change_forbidden`), e a tentativa negada grava `role.change_denied`
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(identity): adiciona retirada de acesso administrativo`
+
+---
+
+### T57: Criar o caso de uso de atribuição de papéis para quem já tem vínculo administrativo ativo
+
+**What**: Criar o caso de uso de atribuição de papéis para quem já tem vínculo administrativo ativo.  
+**Where**: `api/internal/identity/app/assign_roles.go`  
+**Depends on**: T56  
+**Reuses**: Repositório de papéis e `audit.Recorder`  
+**Requirement**: IDN-04 (ACs 7); RBAC-01 (ACs 7); RBAC-02 (ACs 3); IDN-06 (ACs 9); RBAC-03 (ACs 1, 2, 3, 4, 5)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: security-best-practices
+
+**Done when**:
+
 - [ ] Exige `identity:role:assign`
+- [ ] Adicionar papel diferente de ASSOCIADO a quem não tem vínculo ativo devolve 409 `admin_membership_required`
+- [ ] Conjunto vazio de papéis devolve 422 `validation_failed`
+- [ ] Cada papel acrescentado ou removido precisa estar coberto pelas permissões do ator (403 `privilege_escalation`); o ator não altera os próprios papéis (403 `self_change_forbidden`); a tentativa negada grava `role.change_denied`
 - [ ] Substitui o conjunto e grava papéis anteriores e novos em `user.roles_set`
-- [ ] Novas permissões valem na requisição seguinte
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [ ] Um usuário pode ter vários papéis ativos e as novas permissões valem na requisição seguinte
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1582,11 +1732,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T53: Criar o caso de uso de listagem de usuários com paginação por cursor
+### T58: Criar o caso de uso de listagem de usuários com paginação por cursor
 
 **What**: Criar o caso de uso de listagem de usuários com paginação por cursor.  
 **Where**: `api/internal/identity/app/list_users.go`  
-**Depends on**: T52  
+**Depends on**: T57  
 **Reuses**: Convenção de cursor  
 **Requirement**: IDN-04 (ACs 8); API-02 (ACs 5)
 
@@ -1612,13 +1762,13 @@ T67 → T68 → T69 → T70
 
 ### Phase 10: HTTP: contrato de identidade e middlewares (tarefas)
 
-### T54: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar, listar, desativar, papéis) e roles
+### T59: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar sem papéis, listar, desativar, papéis), roles e vínculo administrativo (`POST` e `DELETE /api/v1/users/{id}/admin-membership`)
 
-**What**: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar, listar, desativar, papéis) e roles.  
+**What**: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar sem papéis, listar, desativar, papéis), roles e vínculo administrativo (`POST` e `DELETE /api/v1/users/{id}/admin-membership`).  
 **Where**: `api/openapi/identity.yaml`  
-**Depends on**: T26, T29, T53  
+**Depends on**: T26, T29, T58  
 **Reuses**: `common.yaml` e o padrão de `platform.yaml`  
-**Requirement**: API-01 (ACs 1); IDN-02 (ACs 1, 9); IDN-04 (ACs 1, 8)
+**Requirement**: API-01 (ACs 1); IDN-02 (ACs 1, 9); IDN-04 (ACs 1, 8); IDN-06 (ACs 1, 6)
 
 **Tools**:
 
@@ -1639,11 +1789,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T55: Criar o gatilho `go generate` do `identity`, sua configuração do `oapi-codegen` e regenerar os tipos TypeScript
+### T60: Criar o gatilho `go generate` do `identity`, sua configuração do `oapi-codegen` e regenerar os tipos TypeScript
 
 **What**: Criar o gatilho `go generate` do `identity`, sua configuração do `oapi-codegen` e regenerar os tipos TypeScript.  
 **Where**: `api/internal/identity/http/generate.go`  
-**Depends on**: T54  
+**Depends on**: T59  
 **Reuses**: `identity.yaml` e o gatilho do `platform`  
 **Requirement**: API-01 (ACs 2, 3)
 
@@ -1666,11 +1816,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T56: Acrescentar a consulta de auditoria (`GET /api/v1/audit-logs`) ao contrato do `platform` e regenerar o código e os tipos
+### T61: Acrescentar a consulta de auditoria (`GET /api/v1/audit-logs`) ao contrato do `platform` e regenerar o código e os tipos
 
 **What**: Acrescentar a consulta de auditoria (`GET /api/v1/audit-logs`) ao contrato do `platform` e regenerar o código e os tipos.  
 **Where**: `api/openapi/platform.yaml`  
-**Depends on**: T55  
+**Depends on**: T60  
 **Reuses**: `common.yaml` (`Cursor`, `Limit`, `Problem`)  
 **Requirement**: AUD-03 (ACs 1, 2, 3, 4); API-01 (ACs 1, 2, 3)
 
@@ -1692,11 +1842,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T57: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado
+### T62: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado
 
 **What**: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado.  
 **Where**: `api/internal/platform/httpx/authn.go`  
-**Depends on**: T56  
+**Depends on**: T61  
 **Reuses**: Interface `SessionValidator`  
 **Requirement**: RBAC-02 (ACs 1, 5, 6); IDN-02 (ACs 5)
 
@@ -1720,11 +1870,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T58: Criar o middleware de CSRF e origem
+### T63: Criar o middleware de CSRF e origem
 
 **What**: Criar o middleware de CSRF e origem.  
 **Where**: `api/internal/platform/httpx/csrf.go`  
-**Depends on**: T57  
+**Depends on**: T62  
 **Reuses**: `ALLOWED_ORIGINS` da config  
 **Requirement**: IDN-03 (ACs 1, 2, 3, 4, 5)
 
@@ -1750,7 +1900,7 @@ T67 → T68 → T69 → T70
 
 ### Phase 11: HTTP: handlers e fiação (tarefas)
 
-### T59: Criar os handlers de login, logout, `me` e troca de senha
+### T64: Criar os handlers de login, logout, `me` e troca de senha
 
 **What**: Criar os handlers de login, logout, `me` e troca de senha.  
 **Where**: `api/internal/identity/http/auth_handler.go`  
@@ -1765,7 +1915,7 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] `me` inclui `must_change_password`
+- [ ] `me` inclui `must_change_password` e o vínculo administrativo ativo, quando houver
 - [ ] Cookie `tj_session` com HttpOnly, Secure, SameSite=Lax e Path=/
 - [ ] Erros idênticos para credenciais inválidas
 - [ ] 429 traz `Retry-After`
@@ -1780,11 +1930,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T60: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários
+### T65: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários
 
 **What**: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários.  
 **Where**: `api/internal/identity/http/users_handler.go`  
-**Depends on**: T59  
+**Depends on**: T64  
 **Reuses**: Casos de uso e código gerado  
 **Requirement**: IDN-04 (ACs 1, 2, 3, 4, 7, 8, 9)
 
@@ -1796,7 +1946,7 @@ T67 → T68 → T69 → T70
 **Done when**:
 
 - [ ] Respostas nunca contêm hash de senha nem token
-- [ ] Erros mapeados: 409 `email_taken` e `last_admin`, 403 `forbidden`
+- [ ] Erros mapeados: 409 `email_taken`, `last_admin` e `admin_membership_required`, 403 `forbidden`, `privilege_escalation` e `self_change_forbidden`
 - [ ] Respostas validadas contra o contrato
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
@@ -1808,11 +1958,39 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T61: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`
+### T66: Criar os handlers de promoção e de retirada do vínculo administrativo
+
+**What**: Criar os handlers de promoção e de retirada do vínculo administrativo.  
+**Where**: `api/internal/identity/http/admin_handler.go`  
+**Depends on**: T65  
+**Reuses**: Casos de uso `PromoteToAdmin` e `RevokeAdmin` e código gerado  
+**Requirement**: IDN-06 (ACs 1, 2, 3, 4, 6, 7, 8); RBAC-03 (ACs 1, 2, 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: security-best-practices
+
+**Done when**:
+
+- [ ] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
+- [ ] Respostas validadas contra o contrato
+- [ ] Nenhuma resposta contém hash de senha nem token
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(identity): adiciona handlers de vinculo administrativo`
+
+---
+
+### T67: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`
 
 **What**: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`.  
 **Where**: `api/internal/platform/audit/http.go`  
-**Depends on**: T60  
+**Depends on**: T66  
 **Reuses**: Cursor keyset por (occurred_at, id)  
 **Requirement**: AUD-03 (ACs 1, 2, 3, 4)
 
@@ -1836,11 +2014,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T62: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
+### T68: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
 
 **What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
 **Where**: `api/internal/httpapi/router.go`  
-**Depends on**: T61, T57, T58, T5  
+**Depends on**: T67, T62, T63, T5  
 **Reuses**: Router atual e `gin.Logger` a substituir  
 **Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2); PLT-01 (ACs 3)
 
@@ -1864,12 +2042,12 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T63: Criar a lógica do primeiro administrador
+### T69: Criar a lógica do primeiro administrador
 
 **What**: Criar a lógica do primeiro administrador.  
 **Where**: `api/internal/identity/app/bootstrap_admin.go`  
-**Depends on**: T62  
-**Reuses**: `create_user.go` e `password`  
+**Depends on**: T68  
+**Reuses**: `create_user.go`, `AdminMembership` e `password`  
 **Requirement**: IDN-01 (ACs 1, 2, 3); IDN-05 (ACs 1)
 
 **Tools**:
@@ -1879,8 +2057,8 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Cria ADMIN ativo e grava `user.bootstrap`
-- [ ] Recusa se já existir ADMIN
+- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
+- [ ] Recusa se já existir qualquer vínculo administrativo ativo
 - [ ] Recusa senha ausente ou fora da política de administrador (10 caracteres)
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
@@ -1892,11 +2070,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T64: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente
+### T70: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente
 
 **What**: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente.  
 **Where**: `api/cmd/bootstrap-admin/main.go`  
-**Depends on**: T63  
+**Depends on**: T69  
 **Reuses**: `bootstrap_admin.go`  
 **Requirement**: IDN-01 (ACs 1, 4)
 
@@ -1909,6 +2087,7 @@ T67 → T68 → T69 → T70
 
 - [ ] Não existe flag de senha
 - [ ] Sem `BOOTSTRAP_ADMIN_PASSWORD` sai com código diferente de zero
+- [ ] `--role` aceita só ADMIN_SISTEMA (padrão) ou PRESIDENTE
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
 
@@ -1919,11 +2098,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T65: Ligar config, logger, sincronização de papéis e router no ponto de entrada da API
+### T71: Ligar config, logger, sincronização de papéis (com auditoria do que mudou) e router no ponto de entrada da API
 
-**What**: Ligar config, logger, sincronização de papéis e router no ponto de entrada da API.  
+**What**: Ligar config, logger, sincronização de papéis (com auditoria do que mudou) e router no ponto de entrada da API.  
 **Where**: `api/cmd/api/main.go`  
-**Depends on**: T64, T1  
+**Depends on**: T70, T1  
 **Reuses**: `main.go` atual  
 **Requirement**: PLT-01 (ACs 1, 5, 6); RBAC-01 (ACs 2)
 
@@ -1947,13 +2126,13 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T66: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP
+### T72: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP
 
 **What**: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP.  
 **Where**: `api/internal/httpapi/e2e_test.go`  
-**Depends on**: T65  
+**Depends on**: T71  
 **Reuses**: `testutil.NewTestDB` e o validador de contrato  
-**Requirement**: IDN-02 (ACs 1, 9); IDN-03 (ACs 2, 3); IDN-04 (ACs 1, 3, 7); RBAC-02 (ACs 1, 2); AUD-03 (ACs 1)
+**Requirement**: IDN-02 (ACs 1, 9); IDN-03 (ACs 2, 3); IDN-04 (ACs 1, 3, 7); IDN-06 (ACs 1, 6); RBAC-03 (ACs 1); RBAC-02 (ACs 1, 2); AUD-03 (ACs 1)
 
 **Tools**:
 
@@ -1962,10 +2141,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Fluxo: bootstrap, login, criar usuário FINANCEIRO, atribuir papel, desativar, consultar auditoria
-- [ ] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão
+- [ ] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, atribuir papel, retirar o acesso, desativar, consultar auditoria
+- [ ] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
 - [ ] Todas as respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 13 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1977,7 +2156,7 @@ T67 → T68 → T69 → T70
 
 ### Phase 12: Guardrails e documentação (tarefas)
 
-### T67: Criar o teste de fronteiras entre módulos, baseado em análise de imports
+### T73: Criar o teste de fronteiras entre módulos, baseado em análise de imports
 
 **What**: Criar o teste de fronteiras entre módulos, baseado em análise de imports.  
 **Where**: `api/internal/architecture_test.go`  
@@ -2005,11 +2184,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T68: Registrar AD-011 a AD-013 em `.specs/STATE.md`
+### T74: Registrar AD-012 a AD-014 em `.specs/STATE.md`
 
-**What**: Registrar AD-011 a AD-013 em `.specs/STATE.md`.  
+**What**: Registrar AD-012 a AD-014 em `.specs/STATE.md`.  
 **Where**: `.specs/STATE.md`  
-**Depends on**: T67  
+**Depends on**: T73  
 **Reuses**: Formato dos AD existentes  
 **Requirement**: API-01 (ACs 1); TST-01 (ACs 1); RBAC-02 (ACs 3); API-02 (ACs 1)
 
@@ -2020,7 +2199,7 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Três decisões novas (AD-011 a AD-013), sem tocar na seção Handoff além de atualizá-la
+- [ ] Três decisões novas (AD-012 a AD-014), sem tocar na seção Handoff além de atualizá-la
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
@@ -2030,11 +2209,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T69: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato
+### T75: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato
 
 **What**: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato.  
 **Where**: `docs/architecture/architecture-overview.md`  
-**Depends on**: T68  
+**Depends on**: T74  
 **Reuses**: Documento atual  
 **Requirement**: API-01 (ACs 1)
 
@@ -2056,11 +2235,11 @@ T67 → T68 → T69 → T70
 
 ---
 
-### T70: Documentar como rodar testes de integração, migrar e criar o primeiro administrador
+### T76: Documentar como rodar testes de integração, migrar e criar o primeiro administrador
 
 **What**: Documentar como rodar testes de integração, migrar e criar o primeiro administrador.  
 **Where**: `docs/CONTRIBUTING.md`  
-**Depends on**: T69  
+**Depends on**: T75  
 **Reuses**: Documento atual  
 **Requirement**: TST-01 (ACs 1, 5); IDN-01 (ACs 1)
 
@@ -2156,6 +2335,12 @@ T67 → T68 → T69 → T70
 | T68 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T69 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T70 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T71 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T72 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T73 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T74 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T75 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T76 | 1 arquivo principal, com seu teste | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -2203,20 +2388,20 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T38 | T37 | T37 | ✅ Match |
 | T39 | T38 | T38 | ✅ Match |
 | T40 | T39 | T39 | ✅ Match |
-| T41 | - | - | ✅ Match |
-| T42 | T41 | T41 | ✅ Match |
+| T41 | T40 | T40 | ✅ Match |
+| T42 | - | - | ✅ Match |
 | T43 | T42 | T42 | ✅ Match |
 | T44 | T43 | T43 | ✅ Match |
 | T45 | T44 | T44 | ✅ Match |
 | T46 | T45 | T45 | ✅ Match |
 | T47 | T46 | T46 | ✅ Match |
 | T48 | T47 | T47 | ✅ Match |
-| T49 | - | - | ✅ Match |
+| T49 | T48 | T48 | ✅ Match |
 | T50 | T49 | T49 | ✅ Match |
 | T51 | T50 | T50 | ✅ Match |
-| T52 | T51 | T51 | ✅ Match |
+| T52 | - | - | ✅ Match |
 | T53 | T52 | T52 | ✅ Match |
-| T54 | - | - | ✅ Match |
+| T54 | T53 | T53 | ✅ Match |
 | T55 | T54 | T54 | ✅ Match |
 | T56 | T55 | T55 | ✅ Match |
 | T57 | T56 | T56 | ✅ Match |
@@ -2226,13 +2411,19 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T61 | T60 | T60 | ✅ Match |
 | T62 | T61 | T61 | ✅ Match |
 | T63 | T62 | T62 | ✅ Match |
-| T64 | T63 | T63 | ✅ Match |
+| T64 | - | - | ✅ Match |
 | T65 | T64 | T64 | ✅ Match |
 | T66 | T65 | T65 | ✅ Match |
-| T67 | - | - | ✅ Match |
+| T67 | T66 | T66 | ✅ Match |
 | T68 | T67 | T67 | ✅ Match |
 | T69 | T68 | T68 | ✅ Match |
 | T70 | T69 | T69 | ✅ Match |
+| T71 | T70 | T70 | ✅ Match |
+| T72 | T71 | T71 | ✅ Match |
+| T73 | - | - | ✅ Match |
+| T74 | T73 | T73 | ✅ Match |
+| T75 | T74 | T74 | ✅ Match |
+| T76 | T75 | T75 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -2276,61 +2467,69 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T36: r_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T37: r_perm | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
 | T38: r_authz | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T39: r_matrix | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T40: r_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T41: pw | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T42: pw_deny | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T43: u_dom | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T44: u_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T45: s_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T46: at_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T47: authn | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T48: sess | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T49: uc_create | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T50: uc_deact | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T51: uc_pw | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T52: uc_roles | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T53: uc_list | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T54: oa_identity | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T55: oa_identity_gen | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T56: oa_audit | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T57: mw_authn | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T58: mw_csrf | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T59: h_auth | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T60: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T61: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T62: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T63: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T64: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T65: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T66: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T67: arch | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T68: state | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T69: docs_arch | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T70: docs_contrib | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T39: r_escal | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T40: r_matrix | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T41: r_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T42: pw | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T43: pw_deny | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T44: u_dom | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T45: am_dom | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T46: u_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T47: am_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T48: s_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T49: at_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T50: authn | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T51: sess | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T52: uc_create | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T53: uc_deact | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T54: uc_pw | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T55: uc_promote | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T56: uc_revoke | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T57: uc_roles | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T58: uc_list | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T59: oa_identity | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T60: oa_identity_gen | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T61: oa_audit | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T62: mw_authn | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T63: mw_csrf | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T64: h_auth | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T65: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T66: h_admin | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T67: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T68: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T69: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T70: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T71: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T72: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T73: arch | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T74: state | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T75: docs_arch | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T76: docs_contrib | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
 
 ## Requirement Coverage
 
 | Requirement ID | Tasks |
 | -------------- | ----- |
-| IDN-01 | T41, T43, T63, T64, T70 |
-| IDN-02 | T36, T45, T46, T47, T48, T54, T57, T59, T66 |
-| IDN-03 | T58, T66 |
-| IDN-04 | T41, T43, T44, T49, T50, T51, T52, T53, T54, T59, T60, T66 |
-| IDN-05 | T36, T42, T43, T49, T51, T52, T63 |
-| RBAC-01 | T36, T37, T39, T40, T52, T65 |
-| RBAC-02 | T38, T48, T49, T50, T52, T57, T62, T66, T68 |
+| IDN-01 | T42, T44, T69, T70, T76 |
+| IDN-02 | T36, T48, T49, T50, T51, T59, T62, T64, T72 |
+| IDN-03 | T63, T72 |
+| IDN-04 | T42, T44, T46, T52, T53, T54, T57, T58, T59, T64, T65, T72 |
+| IDN-05 | T36, T43, T44, T52, T54, T55, T69 |
+| IDN-06 | T36, T45, T47, T55, T56, T57, T59, T66, T72 |
+| RBAC-01 | T36, T37, T40, T41, T57, T71 |
+| RBAC-02 | T38, T51, T52, T53, T55, T56, T57, T62, T68, T72, T74 |
+| RBAC-03 | T39, T55, T56, T57, T66, T72 |
 | AUD-01 | T32, T33, T34, T35 |
 | AUD-02 | T31 |
-| AUD-03 | T56, T61, T66 |
+| AUD-03 | T61, T67, T72 |
 | MNY-01 | T17, T20 |
 | MNY-02 | T18, T19, T21, T22 |
 | MNY-03 | T20 |
-| TST-01 | T7, T8, T10, T11, T12, T13, T68, T70 |
-| TST-02 | T67 |
+| TST-01 | T7, T8, T10, T11, T12, T13, T74, T76 |
+| TST-02 | T73 |
 | TST-03 | T14, T15, T16, T22 |
-| API-01 | T23, T24, T25, T26, T27, T28, T29, T30, T54, T55, T56, T68, T69 |
-| API-02 | T3, T4, T5, T23, T25, T53, T62, T68 |
-| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T62, T65 |
+| API-01 | T23, T24, T25, T26, T27, T28, T29, T30, T59, T60, T61, T74, T75 |
+| API-02 | T3, T4, T5, T23, T25, T58, T68, T74 |
+| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T68, T71 |
 
-**Coverage:** 19 total, 19 mapped to tasks, 0 unmapped
+**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped
