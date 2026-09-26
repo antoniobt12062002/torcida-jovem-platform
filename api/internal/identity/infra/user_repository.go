@@ -111,6 +111,11 @@ func (r *UserRepository) SetPassword(ctx context.Context, id, hash string, mustC
 	return r.update(ctx, id, "password_hash = ?, must_change_password = ?", hash, mustChange)
 }
 
+// SetMustChangePassword sets only the must-change flag.
+func (r *UserRepository) SetMustChangePassword(ctx context.Context, id string, mustChange bool) error {
+	return r.update(ctx, id, "must_change_password = ?", mustChange)
+}
+
 // SetActive activates or deactivates the user.
 func (r *UserRepository) SetActive(ctx context.Context, id string, active bool) error {
 	return r.update(ctx, id, "is_active = ?", active)

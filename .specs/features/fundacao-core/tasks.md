@@ -1881,14 +1881,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:admin:grant` antes de qualquer leitura ou escrita
-- [ ] Exige ao menos um papel administrativo, senão 422 `admin_role_required`
-- [ ] Cria o vínculo com motivo, atribui os papéis, marca `must_change_password` quando o usuário não tinha vínculo ativo, revoga todas as sessões do alvo e grava `admin.promote` com papéis anteriores e novos, tudo na mesma transação
-- [ ] Ator não concede papel com permissão que ele não possui (403 `privilege_escalation`) nem altera a si mesmo (403 `self_change_forbidden`)
-- [ ] A tentativa negada por escalada ou por autoalteração grava `role.change_denied` em transação própria
-- [ ] Alvo inativo devolve 409 `user_inactive` e vínculo ativo existente devolve 409 `already_admin`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:admin:grant` antes de qualquer leitura ou escrita
+- [x] Exige ao menos um papel administrativo, senão 422 `admin_role_required`
+- [x] Cria o vínculo com motivo, atribui os papéis, marca `must_change_password` quando o usuário não tinha vínculo ativo, revoga todas as sessões do alvo e grava `admin.promote` com papéis anteriores e novos, tudo na mesma transação
+- [x] Ator não concede papel com permissão que ele não possui (403 `privilege_escalation`) nem altera a si mesmo (403 `self_change_forbidden`)
+- [x] A tentativa negada por escalada ou por autoalteração grava `role.change_denied` em transação própria
+- [x] Alvo inativo devolve 409 `user_inactive` e vínculo ativo existente devolve 409 `already_admin`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

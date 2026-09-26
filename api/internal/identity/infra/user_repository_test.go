@@ -282,3 +282,20 @@ func TestActiveHoldersOfCountsOnlyActiveUsersWithTheActivePermission(t *testing.
 		t.Errorf("permissão inativa não conta, titulares = %d", n)
 	}
 }
+
+func TestSetMustChangePasswordChangesOnlyTheFlag(t *testing.T) {
+	_, repo := newUserRepo(t)
+	u, _ := repo.Create(context.Background(), newDomainUser("ana@exemplo.com"))
+
+	if err := repo.SetMustChangePassword(context.Background(), u.ID, true); err != nil {
+		t.Fatal(err)
+	}
+
+	got, _ := repo.FindByID(context.Background(), u.ID)
+	if !got.MustChangePassword || got.PasswordHash != u.PasswordHash || !got.Active {
+		t.Errorf("usuário = %+v", got)
+	}
+	if err := repo.SetMustChangePassword(context.Background(), "0f8fad5b-d9cb-469f-a165-70867728950e", true); !errors.Is(err, domain.ErrUserNotFound) {
+		t.Errorf("err = %v", err)
+	}
+}

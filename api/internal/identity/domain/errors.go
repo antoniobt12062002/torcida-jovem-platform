@@ -15,4 +15,5 @@ var (
 	ErrInvalidCursor          = errors.New("invalid_cursor")
 	ErrInvalidName            = errors.New("invalid_name")
 	ErrInvalidEmail           = errors.New("invalid_email")
+	ErrUnknownRole            = errors.New("unknown_role")
 )
