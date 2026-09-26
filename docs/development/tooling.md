@@ -53,7 +53,7 @@ Achados adicionais:
 ## Pendentes de escolha (sempre com consulta à documentação vigente)
 
 - Gerador de servidor OpenAPI para Gin, gerador de tipos TypeScript e linter de OpenAPI (tarefa T24 da `fundacao-core`).
-- Lista de senhas comprometidas: fonte e licença (tarefa T42).
+- Lista de senhas comprometidas: fonte e licença (tarefa T43).
 - SDK de S3 e emulador local de S3 (`fundacao-documentos`, tarefas T3 e T4).
 
 ## Limitações conhecidas

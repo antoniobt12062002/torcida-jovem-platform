@@ -147,7 +147,7 @@ Regras de desenho:
 
 - **Purpose**: Permissões, principal e verificação.
 - **Location**: `api/internal/platform/authz/`
-- **Interfaces**: `type Permission string`; `ParsePermission(string) (Permission, error)`; `Principal{UserID, Roles []string, Permissions map[Permission]struct{}}`; `Require(p Principal, perm Permission) error`.
+- **Interfaces**: `type Permission string`; `ParsePermission(string) (Permission, error)`; `Principal{UserID, Roles []string, Permissions map[Permission]struct{}}`; `Require(p Principal, perm Permission) error`; `Covers(p Principal, needed []Permission) (missing []Permission)`, usada pela regra de concessão sem escalada.
 - **Dependencies**: nenhuma.
 
 ### platform/password
@@ -159,14 +159,14 @@ Regras de desenho:
 
 ### identity
 
-- **Purpose**: Usuários, papéis, sessões e casos de uso de acesso.
+- **Purpose**: Usuários, papéis, vínculo administrativo, sessões e casos de uso de acesso.
 - **Location**: `api/internal/identity/{domain,app,infra,http}/`
-- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser`, `DeactivateUser`, `ChangePassword`, `AssignRoles`, `ListUsers`, `SyncRoles`; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
+- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
 - **Dependencies**: `platform/*`.
 
 ### cmd/bootstrap-admin e cmd/api
 
-- **Purpose**: CLI do primeiro ADMIN e ponto de entrada com a fiação (config, logger, sincronização de papéis, router).
+- **Purpose**: CLI do primeiro administrador (ADMIN_SISTEMA ou PRESIDENTE) e ponto de entrada com a fiação (config, logger, sincronização de papéis, router).
 - **Location**: `api/cmd/bootstrap-admin/`, `api/cmd/api/`
 
 ### web/lib/money.ts e web/lib/api
@@ -213,6 +213,32 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 
 ---
 
+## Modelo de identidade
+
+Aprovado com ajustes em 2026-09-26 (aguarda nova aprovação para implementar).
+
+```mermaid
+erDiagram
+    USERS ||--o{ USER_ROLES : "tem (vários papéis)"
+    ROLES ||--o{ USER_ROLES : ""
+    ROLES ||--o{ ROLE_PERMISSIONS : ""
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : ""
+    USERS ||--o{ ADMIN_MEMBERSHIPS : "por que administra"
+    USERS ||--o{ SESSIONS : ""
+    ASSOCIADOS }o..o| USERS : "associados.user_id (módulo dono)"
+```
+
+- **Usuário × Associado**: entidades separadas. O vínculo fica em `associados.associados.user_id`, no módulo dono do domínio; `identity` nunca importa `associados`. A spec de `associados` cria a coluna e o caso de uso "dar acesso ao associado", que chama `identity` pela interface publicada de criação de usuário.
+- **Papel × permissão**: permissões são um catálogo versionado no código (`<módulo>:<recurso>:<ação>`); papéis são agrupadores. O usuário pode ter vários papéis ativos, a permissão efetiva é a união, e o padrão é negar.
+- **Vínculo administrativo × papel**: `AdminMembership` diz *por que* a pessoa tem acesso administrativo (motivo, quem concedeu, quando, encerramento); o papel diz *o que* ela pode fazer. Papel diferente de ASSOCIADO exige vínculo ativo. O vínculo nunca é apagado.
+- **Promoção**: `PromoteToAdmin` cria o vínculo, atribui os papéis, marca `must_change_password` (se não havia vínculo), revoga as sessões do alvo e audita, numa transação. `RevokeAdmin` faz o caminho inverso e deixa só ASSOCIADO. Toda conta nasce ASSOCIADO; esse é o único caminho para conceder poder, além da CLI do primeiro administrador.
+- **Sem escalada**: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas (`authz.Covers`), e nunca os próprios. Consequência: ADMIN_SISTEMA (sem permissões institucionais) não concede PRESIDENTE nem CONSELHO_FISCAL; o PRESIDENTE concede qualquer papel.
+- **Sessões**: promoção e retirada revogam todas as sessões do alvo; troca de papéis vale na requisição seguinte, pois o `Principal` é lido do banco a cada requisição.
+- **Auditoria de permissões**: `admin.promote`, `admin.revoke`, `user.roles_set`, `rbac.sync` (mudança da matriz na partida, sem ator) e `role.change_denied` (tentativa negada, em transação própria).
+- **Evolução futura**: dupla aprovação para promoção administrativa, fora da V1.
+
+---
+
 ## Data Models
 
 Novas migrações (todas com `down`): `000002_audit_log` e `000003_identity`. A `000004_documents` pertence a `fundacao-documentos`. Cada uma concede ao papel `tj_app` apenas o necessário e falha com mensagem clara se o papel não existir.
@@ -251,10 +277,22 @@ CREATE TABLE users (
 );
 CREATE UNIQUE INDEX users_email_uq ON users (lower(email));
 
-CREATE TABLE roles (id smallserial PRIMARY KEY, name text NOT NULL UNIQUE, description text NOT NULL);
+CREATE TABLE roles (id smallserial PRIMARY KEY, name text NOT NULL UNIQUE, description text NOT NULL);  -- ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL, ADMIN_SISTEMA
 CREATE TABLE permissions (id serial PRIMARY KEY, name text NOT NULL UNIQUE, is_active boolean NOT NULL DEFAULT true);
 CREATE TABLE role_permissions (role_id smallint REFERENCES roles, permission_id int REFERENCES permissions, PRIMARY KEY (role_id, permission_id));
 CREATE TABLE user_roles (user_id uuid REFERENCES users, role_id smallint REFERENCES roles, PRIMARY KEY (user_id, role_id));
+
+CREATE TABLE admin_memberships (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES users,
+  reason        text NOT NULL CHECK (length(btrim(reason)) >= 10),
+  granted_by    uuid REFERENCES users,          -- nulo apenas no bootstrap
+  granted_at    timestamptz NOT NULL DEFAULT now(),
+  revoked_by    uuid REFERENCES users,
+  revoke_reason text,
+  revoked_at    timestamptz
+);
+CREATE UNIQUE INDEX admin_memberships_active_uq ON admin_memberships (user_id) WHERE revoked_at IS NULL;
 
 CREATE TABLE sessions (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -277,9 +315,9 @@ CREATE TABLE login_attempts (
 CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC);
 ```
 
-**Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`. `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
+**Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`; `admin_memberships` guarda o histórico de por que cada usuário teve acesso administrativo (um ativo por usuário). Não há coluna de associado em `users`. `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
 
-**Papéis de banco**: `tj_owner` (migrações e DDL) e `tj_app` (API). `tj_app` tem `SELECT/INSERT/UPDATE/DELETE` nas tabelas de identidade e só `SELECT/INSERT` em `audit_log`. O script `docker/postgres/init/01-roles.sql` cria os papéis no ambiente local, e o helper de testes faz o mesmo.
+**Papéis de banco**: `tj_owner` (migrações e DDL) e `tj_app` (API). `tj_app` tem `SELECT/INSERT/UPDATE/DELETE` nas tabelas de identidade (exceto `admin_memberships`, sem `DELETE`) e só `SELECT/INSERT` em `audit_log`. O script `docker/postgres/init/01-roles.sql` cria os papéis no ambiente local, e o helper de testes faz o mesmo.
 
 ---
 
@@ -295,7 +333,9 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | CSRF ou origem inválidos | 403 `csrf_invalid` ou `origin_not_allowed` | Recarregar a página |
 | Excesso de tentativas de login | 429 com `Retry-After` | Aguardar 15 minutos |
 | JSON malformado ou validação | 400 `invalid_json` ou 422 `validation_failed` com `errors[]` | Corrigir os campos |
-| Conflito (e-mail repetido, último ADMIN) | 409 `email_taken` ou `last_admin` | Mensagem específica |
+| Conflito (e-mail repetido, último administrador, vínculo administrativo) | 409 `email_taken`, `last_admin`, `already_admin`, `not_admin`, `user_inactive` ou `admin_membership_required` | Mensagem específica |
+| Motivo do vínculo ausente ou curto | 422 `reason_required` | Informar o motivo |
+| Concessão acima do próprio poder ou alteração do próprio acesso | 403 `privilege_escalation` ou `self_change_forbidden`, com auditoria `role.change_denied` | Acesso negado |
 | Falha ao gravar auditoria | Reverte a transação, 500 `audit_failed` | Operação não realizada, sem efeito parcial |
 | Banco indisponível | 503 `service_unavailable` | Tentar mais tarde |
 | Panic não tratado | 500 `internal_error` com `request_id`, sem detalhes internos | Informar o `request_id` ao suporte |
@@ -306,7 +346,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T62 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T68 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |
@@ -316,7 +356,8 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Suporte do `oapi-codegen` a `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo entre módulos ainda não foi comprovado | não se aplica (ainda não instalado) | Contrato ou geração incompatíveis com as convenções da API | Teste rápido na tarefa T24 antes de fixar a solução; se falhar, volta ao mantenedor |
 | Versões e ferramentas (geradores e linter de OpenAPI, biblioteca de migrações, testcontainers) não foram verificadas na documentação vigente | não se aplica (ainda não instaladas) | Escolher ferramenta descontinuada ou com licença inadequada | Cada tarefa de instalação pesquisa a documentação atual e fixa a versão antes de usar |
 | A lista de senhas comprometidas depende de uma fonte externa e de licença compatível | não se aplica (ainda não adicionada) | Lista defasada ou com licença incompatível com um repositório proprietário | A tarefa da lista registra a fonte e a licença; se não houver fonte adequada, gerar uma lista própria de senhas comuns |
-| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T41 confere o OWASP vigente e mede o custo |
+| Parâmetros do argon2id podem estar defasados ou pesados para a hospedagem | não se aplica (ainda não implementado) | Segurança fraca ou uso excessivo de memória | Tarefa T42 confere o OWASP vigente e mede o custo |
+| A regra sem escalada faz o ADMIN_SISTEMA não conseguir conceder papéis com permissões que ele não tem (PRESIDENTE, CONSELHO_FISCAL, e os papéis de módulo enquanto não receber as permissões deles) | `api/internal/platform/authz` (a criar) | Concessão de papéis concentrada no PRESIDENTE, o que pode surpreender | Efeito intencional (spec, RBAC-03); a matriz de cada módulo decide se o ADMIN_SISTEMA recebe as permissões do módulo |
 | Esquecer a transação no caso de uso deixa a auditoria fora dela | não se aplica | Auditoria sem atomicidade | `Recorder` retorna erro sem transação no contexto (AUD-01.6) e há teste de atomicidade (T35) |
 | Código gerado versionado gera conflitos de merge | não se aplica | Fricção em PRs | CI recusa diferenças; regenerar é um comando único |
 
@@ -332,12 +373,15 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 | Hash do token de sessão | SHA-256 (não argon2) | O token tem 256 bits aleatórios; hash lento não agrega e custaria a cada requisição |
 | Cursor de paginação | Base64 de `(occurred_at, id)` | Estável sob inserções concorrentes, ao contrário de `OFFSET` |
 | Permissões declaradas em código | Matriz papel-permissão em Go, sincronizada na partida | Revisável em PR e testável; migrações de dados de permissão seriam difíceis de auditar |
+| Vínculo usuário-associado | `associados.associados.user_id`, no módulo dono | `identity` não depende de `associados` (regra de fronteira) |
+| Um caminho para conceder poder | Contas nascem ASSOCIADO; só `PromoteToAdmin` (e a CLI do primeiro administrador) concede papéis administrativos | Concentra motivo, `must_change_password`, revogação de sessões e auditoria em um caso de uso |
 | `audit_log.actor_user_id` sem chave estrangeira | Referência lógica | Evita que uma restrição de FK impeça o registro de auditoria |
 | `Principal` sem cache | Consulta por requisição | Mudança de papel vale de imediato; custo aceitável no volume atual |
 | Migrações fora da partida da API | Ferramenta `migrate` separada | Cumpre o ADR-002 (nada de `AutoMigrate`) e o papel sem DDL |
 
-> **Decisões de projeto a registrar em `.specs/STATE.md`** (AD-011 a AD-013 na tarefa de guardrails):
+> **Decisões de projeto a registrar em `.specs/STATE.md`** (AD-012 a AD-014 na tarefa de guardrails):
 > - AD-010 já registrado (contrato OpenAPI contract-first, ADR-008).
-> - AD-011: testes de integração atrás da tag `integration`, com PostgreSQL real via testcontainers.
-> - AD-012: autorização no caso de uso, rotas negadas por padrão, e papéis de banco separados (dono e aplicação).
-> - AD-013: erros em `application/problem+json`, paginação por cursor e identificador de requisição.
+> - AD-011 já registrado (modelo de identidade, ADR-009).
+> - AD-012: testes de integração atrás da tag `integration`, com PostgreSQL real via testcontainers.
+> - AD-013: autorização no caso de uso, rotas negadas por padrão, e papéis de banco separados (dono e aplicação).
+> - AD-014: erros em `application/problem+json`, paginação por cursor e identificador de requisição.
