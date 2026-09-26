@@ -197,7 +197,7 @@ func TestRecordFailureReturnsErrWrite(t *testing.T) {
 	}
 }
 
-// AUD-04.6: RecordSecurity grava em transação própria, independente da de negócio.
+// AUD-04.6: RecordSecurity grava em transação própria, sem depender da de negócio.
 func TestRecordSecuritySurvivesTheRollbackOfTheBusinessTransaction(t *testing.T) {
 	e := newEnv(t)
 	denied := audit.Entry{
@@ -244,7 +244,7 @@ func TestRecordSecurityWorksWithoutAnyBusinessTransactionForAnonymousActors(t *t
 	}
 }
 
-// AUD-04.6: se a gravação do evento falhar, vira incidente operacional e nada mais.
+// AUD-04.6: se a gravação do evento falhar, vira só um incidente registrado em log.
 func TestRecordSecurityFailureIsLoggedAsAnIncidentAndDoesNotPanicOrReturn(t *testing.T) {
 	e := newEnv(t)
 	if err := e.owner.Exec("ALTER TABLE audit_log RENAME TO audit_log_off").Error; err != nil {
