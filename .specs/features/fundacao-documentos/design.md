@@ -43,7 +43,7 @@ Ordem em `Store`: permissão, validação de extensão, leitura em streaming com
 | System | Integration Method |
 |---|---|
 | Object storage S3 | Cliente S3 atrás da interface `storage.Storage`, endpoint configurável e estilo de path opcional; SDK a confirmar na tarefa T4 |
-| PostgreSQL | Migração `000004_documents`, com `tj_app` sem UPDATE e DELETE |
+| PostgreSQL | Migração `000005_documents`, com `tj_app` sem UPDATE e DELETE |
 
 ---
 
@@ -67,10 +67,10 @@ Ordem em `Store`: permissão, validação de extensão, leitura em streaming com
 
 ## Data Models
 
-Migração `000004_documents` (com `down`, e falha com mensagem clara se o papel `tj_app` não existir).
+Migração `000005_documents` (com `down`, e falha com mensagem clara se o papel `tj_app` não existir).
 
 ```sql
--- 000004_documents
+-- 000005_documents
 CREATE TABLE documents (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_type        text NOT NULL,

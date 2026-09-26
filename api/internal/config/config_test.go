@@ -5,6 +5,7 @@ import "testing"
 func TestLoad(t *testing.T) {
 	t.Run("usa porta padrao", func(t *testing.T) {
 		t.Setenv("DATABASE_URL", "postgres://x")
+		t.Setenv("AUTH_HASH_KEY", testHashKey)
 		t.Setenv("PORT", "")
 		cfg, err := Load()
 		if err != nil || cfg.Port != "8080" || cfg.DatabaseURL != "postgres://x" {
@@ -13,6 +14,7 @@ func TestLoad(t *testing.T) {
 	})
 	t.Run("respeita PORT", func(t *testing.T) {
 		t.Setenv("DATABASE_URL", "postgres://x")
+		t.Setenv("AUTH_HASH_KEY", testHashKey)
 		t.Setenv("PORT", "9000")
 		cfg, _ := Load()
 		if cfg.Port != "9000" {

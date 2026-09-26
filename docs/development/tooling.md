@@ -23,6 +23,8 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | `@redocly/cli` | 2.54.3 | `web/package.json` | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | `pnpm lint:api` lê o mesmo `web/redocly.yaml`; regras `info-license` e `operation-4xx-response` desligadas. Fixado na T29 |
 | `openapi-fetch` | 0.17.0 | (primeira tela real) | npm | 2026-09-26 | Não instalado agora |
 | `oapi-codegen/gin-middleware` | v1.1.0 | recusado | proxy do Go | 2026-09-26 | Não atende a API-02.4 (só entrega mensagem em texto); no lugar, middleware próprio em `platform/httpx` sobre o `kin-openapi` |
+| `golang.org/x/crypto` (argon2) | v0.57.0 | `api/go.mod` | [pkg.go.dev](https://pkg.go.dev/golang.org/x/crypto/argon2) e [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) | 2026-09-26 | `argon2.IDKey` (argon2id). Padrão 19 MiB, 2 iterações e paralelismo 1, o mínimo recomendado pelo OWASP para argon2id; custo medido na máquina de desenvolvimento: cerca de 17 ms por hash. Os parâmetros são configuráveis (`ARGON2_*`) e vão dentro do hash (formato PHC), então mudar o padrão não invalida hashes antigos |
+| Lista de senhas comuns (`denylist.txt`) | SecLists commit `c205c36` (2025-05-08) | `api/internal/platform/password/` | [SecLists](https://github.com/danielmiessler/SecLists), arquivo `Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt` | 2026-09-26 | Licença MIT (reproduzida em `denylist.SOURCE.txt`). Filtrada para minúsculas, 8 ou mais caracteres, sem espaços nem repetidas: 38451 entradas, cerca de 355 KB. Embutida no binário; nenhuma consulta externa. Consulta externa (k-anonymity) segue como evolução em aberto |
 
 ### Resultado do teste rápido (T24)
 
@@ -53,7 +55,6 @@ Achados adicionais:
 ## Pendentes de escolha (sempre com consulta à documentação vigente)
 
 - Gerador de servidor OpenAPI para Gin, gerador de tipos TypeScript e linter de OpenAPI (tarefa T24 da `fundacao-core`).
-- Lista de senhas comprometidas: fonte e licença (tarefa T44).
 - SDK de S3 e emulador local de S3 (`fundacao-documentos`, tarefas T3 e T4).
 
 ## Limitações conhecidas

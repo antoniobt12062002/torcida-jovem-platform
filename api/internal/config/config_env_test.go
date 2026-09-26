@@ -9,12 +9,21 @@ import (
 var allVars = []string{
 	"APP_ENV", "LOG_LEVEL", "PORT", "DATABASE_URL", "ALLOWED_ORIGINS",
 	"COOKIE_SECURE", "COOKIE_DOMAIN", "SESSION_IDLE_MINUTES", "SESSION_ABSOLUTE_HOURS",
+	"AUTH_HASH_KEY", "ARGON2_MEMORY_KIB", "ARGON2_ITERATIONS", "ARGON2_PARALLELISM",
+	"PASSWORD_RESET_TTL_MINUTES", "EMAIL_PROVIDER", "EMAIL_FROM", "APP_BASE_URL",
 }
+
+// testHashKey satisfies the 32-byte minimum; setEnv uses it unless a test sets
+// AUTH_HASH_KEY itself.
+const testHashKey = "0123456789abcdef0123456789abcdef"
 
 func setEnv(t *testing.T, kv map[string]string) {
 	t.Helper()
 	for _, k := range allVars {
 		t.Setenv(k, "")
+	}
+	if _, ok := kv["AUTH_HASH_KEY"]; !ok {
+		t.Setenv("AUTH_HASH_KEY", testHashKey)
 	}
 	for k, v := range kv {
 		t.Setenv(k, v)
