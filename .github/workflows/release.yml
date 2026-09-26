@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      created: ${{ steps.tag.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: v
+        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+      - id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.v.outputs.version }}"
+          if [ "$version" = "0.0.0" ]; then
+            echo "VERSION 0.0.0 = sem release; nada a fazer."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git rev-parse "v$version" >/dev/null 2>&1; then
+            echo "Tag v$version ja existe; nada a fazer."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          awk -v h="## v$version " 'index($0,h)==1{f=1;next} /^## v/{f=0} f' CHANGELOG.md > notes.md
+          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" --notes-file notes.md
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+  deploy-production:
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder de deploy
+        run: |
+          echo "TODO: deploy de $(cat VERSION) em producao; aprovacao do PO via Environment production"
+
+  back-merge:
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Abre PR main -> develop e dispara o CI na branch
+        run: |
+          version="${{ needs.release.outputs.version }}"
+          branch="backmerge/v$version"
+          git checkout -b "$branch"
+          git push origin "$branch"
+          gh pr create --base develop --head "$branch" \
+            --title "chore: back-merge v$version na develop" \
+            --body "Traz a release v$version de volta para a develop. **Use 'Create a merge commit' (nao squash)** para a tag continuar alcancavel pela develop."
+          gh workflow run ci.yml --ref "$branch"

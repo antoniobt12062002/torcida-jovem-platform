@@ -1,0 +1,51 @@
+name: Cut release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Tipo de bump (auto calcula pelos commits)
+        type: choice
+        options: [auto, major, minor, patch]
+        default: auto
+
+permissions:
+  contents: write
+
+jobs:
+  cut:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      branch: ${{ steps.v.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+      - name: Calcula versao
+        id: v
+        run: |
+          version=$(bash .github/scripts/next-version.sh "${{ inputs.bump }}")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "branch=release/v$version" >> "$GITHUB_OUTPUT"
+      - name: Cria release branch, VERSION e CHANGELOG
+        run: |
+          version="${{ steps.v.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "release/v$version"
+          bash .github/scripts/changelog-entry.sh "$version" > /tmp/entry.md
+          { head -n 2 CHANGELOG.md; cat /tmp/entry.md; tail -n +3 CHANGELOG.md; } > /tmp/CHANGELOG.md
+          mv /tmp/CHANGELOG.md CHANGELOG.md
+          echo "$version" > VERSION
+          git add VERSION CHANGELOG.md
+          git commit -m "chore(release): v$version"
+          git push origin "release/v$version"
+
+  deploy-staging:
+    needs: cut
+    uses: ./.github/workflows/deploy-staging.yml
+    with:
+      ref: ${{ needs.cut.outputs.branch }}
