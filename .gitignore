@@ -4,6 +4,12 @@
 .cursor/
 .windsurf/
 
+# Ambiente e dependencias
+.env
+.env.local
+node_modules/
+.next/
+
 # Sistema
 .DS_Store
 Thumbs.db
