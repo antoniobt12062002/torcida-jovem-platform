@@ -18,7 +18,7 @@ func NewRouter(ping PingFunc) *gin.Engine {
 	r.Use(httpx.RequestID(), gin.Recovery(), gin.Logger())
 
 	// Each module validates its own requests against its own contract.
-	spec, err := platformapi.GetSwagger()
+	spec, err := platformapi.GetSpec()
 	if err != nil {
 		panic(fmt.Sprintf("contrato platform embutido inválido: %v", err))
 	}

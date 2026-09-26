@@ -16,8 +16,8 @@ import (
 // kin-openapi only checks the formats it knows; register the ones the
 // contracts use so a format violation is a 422 and not silently accepted.
 func init() {
-	openapi3.DefineStringFormat("uuid", `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
-	openapi3.DefineStringFormat("email", `^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+	openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`))
+	openapi3.DefineStringFormatValidator("email", openapi3.NewRegexpFormatValidator(`^[^@\s]+@[^@\s]+\.[^@\s]+$`))
 }
 
 // LoadContract reads and validates an OpenAPI document, resolving references
