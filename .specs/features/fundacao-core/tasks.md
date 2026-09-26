@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-core/design.md`
-**Status**: Approved (2026-09-27); execução em lotes pequenos, por fase
+**Status**: In Progress (execução em lotes pequenos, por fase)
 
 Regras deste plano:
 
@@ -149,12 +149,12 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Variável ausente ou inválida devolve erro que nomeia a variável e não contém valores secretos
-- [ ] `COOKIE_SECURE=false` com `APP_ENV` diferente de `development` é recusado
-- [ ] Padrões: 60 minutos de ociosidade e 8 horas de teto absoluto
-- [ ] Testes existentes de `config` continuam passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Variável ausente ou inválida devolve erro que nomeia a variável e não contém valores secretos
+- [x] `COOKIE_SECURE=false` com `APP_ENV` diferente de `development` é recusado
+- [x] Padrões: 60 minutos de ociosidade e 8 horas de teto absoluto
+- [x] Testes existentes de `config` continuam passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
