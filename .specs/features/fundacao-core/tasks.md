@@ -1412,12 +1412,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Parâmetros iniciais conferidos com a recomendação vigente do OWASP e custo medido
-- [ ] Hash inclui parâmetros e sal; verificação em tempo constante
-- [ ] Hash nunca aparece em log
-- [ ] Memória, iterações e paralelismo vêm da configuração
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Parâmetros iniciais conferidos com a recomendação vigente do OWASP e custo medido
+- [x] Hash inclui parâmetros e sal; verificação em tempo constante
+- [x] Hash nunca aparece em log
+- [x] Memória, iterações e paralelismo vêm da configuração
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

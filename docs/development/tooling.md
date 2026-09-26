@@ -23,6 +23,7 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | `@redocly/cli` | 2.54.3 | `web/package.json` | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | `pnpm lint:api` lê o mesmo `web/redocly.yaml`; regras `info-license` e `operation-4xx-response` desligadas. Fixado na T29 |
 | `openapi-fetch` | 0.17.0 | (primeira tela real) | npm | 2026-09-26 | Não instalado agora |
 | `oapi-codegen/gin-middleware` | v1.1.0 | recusado | proxy do Go | 2026-09-26 | Não atende a API-02.4 (só entrega mensagem em texto); no lugar, middleware próprio em `platform/httpx` sobre o `kin-openapi` |
+| `golang.org/x/crypto` (argon2) | v0.57.0 | `api/go.mod` | [pkg.go.dev](https://pkg.go.dev/golang.org/x/crypto/argon2) e [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) | 2026-09-26 | `argon2.IDKey` (argon2id). Padrão 19 MiB, 2 iterações e paralelismo 1, o mínimo recomendado pelo OWASP para argon2id; custo medido na máquina de desenvolvimento: cerca de 17 ms por hash. Os parâmetros são configuráveis (`ARGON2_*`) e vão dentro do hash (formato PHC), então mudar o padrão não invalida hashes antigos |
 
 ### Resultado do teste rápido (T24)
 

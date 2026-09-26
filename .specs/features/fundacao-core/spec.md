@@ -573,10 +573,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| IDN-01 | P1: Primeiro administrador | In Tasks | Pending |
+| IDN-01 | P1: Primeiro administrador | In Tasks | Implementing |
 | IDN-02 | P1: Login, sessão e logout | In Tasks | Implementing |
 | IDN-03 | P1: Proteção contra CSRF e origem | In Tasks | Pending |
-| IDN-04 | P1: Gestão de usuários | In Tasks | Pending |
+| IDN-04 | P1: Gestão de usuários | In Tasks | Implementing |
 | IDN-05 | P1: Política de senha | In Tasks | Implementing |
 | IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
 | IDN-07 | P1: Recuperação de acesso por e-mail | In Tasks | Implementing |
