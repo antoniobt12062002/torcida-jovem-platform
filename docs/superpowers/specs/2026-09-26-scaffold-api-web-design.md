@@ -1,7 +1,7 @@
 # Design: Scaffold de /api (Go) e /web (Next.js) com CI real
 
 Data: 2026-09-26
-Status: Aprovado em conversa, aguardando revisão do documento escrito
+Status: Aprovado
 
 ## 1. Objetivo
 
@@ -26,7 +26,7 @@ api/
   cmd/api/main.go        ponto de entrada com graceful shutdown
   internal/config/       leitura de DATABASE_URL e PORT
   internal/database/     conexão GORM/Postgres
-  internal/http/         router Gin e handlers (GET /healthz)
+  internal/httpapi/      router Gin e handlers (GET /healthz)
   migrations/            SQL versionado (golang-migrate)
   Dockerfile             build multi-stage
   .golangci.yml
@@ -41,7 +41,7 @@ docker-compose.yml
 ## 4. Comportamento
 
 - `GET /healthz` retorna `200 {"status":"ok"}` quando o banco responde ao ping e `503 {"status":"degraded"}` caso contrário.
-- A home do front chama a API (URL via `NEXT_PUBLIC_API_URL`) e mostra "API online" ou "API indisponível".
+- A home do front chama a API a partir do servidor Next (URL via `API_URL`, sem CORS) e mostra "API online" ou "API indisponível".
 - Teste da API: handler de `/healthz` com `httptest`, cobrindo banco ok e banco indisponível (ping injetável por interface).
 
 ## 5. CI
