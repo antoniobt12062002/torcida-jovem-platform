@@ -1,1 +1,4 @@
 *.sh text eol=lf
+
+# A lista de senhas embutida precisa ficar com LF em qualquer sistema.
+api/internal/platform/password/denylist.txt text eol=lf

@@ -1441,11 +1441,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Fonte e licença da lista registradas no commit; se não houver fonte adequada, gera-se lista própria de senhas comuns
-- [ ] `Contains` ignora maiúsculas e minúsculas
-- [ ] Arquivo `denylist.txt` embutido no binário, sem consulta externa
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Fonte e licença da lista registradas no commit; se não houver fonte adequada, gera-se lista própria de senhas comuns
+- [x] `Contains` ignora maiúsculas e minúsculas
+- [x] Arquivo `denylist.txt` embutido no binário, sem consulta externa
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
