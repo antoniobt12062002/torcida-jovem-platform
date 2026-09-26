@@ -33,7 +33,7 @@ go test -tags=integration ./...   # exige Docker (testcontainers)
 DATABASE_URL="postgres://tj_app:tj_app_dev@localhost:5432/tj?sslmode=disable" APP_ENV=development COOKIE_SECURE=false go run ./cmd/api
 
 # Web (web/)
-pnpm install && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm build
+pnpm install && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build
 
 # Script de versão
 bash .github/scripts/test-next-version.sh
