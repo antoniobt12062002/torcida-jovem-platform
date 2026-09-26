@@ -1759,14 +1759,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] As tentativas de troca de senha têm contador próprio por usuário, separado das tentativas de login
-- [ ] Só o SHA-256 do token é gravado
-- [ ] Criar um token invalida os pendentes do mesmo usuário
-- [ ] O consumo é de uso único, inclusive com duas confirmações simultâneas (só uma vence)
-- [ ] Token expirado, usado ou desconhecido devolve o mesmo erro
-- [ ] Conta as solicitações de um e-mail (por HMAC) na última hora
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] As tentativas de troca de senha têm contador próprio por usuário, separado das tentativas de login
+- [x] Só o SHA-256 do token é gravado
+- [x] Criar um token invalida os pendentes do mesmo usuário
+- [x] O consumo é de uso único, inclusive com duas confirmações simultâneas (só uma vence)
+- [x] Token expirado, usado ou desconhecido devolve o mesmo erro
+- [x] Conta as solicitações de um e-mail (por HMAC) na última hora
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
