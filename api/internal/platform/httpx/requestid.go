@@ -30,6 +30,12 @@ func RequestID() gin.HandlerFunc {
 	}
 }
 
+// WithRequestID returns a context that carries the request id, for code that
+// runs outside a request (tests, background work started by a request).
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, ctxKey{}, id)
+}
+
 func RequestIDFrom(ctx context.Context) string {
 	id, _ := ctx.Value(ctxKey{}).(string)
 	return id

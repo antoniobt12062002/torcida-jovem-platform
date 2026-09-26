@@ -140,7 +140,7 @@ Regras de desenho:
 - **Location**: `api/internal/platform/audit/`
 - **Interfaces**:
   - `Recorder.Record(ctx context.Context, e Entry) error`: exige a transação de negócio no contexto (atomicidade, AUD-01)
-  - `Recorder.RecordSecurity(ctx context.Context, db *gorm.DB, e Entry) error`: abre transação própria, para eventos que não fazem parte de uma mudança de negócio (falha de login, bloqueio, negação); não devolve erro: se a gravação falhar, registra um incidente operacional (log de erro com a ação e o `request_id`) e a operação segue
+  - `Recorder.RecordSecurity(ctx context.Context, e Entry)`: abre transação própria, para eventos que não fazem parte de uma mudança de negócio (falha de login, bloqueio, negação); não devolve erro: se a gravação falhar, registra um incidente operacional (log de erro com a ação e o `request_id`) e a operação segue
   - Catálogo de ações em código (`audit.Action`), validado em `Entry.Validate`
   - `Query.List(ctx, f Filter, cursor string, limit int) (Page, error)`
 - **Dependencies**: `database.TxFrom`, `authz.Principal`, `httpx` (request id via contexto).

@@ -1060,11 +1060,11 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] `Record` sem transação no contexto devolve erro e não grava
-- [ ] O registro contém request_id e ator vindos do contexto
-- [ ] `RecordSecurity` grava em transação própria, sem depender de transação de negócio, e se a gravação falhar registra incidente operacional (log de erro com ação e request_id), sem devolver erro nem alterar a resposta; `Record` com falha reverte a operação e é mapeável para 500 `audit_failed`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `Record` sem transação no contexto devolve erro e não grava
+- [x] O registro contém request_id e ator vindos do contexto
+- [x] `RecordSecurity` grava em transação própria, sem depender de transação de negócio, e se a gravação falhar registra incidente operacional (log de erro com ação e request_id), sem devolver erro nem alterar a resposta; `Record` com falha reverte a operação e é mapeável para 500 `audit_failed`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
