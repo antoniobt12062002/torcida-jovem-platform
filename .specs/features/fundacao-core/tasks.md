@@ -480,9 +480,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Job `api` roda os testes de integração
-- [ ] O CI fica verde com os testes existentes
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Job `api` roda os testes de integração
+- [x] O CI fica verde com os testes existentes
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
