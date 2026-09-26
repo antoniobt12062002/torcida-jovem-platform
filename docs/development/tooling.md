@@ -17,7 +17,7 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | Ferramenta | Versão | Onde | Fonte consultada | Data | Observações |
 |---|---|---|---|---|---|
 | `oapi-codegen` | v2.8.0 (17/07/2026) | `api/go.mod` (diretiva `tool`) | [pkg.go.dev](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2) e [README](https://github.com/oapi-codegen/oapi-codegen) | 2026-09-26 | Executado com `go tool oapi-codegen`; exige Go >= 1.25. Fixada na T24 |
-| `oapi-codegen/runtime` | v1.7.0 | `api/go.mod` | pkg.go.dev (proxy do Go) | 2026-09-26 | Entra no `go.mod` com o primeiro endpoint que tem parâmetros ou corpo (o `/healthz` não os tem, então o código gerado não a importa e o `go mod tidy` a remove) |
+| `oapi-codegen/runtime` | v1.7.0 | `api/go.mod` | pkg.go.dev (proxy do Go) | 2026-09-26 | Entrou no `go.mod` com o contrato de identidade (T70), o primeiro com parâmetros e corpo. Antes: (o `/healthz` não os tem, então o código gerado não a importa e o `go mod tidy` a remove) |
 | `kin-openapi` | v0.149.0 | `api/go.mod` | [README](https://github.com/getkin/kin-openapi) | 2026-09-26 | Fixado na T26 (contrato embutido no código gerado) e usado na validação de respostas nos testes (T27). Ligar `IncludeResponseStatus` para reprovar status não documentado |
 | `openapi-typescript` | 7.13.0 | `web/package.json` | [openapi-ts.dev](https://openapi-ts.dev/introduction) e [CLI](https://openapi-ts.dev/cli) | 2026-09-26 | Node >= 22.12. Um arquivo por contrato, configurado em `web/redocly.yaml` (`apis` e `x-openapi-ts.output`); `pnpm gen:api` gera e `pnpm gen:api:check` reprova diferença. Fixado na T29 |
 | `@redocly/cli` | 2.54.3 | `web/package.json` | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | `pnpm lint:api` lê o mesmo `web/redocly.yaml`; regras `info-license` e `operation-4xx-response` desligadas. Fixado na T29 |
@@ -25,6 +25,10 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | `oapi-codegen/gin-middleware` | v1.1.0 | recusado | proxy do Go | 2026-09-26 | Não atende a API-02.4 (só entrega mensagem em texto); no lugar, middleware próprio em `platform/httpx` sobre o `kin-openapi` |
 | `golang.org/x/crypto` (argon2) | v0.57.0 | `api/go.mod` | [pkg.go.dev](https://pkg.go.dev/golang.org/x/crypto/argon2) e [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) | 2026-09-26 | `argon2.IDKey` (argon2id). Padrão 19 MiB, 2 iterações e paralelismo 1, o mínimo recomendado pelo OWASP para argon2id; custo medido na máquina de desenvolvimento: cerca de 17 ms por hash. Os parâmetros são configuráveis (`ARGON2_*`) e vão dentro do hash (formato PHC), então mudar o padrão não invalida hashes antigos |
 | Lista de senhas comuns (`denylist.txt`) | SecLists commit `c205c36` (2025-05-08) | `api/internal/platform/password/` | [SecLists](https://github.com/danielmiessler/SecLists), arquivo `Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt` | 2026-09-26 | Licença MIT (reproduzida em `denylist.SOURCE.txt`). Filtrada para minúsculas, 8 ou mais caracteres, sem espaços nem repetidas: 38451 entradas, cerca de 355 KB. Embutida no binário; nenhuma consulta externa. Consulta externa (k-anonymity) segue como evolução em aberto |
+
+### Geração do `common.yaml` (T70)
+
+O `common.yaml` não tem rotas, então o `oapi-codegen` poda os componentes por não estarem em uso; a configuração `api/openapi/codegen/common.yaml` usa `output-options.skip-prune: true` e gera `gin-server`, `strict-server`, `models` e `embedded-spec` (sem eles os tipos de parâmetros compartilhados, como `CsrfToken`, não saem). O pacote gerado é `api/internal/platform/apicommon`, e cada contrato de módulo o importa por `import-mapping: {common.yaml: <pacote>}`.
 
 ### Resultado do teste rápido (T24)
 

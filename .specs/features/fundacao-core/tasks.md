@@ -2126,10 +2126,10 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Configuração em `api/openapi/codegen/identity.yaml` e código gerado commitado (pacote `identityhttp`)
-- [ ] `pnpm gen:api` gera `web/lib/api/identity.d.ts`
-- [ ] Gerar duas vezes produz zero diferença
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Configuração em `api/openapi/codegen/identity.yaml` e código gerado commitado (pacote `identityhttp`)
+- [x] `pnpm gen:api` gera `web/lib/api/identity.d.ts`
+- [x] Gerar duas vezes produz zero diferença
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
