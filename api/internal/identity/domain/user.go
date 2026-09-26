@@ -25,6 +25,12 @@ type User struct {
 	UpdatedAt          time.Time
 }
 
+// Errors of the user repository; their messages are the API error codes.
+var (
+	ErrEmailTaken   = errors.New("email_taken")
+	ErrUserNotFound = errors.New("user_not_found")
+)
+
 const maxEmailLen = 254
 
 // NormalizeEmail trims spaces, lowercases and checks the basic form: a single

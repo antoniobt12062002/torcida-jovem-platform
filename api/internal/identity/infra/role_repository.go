@@ -144,8 +144,8 @@ func (s state) snapshot() map[string]any {
 
 type diff struct {
 	permissionsAdded, permissionsDeactivated, permissionsReactivated, permissionsUpdated []string
-	rolesAdded, rolesUpdated                                                            []string
-	linksAdded, linksRemoved                                                            []linkKey
+	rolesAdded, rolesUpdated                                                             []string
+	linksAdded, linksRemoved                                                             []linkKey
 }
 
 func (d diff) empty() bool {

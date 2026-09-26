@@ -1528,10 +1528,10 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Criação simultânea do mesmo e-mail deixa exatamente uma vencer (teste concorrente)
-- [ ] Consulta por e-mail ignora maiúsculas
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Criação simultânea do mesmo e-mail deixa exatamente uma vencer (teste concorrente)
+- [x] Consulta por e-mail ignora maiúsculas
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
