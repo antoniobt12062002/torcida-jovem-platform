@@ -440,7 +440,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
 | API-01 | P1: Contrato OpenAPI | In Tasks | Pending |
-| API-02 | P1: Convenções da API | In Tasks | Pending |
+| API-02 | P1: Convenções da API | In Tasks | Implementing |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
 **Coverage:** 19 total, 19 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).

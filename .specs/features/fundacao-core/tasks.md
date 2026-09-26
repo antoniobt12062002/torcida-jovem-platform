@@ -205,10 +205,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Cabeçalho válido é reaproveitado; inválido ou ausente gera UUID v4
-- [ ] O id é devolvido no cabeçalho `X-Request-Id` e fica disponível no contexto
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Cabeçalho válido é reaproveitado; inválido ou ausente gera UUID v4
+- [x] O id é devolvido no cabeçalho `X-Request-Id` e fica disponível no contexto
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
