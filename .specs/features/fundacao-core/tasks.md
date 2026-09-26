@@ -1469,13 +1469,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] E-mail é normalizado: espaços nas pontas removidos, minúsculas e formato básico (contém `@`, até 254 caracteres)
-- [ ] `HashEmail` (HMAC-SHA256 com a chave) é determinístico, ignora maiúsculas e dá resultados diferentes para chaves diferentes
-- [ ] Usuário com papel diferente de ASSOCIADO exige 10 caracteres; só ASSOCIADO exige 8; acima de 128 é rejeitado
-- [ ] Comprimento medido em pontos de código Unicode e sem regras de composição
-- [ ] Conjunto vazio de papéis é inválido
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] E-mail é normalizado: espaços nas pontas removidos, minúsculas e formato básico (contém `@`, até 254 caracteres)
+- [x] `HashEmail` (HMAC-SHA256 com a chave) é determinístico, ignora maiúsculas e dá resultados diferentes para chaves diferentes
+- [x] Usuário com papel diferente de ASSOCIADO exige 10 caracteres; só ASSOCIADO exige 8; acima de 128 é rejeitado
+- [x] Comprimento medido em pontos de código Unicode e sem regras de composição
+- [x] Conjunto vazio de papéis é inválido
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
