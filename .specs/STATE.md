@@ -63,7 +63,7 @@
 - **Reason**: Durabilidade e custo adequados sem misturar binários ao banco transacional nem travar o provedor.
 - **Trade-off**: Um serviço a mais para proteger; consistência entre banco e bucket fica na aplicação.
 - **Scope**: Módulos que anexam documentos (financeiro em especial). Ver `docs/adr/006-armazenamento-de-documentos.md`.
-- **Date**: 2026-09-27
+- **Date**: 2026-09-26
 - **Status**: active
 
 ### AD-009
@@ -71,16 +71,16 @@
 - **Reason**: Uma única fonte de verdade rastreável e consistente com venda e compra.
 - **Trade-off**: Modelagem mais elaborada e controle de concorrência no banco.
 - **Scope**: `estoque`, `loja`, `eventos` e o fluxo de compra do `financeiro`. Ver `docs/adr/007-fonte-de-verdade-do-estoque.md`.
-- **Date**: 2026-09-27
+- **Date**: 2026-09-26
 - **Status**: active
 
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fase 1 concluída (T1 a T5); próxima é a fase 2 (T6 a T13, infraestrutura de testes de integração)
-- **Completed**: T1, T2, T3, T4, T5
+- **Phase / Task**: Fases 1 e 2 concluídas (T1 a T13); próxima é a fase 3 (T14 a T16, infraestrutura de testes do front)
+- **Completed**: T1 a T13 (fase 1 no PR #21; fase 2 na branch `feature/fundacao-core-fase-2`, empilhada sobre a fase 1)
 - **In-progress** (file:line): none
-- **Next step**: Após autorização, abrir o PR da fase 1 e seguir para a fase 2; a fase 2 exige Docker (testcontainers) e a tarefa T10 escolhe e fixa versões após checar a documentação vigente
-- **Blockers**: Autorização para `git push` e PR da fase 1 (aprovação local não cobre ações remotas)
+- **Next step**: Após autorização, enviar a branch da fase 2 e abrir o PR; seguir para a fase 3 (Vitest, testes do front no CI)
+- **Blockers**: Autorização para `git push` e PR da fase 2; o PR da fase 1 (#21) precisa ser mesclado antes ou junto
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-1
+- **Branch**: feature/fundacao-core-fase-2
