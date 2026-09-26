@@ -83,7 +83,7 @@ func TestNewTestDBDatabaseIsRemovedAfterTheTest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer admin.Close()
+	defer func() { _ = admin.Close() }()
 	var exists bool
 	if err := admin.QueryRow("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)", name).Scan(&exists); err != nil {
 		t.Fatal(err)

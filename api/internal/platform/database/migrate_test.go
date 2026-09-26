@@ -29,7 +29,7 @@ func freshDatabase(t *testing.T, pg *testutil.Postgres) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer admin.Close()
+	defer func() { _ = admin.Close() }()
 	if _, err := admin.Exec(fmt.Sprintf("CREATE DATABASE %s OWNER tj_owner", name)); err != nil {
 		t.Fatalf("criar banco: %v", err)
 	}
@@ -38,7 +38,7 @@ func freshDatabase(t *testing.T, pg *testutil.Postgres) string {
 		if err != nil {
 			return
 		}
-		defer a.Close()
+		defer func() { _ = a.Close() }()
 		_, _ = a.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", name))
 	})
 	return name
@@ -70,7 +70,7 @@ func schemaVersion(t *testing.T, pg *testutil.Postgres, name string) (version in
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if err := db.QueryRow("SELECT version, dirty FROM schema_migrations").Scan(&version, &dirty); err != nil {
 		t.Fatalf("ler schema_migrations: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestMigrateAppliesEveryMigrationAndEnablesPgcrypto(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	var ext string
 	if err := db.QueryRow("SELECT extname FROM pg_extension WHERE extname = 'pgcrypto'").Scan(&ext); err != nil {
 		t.Fatalf("pgcrypto deveria estar instalado: %v", err)

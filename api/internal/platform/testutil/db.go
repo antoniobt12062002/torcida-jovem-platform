@@ -104,7 +104,7 @@ func execAdmin(pg *Postgres, statement string) error {
 	if err != nil {
 		return err
 	}
-	defer admin.Close()
+	defer func() { _ = admin.Close() }()
 	_, err = admin.Exec(statement)
 	return err
 }

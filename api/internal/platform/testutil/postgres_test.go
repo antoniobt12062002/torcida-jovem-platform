@@ -63,7 +63,9 @@ func TestPostgresStartsVersion16WithRoles(t *testing.T) {
 }
 
 func TestPostgresInstanceIsSharedWithinThePackage(t *testing.T) {
-	if SharedPostgres(t) != SharedPostgres(t) {
+	first := SharedPostgres(t)
+	second := SharedPostgres(t)
+	if first != second {
 		t.Error("SharedPostgres deveria devolver a mesma instância na mesma execução de pacote")
 	}
 }

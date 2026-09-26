@@ -112,7 +112,7 @@ func containerLogs(ctx context.Context, c testcontainers.Container) string {
 	if err != nil {
 		return "(logs indisponíveis: " + err.Error() + ")"
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 	b, _ := io.ReadAll(io.LimitReader(r, 8<<10))
 	return string(b)
 }
