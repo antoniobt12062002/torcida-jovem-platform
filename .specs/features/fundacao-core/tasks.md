@@ -1177,12 +1177,12 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Sem a permissão devolve `ErrForbidden`, que vira 403 `forbidden`, e o erro não revela se o recurso existe
-- [ ] `Authorizer` chama o gancho de negação, com o principal e a permissão, para toda negação de permissão que não seja leitura comum, e não o chama quando permitido nem para leitura comum
-- [ ] Permissão desconhecida do catálogo é negada e passa pelo gancho
-- [ ] Teste de arquitetura falha se houver nome de papel literal fora da definição dos papéis ou leitura de `Principal.Roles` fora de `identity`, com fixtures negativas
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Sem a permissão devolve `ErrForbidden`, que vira 403 `forbidden`, e o erro não revela se o recurso existe
+- [x] `Authorizer` chama o gancho de negação, com o principal e a permissão, para toda negação de permissão que não seja leitura comum, e não o chama quando permitido nem para leitura comum
+- [x] Permissão desconhecida do catálogo é negada e passa pelo gancho
+- [x] Teste de arquitetura falha se houver nome de papel literal fora da definição dos papéis ou leitura de `Principal.Roles` fora de `identity`, com fixtures negativas
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

@@ -516,7 +516,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-05 | P1: Política de senha | In Tasks | Implementing |
 | IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
-| RBAC-02 | P1: Autorização negada por padrão | In Tasks | Pending |
+| RBAC-02 | P1: Autorização negada por padrão | In Tasks | Implementing |
 | RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Pending |
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Implementing |
 | AUD-02 | P1: Auditoria imutável | In Tasks | Implementing |
