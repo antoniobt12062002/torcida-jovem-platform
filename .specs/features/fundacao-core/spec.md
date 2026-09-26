@@ -596,7 +596,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-05 | P1: Política de senha | In Tasks | Implementing |
 | IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
 | IDN-07 | P1: Recuperação de acesso por e-mail | In Tasks | Implementing |
-| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Pending |
+| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Implementing |
 | EML-01 | P1: Capacidade de e-mail | In Tasks | Implementing |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Implementing |

@@ -1702,11 +1702,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] A permissão é declarada e concedida a ADMIN_SISTEMA, e o PRESIDENTE a recebe por ter todas
-- [ ] Não é leitura comum, e o Conselho Fiscal continua sem create, update, delete e cancel
-- [ ] Os testes de invariante da matriz continuam passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] A permissão é declarada e concedida a ADMIN_SISTEMA, e o PRESIDENTE a recebe por ter todas
+- [x] Não é leitura comum, e o Conselho Fiscal continua sem create, update, delete e cancel
+- [x] Os testes de invariante da matriz continuam passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
