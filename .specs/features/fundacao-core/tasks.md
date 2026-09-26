@@ -2080,9 +2080,9 @@ T83 → T84 → T85 → T86
 
 ### Phase 10: HTTP: contrato de identidade e middlewares (tarefas)
 
-### T69: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar sem papéis, listar, desativar, papéis), roles e vínculo administrativo (`POST` e `DELETE /api/v1/users/{id}/admin-membership`), recuperação de acesso (`POST /api/v1/auth/password-reset/request` e `/confirm`) e redefinição administrativa (`POST /api/v1/users/{id}/password-reset`)
+### T69: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha, recuperação de acesso), users (criar sem papéis, listar, desativar, reativar, papéis, vínculo administrativo, retirada do vínculo e redefinição administrativa de senha), sem `GET /roles`; e a lista temporária `contractPendingRoutes` do teste de paridade
 
-**What**: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar sem papéis, listar, desativar, papéis), roles e vínculo administrativo (`POST` e `DELETE /api/v1/users/{id}/admin-membership`), recuperação de acesso (`POST /api/v1/auth/password-reset/request` e `/confirm`) e redefinição administrativa (`POST /api/v1/users/{id}/password-reset`).  
+**What**: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha, recuperação de acesso), users (criar sem papéis, listar, desativar, reativar, papéis, vínculo administrativo, retirada do vínculo e redefinição administrativa de senha), sem `GET /roles`; e a lista temporária `contractPendingRoutes` do teste de paridade.  
 **Where**: `api/openapi/identity.yaml`  
 **Depends on**: T26, T29, T65  
 **Reuses**: `common.yaml` e o padrão de `platform.yaml`  
@@ -2095,8 +2095,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Cada rota tem respostas de erro `Problem` e paginação por cursor nas listas
-- [ ] Cookie de sessão e `X-CSRF-Token` descritos; nenhuma regra de negócio no contrato
+- [ ] Rotas: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/password`, `POST /auth/password-reset/request` e `/confirm`, `GET /users`, `POST /users`, `POST /users/{id}/deactivate`, `POST /users/{id}/reactivate`, `PUT /users/{id}/roles`, `POST /users/{id}/admin-membership`, `POST /users/{id}/admin-membership/revoke` (motivo no corpo) e `POST /users/{id}/password-reset`; não existem `DELETE /users/{id}/admin-membership` nem `GET /roles`
+- [ ] Só login e as duas rotas de recuperação são públicas (`security: []`); as demais exigem o cookie de sessão, e as que alteram estado descrevem o cabeçalho `X-CSRF-Token`
+- [ ] O login e o `me` devolvem o mesmo `AuthContext` (usuário, papéis, permissões efetivas, token CSRF, `must_change_password` e `admin_membership` nulo ou com só `reason` e `granted_at`), sem hash nem token interno; o reset administrativo devolve 200 com `Cache-Control: no-store`
+- [ ] Cada rota tem respostas de erro `Problem` e paginação por cursor na lista, com `Retry-After` nos 429
+- [ ] O enum de papéis do contrato é igual aos papéis do domínio (teste), e o contrato não contém regra de negócio
+- [ ] O teste de paridade com o router aceita as operações listadas em `contractPendingRoutes` e falha se a lista guardar operação inexistente ou já registrada; a fase 11 a deixa vazia
 - [ ] Lint passa
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
@@ -2160,12 +2164,12 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T72: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado
+### T72: Criar o middleware `Authn` e o helper do cookie de sessão: cookie para sessão para `Principal` no contexto, com 401 padronizado
 
-**What**: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado.  
+**What**: Criar o middleware `Authn` e o helper do cookie de sessão: cookie para sessão para `Principal` no contexto, com 401 padronizado.  
 **Where**: `api/internal/platform/httpx/authn.go`  
 **Depends on**: T71  
-**Reuses**: Interface `SessionValidator`  
+**Reuses**: Interface `SessionValidator` (definida em `httpx`)  
 **Requirement**: RBAC-02 (ACs 1, 5, 6); IDN-02 (ACs 5)
 
 **Tools**:
@@ -2175,9 +2179,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
+- [ ] Rota fora da lista pública sem cookie, com cookie malformado ou com sessão desconhecida devolve 401 `unauthenticated`; sessão expirada devolve 401 `session_expired` e limpa o cookie; qualquer outro erro devolve 500 sem detalhe interno
+- [ ] Coloca o `Principal`, o token CSRF e o ator no contexto (o `audit.Recorder` passa a enxergar o ator)
 - [ ] Com `must_change_password`, todas as rotas exceto logout, `me` e troca de senha devolvem 403 `password_change_required`
-- [ ] Sem cookie, cookie malformado ou sessão expirada devolvem 401 com o código correto
-- [ ] Não vaza detalhes internos
+- [ ] A lista pública é explícita e injetada; toda rota fora dela é protegida
+- [ ] Helper `SessionCookie` (Set e Clear): HttpOnly, Secure pela configuração, SameSite=Lax, Path=/, domínio configurável e vida igual ao teto absoluto da sessão
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
 
@@ -2188,13 +2194,13 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T73: Criar o middleware de CSRF e origem
+### T73: Criar os middlewares de origem e de CSRF
 
-**What**: Criar o middleware de CSRF e origem.  
+**What**: Criar os middlewares de origem e de CSRF.  
 **Where**: `api/internal/platform/httpx/csrf.go`  
 **Depends on**: T72  
-**Reuses**: `ALLOWED_ORIGINS` da config  
-**Requirement**: IDN-03 (ACs 1, 2, 3, 4, 5); IDN-07 (ACs 10)
+**Reuses**: `ALLOWED_ORIGINS` da config e o token CSRF da sessão  
+**Requirement**: IDN-03 (ACs 1, 2, 3, 4, 5, 6); IDN-07 (ACs 10)
 
 **Tools**:
 
@@ -2203,10 +2209,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Método que altera estado sem `X-CSRF-Token` correto devolve 403 `csrf_invalid`
-- [ ] Origem fora da lista devolve 403 `origin_not_allowed`, inclusive no login, na solicitação e na confirmação de recuperação
-- [ ] GET, HEAD e OPTIONS não exigem token
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
+- [ ] Origem: `Origin` fora da lista em método que altera estado devolve 403 `origin_not_allowed`, inclusive no login e nas duas rotas públicas de recuperação; lista vazia bloqueia toda origem
+- [ ] Origem: requisição autenticada que altera estado, sem `Origin` e com `Sec-Fetch-Site: cross-site`, devolve 403 `origin_not_allowed`; a ausência de `Origin` sozinha não bloqueia
+- [ ] CSRF: método que altera estado em rota autenticada sem `X-CSRF-Token` igual ao da sessão (comparação em tempo constante) devolve 403 `csrf_invalid`
+- [ ] GET, HEAD e OPTIONS não exigem token nem checagem de origem
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  

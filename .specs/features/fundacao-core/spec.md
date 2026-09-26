@@ -129,7 +129,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Toda autorização parte de uma sessão válida.
 
 **Acceptance Criteria**:
-1. WHEN a user submits a valid email and password to `POST /api/v1/auth/login` THEN the system SHALL respond 200, create a session and set the cookie `tj_session` with the attributes HttpOnly, Secure, SameSite=Lax and Path=/.
+1. WHEN a user submits a valid email and password to `POST /api/v1/auth/login` THEN the system SHALL respond 200 with the same body as `GET /api/v1/auth/me`, create a session and set the cookie `tj_session` with the attributes HttpOnly, Secure, SameSite=Lax and Path=/.
 2. WHEN a session is created THEN the system SHALL store only the SHA-256 hash of the session token in the database.
 3. IF the email does not exist or the password is wrong THEN the system SHALL respond 401 with code `invalid_credentials` and an identical body for both cases.
 4. IF the user is inactive THEN the system SHALL respond 401 with code `invalid_credentials` and the same body as for a wrong password.
@@ -137,7 +137,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 6. WHEN a user calls `POST /api/v1/auth/logout` THEN the system SHALL revoke the session and clear the cookie.
 7. WHEN a login succeeds THEN the system SHALL issue a new session token even if a session cookie was sent with the request.
 8. IF a fifth consecutive login failure for the same email occurs within 15 minutes THEN the system SHALL respond 429 with a `Retry-After` header to every login attempt for that email during the following 15 minutes.
-9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the active administrative membership (or null), the CSRF token and the flag `must_change_password`.
+9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the administrative membership summary (`null`, or an object with only `reason` and `granted_at`, never the grantor or the history), the CSRF token and the flag `must_change_password`. The system SHALL NOT include hashes, internal tokens or other sensitive data in these responses.
 10. The system SHALL NOT lock an account permanently as a result of failed logins.
 
 **Independent Test**: Logar com o administrador criado pela CLI, chamar `/auth/me`, deslogar e ver que a sessão deixou de valer.
@@ -155,6 +155,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 3. IF a state-changing request carries an `Origin` header that is not in `ALLOWED_ORIGINS` THEN the system SHALL respond 403 with code `origin_not_allowed`.
 4. IF `POST /api/v1/auth/login` carries an `Origin` header that is not in `ALLOWED_ORIGINS` THEN the system SHALL respond 403 with code `origin_not_allowed`.
 5. The system SHALL NOT change state in response to GET, HEAD or OPTIONS requests.
+6. IF an authenticated state-changing request carries no `Origin` header and has `Sec-Fetch-Site: cross-site` THEN the system SHALL respond 403 with code `origin_not_allowed`; the absence of `Origin` alone SHALL NOT block a request, since clients other than browsers do not send it.
 
 **Independent Test**: Enviar um POST autenticado sem o cabeçalho e com origem estranha e ver os dois 403.
 
@@ -296,7 +297,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 3. IF the target user already has an active administrative membership THEN the system SHALL respond 409 with code `already_admin`.
 4. IF the target user is inactive THEN the system SHALL respond 409 with code `user_inactive`.
 5. The system SHALL keep at most one active administrative membership per user, enforced by the database, and SHALL NOT delete membership rows.
-6. WHEN an actor with `identity:admin:revoke` calls `DELETE /api/v1/users/{id}/admin-membership` with a reason THEN the system SHALL, in one transaction, close the membership recording who, when and why, remove every role other than ASSOCIADO, revoke every session of the target user and record an audit entry with action `admin.revoke`.
+6. WHEN an actor with `identity:admin:revoke` calls `POST /api/v1/users/{id}/admin-membership/revoke` with a reason in the body THEN the system SHALL, in one transaction, close the membership recording who, when and why, remove every role other than ASSOCIADO, revoke every session of the target user and record an audit entry with action `admin.revoke`.
 7. IF the target user has no active administrative membership THEN the system SHALL respond 409 with code `not_admin`.
 8. IF the operation would leave no active user that holds `identity:admin:grant` THEN the system SHALL respond 409 with code `last_admin` and change nothing.
 9. The system SHALL NOT allow a user to hold a role other than ASSOCIADO without an active administrative membership; adding such a role without one SHALL respond 409 with code `admin_membership_required`.
