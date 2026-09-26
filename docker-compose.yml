@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tj
+      POSTGRES_PASSWORD: tj
+      POSTGRES_DB: tj
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tj -d tj"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    image: migrate/migrate:v4.18.1
+    profiles: [tools]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./api/migrations:/migrations
+    command: ["-path=/migrations", "-database=postgres://tj:tj@db:5432/tj?sslmode=disable", "up"]
+
+volumes:
+  pgdata:
