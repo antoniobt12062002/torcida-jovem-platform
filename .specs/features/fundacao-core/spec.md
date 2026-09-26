@@ -105,7 +105,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Sem um usuário inicial, nada mais pode ser usado.
 
 **Acceptance Criteria**:
-1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the reason `bootstrap` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
+1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the fixed reason `bootstrap-admin` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
 2. IF an active administrative membership already exists THEN the system SHALL exit with a non-zero status without creating any user.
 3. IF the password is absent or violates the administrator password policy (at least 10 characters) THEN the system SHALL exit with a non-zero status without creating any user.
 4. The system SHALL NOT accept the password as a command-line argument.

@@ -33,17 +33,11 @@ func TestBootstrapMembershipHasNoGrantor(t *testing.T) {
 	if err != nil || m.GrantedBy != nil || !m.Active() {
 		t.Errorf("vínculo = %+v, err = %v", m, err)
 	}
-	if BootstrapReason != "bootstrap" {
-		t.Errorf("BootstrapReason = %q", BootstrapReason)
-	}
 }
 
-func TestBootstrapReasonIsAcceptedEvenThoughItIsShort(t *testing.T) {
-	if _, err := NewAdminMembership("u-1", BootstrapReason, nil, now); err != nil {
-		t.Errorf("o motivo de bootstrap é a exceção ao mínimo: %v", err)
-	}
-	if _, err := NewAdminMembership("u-1", BootstrapReason, new(grantor), now); !errors.Is(err, ErrReasonRequired) {
-		t.Errorf("com quem concedeu, o motivo curto continua inválido: %v", err)
+func TestBootstrapReasonSatisfiesTheMinimumLength(t *testing.T) {
+	if len(BootstrapReason) < 10 || BootstrapReason != "bootstrap-admin" {
+		t.Errorf("BootstrapReason = %q: precisa cumprir a mesma regra de tamanho do banco", BootstrapReason)
 	}
 }
 

@@ -1555,11 +1555,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Conceder dois vínculos ativos ao mesmo usuário ao mesmo tempo deixa exatamente um vencer (teste concorrente)
-- [ ] Encerrar preserva a linha e o histórico de vínculos anteriores continua consultável
-- [ ] O repositório não expõe operação de exclusão
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Conceder dois vínculos ativos ao mesmo usuário ao mesmo tempo deixa exatamente um vencer (teste concorrente)
+- [x] Encerrar preserva a linha e o histórico de vínculos anteriores continua consultável
+- [x] O repositório não expõe operação de exclusão
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

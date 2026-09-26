@@ -18,9 +18,9 @@ var (
 const (
 	minReasonLen = 10
 
-	// BootstrapReason is the reason of the membership created by the
+	// BootstrapReason is the fixed reason of the membership created by the
 	// bootstrap-admin command, which has no grantor.
-	BootstrapReason = "bootstrap"
+	BootstrapReason = "bootstrap-admin"
 )
 
 // AdminMembership says why a user has administrative access; the roles say what
@@ -37,12 +37,10 @@ type AdminMembership struct {
 }
 
 // NewAdminMembership opens a membership. The reason must have at least 10
-// characters after trimming; the bootstrap membership, which has no grantor and
-// uses BootstrapReason, is the only exception.
+// characters after trimming; the bootstrap membership has no grantor.
 func NewAdminMembership(userID, reason string, grantedBy *string, at time.Time) (AdminMembership, error) {
 	reason = strings.TrimSpace(reason)
-	bootstrap := grantedBy == nil && reason == BootstrapReason
-	if len([]rune(reason)) < minReasonLen && !bootstrap {
+	if len([]rune(reason)) < minReasonLen {
 		return AdminMembership{}, ErrReasonRequired
 	}
 	return AdminMembership{UserID: userID, Reason: reason, GrantedBy: grantedBy, GrantedAt: at}, nil
