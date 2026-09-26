@@ -370,9 +370,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Nenhum segredo real no arquivo
-- [ ] Todas as variáveis lidas por `config.Load` estão presentes ou documentadas
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Nenhum segredo real no arquivo
+- [x] Todas as variáveis lidas por `config.Load` estão presentes ou documentadas
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
