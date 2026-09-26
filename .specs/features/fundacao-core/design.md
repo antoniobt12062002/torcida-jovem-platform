@@ -132,6 +132,7 @@ Regras de desenho:
 - **Location**: `api/internal/platform/money/`
 - **Interfaces**: `type Cents int64`; `Add`, `Sub`, `Cmp`; `Format`, `Parse`; `MarshalJSON`, `UnmarshalJSON`; `Allocate(total Cents, weights []int64) ([]Cents, error)`; `Percent(a Cents, bp int64) (Cents, error)`; `ErrOverflow`.
 - **Dependencies**: `math/big` ou `math/bits` para o produto intermediário.
+- **Escopo (confirmado em 2026-09-26)**: núcleo monetário compartilhado, tratado como infraestrutura. Conhece apenas valores em centavos e operações sobre eles. **Não** contém lançamentos financeiros, receitas, despesas, plano de contas, produtos, eventos, taxas de meio de pagamento nem qualquer conceito de módulo de negócio; esses pertencem aos módulos de domínio posteriores, que importam `platform/money`. O mesmo vale para `web/lib/money.ts`.
 
 ### platform/audit
 
@@ -287,6 +288,7 @@ CREATE INDEX login_attempts_idx ON login_attempts (email_hash, attempted_at DESC
 
 | Decision | Choice | Rationale |
 |---|---|---|
+| Local e escopo de `money` | `api/internal/platform/money/` e `web/lib/money.ts`, sem conceitos de domínio | É infraestrutura compartilhada como `authz` e `audit`; a dependência vai dos módulos para `platform`, nunca o contrário (verificado por TST-02) |
 | Local do pacote de banco | Mover `internal/database` para `internal/platform/database` | Alinha com `domain-boundaries.md`, onde `platform` é o núcleo compartilhado |
 | Política de senha | Regra por papel no domínio, mais lista embutida e `must_change_password` | Mínimos diferentes por perfil exigem decidir o que acontece na promoção de um associado a papel administrativo |
 | Hash do token de sessão | SHA-256 (não argon2) | O token tem 256 bits aleatórios; hash lento não agrega e custaria a cada requisição |

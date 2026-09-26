@@ -589,10 +589,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Overflow de soma e subtração devolve `ErrOverflow` sem dar a volta
-- [ ] Nenhuma função aceita ou devolve float32 ou float64 (verificado por teste que inspeciona a API do pacote)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Overflow de soma e subtração devolve `ErrOverflow` sem dar a volta
+- [x] Nenhuma função aceita ou devolve float32 ou float64 (verificado por teste que inspeciona a API do pacote)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -616,10 +616,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] 123456 vira `R$ 1.234,56` e -123456 vira `-R$ 1.234,56` com espaço comum
-- [ ] `Parse` rejeita mais de duas casas decimais e caracteres inválidos
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] 123456 vira `R$ 1.234,56` e -123456 vira `-R$ 1.234,56` com espaço comum
+- [x] `Parse` rejeita mais de duas casas decimais e caracteres inválidos
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -643,10 +643,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Marshal emite literal inteiro; unmarshal rejeita string, decimal, expoente e null
-- [ ] Valor acima de 9007199254740991 em módulo devolve erro mapeável para 422 `amount_out_of_range`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Marshal emite literal inteiro; unmarshal rejeita string, decimal, expoente e null
+- [x] Valor acima de 9007199254740991 em módulo devolve erro mapeável para 422 `amount_out_of_range`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -670,12 +670,12 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `Allocate(10000,[1,1,1])` devolve 3334, 3333, 3333
-- [ ] `Percent(10000,400)` devolve 400 e `Percent(1,5000)` devolve 1
-- [ ] Teste de propriedade: a soma das partes é sempre o total
-- [ ] Cobertura de instruções do pacote `money` maior ou igual a 95%
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `Allocate(10000,[1,1,1])` devolve 3334, 3333, 3333
+- [x] `Percent(10000,400)` devolve 400 e `Percent(1,5000)` devolve 1
+- [x] Teste de propriedade: a soma das partes é sempre o total
+- [x] Cobertura de instruções do pacote `money` maior ou igual a 95%
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -699,10 +699,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Passa no esquema atual
-- [ ] Um esquema de fixture com coluna proibida faz o teste falhar (teste negativo)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Passa no esquema atual
+- [x] Um esquema de fixture com coluna proibida faz o teste falhar (teste negativo)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -726,10 +726,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Mesmos vetores do Go passam
-- [ ] Número que não é inteiro seguro lança `RangeError`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Mesmos vetores do Go passam
+- [x] Número que não é inteiro seguro lança `RangeError`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: unit  
 **Gate**: build
