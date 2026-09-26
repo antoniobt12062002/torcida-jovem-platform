@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -103,5 +104,16 @@ func TestRequestIDIsAvailableInContexts(t *testing.T) {
 func TestRequestIDFromWithoutMiddlewareIsEmpty(t *testing.T) {
 	if got := RequestIDFrom(httptest.NewRequest(http.MethodGet, "/", nil).Context()); got != "" {
 		t.Errorf("esperava vazio, veio %q", got)
+	}
+}
+
+func TestWithRequestIDCarriesTheIDToRequestIDFrom(t *testing.T) {
+	ctx := WithRequestID(context.Background(), "req-12345678")
+
+	if got := RequestIDFrom(ctx); got != "req-12345678" {
+		t.Errorf("RequestIDFrom = %q", got)
+	}
+	if got := RequestIDFrom(context.Background()); got != "" {
+		t.Errorf("sem id, RequestIDFrom = %q", got)
 	}
 }
