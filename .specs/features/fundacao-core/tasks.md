@@ -1942,14 +1942,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:role:assign`
-- [ ] Adicionar papel diferente de ASSOCIADO a quem não tem vínculo ativo devolve 409 `admin_membership_required`
-- [ ] O papel ASSOCIADO é sempre mantido pelo servidor; a lista recebida traz só papéis administrativos e pode ser vazia, o que deixa o vínculo dormente
-- [ ] Cada papel acrescentado ou removido precisa estar coberto pelas permissões do ator (403 `privilege_escalation`); o ator não altera os próprios papéis (403 `self_change_forbidden`); a tentativa negada grava `role.change_denied`
-- [ ] Substitui o conjunto e grava papéis anteriores e novos em `user.roles_set`
-- [ ] Um usuário pode ter vários papéis ativos e as novas permissões valem na requisição seguinte
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:role:assign`
+- [x] Adicionar papel diferente de ASSOCIADO a quem não tem vínculo ativo devolve 409 `admin_membership_required`
+- [x] O papel ASSOCIADO é sempre mantido pelo servidor; a lista recebida traz só papéis administrativos e pode ser vazia, o que deixa o vínculo dormente
+- [x] Cada papel acrescentado ou removido precisa estar coberto pelas permissões do ator (403 `privilege_escalation`); o ator não altera os próprios papéis (403 `self_change_forbidden`); a tentativa negada grava `role.change_denied`
+- [x] Substitui o conjunto e grava papéis anteriores e novos em `user.roles_set`
+- [x] Um usuário pode ter vários papéis ativos e as novas permissões valem na requisição seguinte
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
