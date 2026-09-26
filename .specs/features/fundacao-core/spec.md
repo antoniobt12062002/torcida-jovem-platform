@@ -604,7 +604,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Implementing |
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Implementing |
 | AUD-02 | P1: Auditoria imutável | In Tasks | Implementing |
-| AUD-03 | P2: Consulta de auditoria | In Tasks | Pending |
+| AUD-03 | P2: Consulta de auditoria | In Tasks | Implementing |
 | AUD-04 | P1: Eventos de segurança | In Tasks | Implementing |
 | MNY-01 | P1: Tipo monetário em centavos | In Tasks | Implementing |
 | MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |

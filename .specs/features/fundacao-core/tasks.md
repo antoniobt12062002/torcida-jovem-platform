@@ -2153,9 +2153,9 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Filtros `entity_type`, `entity_id`, `actor_user_id`, `action`, `outcome`, `from` e `to` e `limit` de no máximo 100; o esquema do registro tem ator, alvo, resultado, contexto e `request_id`
-- [ ] Geração de Go e TypeScript sem diferença após regenerar
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Filtros `entity_type`, `entity_id`, `actor_user_id`, `action`, `outcome`, `from` e `to` e `limit` de no máximo 100; o esquema do registro tem ator, alvo, resultado, contexto e `request_id`
+- [x] Geração de Go e TypeScript sem diferença após regenerar
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build

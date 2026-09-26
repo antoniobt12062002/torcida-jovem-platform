@@ -10,6 +10,8 @@ servers:
 tags:
   - name: platform
     description: Operações do núcleo compartilhado.
+security:
+  - sessionCookie: []
 paths:
   /healthz:
     get:
@@ -34,8 +36,132 @@ paths:
                 $ref: '#/components/schemas/Health'
               example:
                 status: degraded
+  /api/v1/audit-logs:
+    get:
+      operationId: getAuditLogs
+      tags: [platform]
+      summary: Consulta o registro de auditoria, do mais novo para o mais antigo.
+      description: Exige a permissão de leitura da auditoria (verificada no caso de uso).
+      parameters:
+        - name: entity_type
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: entity_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: actor_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [success, denied, failure]
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/CursorParam'
+      responses:
+        '200':
+          description: Uma página de registros, com todos os filtros combinados por E.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogPage'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
 components:
+  securitySchemes:
+    sessionCookie:
+      $ref: 'common.yaml#/components/securitySchemes/sessionCookie'
   schemas:
+    AuditLog:
+      type: object
+      description: Registro imutável de auditoria.
+      required: [id, occurred_at, actor_type, actor_user_id, action, entity_type, entity_id, before, after, outcome, reason, context, request_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+        actor_type:
+          type: string
+          enum: [user, system, anonymous]
+        actor_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        action:
+          type: string
+        entity_type:
+          type: string
+          description: Tipo do alvo da ação.
+        entity_id:
+          type: string
+          description: Identificador do alvo da ação.
+        before:
+          type: object
+          nullable: true
+          additionalProperties: true
+        after:
+          type: object
+          nullable: true
+          additionalProperties: true
+        outcome:
+          type: string
+          enum: [success, denied, failure]
+        reason:
+          type: string
+          nullable: true
+        context:
+          type: object
+          additionalProperties: true
+        request_id:
+          type: string
+          nullable: true
+    AuditLogPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor da próxima página, ou null na última.
     Health:
       type: object
       required: [status]

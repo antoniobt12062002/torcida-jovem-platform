@@ -14,10 +14,56 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
+	externalRef0 "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/apicommon"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for AuditLogActorType.
+const (
+	Anonymous AuditLogActorType = "anonymous"
+	System    AuditLogActorType = "system"
+	User      AuditLogActorType = "user"
+)
+
+// Valid indicates whether the value is a known member of the AuditLogActorType enum.
+func (e AuditLogActorType) Valid() bool {
+	switch e {
+	case Anonymous:
+		return true
+	case System:
+		return true
+	case User:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditLogOutcome.
+const (
+	AuditLogOutcomeDenied  AuditLogOutcome = "denied"
+	AuditLogOutcomeFailure AuditLogOutcome = "failure"
+	AuditLogOutcomeSuccess AuditLogOutcome = "success"
+)
+
+// Valid indicates whether the value is a known member of the AuditLogOutcome enum.
+func (e AuditLogOutcome) Valid() bool {
+	switch e {
+	case AuditLogOutcomeDenied:
+		return true
+	case AuditLogOutcomeFailure:
+		return true
+	case AuditLogOutcomeSuccess:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for HealthStatus.
 const (
@@ -37,6 +83,62 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetAuditLogsParamsOutcome.
+const (
+	GetAuditLogsParamsOutcomeDenied  GetAuditLogsParamsOutcome = "denied"
+	GetAuditLogsParamsOutcomeFailure GetAuditLogsParamsOutcome = "failure"
+	GetAuditLogsParamsOutcomeSuccess GetAuditLogsParamsOutcome = "success"
+)
+
+// Valid indicates whether the value is a known member of the GetAuditLogsParamsOutcome enum.
+func (e GetAuditLogsParamsOutcome) Valid() bool {
+	switch e {
+	case GetAuditLogsParamsOutcomeDenied:
+		return true
+	case GetAuditLogsParamsOutcomeFailure:
+		return true
+	case GetAuditLogsParamsOutcomeSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
+// AuditLog Registro imutável de auditoria.
+type AuditLog struct {
+	Action      string                  `json:"action"`
+	ActorType   AuditLogActorType       `json:"actor_type"`
+	ActorUserId *openapi_types.UUID     `json:"actor_user_id"`
+	After       *map[string]interface{} `json:"after"`
+	Before      *map[string]interface{} `json:"before"`
+	Context     map[string]interface{}  `json:"context"`
+
+	// EntityId Identificador do alvo da ação.
+	EntityId string `json:"entity_id"`
+
+	// EntityType Tipo do alvo da ação.
+	EntityType string             `json:"entity_type"`
+	Id         openapi_types.UUID `json:"id"`
+	OccurredAt time.Time          `json:"occurred_at"`
+	Outcome    AuditLogOutcome    `json:"outcome"`
+	Reason     *string            `json:"reason"`
+	RequestId  *string            `json:"request_id"`
+}
+
+// AuditLogActorType defines model for AuditLog.ActorType.
+type AuditLogActorType string
+
+// AuditLogOutcome defines model for AuditLog.Outcome.
+type AuditLogOutcome string
+
+// AuditLogPage defines model for AuditLogPage.
+type AuditLogPage struct {
+	Items []AuditLog `json:"items"`
+
+	// NextCursor Cursor da próxima página, ou null na última.
+	NextCursor *string `json:"next_cursor"`
+}
+
 // Health defines model for Health.
 type Health struct {
 	Status HealthStatus `json:"status"`
@@ -45,8 +147,31 @@ type Health struct {
 // HealthStatus defines model for Health.Status.
 type HealthStatus string
 
+// GetAuditLogsParams defines parameters for GetAuditLogs.
+type GetAuditLogsParams struct {
+	EntityType  *string                    `form:"entity_type,omitempty" json:"entity_type,omitempty"`
+	EntityId    *string                    `form:"entity_id,omitempty" json:"entity_id,omitempty"`
+	ActorUserId *openapi_types.UUID        `form:"actor_user_id,omitempty" json:"actor_user_id,omitempty"`
+	Action      *string                    `form:"action,omitempty" json:"action,omitempty"`
+	Outcome     *GetAuditLogsParamsOutcome `form:"outcome,omitempty" json:"outcome,omitempty"`
+	From        *time.Time                 `form:"from,omitempty" json:"from,omitempty"`
+	To          *time.Time                 `form:"to,omitempty" json:"to,omitempty"`
+
+	// Limit Quantidade de itens por página.
+	Limit *externalRef0.Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Cursor Cursor da página, vindo de next_cursor.
+	Cursor *externalRef0.CursorParam `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// GetAuditLogsParamsOutcome defines parameters for GetAuditLogs.
+type GetAuditLogsParamsOutcome string
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// GetAuditLogs Consulta o registro de auditoria, do mais novo para o mais antigo.
+	// (GET /api/v1/audit-logs)
+	GetAuditLogs(c *gin.Context, params GetAuditLogsParams)
 	// GetHealth Estado da API e do banco de dados.
 	// (GET /healthz)
 	GetHealth(c *gin.Context)
@@ -60,6 +185,97 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetAuditLogs operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditLogs(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditLogsParams
+
+	// ------------- Optional query parameter "entity_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entity_type", c.Request.URL.Query(), &params.EntityType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entity_type: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "entity_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entity_id", c.Request.URL.Query(), &params.EntityId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entity_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "actor_user_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "actor_user_id", c.Request.URL.Query(), &params.ActorUserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter actor_user_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "action" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "action", c.Request.URL.Query(), &params.Action, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter action: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "outcome" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "outcome", c.Request.URL.Query(), &params.Outcome, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter outcome: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", c.Request.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter from: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", c.Request.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter to: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", c.Request.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", c.Request.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter cursor: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAuditLogs(c, params)
+}
 
 // GetHealth operation middleware
 func (siw *ServerInterfaceWrapper) GetHealth(c *gin.Context) {
@@ -102,6 +318,93 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/healthz", wrapper.GetHealth)
+	router.GET(options.BaseURL+"/api/v1/audit-logs", wrapper.GetAuditLogs)
+}
+
+type GetAuditLogsRequestObject struct {
+	Params GetAuditLogsParams
+}
+
+type GetAuditLogsResponseObject interface {
+	VisitGetAuditLogsResponse(w http.ResponseWriter) error
+}
+
+type GetAuditLogs200JSONResponse AuditLogPage
+
+func (response GetAuditLogs200JSONResponse) VisitGetAuditLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditLogs401ApplicationProblemPlusJSONResponse struct {
+	externalRef0.UnauthorizedApplicationProblemPlusJSONResponse
+}
+
+func (response GetAuditLogs401ApplicationProblemPlusJSONResponse) VisitGetAuditLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditLogs403ApplicationProblemPlusJSONResponse struct {
+	externalRef0.ForbiddenApplicationProblemPlusJSONResponse
+}
+
+func (response GetAuditLogs403ApplicationProblemPlusJSONResponse) VisitGetAuditLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditLogs422ApplicationProblemPlusJSONResponse struct {
+	externalRef0.ValidationFailedApplicationProblemPlusJSONResponse
+}
+
+func (response GetAuditLogs422ApplicationProblemPlusJSONResponse) VisitGetAuditLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditLogs500ApplicationProblemPlusJSONResponse struct {
+	externalRef0.InternalErrorApplicationProblemPlusJSONResponse
+}
+
+func (response GetAuditLogs500ApplicationProblemPlusJSONResponse) VisitGetAuditLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetHealthRequestObject struct {
@@ -141,6 +444,9 @@ func (response GetHealth503JSONResponse) VisitGetHealthResponse(w http.ResponseW
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// GetAuditLogs Consulta o registro de auditoria, do mais novo para o mais antigo.
+	// (GET /api/v1/audit-logs)
+	GetAuditLogs(ctx context.Context, request GetAuditLogsRequestObject) (GetAuditLogsResponseObject, error)
 	// GetHealth Estado da API e do banco de dados.
 	// (GET /healthz)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
@@ -203,6 +509,32 @@ type strictHandler struct {
 	options     StrictGinServerOptions
 }
 
+// GetAuditLogs operation middleware
+func (sh *strictHandler) GetAuditLogs(ctx *gin.Context, params GetAuditLogsParams) {
+	var request GetAuditLogsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAuditLogs(ctx, request.(GetAuditLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAuditLogs")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetAuditLogsResponseObject); ok {
+		if err := validResponse.VisitGetAuditLogsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetHealth operation middleware
 func (sh *strictHandler) GetHealth(ctx *gin.Context) {
 	var request GetHealthRequestObject
@@ -232,15 +564,35 @@ func (sh *strictHandler) GetHealth(ctx *gin.Context) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"rFI/b9ROEP0qq/n9CpCMbYhoTMU/QWhIQZdcMdmd2Bu8O5vddcRx8qehOFFQRTS0/mJobOdOINEgqh1p",
-	"Z957M+/tQLML7MnnBM0Oku7I4Vy+JexzJ1WIHChmS0tLxjzMFfnBQXMO/BEKMNRGNGRgU0DeBoIGUo7W",
-	"tzCOBUS6GWwkI+0rwLGPL69JZxil0forFmxDSUcbsmUPDbxknyNmVoaUZjd4q3HaT19YGVZ++qF7YvkI",
-	"GLPtOzSsHoQe8xVH97BUrwSMbunCa3TWd5wKRelmkFUVqUTtENFPe3ymvIBq9nn66lSUnZKQemqnO225",
-	"vPBQQLa5F+Ef3qmzlUU9Um66M0PP6p4YCrilmJYNHpd1WcNYAAfyGCw0cFLW5QkUEDB38z2rbj75Z6lb",
-	"yvLI4VGOcGqggTeUV1fkoimwT4snT+paHtFNfh7EEHqr59HqOomEHdAndEGEH00U78ZitV0+/o90BQ38",
-	"Vx1zUa2hqFbu2adf/Xl+dqpIXaLXrIwVYdO3W7KpFPCn9clfijtk6h9IfLGII2XQcFLWH3X25ZzRRHqI",
-	"Nm+hOd8UkAbnMG6hgdcpS6AMqmVNw/ebrmClRALbJOE+mL8ZF8woGYDmfAdD7KGBCsbNof33nL8Xu6f9",
-	"9J3SH5MtbB6d5O9ANm7GnwEAAP//",
+	"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",
+	"eLMp/p0JUX+q/4thry6YDUWwh7M52/wvAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
@@ -280,6 +632,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "common.yaml")) {
+		if _, ok := res[rawPath]; ok {
+			// it is not possible to compare functions in golang, so always overwrite the old value
+		}
+		res[rawPath] = rawFunc
+	}
 	return res
 }
 

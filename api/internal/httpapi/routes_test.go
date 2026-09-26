@@ -75,7 +75,7 @@ func parity(routes, operations []string) (routesWithoutContract, operationsWitho
 // whose handlers do not exist yet. It is temporary: phase 10 creates the identity
 // contract before the handlers of phase 11, which must empty this list.
 var contractPendingRoutes = []string{
-	"GET /api/v1/auth/me", "GET /api/v1/users",
+	"GET /api/v1/audit-logs", "GET /api/v1/auth/me", "GET /api/v1/users",
 	"POST /api/v1/auth/login", "POST /api/v1/auth/logout", "POST /api/v1/auth/password",
 	"POST /api/v1/auth/password-reset/confirm", "POST /api/v1/auth/password-reset/request",
 	"POST /api/v1/users", "POST /api/v1/users/{id}/admin-membership", "POST /api/v1/users/{id}/admin-membership/revoke",
