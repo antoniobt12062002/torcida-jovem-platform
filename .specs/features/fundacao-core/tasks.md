@@ -1149,11 +1149,11 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Aceita `financeiro:lancamento:read` e rejeita formas inválidas
-- [ ] Regex `^[a-z_]+:[a-z_]+:[a-z_]+$` aplicada
-- [ ] `Definition` com permissão inválida é rejeitada e a marca de leitura comum só é aceita em permissão de ação `read`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Aceita `financeiro:lancamento:read` e rejeita formas inválidas
+- [x] Regex `^[a-z_]+:[a-z_]+:[a-z_]+$` aplicada
+- [x] `Definition` com permissão inválida é rejeitada e a marca de leitura comum só é aceita em permissão de ação `read`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
