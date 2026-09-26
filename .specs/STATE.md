@@ -85,10 +85,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fase 5 (contrato OpenAPI, T23 a T30) em andamento; spec, design e tasks já atualizados para o contrato por módulo
-- **Completed**: T1 a T22 (fases 1 a 3 mescladas; fase 4 no PR #24); ADR-008 e AD-010 registrados
+- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30); a próxima é a fase 6 (auditoria, T31 a T36)
+- **Completed**: T1 a T30 (fases 1 a 3 mescladas; fase 4 no PR #24; fase 5 na branch `feature/fundacao-core-fase-5`, empilhada sobre a fase 4)
 - **In-progress** (file:line): none
-- **Next step**: Executar T23 (common.yaml) e T24 (teste rápido do oapi-codegen: problem+json, cookie de sessão, X-CSRF-Token e $ref externo); se houver incompatibilidade, parar e reportar ao mantenedor antes de fixar a solução
-- **Blockers**: none
+- **Next step**: Após o merge do PR #24 e autorização, enviar a fase 5 e abrir o PR. Antes dos handlers de identidade, decidir a validação de requisições (o código gerado não aplica restrições do esquema; o `oapi-codegen/gin-middleware` v1.1.0 aplica, conforme o teste rápido em `docs/development/tooling.md`)
+- **Blockers**: Autorização para `git push` e PR da fase 5; merge do PR #24
 - **Uncommitted files**: none
 - **Branch**: feature/fundacao-core-fase-5
