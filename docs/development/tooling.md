@@ -19,8 +19,8 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | `oapi-codegen` | v2.8.0 (17/07/2026) | `api/go.mod` (diretiva `tool`) | [pkg.go.dev](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2) e [README](https://github.com/oapi-codegen/oapi-codegen) | 2026-09-26 | Executado com `go tool oapi-codegen`; exige Go >= 1.25. Fixada na T24 |
 | `oapi-codegen/runtime` | v1.7.0 | `api/go.mod` | pkg.go.dev (proxy do Go) | 2026-09-26 | Entra no `go.mod` com o primeiro endpoint que tem parâmetros ou corpo (o `/healthz` não os tem, então o código gerado não a importa e o `go mod tidy` a remove) |
 | `kin-openapi` | v0.149.0 | `api/go.mod` | [README](https://github.com/getkin/kin-openapi) | 2026-09-26 | Fixado na T26 (contrato embutido no código gerado) e usado na validação de respostas nos testes (T27). Ligar `IncludeResponseStatus` para reprovar status não documentado |
-| `openapi-typescript` | 7.13.0 | `web/package.json` (T29) | [openapi-ts.dev](https://openapi-ts.dev/introduction) | 2026-09-26 | Node >= 22.12 |
-| `@redocly/cli` | 2.54.3 | `web/package.json` (T29) | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | Lint dos contratos |
+| `openapi-typescript` | 7.13.0 | `web/package.json` | [openapi-ts.dev](https://openapi-ts.dev/introduction) e [CLI](https://openapi-ts.dev/cli) | 2026-09-26 | Node >= 22.12. Um arquivo por contrato, configurado em `web/redocly.yaml` (`apis` e `x-openapi-ts.output`); `pnpm gen:api` gera e `pnpm gen:api:check` reprova diferença. Fixado na T29 |
+| `@redocly/cli` | 2.54.3 | `web/package.json` | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | `pnpm lint:api` lê o mesmo `web/redocly.yaml`; regras `info-license` e `operation-4xx-response` desligadas. Fixado na T29 |
 | `openapi-fetch` | 0.17.0 | (primeira tela real) | npm | 2026-09-26 | Não instalado agora |
 | `oapi-codegen/gin-middleware` | v1.1.0 | (candidato, não adotado) | proxy do Go | 2026-09-26 | Validador de requisições a partir do contrato; ver resultado do teste rápido |
 

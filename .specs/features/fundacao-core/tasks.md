@@ -918,10 +918,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] `gen:api` gera `web/lib/api/platform.d.ts` sem diferença na segunda execução
-- [ ] `lint:api` passa nos contratos atuais
-- [ ] `tsc` passa com o arquivo gerado; `openapi-fetch` não é instalado agora
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `gen:api` gera `web/lib/api/platform.d.ts` sem diferença na segunda execução
+- [x] `lint:api` passa nos contratos atuais
+- [x] `tsc` passa com o arquivo gerado; `openapi-fetch` não é instalado agora
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
