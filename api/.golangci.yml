@@ -1,4 +1,4 @@
 version: "2"
-linters:
-  enable:
-    - misspell
+# O projeto escreve comentários, mensagens e testes em português (Brasil).
+# O linter misspell só conhece inglês e reprova palavras corretas (por exemplo
+# "administrativo" e "validade"), por isso não está habilitado.
