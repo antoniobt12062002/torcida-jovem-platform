@@ -22,7 +22,7 @@ Registro das ferramentas fixadas durante a execução das specs, com a fonte con
 | `openapi-typescript` | 7.13.0 | `web/package.json` | [openapi-ts.dev](https://openapi-ts.dev/introduction) e [CLI](https://openapi-ts.dev/cli) | 2026-09-26 | Node >= 22.12. Um arquivo por contrato, configurado em `web/redocly.yaml` (`apis` e `x-openapi-ts.output`); `pnpm gen:api` gera e `pnpm gen:api:check` reprova diferença. Fixado na T29 |
 | `@redocly/cli` | 2.54.3 | `web/package.json` | npm e [documentação do Redocly](https://redocly.com/docs/cli/) | 2026-09-26 | `pnpm lint:api` lê o mesmo `web/redocly.yaml`; regras `info-license` e `operation-4xx-response` desligadas. Fixado na T29 |
 | `openapi-fetch` | 0.17.0 | (primeira tela real) | npm | 2026-09-26 | Não instalado agora |
-| `oapi-codegen/gin-middleware` | v1.1.0 | (candidato, não adotado) | proxy do Go | 2026-09-26 | Validador de requisições a partir do contrato; ver resultado do teste rápido |
+| `oapi-codegen/gin-middleware` | v1.1.0 | recusado | proxy do Go | 2026-09-26 | Não atende a API-02.4 (só entrega mensagem em texto); no lugar, middleware próprio em `platform/httpx` sobre o `kin-openapi` |
 
 ### Resultado do teste rápido (T24)
 
@@ -35,7 +35,7 @@ Experimento descartável com um `common.yaml` compartilhado e dois módulos com 
 
 Achados adicionais:
 
-- **`gin-middleware` v1.1.0 e erros por campo (achado ao ler o código-fonte):** o `ErrorHandler` recebe só a mensagem (`func(c, message string, status int)`, primeira linha do erro do `kin-openapi`) e o middleware usa `gorilla/mux` e valida `Host` quando o contrato tem `servers`. Não dá para montar o `errors[]` (`field` e `code`) de API-02.4 sem interpretar texto. Alternativa em avaliação: um middleware próprio, pequeno, sobre o `kin-openapi` (que já é dependência aprovada), com erros estruturados.
+- **`gin-middleware` v1.1.0 e erros por campo (achado ao ler o código-fonte):** o `ErrorHandler` recebe só a mensagem (`func(c, message string, status int)`, primeira linha do erro do `kin-openapi`) e o middleware usa `gorilla/mux` e valida `Host` quando o contrato tem `servers`. Não dá para montar o `errors[]` (`field` e `code`) de API-02.4 sem interpretar texto. Decisão: middleware próprio, pequeno, em `platform/httpx` (`NewContractValidator`), sobre o `kin-openapi`, com erros estruturados (422 `validation_failed` com `errors[]`, 400 `invalid_json`). Ele valida só o contrato HTTP; não aplica esquemas de segurança nem regras de negócio, e deixa passar rotas sem operação no contrato. Cada módulo o liga por `GinServerOptions.Middlewares` com o próprio contrato. Formatos `uuid` e `email` são registrados no pacote, pois o `kin-openapi` só valida os que conhece.
 - O código gerado **não aplica** restrições do esquema (por exemplo `minLength`); só decodifica. O `gin-middleware` v1.1.0 aplica-as a partir do contrato (testado: `minLength` e campo obrigatório resultam em erro tratável). A adoção fica para a decisão sobre validação de requisições, antes dos handlers de identidade.
 - `GetSwagger` está obsoleto; usar `GetSpec`.
 

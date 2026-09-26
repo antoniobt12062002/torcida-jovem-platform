@@ -85,10 +85,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30); falta a validação automática de requisições pelo contrato, que aguarda decisão de implementação
-- **Completed**: T1 a T30 (fases 1 a 4 mescladas; fase 5 no PR da branch `feature/fundacao-core-fase-5`)
+- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) mais o validador de requisições pelo contrato (`platform/httpx`, sem tarefa numerada própria; a numeração das tarefas segue a de `tasks.md`)
+- **Completed**: T1 a T30 e o validador de requisições (fases 1 a 4 mescladas; fase 5 no PR da branch `feature/fundacao-core-fase-5`)
 - **In-progress** (file:line): none
-- **Next step**: Decidir a validação de requisições (`gin-middleware` v1.1.0 não entrega erros por campo; alternativa: middleware próprio sobre o `kin-openapi`); depois, apresentar o design da modelagem de identidade (User x Associado, papéis e permissões, sessões, vínculo administrativo, promoção, auditoria de permissões) antes de Identity/RBAC
-- **Blockers**: Decisão sobre a implementação da validação de requisições
+- **Next step**: Após o merge da fase 5, apresentar o design da modelagem Identity/RBAC (User x Associado, papéis e permissões, sessões, vínculo administrativo, promoção, auditoria de permissões) e aguardar aprovação antes de iniciar a implementação
+- **Blockers**: Aprovação do design de Identity/RBAC
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar
 - **Uncommitted files**: none
 - **Branch**: feature/fundacao-core-fase-5
