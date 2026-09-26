@@ -1031,12 +1031,12 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Ação de cancelamento ou ajuste sem motivo é rejeitada
-- [ ] Ação fora do catálogo é rejeitada; o catálogo tem as ações de identidade e de segurança da spec
-- [ ] `actor_user_id` só com `actor_type` igual a `user`; `outcome` e `actor_type` inválidos são rejeitados
-- [ ] Chaves sensíveis em before, after e context viram `[redacted]`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Ação de cancelamento ou ajuste sem motivo é rejeitada
+- [x] Ação fora do catálogo é rejeitada; o catálogo tem as ações de identidade e de segurança da spec
+- [x] `actor_user_id` só com `actor_type` igual a `user`; `outcome` e `actor_type` inválidos são rejeitados
+- [x] Chaves sensíveis em before, after e context viram `[redacted]`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
