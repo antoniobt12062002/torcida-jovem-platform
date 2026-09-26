@@ -207,3 +207,28 @@ func TestFoundationDefinitionsMarkNoPermissionAsCommonRead(t *testing.T) {
 		}
 	}
 }
+
+// IDN-08.1: a permissão de redefinição administrativa.
+func TestResetPasswordPermissionGoesToAdminSistemaAndPresidenteOnly(t *testing.T) {
+	m := foundation(t)
+	const perm authz.Permission = "identity:user:reset_password"
+
+	var defined bool
+	for _, d := range m.Definitions {
+		if d.Permission == perm {
+			defined = true
+			if d.CommonRead {
+				t.Error("não pode ser leitura comum")
+			}
+		}
+	}
+	if !defined {
+		t.Fatal("a permissão deveria estar declarada")
+	}
+	for _, r := range domain.AllRoles {
+		want := r == domain.RoleAdminSistema || r == domain.RolePresidente
+		if m.Has(r, perm) != want {
+			t.Errorf("%s: Has = %v, esperado %v", r, m.Has(r, perm), want)
+		}
+	}
+}

@@ -36,3 +36,19 @@ func TestMatrixHasAndPermissions(t *testing.T) {
 		t.Errorf("Permissions = %v", got)
 	}
 }
+
+func TestPermissionsOfIsTheSortedUnionWithoutRepetition(t *testing.T) {
+	m := Matrix{Grants: map[Role][]authz.Permission{
+		RoleEventos:    {"a:b:read", "a:b:update"},
+		RoleTesouraria: {"a:b:read", "c:d:create"},
+	}}
+
+	got := m.PermissionsOf([]Role{RoleTesouraria, RoleEventos, RoleAssociado})
+
+	if !slices.Equal(got, []authz.Permission{"a:b:read", "a:b:update", "c:d:create"}) {
+		t.Errorf("PermissionsOf = %v", got)
+	}
+	if got := m.PermissionsOf(nil); len(got) != 0 {
+		t.Errorf("sem papéis: %v", got)
+	}
+}

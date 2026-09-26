@@ -29,3 +29,18 @@ func (m Matrix) Permissions() []authz.Permission {
 	}
 	return out
 }
+
+// PermissionsOf is the union of the permissions granted to the given roles,
+// sorted and without repetition.
+func (m Matrix) PermissionsOf(roles []Role) []authz.Permission {
+	var out []authz.Permission
+	for _, r := range roles {
+		for _, p := range m.Grants[r] {
+			if !slices.Contains(out, p) {
+				out = append(out, p)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
+}

@@ -170,7 +170,7 @@ Regras de desenho:
 
 - **Purpose**: Usuários, papéis, vínculo administrativo, sessões e casos de uso de acesso.
 - **Location**: `api/internal/identity/{domain,app,infra,http}/`
-- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `RequestPasswordReset`, `ResetPasswordWithToken`, `AdminResetPassword`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` com estado anterior e posterior e o diff, sob `pg_advisory_xact_lock`; só grava quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
+- **Interfaces**: política de senha por papel no domínio (mínimo 10 para qualquer papel diferente de ASSOCIADO, 8 só para ASSOCIADO, máximo 128 pontos de código); casos de uso `Authenticate`, `ReactivateUser`, `RequestPasswordReset`, `ResetPasswordWithToken`, `AdminResetPassword`, `Logout`, `CreateUser` (só ASSOCIADO), `DeactivateUser`, `ChangePassword`, `PromoteToAdmin`, `RevokeAdmin`, `AssignRoles`, `ListUsers`, `SyncRoles` (grava `rbac.sync` com estado anterior e posterior e o diff, sob `pg_advisory_xact_lock`; só grava quando algo muda); entidade `AdminMembership` separada de papel; `SessionValidator.Validate(ctx, token) (authz.Principal, csrf string, error)`.
 - **Dependencies**: `platform/*`.
 
 ### cmd/bootstrap-admin e cmd/api
@@ -225,7 +225,7 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 ## Auditoria e eventos de segurança
 
 - Dois modos de gravação: **atômico** (`Record`, dentro da transação do caso de uso, para mudanças de dado) e **de segurança** (`RecordSecurity`, transação própria, para telemetria e eventos que não alteram estado crítico: login, falha de login, bloqueio, logout, negação). Falha de gravação: no modo atômico reverte a operação (500 `audit_failed`); no modo de segurança vira incidente operacional e a operação continua.
-- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout`, `authz.denied` (negação de permissão que não seja leitura comum), `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed` e `user.password_reset`. Cada spec de módulo acrescenta as suas.
+- Catálogo de ações (constantes): `user.create`, `user.bootstrap`, `user.deactivate`, `user.password_change`, `user.roles_set`, `admin.promote`, `admin.revoke`, `rbac.sync`, `role.change_denied`, `auth.login`, `auth.login_failed`, `auth.login_blocked` e `auth.logout`, `authz.denied` (negação de permissão que não seja leitura comum), `auth.password_reset_requested`, `auth.password_reset_completed`, `auth.password_reset_failed`, `user.password_reset` e `user.reactivate`. Cada spec de módulo acrescenta as suas.
 - Ator (`actor_type` e `actor_user_id`), alvo (`entity_type` e `entity_id`), momento, `request_id`, antes e depois, resultado (`outcome`) e contexto da ação ficam no mesmo registro; nada é alterável nem apagável (trigger e concessões, AUD-02).
 - Segredos nunca entram: as chaves sensíveis são redigidas em `before`, `after` e `context`; o e-mail de uma tentativa de login entra só como hash.
 - **Evoluções futuras, fora desta fase**: armazenamento controlado de IP em eventos de segurança (LGPD), separação entre auditoria institucional e técnica, versionamento dos eventos e encadeamento criptográfico entre registros.
@@ -361,6 +361,14 @@ CREATE TABLE password_reset_requests (
 );
 CREATE INDEX password_reset_requests_idx ON password_reset_requests (email_hash, requested_at DESC);
 -- GRANT SELECT, INSERT, DELETE ON password_reset_requests TO tj_app
+
+CREATE TABLE password_change_attempts (         -- contador próprio da troca de senha, separado do login
+  id           bigserial PRIMARY KEY,
+  user_id      uuid NOT NULL REFERENCES users,
+  attempted_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX password_change_attempts_idx ON password_change_attempts (user_id, attempted_at DESC);
+-- GRANT SELECT, INSERT, DELETE ON password_change_attempts TO tj_app
 ```
 
 **Relationships**: `user_roles` liga usuários e papéis; permissões efetivas são a união via `role_permissions`; `admin_memberships` guarda o histórico de por que cada usuário teve acesso administrativo (um ativo por usuário). Não há coluna de associado em `users`. `audit_log.actor_user_id` referencia `users` logicamente e não por chave estrangeira, para nunca bloquear a gravação.
@@ -383,6 +391,8 @@ CREATE INDEX password_reset_requests_idx ON password_reset_requests (email_hash,
 | JSON malformado ou validação | 400 `invalid_json` ou 422 `validation_failed` com `errors[]` | Corrigir os campos |
 | Conflito (e-mail repetido, último administrador, vínculo administrativo) | 409 `email_taken`, `last_admin`, `already_admin`, `not_admin`, `user_inactive` ou `admin_membership_required` | Mensagem específica |
 | Motivo do vínculo ausente ou curto | 422 `reason_required` | Informar o motivo |
+| Troca de senha: senha atual errada, igual à nova, ou bloqueio | 403 `invalid_current_password`, 422 `password_unchanged`, 429 `password_change_blocked` com `Retry-After` | Corrigir ou aguardar 15 minutos |
+| Promoção sem papel administrativo | 422 `admin_role_required` | Escolher ao menos um papel |
 | Token de recuperação desconhecido, expirado ou usado | 400 `invalid_reset_token`, idêntico nos três casos, com `auth.password_reset_failed` | Pedir uma nova recuperação |
 | Solicitação de recuperação | 202 com corpo fixo, exista ou não a conta; envio assíncrono, e falha de envio é incidente no log | Nenhum efeito visível |
 | Concessão acima do próprio poder ou alteração do próprio acesso | 403 `privilege_escalation` ou `self_change_forbidden`, com auditoria `role.change_denied` | Acesso negado |
@@ -425,6 +435,9 @@ CREATE INDEX password_reset_requests_idx ON password_reset_requests (email_hash,
 | Cursor de paginação | Base64 de `(occurred_at, id)` | Estável sob inserções concorrentes, ao contrário de `OFFSET` |
 | Permissões declaradas em código | Matriz papel-permissão em Go, sincronizada na partida | Revisável em PR e testável; migrações de dados de permissão seriam difíceis de auditar |
 | Vínculo usuário-associado | `associados.associados.user_id`, no módulo dono | `identity` não depende de `associados` (regra de fronteira) |
+| Reset administrativo | Senha temporária aleatória mostrada uma única vez ao administrador (`Cache-Control: no-store`), `must_change_password`, sessões e tokens revogados, motivo obrigatório | Consistente com a criação de usuário (o criador conhece a senha inicial, que precisa ser trocada); a recuperação por e-mail segue só com token |
+| Trava do conjunto de administradores | `pg_advisory_xact_lock` próprio em toda operação que reduz quem administra acesso (desativar, retirar vínculo, trocar papéis) | Duas operações simultâneas não deixam o sistema sem administrador |
+| Regra sem escalada nas ações sobre outro usuário | `authz.Covers` sobre as permissões efetivas do alvo antes de desativar, reativar, redefinir a senha, promover, retirar ou trocar papéis | Ninguém age sobre quem tem mais poder do que ele |
 | Recuperação por token | Token aleatório de 256 bits, só o hash no banco, uso único, validade de 30 minutos, envio assíncrono e resposta uniforme | Sem senha temporária e sem revelar se a conta existe; o tempo de resposta não depende do envio |
 | Hash de e-mail | HMAC-SHA256 com `AUTH_HASH_KEY` | Vazamento do banco ou da auditoria não expõe e-mails por dicionário |
 | Um caminho para conceder poder | Contas nascem ASSOCIADO; só `PromoteToAdmin` (e a CLI do primeiro administrador) concede papéis administrativos | Concentra motivo, `must_change_password`, revogação de sessões e auditoria em um caso de uso |

@@ -108,11 +108,12 @@ func FoundationContributions() []Contribution {
 				{Permission: "identity:role:assign", Description: "Atribuir papéis a quem tem vínculo de gestão"},
 				{Permission: "identity:admin:grant", Description: "Conceder acesso de gestão (promoção)"},
 				{Permission: "identity:admin:revoke", Description: "Retirar acesso de gestão"},
+				{Permission: "identity:user:reset_password", Description: "Redefinir a senha de outro usuário"},
 			},
 			Grants: map[domain.Role][]authz.Permission{
 				domain.RoleAdminSistema: {
 					"identity:user:read", "identity:user:create", "identity:user:update",
-					"identity:role:assign", "identity:admin:grant", "identity:admin:revoke",
+					"identity:role:assign", "identity:admin:grant", "identity:admin:revoke", "identity:user:reset_password",
 				},
 				domain.RoleDiretoria: {"identity:user:read"},
 			},

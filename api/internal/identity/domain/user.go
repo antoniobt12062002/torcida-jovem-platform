@@ -29,6 +29,10 @@ type User struct {
 var (
 	ErrEmailTaken   = errors.New("email_taken")
 	ErrUserNotFound = errors.New("user_not_found")
+
+	// ErrInvalidResetToken covers an unknown, expired and already used recovery
+	// token alike, so the response never says which.
+	ErrInvalidResetToken = errors.New("invalid_reset_token")
 )
 
 const maxEmailLen = 254

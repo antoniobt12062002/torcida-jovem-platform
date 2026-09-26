@@ -152,6 +152,10 @@ func TestIdentityDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 	app, owner := newAuditDBs(t)
 	newUser(t, app, "a@x.com")
 
+	// 000004 depende de users: é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000004_password_reset.down.sql")); err != nil {
+		t.Fatalf("down 000004: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000003_identity.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}
@@ -166,6 +170,10 @@ func TestIdentityDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 
 func TestIdentityMigrationFailsClearlyWithoutTheApplicationRole(t *testing.T) {
 	_, owner := newAuditDBs(t)
+	// 000004 depende de users: é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000004_password_reset.down.sql")); err != nil {
+		t.Fatalf("down 000004: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000003_identity.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}

@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
@@ -110,6 +112,11 @@ func (r *UserRepository) SetPassword(ctx context.Context, id, hash string, mustC
 	return r.update(ctx, id, "password_hash = ?, must_change_password = ?", hash, mustChange)
 }
 
+// SetMustChangePassword sets only the must-change flag.
+func (r *UserRepository) SetMustChangePassword(ctx context.Context, id string, mustChange bool) error {
+	return r.update(ctx, id, "must_change_password = ?", mustChange)
+}
+
 // SetActive activates or deactivates the user.
 func (r *UserRepository) SetActive(ctx context.Context, id string, active bool) error {
 	return r.update(ctx, id, "is_active = ?", active)
@@ -163,3 +170,117 @@ func roleAlreadyAssigned(tx *gorm.DB, userID string, role domain.Role) bool {
 		userID, string(role)).Scan(&n).Error
 	return n > 0
 }
+
+// AdminSetLockKey is the transaction-level advisory lock that serializes every
+// operation that can reduce who administers access (deactivating a user,
+// withdrawing the membership, changing roles), so two of them running together
+// cannot leave the system without an administrator.
+const AdminSetLockKey int64 = 0x746a5f61646d696e // "tj_admin"
+
+// LockAdminSet takes the admin-set lock for the current transaction. It fails
+// outside a transaction, because the lock would end at once.
+func (r *UserRepository) LockAdminSet(ctx context.Context) error {
+	tx, ok := database.TxFrom(ctx)
+	if !ok {
+		return errors.New("usuário: LockAdminSet exige uma transação")
+	}
+	if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", AdminSetLockKey).Error; err != nil {
+		return fmt.Errorf("usuário: lock do conjunto de administradores: %w", err)
+	}
+	return nil
+}
+
+// ActiveHoldersOf counts the active users that hold the (active) permission
+// through their roles, not counting the excluded user id (may be empty).
+func (r *UserRepository) ActiveHoldersOf(ctx context.Context, perm authz.Permission, exclude string) (int, error) {
+	if exclude != "" && !uuidFormat.MatchString(exclude) {
+		return 0, domain.ErrUserNotFound
+	}
+	var n int64
+	q := `SELECT count(DISTINCT u.id) FROM users u
+		JOIN user_roles ur ON ur.user_id = u.id
+		JOIN role_permissions rp ON rp.role_id = ur.role_id
+		JOIN permissions p ON p.id = rp.permission_id
+		WHERE u.is_active AND p.is_active AND p.name = ?`
+	args := []any{string(perm)}
+	if exclude != "" {
+		q += " AND u.id <> ?::uuid"
+		args = append(args, exclude)
+	}
+	if err := conn(ctx, r.db).Raw(q, args...).Scan(&n).Error; err != nil {
+		return 0, fmt.Errorf("usuário: contar titulares: %w", err)
+	}
+	return int(n), nil
+}
+
+// List returns up to limit users, newest first, after the cursor (nil starts at
+// the newest). Each item carries the roles and the summary of the active
+// administrative membership; the password hash is never read.
+func (r *UserRepository) List(ctx context.Context, filter domain.ListFilter, after *domain.ListCursor, limit int) ([]domain.UserSummary, error) {
+	q := `SELECT id::text AS id, email, name, is_active, must_change_password, created_at FROM users u WHERE true`
+	var args []any
+	if filter.Active != nil {
+		q += " AND u.is_active = ?"
+		args = append(args, *filter.Active)
+	}
+	if filter.Role != nil {
+		q += " AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = ?)"
+		args = append(args, string(*filter.Role))
+	}
+	if after != nil {
+		q += " AND (u.created_at, u.id) < (?, ?::uuid)"
+		args = append(args, after.CreatedAt, after.ID)
+	}
+	q += " ORDER BY u.created_at DESC, u.id DESC LIMIT ?"
+	args = append(args, limit)
+
+	var rows []struct {
+		ID                 string
+		Email              string
+		Name               string
+		IsActive           bool
+		MustChangePassword bool
+		CreatedAt          time.Time
+	}
+	c := conn(ctx, r.db)
+	if err := c.Raw(q, args...).Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("usuários: listar: %w", err)
+	}
+	out := make([]domain.UserSummary, len(rows))
+	ids := make([]string, len(rows))
+	index := map[string]int{}
+	for i, row := range rows {
+		out[i] = domain.UserSummary{ID: row.ID, Email: row.Email, Name: row.Name, Active: row.IsActive, MustChangePassword: row.MustChangePassword, CreatedAt: row.CreatedAt}
+		ids[i] = row.ID
+		index[row.ID] = i
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	var roleRows []struct{ UserID, Name string }
+	if err := c.Raw(`SELECT ur.user_id::text AS user_id, r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = ANY(?::uuid[]) ORDER BY r.name`, pgUUIDArray(ids)).Scan(&roleRows).Error; err != nil {
+		return nil, fmt.Errorf("usuários: papéis da página: %w", err)
+	}
+	for _, rr := range roleRows {
+		out[index[rr.UserID]].Roles = append(out[index[rr.UserID]].Roles, domain.Role(rr.Name))
+	}
+	var memRows []struct {
+		UserID    string
+		Reason    string
+		GrantedAt time.Time
+	}
+	if err := c.Raw(`SELECT user_id::text AS user_id, reason, granted_at FROM admin_memberships
+		WHERE user_id = ANY(?::uuid[]) AND revoked_at IS NULL`, pgUUIDArray(ids)).Scan(&memRows).Error; err != nil {
+		return nil, fmt.Errorf("usuários: vínculos da página: %w", err)
+	}
+	for _, mr := range memRows {
+		out[index[mr.UserID]].AdminMembership = &domain.MembershipSummary{Reason: mr.Reason, GrantedAt: mr.GrantedAt}
+	}
+	return out, nil
+}
+
+// pgUUIDArray formats ids (already validated UUIDs from the database) as a
+// PostgreSQL array literal.
+func pgUUIDArray(ids []string) string { return "{" + strings.Join(ids, ",") + "}" }

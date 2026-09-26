@@ -1702,11 +1702,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] A permissão é declarada e concedida a ADMIN_SISTEMA, e o PRESIDENTE a recebe por ter todas
-- [ ] Não é leitura comum, e o Conselho Fiscal continua sem create, update, delete e cancel
-- [ ] Os testes de invariante da matriz continuam passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] A permissão é declarada e concedida a ADMIN_SISTEMA, e o PRESIDENTE a recebe por ter todas
+- [x] Não é leitura comum, e o Conselho Fiscal continua sem create, update, delete e cancel
+- [x] Os testes de invariante da matriz continuam passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -1715,13 +1715,13 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T57: Criar a migração de recuperação de senha (`password_reset_tokens`, só o hash do token, e `password_reset_requests`) com `down` e concessões
+### T57: Criar a migração de recuperação de senha (`password_reset_tokens`, só o hash do token, `password_reset_requests` e `password_change_attempts`) com `down` e concessões
 
-**What**: Criar a migração de recuperação de senha (`password_reset_tokens`, só o hash do token, e `password_reset_requests`) com `down` e concessões.  
+**What**: Criar a migração de recuperação de senha (`password_reset_tokens`, só o hash do token, `password_reset_requests` e `password_change_attempts`) com `down` e concessões.  
 **Where**: `api/migrations/000004_password_reset.up.sql`  
 **Depends on**: T56  
 **Reuses**: Migração 000003 como padrão  
-**Requirement**: IDN-07 (ACs 2, 3, 4)
+**Requirement**: IDN-07 (ACs 2, 3, 4); IDN-04 (ACs 12)
 
 **Tools**:
 
@@ -1730,12 +1730,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `token_hash` único e nenhuma coluna guarda o token; `password_reset_requests` guarda só o HMAC do e-mail
-- [ ] `tj_app` com SELECT, INSERT e UPDATE em `password_reset_tokens`, sem DELETE
-- [ ] Migração `down` desfaz sem erro
-- [ ] Falha com mensagem clara se o papel `tj_app` não existir
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `token_hash` único e nenhuma coluna guarda o token; `password_reset_requests` guarda só o HMAC do e-mail; `password_change_attempts` guarda só o usuário e o instante
+- [x] `tj_app` com SELECT, INSERT e UPDATE em `password_reset_tokens`, sem DELETE
+- [x] Migração `down` desfaz sem erro
+- [x] Falha com mensagem clara se o papel `tj_app` não existir
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1744,13 +1744,13 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T58: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail
+### T58: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail e das tentativas de troca de senha por usuário
 
-**What**: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail.  
+**What**: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail e das tentativas de troca de senha por usuário.  
 **Where**: `api/internal/identity/infra/reset_token_repository.go`  
 **Depends on**: T57  
 **Reuses**: `password_reset_tokens` e `password_reset_requests`  
-**Requirement**: IDN-07 (ACs 2, 4, 5, 6)
+**Requirement**: IDN-07 (ACs 2, 4, 5, 6); IDN-04 (ACs 12)
 
 **Tools**:
 
@@ -1759,13 +1759,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Só o SHA-256 do token é gravado
-- [ ] Criar um token invalida os pendentes do mesmo usuário
-- [ ] O consumo é de uso único, inclusive com duas confirmações simultâneas (só uma vence)
-- [ ] Token expirado, usado ou desconhecido devolve o mesmo erro
-- [ ] Conta as solicitações de um e-mail (por HMAC) na última hora
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] As tentativas de troca de senha têm contador próprio por usuário, separado das tentativas de login
+- [x] Só o SHA-256 do token é gravado
+- [x] Criar um token invalida os pendentes do mesmo usuário
+- [x] O consumo é de uso único, inclusive com duas confirmações simultâneas (só uma vence)
+- [x] Token expirado, usado ou desconhecido devolve o mesmo erro
+- [x] Conta as solicitações de um e-mail (por HMAC) na última hora
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1780,7 +1781,7 @@ T83 → T84 → T85 → T86
 **Where**: `api/internal/identity/app/create_user.go`  
 **Depends on**: T58  
 **Reuses**: `WithTx`, `audit.Recorder`, `authz.Require`  
-**Requirement**: IDN-04 (ACs 1, 2); RBAC-02 (ACs 3); IDN-05 (ACs 2, 3, 4)
+**Requirement**: IDN-04 (ACs 1, 2); RBAC-02 (ACs 3); IDN-05 (ACs 2, 3, 4, 8)
 
 **Tools**:
 
@@ -1789,13 +1790,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Aplica a política de senha de ASSOCIADO (8) e a lista de comprometidas
-- [ ] O comando não aceita papéis: o usuário criado tem só ASSOCIADO
-- [ ] Exige `identity:user:create` antes de qualquer leitura ou escrita
-- [ ] Grava `user.create` na mesma transação
-- [ ] E-mail repetido devolve erro mapeável para 409 `email_taken`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Aplica a política de senha de ASSOCIADO (8) e a lista de comprometidas
+- [x] O comando não aceita papéis: o usuário criado tem só ASSOCIADO, com `must_change_password` verdadeiro
+- [x] Exige `identity:user:create` antes de qualquer leitura ou escrita
+- [x] Grava `user.create` na mesma transação
+- [x] E-mail repetido devolve erro mapeável para 409 `email_taken`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1804,41 +1805,13 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T60: Criar o caso de uso de desativação e reativação de usuário
+### T60: Criar os casos de uso de desativação e de reativação de usuário
 
-**What**: Criar o caso de uso de desativação e reativação de usuário.  
+**What**: Criar os casos de uso de desativação e de reativação de usuário.  
 **Where**: `api/internal/identity/app/deactivate_user.go`  
 **Depends on**: T59  
-**Reuses**: `WithTx` e `audit.Recorder`  
-**Requirement**: IDN-04 (ACs 3, 4); RBAC-02 (ACs 3, 5)
-
-**Tools**:
-
-- MCP: NONE
-- Skill: NONE
-
-**Done when**:
-
-- [ ] Desativar revoga todas as sessões na mesma transação
-- [ ] Desativar o último usuário ativo que possui `identity:admin:grant` devolve erro mapeável para 409 `last_admin`
-- [ ] Grava `user.deactivate`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
-
-**Tests**: integration  
-**Gate**: full
-
-**Commit**: `feat(identity): adiciona desativacao de usuario`
-
----
-
-### T61: Criar o caso de uso de troca de senha
-
-**What**: Criar o caso de uso de troca de senha.  
-**Where**: `api/internal/identity/app/change_password.go`  
-**Depends on**: T60  
-**Reuses**: `password` e `audit.Recorder`  
-**Requirement**: IDN-04 (ACs 5, 6, 9); IDN-05 (ACs 1, 2, 3, 4, 6)
+**Reuses**: `WithTx`, `audit.Recorder`, `authz.Covers` e o lock do conjunto de administradores  
+**Requirement**: IDN-04 (ACs 3, 4, 10); RBAC-02 (ACs 3, 5); RBAC-03 (ACs 3, 4, 5, 6)
 
 **Tools**:
 
@@ -1847,12 +1820,44 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Aplica a política de senha e limpa `must_change_password` ao trocar
-- [ ] Senha atual errada devolve erro mapeável para 403 `invalid_current_password`
-- [ ] Revoga as outras sessões do usuário
-- [ ] Auditoria `user.password_change` não contém valor de senha
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exigem `identity:user:update` antes de qualquer leitura ou escrita
+- [x] Desativar revoga todas as sessões e os tokens de recuperação pendentes do usuário na mesma transação e grava `user.deactivate`
+- [x] Desativar o último usuário ativo que possui `identity:admin:grant` devolve 409 `last_admin`, sob um lock consultivo do conjunto de administradores (duas desativações simultâneas não deixam o sistema sem administrador)
+- [x] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam a ação da operação com resultado `denied` por `RecordSecurity`
+- [x] Reativar segue as mesmas regras, grava `user.reactivate` e não restaura papéis administrativos nem o vínculo encerrado
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(identity): adiciona desativacao e reativacao de usuario`
+
+---
+
+### T61: Criar o caso de uso de troca de senha do próprio usuário
+
+**What**: Criar o caso de uso de troca de senha do próprio usuário.  
+**Where**: `api/internal/identity/app/change_password.go`  
+**Depends on**: T60  
+**Reuses**: `password`, `audit.Recorder` e o contador `password_change_attempts`  
+**Requirement**: IDN-04 (ACs 5, 6, 9, 11, 12); IDN-05 (ACs 1, 2, 3, 4, 6)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: security-best-practices
+
+**Done when**:
+
+- [x] Aplica a política de senha por papel e a lista de comprometidas e limpa `must_change_password` ao trocar
+- [x] Senha atual errada devolve 403 `invalid_current_password` e conta no contador próprio `password_change_attempts`, separado do login
+- [x] Cinco erros em 15 minutos bloqueiam a troca por 15 minutos (429 `password_change_blocked`, com `Retry-After`); tentativas bloqueadas não contam nem estendem, e o sucesso zera a contagem
+- [x] Nova senha igual à atual devolve 422 `password_unchanged`
+- [x] Revoga as outras sessões do usuário (a atual continua) na mesma transação e grava `user.password_change` sem valor de senha
+- [x] O erro de senha atual grava `user.password_change` com resultado `failure` por `RecordSecurity`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1876,13 +1881,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:admin:grant` antes de qualquer leitura ou escrita
-- [ ] Cria o vínculo com motivo, atribui os papéis, marca `must_change_password` quando o usuário não tinha vínculo ativo, revoga todas as sessões do alvo e grava `admin.promote` com papéis anteriores e novos, tudo na mesma transação
-- [ ] Ator não concede papel com permissão que ele não possui (403 `privilege_escalation`) nem altera a si mesmo (403 `self_change_forbidden`)
-- [ ] A tentativa negada por escalada ou por autoalteração grava `role.change_denied` em transação própria
-- [ ] Alvo inativo devolve 409 `user_inactive` e vínculo ativo existente devolve 409 `already_admin`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:admin:grant` antes de qualquer leitura ou escrita
+- [x] Exige ao menos um papel administrativo, senão 422 `admin_role_required`
+- [x] Cria o vínculo com motivo, atribui os papéis, marca `must_change_password` quando o usuário não tinha vínculo ativo, revoga todas as sessões do alvo e grava `admin.promote` com papéis anteriores e novos, tudo na mesma transação
+- [x] Ator não concede papel com permissão que ele não possui (403 `privilege_escalation`) nem altera a si mesmo (403 `self_change_forbidden`)
+- [x] A tentativa negada por escalada ou por autoalteração grava `role.change_denied` em transação própria
+- [x] Alvo inativo devolve 409 `user_inactive` e vínculo ativo existente devolve 409 `already_admin`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 10 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1906,13 +1912,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:admin:revoke` e motivo
-- [ ] Encerra o vínculo, remove todos os papéis diferentes de ASSOCIADO, revoga as sessões do alvo e grava `admin.revoke`, na mesma transação
-- [ ] Retirar o último usuário ativo com `identity:admin:grant` devolve 409 `last_admin`
-- [ ] Alvo sem vínculo ativo devolve 409 `not_admin`
-- [ ] Ator não retira acesso de quem tem permissões que ele não possui (403 `privilege_escalation`) nem o próprio (403 `self_change_forbidden`), e a tentativa negada grava `role.change_denied`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:admin:revoke` e motivo
+- [x] Encerra o vínculo, remove todos os papéis diferentes de ASSOCIADO, revoga as sessões do alvo e grava `admin.revoke`, na mesma transação
+- [x] Retirar o último usuário ativo com `identity:admin:grant` devolve 409 `last_admin`
+- [x] Alvo sem vínculo ativo devolve 409 `not_admin`
+- [x] Ator não retira acesso de quem tem permissões que ele não possui (403 `privilege_escalation`) nem o próprio (403 `self_change_forbidden`), e a tentativa negada grava `role.change_denied`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1936,14 +1942,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:role:assign`
-- [ ] Adicionar papel diferente de ASSOCIADO a quem não tem vínculo ativo devolve 409 `admin_membership_required`
-- [ ] Conjunto vazio de papéis devolve 422 `validation_failed`
-- [ ] Cada papel acrescentado ou removido precisa estar coberto pelas permissões do ator (403 `privilege_escalation`); o ator não altera os próprios papéis (403 `self_change_forbidden`); a tentativa negada grava `role.change_denied`
-- [ ] Substitui o conjunto e grava papéis anteriores e novos em `user.roles_set`
-- [ ] Um usuário pode ter vários papéis ativos e as novas permissões valem na requisição seguinte
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:role:assign`
+- [x] Adicionar papel diferente de ASSOCIADO a quem não tem vínculo ativo devolve 409 `admin_membership_required`
+- [x] O papel ASSOCIADO é sempre mantido pelo servidor; a lista recebida traz só papéis administrativos e pode ser vazia, o que deixa o vínculo dormente
+- [x] Cada papel acrescentado ou removido precisa estar coberto pelas permissões do ator (403 `privilege_escalation`); o ator não altera os próprios papéis (403 `self_change_forbidden`); a tentativa negada grava `role.change_denied`
+- [x] Substitui o conjunto e grava papéis anteriores e novos em `user.roles_set`
+- [x] Um usuário pode ter vários papéis ativos e as novas permissões valem na requisição seguinte
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1952,9 +1958,9 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T65: Criar o caso de uso de listagem de usuários com paginação por cursor
+### T65: Criar o caso de uso de listagem de usuários com paginação por cursor e filtros
 
-**What**: Criar o caso de uso de listagem de usuários com paginação por cursor.  
+**What**: Criar o caso de uso de listagem de usuários com paginação por cursor e filtros.  
 **Where**: `api/internal/identity/app/list_users.go`  
 **Depends on**: T64  
 **Reuses**: Convenção de cursor  
@@ -1967,11 +1973,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:user:read`
-- [ ] Ordena de forma estável, respeita `limit` e devolve `next_cursor`
-- [ ] Nunca devolve hash de senha
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:user:read`
+- [x] Cursor por (`created_at`, `id`), 50 por página por padrão e no máximo 100 (acima disso, 422 `invalid_limit`), com `next_cursor`
+- [x] Filtros `active` e `role`; cada item traz os papéis e o resumo do vínculo administrativo ativo
+- [x] Nunca devolve hash de senha, token nem tentativas
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -1995,14 +2002,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Devolve sempre o mesmo resultado, exista ou não a conta, esteja ela ativa ou não
-- [ ] Conta ativa: cria o token (256 bits, base64url), grava só o hash com validade de 30 minutos e envia o e-mail com o link depois de responder; falha de envio vira incidente no log e não chega ao cliente
-- [ ] Mais de 3 solicitações do mesmo e-mail em uma hora não criam token nem enviam e-mail, com o mesmo resultado
-- [ ] Grava `auth.password_reset_requested` por `RecordSecurity`, com o e-mail só como HMAC e sem token nem link
-- [ ] O envio é assíncrono, então o tempo de resposta não depende de a conta existir
-- [ ] Nem o token nem o link aparecem em log, auditoria ou resposta
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Devolve sempre o mesmo resultado, exista ou não a conta, esteja ela ativa ou não
+- [x] Conta ativa: cria o token (256 bits, base64url), grava só o hash com validade de 30 minutos e envia o e-mail com o link depois de responder; falha de envio vira incidente no log e não chega ao cliente
+- [x] Mais de 3 solicitações do mesmo e-mail em uma hora não criam token nem enviam e-mail, com o mesmo resultado
+- [x] Grava `auth.password_reset_requested` por `RecordSecurity`, com o e-mail só como HMAC e sem token nem link
+- [x] O envio é assíncrono, então o tempo de resposta não depende de a conta existir
+- [x] Nem o token nem o link aparecem em log, auditoria ou resposta
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2026,13 +2033,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Token válido e senha dentro da política: troca o hash, consome o token, invalida os outros pendentes, limpa `must_change_password`, revoga todas as sessões e grava `auth.password_reset_completed` na mesma transação
-- [ ] Token desconhecido, expirado ou usado devolve o mesmo erro (400 `invalid_reset_token`) e grava `auth.password_reset_failed` por `RecordSecurity`
-- [ ] Senha fora da política devolve o código da política e mantém o token válido
-- [ ] Se a auditoria falhar, a redefinição é revertida
-- [ ] A auditoria não contém senha nem token
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Token válido e senha dentro da política: troca o hash, consome o token, invalida os outros pendentes, limpa `must_change_password`, revoga todas as sessões e grava `auth.password_reset_completed` na mesma transação
+- [x] Token desconhecido, expirado ou usado devolve o mesmo erro (400 `invalid_reset_token`) e grava `auth.password_reset_failed` por `RecordSecurity`
+- [x] Senha fora da política devolve o código da política e mantém o token válido
+- [x] Se a auditoria falhar, a redefinição é revertida
+- [x] A auditoria não contém senha nem token
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2041,13 +2048,13 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T68: Criar o caso de uso de redefinição administrativa (`AdminResetPassword`)
+### T68: Criar o caso de uso de redefinição administrativa de senha (`AdminResetPassword`)
 
-**What**: Criar o caso de uso de redefinição administrativa (`AdminResetPassword`).  
+**What**: Criar o caso de uso de redefinição administrativa de senha (`AdminResetPassword`).  
 **Where**: `api/internal/identity/app/admin_reset_password.go`  
 **Depends on**: T67  
-**Reuses**: Casos de uso de recuperação, `authz.Covers` e `WithTx`  
-**Requirement**: IDN-08 (ACs 1, 2, 3, 4, 5); RBAC-03 (ACs 1, 3); RBAC-02 (ACs 3)
+**Reuses**: `password`, `authz.Covers` e `WithTx`  
+**Requirement**: IDN-08 (ACs 1, 2, 3, 4, 5, 6, 7); IDN-05 (ACs 8); RBAC-03 (ACs 1, 3, 6); RBAC-02 (ACs 3)
 
 **Tools**:
 
@@ -2056,12 +2063,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:user:reset_password` antes de qualquer leitura ou escrita
-- [ ] Cria o token, revoga as sessões do alvo e grava `user.password_reset` na mesma transação; o e-mail sai depois do commit e o ator não recebe senha nem token
-- [ ] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam `user.password_reset` com resultado `denied` por `RecordSecurity`
-- [ ] Alvo inativo devolve 409 `user_inactive`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:user:reset_password` antes de qualquer leitura ou escrita, e um motivo de ao menos 10 caracteres (422 `reason_required`)
+- [x] Gera uma senha temporária aleatória que cumpre a política, troca o hash, marca `must_change_password`, revoga as sessões e os tokens de recuperação pendentes do alvo e grava `user.password_reset` com o motivo, tudo na mesma transação
+- [x] A senha temporária é devolvida uma única vez ao chamador e nunca é gravada, registrada em log nem auditada; nada é enviado por e-mail
+- [x] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam `user.password_reset` com resultado `denied` por `RecordSecurity`
+- [x] Alvo inativo devolve 409 `user_inactive`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2288,7 +2296,7 @@ T83 → T84 → T85 → T86
 - [ ] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
 - [ ] Respostas validadas contra o contrato
 - [ ] Nenhuma resposta contém hash de senha nem token
-- [ ] `POST /api/v1/users/{id}/password-reset` devolve 202 sem senha nem token; erros mapeados: 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
+- [ ] `POST /api/v1/users/{id}/password-reset` devolve 200 com a senha temporária uma única vez e `Cache-Control: no-store`, sem registrá-la em log nem auditoria; erros mapeados: 422 `reason_required`, 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
@@ -2370,7 +2378,7 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
+- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap-admin` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
 - [ ] Recusa se já existir qualquer vínculo administrativo ativo
 - [ ] Recusa senha ausente ou fora da política de administrador (10 caracteres)
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
@@ -2857,14 +2865,14 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | IDN-01 | T46, T48, T79, T80, T86 |
 | IDN-02 | T36, T52, T53, T54, T55, T69, T72, T74, T82 |
 | IDN-03 | T73, T82 |
-| IDN-04 | T46, T48, T50, T59, T60, T61, T64, T65, T69, T74, T75, T82 |
-| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T79 |
+| IDN-04 | T46, T48, T50, T57, T58, T59, T60, T61, T64, T65, T69, T74, T75, T82 |
+| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T68, T79 |
 | IDN-06 | T36, T49, T51, T62, T63, T64, T69, T76, T82 |
 | IDN-07 | T43, T57, T58, T66, T67, T69, T73, T74, T82 |
 | IDN-08 | T56, T68, T69, T76, T82 |
 | RBAC-01 | T36, T37, T41, T42, T64, T81 |
 | RBAC-02 | T37, T38, T39, T55, T59, T60, T62, T63, T64, T68, T72, T78, T82, T84 |
-| RBAC-03 | T40, T62, T63, T64, T68, T76, T82 |
+| RBAC-03 | T40, T60, T62, T63, T64, T68, T76, T82 |
 | AUD-01 | T32, T33, T34, T35 |
 | AUD-02 | T31 |
 | AUD-03 | T71, T77, T82 |

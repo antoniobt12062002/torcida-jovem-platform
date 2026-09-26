@@ -30,6 +30,9 @@ A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega ident
 | Fechamento de ano e ajuste extraordinário | Regras do financeiro (FIN-001, seção 16) |
 | Dupla aprovação para promoção administrativa | Evolução futura, fora da V1: hoje uma pessoa com `identity:admin:grant` promove, sempre com motivo e auditoria |
 | Vínculo entre usuário e associado | Pertence ao módulo dono do domínio: `associados.associados.user_id`, criado na spec de `associados`; `identity` não conhece associados |
+| Convite por e-mail e primeiro acesso por link temporário | Evolução futura da criação de usuários |
+| Troca de e-mail (`ChangeEmail`) | Evolução futura: o e-mail é identificador de login e canal de recuperação, então a troca exigirá senha atual, auditoria e, possivelmente, confirmação por e-mail |
+| Rate limit unificado de credenciais, por IP e dispositivo, e MFA na recuperação | Evolução futura |
 | Rate limiting global da API | Só o bloqueio de tentativas de login está no escopo |
 
 ---
@@ -49,7 +52,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Troca obrigatória de senha | Ao conceder o primeiro vínculo administrativo a um usuário que não tinha vínculo ativo (só ASSOCIADO), o sistema marca `must_change_password=true` e exige a troca no próximo login; até lá o usuário só pode trocar a senha, ver `me` ou sair | Aprovado pelo mantenedor; evita que uma senha de 8 caracteres passe a proteger conta administrativa | y |
 | Capacidade de e-mail | `platform/email`, transversal: interface `Sender` desacoplada do provedor, mensagem validada (destinatário e ausência de quebras de linha nos cabeçalhos), remetente `log` para desenvolvimento e `disabled` para quando não há provedor; nenhum módulo depende de um provedor. O provedor real é definido depois e entra como novo adaptador. O corpo da mensagem nunca é registrado em log | Aprovado pelo mantenedor: e-mail é capacidade da plataforma, não só da autenticação | y |
 | Recuperação de acesso | Por e-mail, com token de recuperação (256 bits, base64url), guardado só como hash SHA-256 em `password_reset_tokens`, válido por 30 minutos (configurável) e de uso único. Não existe senha temporária. A resposta da solicitação é sempre a mesma; o envio é assíncrono, para o tempo de resposta não revelar se a conta existe; no máximo 3 solicitações por e-mail por hora (as demais recebem a mesma resposta e não enviam) | Aprovado pelo mantenedor; o limite de 3 por hora contra spam de e-mail é proposta a confirmar | n |
-| Redefinição administrativa | Alternativa à recuperação: quem tem `identity:user:reset_password` dispara o mesmo fluxo de token para o usuário (o administrador nunca vê senha nem token), com a regra sem escalada e sem redefinir a própria conta; revoga as sessões do alvo | Aprovado pelo mantenedor; a permissão nova é concedida ao ADMIN_SISTEMA junto com as demais de identidade, e o PRESIDENTE a recebe por ter todas | y |
+| Redefinição administrativa | Alternativa à recuperação por e-mail: quem tem `identity:user:reset_password` informa um motivo (mínimo 10 caracteres), e o sistema gera uma senha temporária aleatória, mostrada uma única vez ao administrador na resposta (nunca em log, auditoria ou cache), marca `must_change_password`, revoga as sessões e os tokens de recuperação pendentes do alvo e grava `user.password_reset`. Segue a regra sem escalada e não vale para a própria conta. Nunca são enviados senha antiga, token ou hash | Aprovado pelo mantenedor; a recuperação por e-mail continua sem senha temporária, só com token | y |
+| Criação de usuário | O criador informa a senha inicial e o sistema marca `must_change_password=true` automaticamente, para que ela não fique como credencial definitiva conhecida por terceiro. Criação por convite e primeiro acesso por link temporário ficam como evolução futura | Aprovado pelo mantenedor | y |
+| Regra sem escalada nas ações sobre outro usuário | Vale para promoção, retirada de acesso, alteração de papéis, desativação, reativação e redefinição administrativa: o ator precisa cobrir (`authz.Covers`) as permissões efetivas que a operação concede, retira ou altera no alvo. Ninguém desativa a própria conta, remove o próprio acesso administrativo, altera os próprios papéis ou redefine a própria senha por esse caminho (403 `self_change_forbidden`, com evento de segurança) | Aprovado pelo mantenedor | y |
+| Troca de senha | Exige a senha atual, aplica a política, recusa a senha igual à atual (422 `password_unchanged`) e revoga as outras sessões. Erros de senha atual têm contador próprio, `password_change_attempts`, separado do login: 5 erros em 15 minutos bloqueiam a troca por 15 minutos (429 `password_change_blocked`). Um rate limit unificado de credenciais fica como evolução | Aprovado pelo mantenedor | y |
+| Papel-base ASSOCIADO | Toda conta tem ASSOCIADO, que nunca é removido; papéis administrativos são adicionais. A lista de papéis recebida pela API é a dos administrativos (pode ser vazia, deixando o vínculo dormente); `PromoteToAdmin` exige ao menos um papel administrativo. Reativar um usuário não restaura papéis administrativos nem o vínculo encerrado | Aprovado pelo mantenedor | y |
+| Listagem de usuários | Cursor por (`created_at`, `id`), 50 por página e no máximo 100; filtros `active` e `role`; nunca devolve hash, token ou dado sensível | Aprovado pelo mantenedor | y |
 | Hash de e-mail | HMAC-SHA256 com a chave `AUTH_HASH_KEY` (mínimo 32 bytes, obrigatória fora de `development`) nas tentativas de login e nos eventos de auditoria; o e-mail nunca é gravado em claro nesses lugares | Aprovado pelo mantenedor; um vazamento do banco ou da auditoria não permite descobrir e-mails por dicionário | y |
 | E-mail: normalização | Espaços nas pontas removidos, minúsculas e formato básico (contém `@`, até 254 caracteres); sem normalização de domínios internacionalizados nem de aliases | Aprovado pelo mantenedor | y |
 | Sessões no login | Cada login emite token novo e revoga a sessão apresentada no cookie, se válida; várias sessões simultâneas por usuário são permitidas; todas caem ao trocar ou redefinir a senha, desativar, promover ou retirar o acesso | Aprovado pelo mantenedor | y |
@@ -159,15 +167,18 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Sem usuários e papéis não há quem use os módulos.
 
 **Acceptance Criteria**:
-1. WHEN an actor with `identity:user:create` calls `POST /api/v1/users` with email, name and initial password THEN the system SHALL create an active user holding only the role ASSOCIADO, respond 201 and record an audit entry with action `user.create`.
+1. WHEN an actor with `identity:user:create` calls `POST /api/v1/users` with email, name and initial password THEN the system SHALL create an active user holding only the role ASSOCIADO with `must_change_password` set to true, respond 201 and record an audit entry with action `user.create`.
 2. IF the email already exists, ignoring letter case, THEN the system SHALL respond 409 with code `email_taken`.
-3. WHEN an actor with `identity:user:update` deactivates a user THEN the system SHALL mark the user inactive, revoke all of that user's sessions in the same transaction and record an audit entry with action `user.deactivate`.
+3. WHEN an actor with `identity:user:update` deactivates a user THEN the system SHALL mark the user inactive, revoke all of that user's sessions and pending recovery tokens in the same transaction and record an audit entry with action `user.deactivate`.
 4. IF an actor tries to deactivate the last active user that holds `identity:admin:grant` THEN the system SHALL respond 409 with code `last_admin`.
 5. WHEN a user calls `POST /api/v1/auth/password` with the correct current password and a valid new password THEN the system SHALL update the hash, revoke all other sessions of that user and record an audit entry with action `user.password_change` containing no password value.
 6. IF the current password sent to `POST /api/v1/auth/password` is wrong THEN the system SHALL respond 403 with code `invalid_current_password`.
 7. WHEN an actor with `identity:role:assign` sets the roles of a user that has an active administrative membership THEN the system SHALL replace the role set, record the previous and new role names in an audit entry with action `user.roles_set` and apply the new permissions from the next request.
-8. WHEN an actor with `identity:user:read` calls `GET /api/v1/users` THEN the system SHALL return users with cursor pagination.
+8. WHEN an actor with `identity:user:read` calls `GET /api/v1/users` THEN the system SHALL return users with cursor pagination over (`created_at`, `id`), 50 per page by default, filterable by `active` and `role`, and IF `limit` exceeds 100 THEN the system SHALL respond 422 with code `invalid_limit`.
 9. The system SHALL NOT return password hashes or session tokens in any API response, log line or audit entry.
+10. WHEN an actor with `identity:user:update` reactivates a user THEN the system SHALL mark the user active and record an audit entry with action `user.reactivate`, and SHALL NOT restore any administrative role or closed administrative membership.
+11. IF the new password sent to `POST /api/v1/auth/password` equals the current one THEN the system SHALL respond 422 with code `password_unchanged`.
+12. IF five wrong current passwords are submitted to `POST /api/v1/auth/password` by the same user within 15 minutes THEN the system SHALL respond 429 with code `password_change_blocked` and a `Retry-After` header to every change attempt of that user during the following 15 minutes, counting them in `password_change_attempts`, separate from the login attempts.
 
 **Independent Test**: Como PRESIDENTE, criar um usuário, promovê-lo a TESOURARIA (IDN-06), trocar papéis, desativá-lo e ver as sessões dele caírem; conferir tudo na auditoria.
 
@@ -187,6 +198,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 5. WHEN an administrative membership is granted to a user that had no active membership THEN the system SHALL set `must_change_password` to true for that user.
 6. WHEN a user changes the password successfully THEN the system SHALL set `must_change_password` to false.
 7. The system SHALL measure password length in Unicode code points and SHALL NOT impose composition rules.
+8. WHEN an actor creates a user, or an administrator resets a user's password, THEN the system SHALL set `must_change_password` to true for that user.
 
 **Independent Test**: Trocar a senha de uma conta administrativa por uma de 9 caracteres e ver a recusa; promover um ASSOCIADO a DIRETORIA e ver a troca de senha obrigatória.
 
@@ -238,13 +250,15 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Alternativa administrativa à recuperação por e-mail, sob controle de permissão.
 
 **Acceptance Criteria**:
-1. WHEN an actor with `identity:user:reset_password` calls `POST /api/v1/users/{id}/password-reset` THEN the system SHALL, in one transaction, create a recovery token as in IDN-07.2, revoke every session of the target user and record an audit entry with action `user.password_reset`, and SHALL send the instructions to the target user after the commit; the actor SHALL NOT receive any password or token.
+1. WHEN an actor with `identity:user:reset_password` calls `POST /api/v1/users/{id}/password-reset` with a reason THEN the system SHALL, in one transaction, generate a random temporary password, replace the password hash, set `must_change_password` to true, revoke every session and pending recovery token of the target user and record an audit entry with action `user.password_reset` containing the reason, and SHALL respond 200 with the temporary password exactly once, with `Cache-Control: no-store`.
+6. IF the reason is missing or has fewer than 10 characters after trimming THEN the system SHALL respond 422 with code `reason_required` and change nothing.
+7. The system SHALL NOT store, log or audit the temporary password, the old password or any hash, and SHALL NOT send them by e-mail.
 2. IF the actor lacks a permission held by the target user THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
 3. IF the actor targets their own account THEN the system SHALL respond 403 with code `self_change_forbidden`.
 4. IF the target user is inactive THEN the system SHALL respond 409 with code `user_inactive`.
 5. WHEN the request is denied by AC 2 or 3 THEN the system SHALL record an audit entry with action `user.password_reset`, outcome `denied`, as a security event.
 
-**Independent Test**: Como administrador, disparar a redefinição de um usuário e ver as sessões dele caírem e o e-mail sair; tentar com um alvo mais poderoso e ver 403.
+**Independent Test**: Como administrador, redefinir a senha de um usuário com motivo, receber a senha temporária uma vez, ver as sessões dele caírem e a troca obrigatória no próximo login; tentar com um alvo mais poderoso e ver 403.
 
 ---
 
@@ -286,6 +300,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 7. IF the target user has no active administrative membership THEN the system SHALL respond 409 with code `not_admin`.
 8. IF the operation would leave no active user that holds `identity:admin:grant` THEN the system SHALL respond 409 with code `last_admin` and change nothing.
 9. The system SHALL NOT allow a user to hold a role other than ASSOCIADO without an active administrative membership; adding such a role without one SHALL respond 409 with code `admin_membership_required`.
+10. IF the roles of a promotion contain no role other than ASSOCIADO THEN the system SHALL respond 422 with code `admin_role_required`; the role ASSOCIADO SHALL always remain with the user, and no operation removes it.
 
 **Independent Test**: Como PRESIDENTE, promover um usuário a TESOURARIA com motivo, ver a troca de senha obrigatória e as sessões caírem; retirar o acesso e ver o histórico do vínculo preservado.
 
@@ -300,9 +315,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Acceptance Criteria**:
 1. IF an actor tries to grant, in a promotion or in a role assignment, a role with any permission the actor does not hold THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
 2. IF an actor tries to remove a role, or the administrative membership, of a user when that role holds a permission the actor does not hold THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
-3. IF an actor tries to change their own roles or administrative membership THEN the system SHALL respond 403 with code `self_change_forbidden` and change nothing.
+3. IF an actor tries to change their own roles or administrative membership, deactivate their own account or reset their own password as an administrator THEN the system SHALL respond 403 with code `self_change_forbidden` and change nothing.
 4. The system SHALL evaluate these rules with the effective permissions of the actor at the moment of the request.
-5. WHEN a change is denied by AC 1, 2 or 3 THEN the system SHALL record an audit entry with action `role.change_denied` containing the actor, the target and the requested roles, in its own transaction.
+5. WHEN a change is denied by AC 1, 2 or 3 THEN the system SHALL record an audit entry with action `role.change_denied` containing the actor, the target and the requested roles, in its own transaction; WHEN a deactivation, reactivation or administrative password reset is denied by AC 3 or 6 THEN it SHALL record the action of the operation (`user.deactivate`, `user.reactivate` or `user.password_reset`) with outcome `denied`, as a security event.
+6. IF an actor tries to deactivate, reactivate or reset the password of a user whose effective permissions are not all held by the actor THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
 
 **Independent Test**: Como ator cujas permissões efetivas não cobrem CONSELHO_FISCAL, tentar promover alguém a esse papel e ver 403 `privilege_escalation`; como PRESIDENTE, tentar alterar o próprio papel e ver 403 `self_change_forbidden`.
 
@@ -580,7 +596,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | IDN-05 | P1: Política de senha | In Tasks | Implementing |
 | IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
 | IDN-07 | P1: Recuperação de acesso por e-mail | In Tasks | Implementing |
-| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Pending |
+| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Implementing |
 | EML-01 | P1: Capacidade de e-mail | In Tasks | Implementing |
 | RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
 | RBAC-02 | P1: Autorização negada por padrão | In Tasks | Implementing |
