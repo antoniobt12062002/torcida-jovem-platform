@@ -1,7 +1,7 @@
 # Design: Fluxo de branches, versionamento e pipelines (GitHub)
 
 Data: 2026-09-26
-Status: Aprovado em conversa, aguardando revisão do documento escrito
+Status: Implementado e validado com a release v0.1.0 (ajustes da implementação incorporados abaixo)
 
 ## 1. Objetivo
 
@@ -36,7 +36,7 @@ hotfix/*  --PR-----------> main --back-merge--> develop
 | Branch | Regras |
 |---|---|
 | `main`, `develop` | Sem push direto, sem force push, sem deleção; PR com 1 aprovação; check obrigatório `ci-gate`; branch atualizada antes do merge |
-| `release/*` | Sem force push e sem deleção; correções via PR com `ci-gate` |
+| `release/*` | Sem force push e sem deleção. Exigir PR aqui bloquearia o `cut-release` (GITHUB_TOKEN); correções entram por PR por convenção |
 
 CODEOWNERS pede revisão do dono e do PO. O GitHub não permite que o autor aprove o próprio PR; enquanto houver um único contribuidor, o bypass fica restrito ao administrador do repositório.
 
@@ -51,11 +51,12 @@ CODEOWNERS pede revisão do dono e do PO. O GitHub não permite que o autor apro
 
 | Workflow | Gatilho | Função |
 |---|---|---|
-| `ci.yml` | PR para `develop`, `release/*`, `main` | Jobs com filtro de caminho: docs (markdownlint + links), api (`go vet`, `go test`, build), web (lint, typecheck, build). Job agregador `ci-gate` é o único check obrigatório, para que jobs pulados por filtro não travem o PR |
-| `pr-title.yml` | PR | Valida título Conventional Commits |
+| `ci.yml` | PR para `develop`, `release/*`, `main` | Jobs com filtro de caminho: docs (markdownlint + links), api (`go vet`, `go test`, build), web (lint, typecheck, build). Inclui a validação do título do PR (Conventional Commits). Job agregador `ci-gate` é o único check obrigatório, para que jobs pulados por filtro não travem o PR. Aceita `workflow_dispatch`, usado para rodar o CI na branch de back-merge |
 | `cut-release.yml` | Manual, a partir da `develop` | Calcula versão, cria `release/vX.Y.Z`, atualiza `VERSION` e `CHANGELOG.md`, chama `deploy-staging.yml` |
 | `deploy-staging.yml` | Push em `release/**` e `workflow_call` | Build e deploy no ambiente `staging` |
 | `release.yml` | Push na `main` | Cria tag e GitHub Release, faz deploy em `production` (com aprovação do PO) e abre PR de back-merge `main` → `develop` |
+
+PRs abertos com `GITHUB_TOKEN` (o de back-merge) não disparam `pull_request`; por isso `release.yml` dispara `ci.yml` via `workflow_dispatch` na branch, e o `ci-gate` resultante satisfaz o PR. O back-merge `main` → `develop` deve usar **merge commit** (nunca squash), senão a tag deixa de ser alcançável pela `develop` e o cálculo de versão erra.
 
 Pushes feitos com `GITHUB_TOKEN` não disparam outros workflows; por isso `cut-release` invoca o deploy de staging explicitamente via `workflow_call`, sem PAT ou GitHub App.
 
@@ -71,11 +72,11 @@ Sem código Go ou Next.js, os jobs `api` e `web` e os passos de deploy entram co
 
 ```
 .github/workflows/ci.yml
-.github/workflows/pr-title.yml
 .github/workflows/cut-release.yml
 .github/workflows/deploy-staging.yml
 .github/workflows/release.yml
 .github/scripts/next-version.sh
+.github/rulesets/   (JSON dos rulesets aplicados via gh api)
 .github/CODEOWNERS
 .github/pull_request_template.md
 .github/dependabot.yml
@@ -98,3 +99,9 @@ docs/CONTRIBUTING.md
 ## 8. Fora de escopo
 
 Escolha do provedor de hospedagem, scaffolding de `/api` e `/web`, testes reais e passos reais de deploy (dependem da definição de stack e hospedagem).
+
+## 9. Lições da validação (v0.1.0)
+
+- O link check do CI falha se o `README` referenciar arquivos ainda não publicados; a correção de uma release entra por PR na própria `release/*`, e o back-merge leva a correção à `develop`.
+- Branches `release/*` não podem ser deletadas (ruleset); erros exigem nova versão ou correção via PR.
+- Enquanto houver um único contribuidor, merges em `main`/`develop` dependem do bypass de administrador (`pull_request`); o aprovador de `production` é o dono até o PO ser cadastrado.
