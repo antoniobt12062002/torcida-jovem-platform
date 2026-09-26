@@ -945,10 +945,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Alterar um contrato sem regenerar faz o CI falhar
-- [ ] Contrato inválido faz o CI falhar
-- [ ] `ci-gate` considera o job `contract`
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Alterar um contrato sem regenerar faz o CI falhar
+- [x] Contrato inválido faz o CI falhar
+- [x] `ci-gate` considera o job `contract`
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
