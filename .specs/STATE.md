@@ -78,9 +78,9 @@
 
 - **Feature**: `.specs/features/fundacao-core/`
 - **Phase / Task**: Fases 1 a 4 concluídas (T1 a T22); a próxima é a fase 5 (contrato OpenAPI, T23 a T29)
-- **Completed**: T1 a T22 (fases 1 e 2 mescladas em #21 e #22; fase 3 no PR #23; fase 4 na branch `feature/fundacao-core-fase-4`, empilhada sobre a fase 3)
+- **Completed**: T1 a T22 (fases 1 a 3 mescladas em #21, #22 e #23; fase 4 na branch `feature/fundacao-core-fase-4`)
 - **In-progress** (file:line): none
-- **Next step**: Após o merge do PR #23 e autorização, enviar a fase 4 e abrir o PR; a fase 5 exige escolher e fixar as ferramentas de OpenAPI (tarefa T24) após consultar a documentação vigente
-- **Blockers**: Autorização para `git push` e PR da fase 4; merge do PR #23. Pendência de spec: mapear `money.ErrOutOfRange` para 422 `amount_out_of_range` no `BindJSON` quando existir o primeiro endpoint com valor monetário
+- **Next step**: Abrir o PR da fase 4; antes de implementar a fase 5, apresentar a ferramenta de OpenAPI escolhida, a justificativa, o fluxo contract-first e o impacto no backend e no frontend
+- **Blockers**: Aprovação da proposta de OpenAPI antes de iniciar a fase 5. Decisão aprovada: o mapeamento de `money.ErrOutOfRange` para 422 `amount_out_of_range` fica para a primeira feature com endpoint monetário
 - **Uncommitted files**: none
 - **Branch**: feature/fundacao-core-fase-4

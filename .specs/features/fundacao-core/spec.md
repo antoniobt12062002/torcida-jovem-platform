@@ -54,6 +54,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Fuso horário | Tudo em UTC (`timestamptz`); conversão para America/Sao_Paulo na borda | Evita ambiguidade de horário de verão e de servidor | n |
 | Arredondamento de percentuais | `ROUND_HALF_UP` (empate arredonda para longe de zero, também nos negativos); taxas em pontos-base (1 bp = 0,01%) | Aprovado pelo mantenedor; segue a semântica de `BigDecimal.ROUND_HALF_UP` | y |
 | Rateio de centavos | O resto é distribuído 1 centavo por parcela, da primeira em diante | Determinístico e reproduzível (ex.: 10000 em 3 partes = 3334, 3333, 3333) | n |
+| Mapeamento HTTP de `ErrOutOfRange` | O erro fica no domínio do Money; o mapeamento para 422 `amount_out_of_range` acontece na primeira feature com endpoint monetário real | Aprovado pelo mantenedor; nenhum endpoint da fundação recebe valores e o Money não deve conhecer HTTP | y |
+| Parse monetário | Só dígitos, pontos de milhar em grupos de três e uma vírgula; sem sinal e sem prefixo `R$`. Se necessário, separar no futuro o parsing de entrada monetária do parsing técnico de centavos | Aprovado pelo mantenedor | y |
+| Rateio com pesos desiguais | A soma preserva o total e o resto vai, um centavo por vez, para as primeiras partes; comportamento determinístico | Aprovado pelo mantenedor | y |
+| Basis points negativos | Aceitos e invertem o sinal do resultado | Aprovado pelo mantenedor | y |
 | Limite de valores na API | Inteiros assinados até 9007199254740991 em módulo | Faixa segura para números do JavaScript no front | n |
 | Testes de integração | Ficam atrás da tag de build `integration`; `go test ./...` não exige Docker | Mantém o ciclo local rápido | n |
 | Cobertura | Sem meta global; o pacote de dinheiro exige 95% de cobertura de instruções | Lógica pura e crítica, fácil de cobrir | n |
@@ -275,7 +279,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Acceptance Criteria**:
 1. WHEN a `Cents` value is marshaled to JSON THEN the system SHALL emit an integer literal with no quotes, no decimal point and no exponent.
 2. IF JSON being unmarshaled into `Cents` is a string, a decimal, an exponent form or null THEN the system SHALL return an error.
-3. IF the magnitude of an amount received by the API exceeds 9007199254740991 THEN the system SHALL respond 422 with code `amount_out_of_range`.
+3. IF the magnitude of a JSON amount being unmarshaled exceeds 9007199254740991 THEN the money package SHALL return `ErrOutOfRange`, and the API layer of the first feature with a monetary endpoint SHALL map it to 422 with code `amount_out_of_range`.
 4. WHEN 123456 is formatted THEN the Go and TypeScript formatters SHALL both return `R$ 1.234,56`, and for -123456 they SHALL return `-R$ 1.234,56`, using an ordinary space.
 5. WHEN the text `1.234,56` is parsed THEN the system SHALL return 123456.
 6. IF the text to parse has more than two decimal places or characters outside digits, dots and one comma THEN the system SHALL return an error.
