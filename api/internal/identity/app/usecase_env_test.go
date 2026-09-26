@@ -5,6 +5,7 @@ package app_test
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"slices"
 	"testing"
@@ -201,4 +202,9 @@ func (e *ucEnv) rolesOf(t *testing.T, userID string) []domain.Role {
 		t.Fatal(err)
 	}
 	return r
+}
+
+func sha256of(s string) []byte {
+	sum := sha256.Sum256([]byte(s))
+	return sum[:]
 }

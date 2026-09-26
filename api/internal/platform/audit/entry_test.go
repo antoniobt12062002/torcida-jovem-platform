@@ -40,7 +40,7 @@ func TestCatalogHasTheIdentityAndSecurityActionsOfTheSpec(t *testing.T) {
 		UserCreate, UserBootstrap, UserDeactivate, UserPasswordChange, UserRolesSet,
 		AdminPromote, AdminRevoke, RBACSync, RoleChangeDenied,
 		AuthLogin, AuthLoginFailed, AuthLoginBlocked, AuthLogout, AuthzDenied,
-		AuthPasswordResetRequested, AuthPasswordResetCompleted, AuthPasswordResetFailed, UserPasswordReset,
+		AuthPasswordResetRequested, AuthPasswordResetCompleted, AuthPasswordResetFailed, UserPasswordReset, UserReactivate,
 	} {
 		if !a.Known() {
 			t.Errorf("a ação %q deveria estar no catálogo", a)

@@ -52,6 +52,7 @@ const (
 	AuthPasswordResetCompleted Action = "auth.password_reset_completed"
 	AuthPasswordResetFailed    Action = "auth.password_reset_failed"
 	UserPasswordReset          Action = "user.password_reset"
+	UserReactivate             Action = "user.reactivate"
 )
 
 var (
@@ -63,7 +64,7 @@ var (
 		UserCreate: {}, UserBootstrap: {}, UserDeactivate: {}, UserPasswordChange: {}, UserRolesSet: {},
 		AdminPromote: {}, AdminRevoke: {}, RBACSync: {}, RoleChangeDenied: {},
 		AuthLogin: {}, AuthLoginFailed: {}, AuthLoginBlocked: {}, AuthLogout: {}, AuthzDenied: {},
-		AuthPasswordResetRequested: {}, AuthPasswordResetCompleted: {}, AuthPasswordResetFailed: {}, UserPasswordReset: {},
+		AuthPasswordResetRequested: {}, AuthPasswordResetCompleted: {}, AuthPasswordResetFailed: {}, UserPasswordReset: {}, UserReactivate: {},
 	}
 
 	sensitiveKeys = map[string]struct{}{

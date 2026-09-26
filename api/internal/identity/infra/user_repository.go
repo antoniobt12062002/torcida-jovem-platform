@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
@@ -162,4 +163,46 @@ func roleAlreadyAssigned(tx *gorm.DB, userID string, role domain.Role) bool {
 	_ = tx.Raw(`SELECT count(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ?::uuid AND r.name = ?`,
 		userID, string(role)).Scan(&n).Error
 	return n > 0
+}
+
+// AdminSetLockKey is the transaction-level advisory lock that serializes every
+// operation that can reduce who administers access (deactivating a user,
+// withdrawing the membership, changing roles), so two of them running together
+// cannot leave the system without an administrator.
+const AdminSetLockKey int64 = 0x746a5f61646d696e // "tj_admin"
+
+// LockAdminSet takes the admin-set lock for the current transaction. It fails
+// outside a transaction, because the lock would end at once.
+func (r *UserRepository) LockAdminSet(ctx context.Context) error {
+	tx, ok := database.TxFrom(ctx)
+	if !ok {
+		return errors.New("usuário: LockAdminSet exige uma transação")
+	}
+	if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", AdminSetLockKey).Error; err != nil {
+		return fmt.Errorf("usuário: lock do conjunto de administradores: %w", err)
+	}
+	return nil
+}
+
+// ActiveHoldersOf counts the active users that hold the (active) permission
+// through their roles, not counting the excluded user id (may be empty).
+func (r *UserRepository) ActiveHoldersOf(ctx context.Context, perm authz.Permission, exclude string) (int, error) {
+	if exclude != "" && !uuidFormat.MatchString(exclude) {
+		return 0, domain.ErrUserNotFound
+	}
+	var n int64
+	q := `SELECT count(DISTINCT u.id) FROM users u
+		JOIN user_roles ur ON ur.user_id = u.id
+		JOIN role_permissions rp ON rp.role_id = ur.role_id
+		JOIN permissions p ON p.id = rp.permission_id
+		WHERE u.is_active AND p.is_active AND p.name = ?`
+	args := []any{string(perm)}
+	if exclude != "" {
+		q += " AND u.id <> ?::uuid"
+		args = append(args, exclude)
+	}
+	if err := conn(ctx, r.db).Raw(q, args...).Scan(&n).Error; err != nil {
+		return 0, fmt.Errorf("usuário: contar titulares: %w", err)
+	}
+	return int(n), nil
 }

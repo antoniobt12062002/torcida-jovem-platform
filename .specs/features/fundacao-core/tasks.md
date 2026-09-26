@@ -1820,13 +1820,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exigem `identity:user:update` antes de qualquer leitura ou escrita
-- [ ] Desativar revoga todas as sessões e os tokens de recuperação pendentes do usuário na mesma transação e grava `user.deactivate`
-- [ ] Desativar o último usuário ativo que possui `identity:admin:grant` devolve 409 `last_admin`, sob um lock consultivo do conjunto de administradores (duas desativações simultâneas não deixam o sistema sem administrador)
-- [ ] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam a ação da operação com resultado `denied` por `RecordSecurity`
-- [ ] Reativar segue as mesmas regras, grava `user.reactivate` e não restaura papéis administrativos nem o vínculo encerrado
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exigem `identity:user:update` antes de qualquer leitura ou escrita
+- [x] Desativar revoga todas as sessões e os tokens de recuperação pendentes do usuário na mesma transação e grava `user.deactivate`
+- [x] Desativar o último usuário ativo que possui `identity:admin:grant` devolve 409 `last_admin`, sob um lock consultivo do conjunto de administradores (duas desativações simultâneas não deixam o sistema sem administrador)
+- [x] Ator sem alguma permissão do alvo recebe 403 `privilege_escalation`; o próprio usuário recebe 403 `self_change_forbidden`; ambos gravam a ação da operação com resultado `denied` por `RecordSecurity`
+- [x] Reativar segue as mesmas regras, grava `user.reactivate` e não restaura papéis administrativos nem o vínculo encerrado
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 9 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

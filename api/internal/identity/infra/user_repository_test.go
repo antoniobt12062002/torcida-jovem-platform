@@ -208,3 +208,77 @@ func TestSetRolesRejectsAnEmptyOrUnsyncedRoleSet(t *testing.T) {
 		t.Errorf("uma troca recusada não pode alterar os papéis: %v", got)
 	}
 }
+
+// LockAdminSet só existe dentro de uma transação e serializa quem reduz o conjunto de administradores.
+func TestLockAdminSetRequiresATransactionAndHoldsTheAdvisoryLockUntilItEnds(t *testing.T) {
+	e, repo := newUserRepo(t)
+	if err := repo.LockAdminSet(context.Background()); err == nil {
+		t.Fatal("fora de uma transação o lock não faria sentido: deveria falhar")
+	}
+
+	tryLock := func() bool {
+		var got bool
+		if err := e.owner.Raw("SELECT pg_try_advisory_lock(?)", infra.AdminSetLockKey).Scan(&got).Error; err != nil {
+			t.Fatal(err)
+		}
+		if got {
+			_ = e.owner.Exec("SELECT pg_advisory_unlock(?)", infra.AdminSetLockKey).Error
+		}
+		return got
+	}
+	// pg_try_advisory_lock (de sessão) e pg_advisory_xact_lock disputam a mesma chave.
+	err := database.WithTx(context.Background(), e.app, func(ctx context.Context) error {
+		if err := repo.LockAdminSet(ctx); err != nil {
+			return err
+		}
+		if tryLock() {
+			t.Error("com o lock de transação preso, outra conexão não deveria conseguir a chave")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !tryLock() {
+		t.Error("depois do fim da transação a chave deveria estar livre")
+	}
+}
+
+func TestActiveHoldersOfCountsOnlyActiveUsersWithTheActivePermission(t *testing.T) {
+	e, repo := newUserRepo(t)
+	if _, err := e.repo.Sync(context.Background(), matrix(t)); err != nil {
+		t.Fatal(err)
+	}
+	mk := func(email string, active bool, roles ...domain.Role) string {
+		u, err := repo.Create(context.Background(), newDomainUser(email))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := repo.SetRoles(context.Background(), u.ID, roles); err != nil {
+			t.Fatal(err)
+		}
+		if !active {
+			_ = repo.SetActive(context.Background(), u.ID, false)
+		}
+		return u.ID
+	}
+	admin := mk("admin@exemplo.com", true, domain.RoleAdminSistema)
+	mk("presidente@exemplo.com", true, domain.RolePresidente, domain.RoleAssociado)
+	mk("inativo@exemplo.com", false, domain.RoleAdminSistema)
+	mk("diretoria@exemplo.com", true, domain.RoleDiretoria)
+	mk("associado@exemplo.com", true, domain.RoleAssociado)
+
+	const grant = "identity:admin:grant"
+	if n, err := repo.ActiveHoldersOf(context.Background(), grant, ""); err != nil || n != 2 {
+		t.Errorf("titulares = %d, %v (ADMIN_SISTEMA e PRESIDENTE ativos)", n, err)
+	}
+	if n, _ := repo.ActiveHoldersOf(context.Background(), grant, admin); n != 1 {
+		t.Errorf("excluindo o admin, titulares = %d", n)
+	}
+	if err := e.owner.Exec("UPDATE permissions SET is_active = false WHERE name = 'identity:admin:grant'").Error; err != nil {
+		t.Fatal(err)
+	}
+	if n, _ := repo.ActiveHoldersOf(context.Background(), grant, ""); n != 0 {
+		t.Errorf("permissão inativa não conta, titulares = %d", n)
+	}
+}
