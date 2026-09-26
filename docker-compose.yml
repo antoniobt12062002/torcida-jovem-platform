@@ -1,3 +1,7 @@
+# Ambiente local. As credenciais abaixo são apenas de desenvolvimento.
+# O superusuário `tj` só inicializa o banco; a API usa `tj_app` e as migrações usam `tj_owner`.
+# Os papéis são criados por docker/postgres/init/01-roles.sql, que só roda em volume novo:
+# para recriar o banco local, use `docker compose down -v`.
 services:
   db:
     image: postgres:16-alpine
@@ -9,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tj -d tj"]
       interval: 3s
@@ -16,14 +21,14 @@ services:
       retries: 10
 
   migrate:
-    image: migrate/migrate:v4.18.1
+    image: migrate/migrate:v4.20.1
     profiles: [tools]
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./api/migrations:/migrations
-    command: ["-path=/migrations", "-database=postgres://tj:tj@db:5432/tj?sslmode=disable", "up"]
+    command: ["-path=/migrations", "-database=postgres://tj_owner:tj_owner_dev@db:5432/tj?sslmode=disable", "up"]
 
 volumes:
   pgdata:

@@ -343,10 +343,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `docker compose config` valida
-- [ ] `docker compose up -d db` seguido de `migrate` conclui com o papel dono
-- [ ] Migração 000001 aplicada continua funcionando
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `docker compose config` valida
+- [x] `docker compose up -d db` seguido de `migrate` conclui com o papel dono
+- [x] Migração 000001 aplicada continua funcionando
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
