@@ -76,11 +76,11 @@
 
 ## Handoff
 
-- **Feature**: governança (sem feature em `.specs/features/`)
-- **Phase / Task**: Governança aprovada com ajustes; próxima etapa é a spec de fundação
-- **Completed**: CLAUDE.md, `.specs/`, `docs/architecture/`, ADR-001 a ADR-007, SECURITY.md, LICENSE, `docs/development/ai-environment.md`, reorganização de `docs/`
+- **Feature**: `.specs/features/fundacao-core/` (Feature 1 de 2; a `fundacao-documentos` vem depois)
+- **Phase / Task**: Spec, design e tasks aprovados com ajustes; execução começa na fase 1 (T1 a T5)
+- **Completed**: divisão em duas features, ajustes de sessão (8 h), senha (10/8), bloqueio, arredondamento, documentos e cookie
 - **In-progress** (file:line): none
-- **Next step**: Escrever spec, design, tasks e critérios de aceite da fundação (identity, RBAC, auditoria, money, document management, infraestrutura de testes, OpenAPI) e aguardar aprovação
-- **Blockers**: Aprovação da spec de fundação antes de qualquer implementação
+- **Next step**: Executar a fase 1 da `fundacao-core` (T1 a T5) em lote pequeno, com testes e commits atômicos; registrar AD-010 a AD-013 na tarefa de guardrails
+- **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feature/governanca
+- **Branch**: feature/spec-fundacao (docs); a implementação usa `feature/fundacao-core-fase-1`
