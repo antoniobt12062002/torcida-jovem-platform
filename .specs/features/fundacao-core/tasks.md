@@ -1499,12 +1499,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Motivo obrigatório, com no mínimo 10 caracteres após remover espaços nas pontas; sem motivo devolve erro mapeável para 422 `reason_required`
-- [ ] Só pode haver um vínculo ativo por usuário
-- [ ] Papel diferente de ASSOCIADO exige vínculo ativo, senão devolve erro mapeável para 409 `admin_membership_required`
-- [ ] Encerrar registra quem, quando e por quê, e não apaga o vínculo
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Motivo obrigatório, com no mínimo 10 caracteres após remover espaços nas pontas; sem motivo devolve erro mapeável para 422 `reason_required`
+- [x] Só pode haver um vínculo ativo por usuário
+- [x] Papel diferente de ASSOCIADO exige vínculo ativo, senão devolve erro mapeável para 409 `admin_membership_required`
+- [x] Encerrar registra quem, quando e por quê, e não apaga o vínculo
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
