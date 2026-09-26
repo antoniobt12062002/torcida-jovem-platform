@@ -782,10 +782,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Os quatro pontos do teste rápido foram executados e o resultado foi reportado ao mantenedor
-- [ ] Se houve incompatibilidade, a execução parou e a solução voltou ao mantenedor antes de fixar qualquer coisa
-- [ ] Versões fixadas (`oapi-codegen` v2.8.0, runtime v1.7.0, `kin-openapi` v0.149.0) com a fonte registrada em `docs/development/tooling.md`
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Os quatro pontos do teste rápido foram executados e o resultado foi reportado ao mantenedor
+- [x] Se houve incompatibilidade, a execução parou e a solução voltou ao mantenedor antes de fixar qualquer coisa
+- [x] Versões fixadas (`oapi-codegen` v2.8.0, runtime v1.7.0, `kin-openapi` v0.149.0) com a fonte registrada em `docs/development/tooling.md`
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
