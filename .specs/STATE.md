@@ -93,11 +93,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 7 mescladas (T1 a T42); fase 8 (identidade: base, T43 a T55) implementada no PR da branch `feature/fundacao-core-fase-8`. Próxima: fase 9 (casos de uso: criar, desativar, trocar senha, promover, retirar, papéis, listar, recuperação por e-mail e redefinição administrativa), a apresentar antes de implementar
+- **Phase / Task**: Fases 1 a 8 mescladas (T1 a T55); fase 9 (casos de uso de identidade, T56 a T68) com spec, design e tarefas aprovados, em implementação na branch `feature/fundacao-core-fase-9`
 - **Completed**: T1 a T55
 - **In-progress** (file:line): none
-- **Next step**: Após o merge da fase 8, apresentar spec/design/decisões abertas da fase 9 e aguardar aprovação
+- **Next step**: Implementar T56 a T68, tests-first, um commit por tarefa, e abrir o PR
 - **Blockers**: none
-- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); convite por e-mail e primeiro acesso por link temporário; troca de e-mail (`ChangeEmail`, com senha atual, auditoria e possível confirmação por e-mail); rate limit unificado de credenciais, por IP e dispositivo, e MFA na recuperação; impedir `EMAIL_PROVIDER=disabled` em produção; provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-8
+- **Branch**: feature/fundacao-core-fase-9
