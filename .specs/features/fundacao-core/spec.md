@@ -43,8 +43,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Tempo de sessão | Sessão administrativa expira em 8 horas (teto absoluto) ou após 60 minutos sem uso; a regra para associados será fixada na spec de associados e, até lá, vale a mesma | 8 horas definido pelo mantenedor; 60 minutos de ociosidade é o padrão mantido, ajustável por configuração | n |
 | Política de senha | Quem tem qualquer papel diferente de ASSOCIADO: mínimo 10 caracteres; só ASSOCIADO: mínimo 8; máximo 128 em pontos de código Unicode; sem regras de composição. Hash argon2id com memória 19 MiB, 2 iterações, paralelismo 1, configuráveis | Mínimos definidos pelo mantenedor; parâmetros alinhados às recomendações públicas do OWASP (validar na tarefa contra a versão vigente) | y |
 | Bloqueio de login | 5 falhas seguidas para o mesmo e-mail em 15 minutos bloqueiam novas tentativas por 15 minutos (HTTP 429); nunca há bloqueio permanente; contadores no PostgreSQL | Aprovado pelo mantenedor; barra força bruta sem trancar a conta de forma definitiva | y |
-| Proteção contra senhas comprometidas | Lista embutida de senhas comuns e vazadas, comparada sem diferenciar maiúsculas; a fonte e a licença da lista são verificadas na tarefa. Consulta a serviço externo (k-anonymity) fica como evolução | Não cria dependência externa nem envia dados para fora; o pedido de "manter" a proteção não estava na spec anterior e foi incluído agora | n |
-| Troca obrigatória de senha | Ao acrescentar um papel administrativo a quem só era ASSOCIADO, o usuário é marcado com `must_change_password` e só pode trocar a senha, ver `me` ou sair | Evita que uma senha de 8 caracteres passe a proteger uma conta administrativa | n |
+| Proteção contra senhas comprometidas | Lista local embutida e versionada de senhas comuns e vazadas, comparada sem diferenciar maiúsculas; fonte e licença verificadas na tarefa. Solução inicial: integração externa (ex.: consulta k-anonymity) permanece como evolução em aberto | Aprovado pelo mantenedor; não cria dependência externa nem envia dados para fora | y |
+| Troca obrigatória de senha | Ao promover um usuário que só era ASSOCIADO a qualquer papel administrativo, o sistema marca `must_change_password=true` e exige a troca no próximo login; até lá o usuário só pode trocar a senha, ver `me` ou sair | Aprovado pelo mantenedor; evita que uma senha de 8 caracteres passe a proteger conta administrativa | y |
+| Valor padrão de `APP_ENV` | Variável ausente equivale a `production` | Aprovado pelo mantenedor; padrão seguro, e `development` passa a ser explícito | y |
+| `ALLOWED_ORIGINS` vazio | Mantém o comportamento seguro: nenhuma origem é autorizada e requisições de navegador com `Origin` são bloqueadas; em `development` o padrão é `http://localhost:3000` | Aprovado pelo mantenedor; falha fechada em vez de aberta | y |
 | Cadastro de usuários | Sem autocadastro; o primeiro ADMIN nasce por CLI e os demais são criados por quem tem permissão | Sistema institucional fechado; reduz superfície de ataque | n |
 | Matriz inicial de permissões | Provisória e mínima: ADMIN e PRESIDENTE com todas as permissões da fundação; DIRETOR só `identity:user:read`; FINANCEIRO, CONSELHO_FISCAL e ASSOCIADO sem permissões da fundação (as de documentos entram em `fundacao-documentos`) | Cada spec de módulo ampliará a matriz do seu módulo | n |
 | Ações que o Conselho Fiscal nunca recebe | `create`, `update`, `delete` e `cancel`; recebe `read`, `approve` e `opine` | Decisão já tomada pelo mantenedor (ADR-005, FIN-001 seção 24) | y |
@@ -440,8 +442,8 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
 | API-01 | P1: Contrato OpenAPI | In Tasks | Pending |
-| API-02 | P1: Convenções da API | In Tasks | Pending |
-| PLT-01 | P2: Configuração, logs e migrações | In Tasks | Pending |
+| API-02 | P1: Convenções da API | In Tasks | Implementing |
+| PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
 **Coverage:** 19 total, 19 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
