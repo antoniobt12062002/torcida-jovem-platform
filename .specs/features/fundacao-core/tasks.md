@@ -1637,16 +1637,16 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Login bem-sucedido grava `auth.login` por `RecordSecurity`; falha grava `auth.login_failed` (com categoria da falha e hash do e-mail, sem senha nem e-mail em claro) e bloqueio grava `auth.login_blocked`, também por `RecordSecurity`; falha ao gravar o evento não impede a resposta do login
-- [ ] Nenhuma sequência de falhas bloqueia a conta de forma permanente
-- [ ] Usuário inexistente, senha errada e inativo devolvem o mesmo erro
-- [ ] Quinta falha em 15 minutos bloqueia por 15 minutos
-- [ ] Login bem-sucedido emite novo token e revoga a sessão apresentada no cookie, se válida; várias sessões simultâneas são permitidas
-- [ ] Usuário inexistente também verifica a senha contra um hash fixo, para o tempo de resposta não revelar o e-mail
-- [ ] Tentativas feitas durante o bloqueio não contam como falha nem o estendem
-- [ ] O e-mail, nas tentativas e nos eventos, aparece só como HMAC-SHA256
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 11 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Login bem-sucedido grava `auth.login` por `RecordSecurity`; falha grava `auth.login_failed` (com categoria da falha e hash do e-mail, sem senha nem e-mail em claro) e bloqueio grava `auth.login_blocked`, também por `RecordSecurity`; falha ao gravar o evento não impede a resposta do login
+- [x] Nenhuma sequência de falhas bloqueia a conta de forma permanente
+- [x] Usuário inexistente, senha errada e inativo devolvem o mesmo erro
+- [x] Quinta falha em 15 minutos bloqueia por 15 minutos
+- [x] Login bem-sucedido emite novo token e revoga a sessão apresentada no cookie, se válida; várias sessões simultâneas são permitidas
+- [x] Usuário inexistente também verifica a senha contra um hash fixo, para o tempo de resposta não revelar o e-mail
+- [x] Tentativas feitas durante o bloqueio não contam como falha nem o estendem
+- [x] O e-mail, nas tentativas e nos eventos, aparece só como HMAC-SHA256
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 11 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

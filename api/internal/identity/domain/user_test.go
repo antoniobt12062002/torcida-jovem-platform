@@ -180,3 +180,16 @@ func TestValidatePasswordPropagatesARoleSetError(t *testing.T) {
 		t.Error("sem papéis não há como saber o mínimo: deveria falhar")
 	}
 }
+
+func TestHashIdentifierEqualsHashEmailForValidAddressesAndAcceptsInvalidOnes(t *testing.T) {
+	a, _ := HashEmail(hashKey, "ana@exemplo.com")
+	b, err := HashIdentifier(hashKey, "  ANA@exemplo.com ")
+	c, err2 := HashIdentifier(hashKey, "isto não é um e-mail")
+
+	if err != nil || err2 != nil || !bytes.Equal(a, b) || len(c) != 32 {
+		t.Errorf("a = %x, b = %x, c = %x, err = %v/%v", a, b, c, err, err2)
+	}
+	if _, err := HashIdentifier(nil, "x"); err == nil {
+		t.Error("chave vazia deveria ser recusada")
+	}
+}

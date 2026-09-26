@@ -52,6 +52,19 @@ func NormalizeEmail(raw string) (string, error) {
 	return email, nil
 }
 
+// HashIdentifier is the HMAC-SHA256, under the secret key, of what a client
+// typed as an e-mail, trimmed and lowercased but not validated. Login uses it so
+// that an invalid address is counted and audited like an unknown one, without
+// ever storing the text.
+func HashIdentifier(key []byte, raw string) ([]byte, error) {
+	if len(key) == 0 {
+		return nil, errors.New("chave do hash de e-mail ausente")
+	}
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(strings.ToLower(strings.TrimSpace(raw))))
+	return mac.Sum(nil), nil
+}
+
 // HashEmail is the HMAC-SHA256 of the normalized e-mail under the secret key.
 // It is what login attempts and audit entries store instead of the e-mail, so a
 // leaked table cannot be reversed with a dictionary of addresses.
@@ -63,9 +76,7 @@ func HashEmail(key []byte, raw string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	mac := hmac.New(sha256.New, key)
-	mac.Write([]byte(email))
-	return mac.Sum(nil), nil
+	return HashIdentifier(key, email)
 }
 
 const (
