@@ -726,10 +726,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Mesmos vetores do Go passam
-- [ ] Número que não é inteiro seguro lança `RangeError`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Mesmos vetores do Go passam
+- [x] Número que não é inteiro seguro lança `RangeError`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: unit  
 **Gate**: build
