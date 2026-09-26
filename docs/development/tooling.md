@@ -35,6 +35,7 @@ Experimento descartável com um `common.yaml` compartilhado e dois módulos com 
 
 Achados adicionais:
 
+- **`gin-middleware` v1.1.0 e erros por campo (achado ao ler o código-fonte):** o `ErrorHandler` recebe só a mensagem (`func(c, message string, status int)`, primeira linha do erro do `kin-openapi`) e o middleware usa `gorilla/mux` e valida `Host` quando o contrato tem `servers`. Não dá para montar o `errors[]` (`field` e `code`) de API-02.4 sem interpretar texto. Alternativa em avaliação: um middleware próprio, pequeno, sobre o `kin-openapi` (que já é dependência aprovada), com erros estruturados.
 - O código gerado **não aplica** restrições do esquema (por exemplo `minLength`); só decodifica. O `gin-middleware` v1.1.0 aplica-as a partir do contrato (testado: `minLength` e campo obrigatório resultam em erro tratável). A adoção fica para a decisão sobre validação de requisições, antes dos handlers de identidade.
 - `GetSwagger` está obsoleto; usar `GetSpec`.
 

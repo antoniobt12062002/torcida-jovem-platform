@@ -85,10 +85,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30); a próxima é a fase 6 (auditoria, T31 a T36)
-- **Completed**: T1 a T30 (fases 1 a 3 mescladas; fase 4 no PR #24; fase 5 na branch `feature/fundacao-core-fase-5`, empilhada sobre a fase 4)
+- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30); falta a validação automática de requisições pelo contrato, que aguarda decisão de implementação
+- **Completed**: T1 a T30 (fases 1 a 4 mescladas; fase 5 no PR da branch `feature/fundacao-core-fase-5`)
 - **In-progress** (file:line): none
-- **Next step**: Após o merge do PR #24 e autorização, enviar a fase 5 e abrir o PR. Antes dos handlers de identidade, decidir a validação de requisições (o código gerado não aplica restrições do esquema; o `oapi-codegen/gin-middleware` v1.1.0 aplica, conforme o teste rápido em `docs/development/tooling.md`)
-- **Blockers**: Autorização para `git push` e PR da fase 5; merge do PR #24
+- **Next step**: Decidir a validação de requisições (`gin-middleware` v1.1.0 não entrega erros por campo; alternativa: middleware próprio sobre o `kin-openapi`); depois, apresentar o design da modelagem de identidade (User x Associado, papéis e permissões, sessões, vínculo administrativo, promoção, auditoria de permissões) antes de Identity/RBAC
+- **Blockers**: Decisão sobre a implementação da validação de requisições
 - **Uncommitted files**: none
 - **Branch**: feature/fundacao-core-fase-5
