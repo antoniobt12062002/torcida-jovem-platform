@@ -232,10 +232,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Corpo com type, title, status, detail, code e request_id
-- [ ] JSON malformado produz 400 `invalid_json`; validação produz 422 `validation_failed` com `errors[]`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Corpo com type, title, status, detail, code e request_id
+- [x] JSON malformado produz 400 `invalid_json`; validação produz 422 `validation_failed` com `errors[]`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
