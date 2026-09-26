@@ -863,11 +863,11 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] Resposta conforme passa; status, cabeçalho ou corpo divergente falha o teste
-- [ ] Suporta `application/problem+json`
-- [ ] `/healthz` é validado por ele
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Resposta conforme passa; status, cabeçalho ou corpo divergente falha o teste
+- [x] Suporta `application/problem+json`
+- [x] `/healthz` é validado por ele
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
