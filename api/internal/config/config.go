@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"os"
 	"strconv"
@@ -20,7 +21,22 @@ type Config struct {
 	CookieDomain    string
 	SessionIdle     time.Duration
 	SessionAbsolute time.Duration
+
+	// AuthHashKey keys the HMAC-SHA256 of e-mails (login attempts, audit). It is
+	// a secret: it never appears in an error message or a log.
+	AuthHashKey       []byte
+	Argon2MemoryKiB   uint32
+	Argon2Iterations  uint32
+	Argon2Parallelism uint8
+	PasswordResetTTL  time.Duration
+
+	EmailProvider string // "log" or "disabled"; real providers arrive later
+	EmailFrom     string
+	AppBaseURL    string // base of the links sent by e-mail, without trailing slash
 }
+
+// devAuthHashKey is used only when APP_ENV=development and AUTH_HASH_KEY is unset.
+const devAuthHashKey = "dev-only-auth-hash-key-do-not-use-in-production"
 
 const (
 	envDevelopment = "development"
@@ -87,7 +103,109 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	if err := loadAuth(&cfg); err != nil {
+		return Config{}, err
+	}
+	if err := loadEmail(&cfg); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+func loadAuth(cfg *Config) error {
+	key := os.Getenv("AUTH_HASH_KEY")
+	switch {
+	case key == "" && cfg.AppEnv == envDevelopment:
+		key = devAuthHashKey
+	case key == "":
+		return invalid("AUTH_HASH_KEY", "e obrigatoria fora de development")
+	case len(key) < 32:
+		return invalid("AUTH_HASH_KEY", "deve ter no minimo 32 bytes")
+	}
+	cfg.AuthHashKey = []byte(key)
+
+	memory, err := boundedInt("ARGON2_MEMORY_KIB", 19456, 1<<20)
+	if err != nil {
+		return err
+	}
+	iterations, err := boundedInt("ARGON2_ITERATIONS", 2, 20)
+	if err != nil {
+		return err
+	}
+	parallelism, err := boundedInt("ARGON2_PARALLELISM", 1, 255)
+	if err != nil {
+		return err
+	}
+	ttl, err := boundedInt("PASSWORD_RESET_TTL_MINUTES", 30, 24*60)
+	if err != nil {
+		return err
+	}
+	cfg.Argon2MemoryKiB = uint32(memory)
+	cfg.Argon2Iterations = uint32(iterations)
+	cfg.Argon2Parallelism = uint8(parallelism)
+	cfg.PasswordResetTTL = time.Duration(ttl) * time.Minute
+	return nil
+}
+
+func loadEmail(cfg *Config) error {
+	dev := cfg.AppEnv == envDevelopment
+	defProvider := "disabled"
+	if dev {
+		defProvider = "log"
+	}
+	cfg.EmailProvider = getenv("EMAIL_PROVIDER", defProvider)
+	switch cfg.EmailProvider {
+	case "log", "disabled":
+	default:
+		return invalid("EMAIL_PROVIDER", "deve ser log ou disabled")
+	}
+
+	defBase, defFrom := "", ""
+	if dev {
+		defBase, defFrom = "http://localhost:3000", "TJ Platform <no-reply@localhost>"
+	}
+	base, from := getenv("APP_BASE_URL", defBase), getenv("EMAIL_FROM", defFrom)
+	if cfg.EmailProvider == "disabled" && os.Getenv("APP_BASE_URL") == "" && os.Getenv("EMAIL_FROM") == "" {
+		return nil
+	}
+	if cfg.EmailProvider != "disabled" {
+		if from == "" {
+			return invalid("EMAIL_FROM", "e obrigatoria quando EMAIL_PROVIDER nao e disabled")
+		}
+		if base == "" {
+			return invalid("APP_BASE_URL", "e obrigatoria quando EMAIL_PROVIDER nao e disabled")
+		}
+	}
+	if from != "" {
+		if _, err := mail.ParseAddress(from); err != nil {
+			return invalid("EMAIL_FROM", "deve ser um endereco de e-mail valido")
+		}
+		cfg.EmailFrom = from
+	}
+	if base != "" {
+		u, err := url.Parse(base)
+		switch {
+		case err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https"):
+			return invalid("APP_BASE_URL", "deve ser uma URL absoluta http ou https")
+		case u.Scheme != "https" && !dev:
+			return invalid("APP_BASE_URL", "deve usar https fora de development")
+		case u.User != nil || u.RawQuery != "" || u.Fragment != "":
+			return invalid("APP_BASE_URL", "nao pode ter credenciais, consulta nem fragmento")
+		}
+		cfg.AppBaseURL = strings.TrimSuffix(base, "/")
+	}
+	return nil
+}
+
+func boundedInt(name string, def, maxValue int) (int, error) {
+	v, err := positiveInt(name, def)
+	if err != nil {
+		return 0, err
+	}
+	if v > maxValue {
+		return 0, invalid(name, fmt.Sprintf("deve ser no maximo %d", maxValue))
+	}
+	return v, nil
 }
 
 func invalid(name, reason string) error {

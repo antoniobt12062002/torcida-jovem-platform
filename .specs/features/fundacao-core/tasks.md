@@ -1324,13 +1324,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `AUTH_HASH_KEY` com no mínimo 32 bytes é obrigatória fora de `development` e nunca aparece em mensagem de erro
-- [ ] Parâmetros do argon2id (memória em KiB, iterações e paralelismo) com padrão 19456, 2 e 1; valores inválidos são recusados nomeando a variável
-- [ ] `PASSWORD_RESET_TTL_MINUTES` com padrão 30
-- [ ] `EMAIL_PROVIDER` aceita `log` e `disabled` (padrão `log` em `development` e `disabled` nas demais); valor desconhecido é recusado nomeando a variável
-- [ ] `APP_BASE_URL` (base dos links) é uma URL absoluta e exige https fora de `development`; `EMAIL_FROM` é um endereço válido quando o provedor não é `disabled`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `AUTH_HASH_KEY` com no mínimo 32 bytes é obrigatória fora de `development` e nunca aparece em mensagem de erro
+- [x] Parâmetros do argon2id (memória em KiB, iterações e paralelismo) com padrão 19456, 2 e 1; valores inválidos são recusados nomeando a variável
+- [x] `PASSWORD_RESET_TTL_MINUTES` com padrão 30
+- [x] `EMAIL_PROVIDER` aceita `log` e `disabled` (padrão `log` em `development` e `disabled` nas demais); valor desconhecido é recusado nomeando a variável
+- [x] `APP_BASE_URL` (base dos links) é uma URL absoluta e exige https fora de `development`; `EMAIL_FROM` é um endereço válido quando o provedor não é `disabled`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
