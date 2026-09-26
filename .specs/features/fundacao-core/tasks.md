@@ -1670,13 +1670,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Logout grava `auth.logout`
-- [ ] Sessão ociosa ou antiga é inválida
-- [ ] Usuário inativo invalida todas as suas sessões
-- [ ] `last_seen_at` atualiza no máximo uma vez por minuto
-- [ ] Devolve Principal e token CSRF
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Logout grava `auth.logout`
+- [x] Sessão ociosa ou antiga é inválida
+- [x] Usuário inativo invalida todas as suas sessões
+- [x] `last_seen_at` atualiza no máximo uma vez por minuto
+- [x] Devolve Principal e token CSRF
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

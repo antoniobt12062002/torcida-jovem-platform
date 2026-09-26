@@ -34,7 +34,8 @@ func (s sessionEnv) open(t *testing.T, userID string) (token string, sess domain
 		t.Fatal(err)
 	}
 	csrf, _ := domain.NewCSRFToken()
-	sess, err = s.sessions.Create(context.Background(), userID, hash, csrf, time.Now().UTC().Add(8*time.Hour))
+	now := time.Now().UTC()
+	sess, err = s.sessions.Create(context.Background(), userID, hash, csrf, now, now.Add(8*time.Hour))
 	if err != nil {
 		t.Fatal(err)
 	}

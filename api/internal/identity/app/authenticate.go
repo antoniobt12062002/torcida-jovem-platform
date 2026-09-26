@@ -27,7 +27,7 @@ type (
 		FindByEmail(ctx context.Context, email string) (domain.User, error)
 	}
 	SessionStore interface {
-		Create(ctx context.Context, userID string, tokenHash []byte, csrfToken string, expiresAt time.Time) (domain.Session, error)
+		Create(ctx context.Context, userID string, tokenHash []byte, csrfToken string, at, expiresAt time.Time) (domain.Session, error)
 		FindByToken(ctx context.Context, token string) (domain.Session, error)
 		Revoke(ctx context.Context, sessionID string) error
 	}
@@ -190,7 +190,7 @@ func (a *Authenticator) succeed(ctx context.Context, in LoginInput, emailHash []
 				return ferr
 			}
 		}
-		session, err = a.Sessions.Create(ctx, user.ID, tokenHash, csrf, now.Add(a.SessionAbsolute))
+		session, err = a.Sessions.Create(ctx, user.ID, tokenHash, csrf, now, now.Add(a.SessionAbsolute))
 		return err
 	})
 	if err != nil {

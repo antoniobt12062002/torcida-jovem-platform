@@ -35,11 +35,12 @@ func (r sessionRow) session() domain.Session {
 
 const sessionColumns = `id::text AS id, user_id::text AS user_id, csrf_token, created_at, last_seen_at, expires_at, revoked_at`
 
-// Create stores a session under the SHA-256 of its token.
-func (r *SessionRepository) Create(ctx context.Context, userID string, tokenHash []byte, csrfToken string, expiresAt time.Time) (domain.Session, error) {
+// Create stores a session under the SHA-256 of its token, created and last seen
+// at the given instant (the caller's clock, so tests can control time).
+func (r *SessionRepository) Create(ctx context.Context, userID string, tokenHash []byte, csrfToken string, at, expiresAt time.Time) (domain.Session, error) {
 	var row sessionRow
-	err := conn(ctx, r.db).Raw(`INSERT INTO sessions (user_id, token_hash, csrf_token, expires_at)
-		VALUES (?::uuid, ?, ?, ?) RETURNING `+sessionColumns, userID, bytesParam(tokenHash), csrfToken, expiresAt).Scan(&row).Error
+	err := conn(ctx, r.db).Raw(`INSERT INTO sessions (user_id, token_hash, csrf_token, created_at, last_seen_at, expires_at)
+		VALUES (?::uuid, ?, ?, ?, ?, ?) RETURNING `+sessionColumns, userID, bytesParam(tokenHash), csrfToken, at, at, expiresAt).Scan(&row).Error
 	if err != nil {
 		return domain.Session{}, fmt.Errorf("sessão: criar: %w", err)
 	}
