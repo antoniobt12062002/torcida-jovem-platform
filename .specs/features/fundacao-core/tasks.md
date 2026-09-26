@@ -396,11 +396,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Arquivo com a tag `integration`; sem a tag, `go test ./...` não exige Docker
-- [ ] Sem Docker e com a tag, o teste falha citando Docker
-- [ ] Teste de fumaça conecta e confirma que os papéis existem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Arquivo com a tag `integration`; sem a tag, `go test ./...` não exige Docker
+- [x] Sem Docker e com a tag, o teste falha citando Docker
+- [x] Teste de fumaça conecta e confirma que os papéis existem
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
