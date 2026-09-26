@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [develop, main, 'release/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      docs: ${{ steps.out.outputs.docs }}
+      api: ${{ steps.out.outputs.api }}
+      web: ${{ steps.out.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '**/*.md'
+              - '.markdownlint.json'
+            api:
+              - 'api/**'
+            web:
+              - 'web/**'
+      - id: out
+        env:
+          EVENT: ${{ github.event_name }}
+          DOCS: ${{ steps.f.outputs.docs }}
+          API: ${{ steps.f.outputs.api }}
+          WEB: ${{ steps.f.outputs.web }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            echo "docs=$DOCS" >> "$GITHUB_OUTPUT"
+            echo "api=$API" >> "$GITHUB_OUTPUT"
+            echo "web=$WEB" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            echo "api=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  docs:
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: '**/*.md'
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress './**/*.md'
+          fail: true
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder
+        run: |
+          echo "TODO (quando existir /api): go vet ./... && go test ./... && go build ./..."
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder
+        run: |
+          echo "TODO (quando existir /web): npm ci && npm run lint && npx tsc --noEmit && npm run build"
+
+  ci-gate:
+    if: always()
+    needs: [pr-title, changes, docs, api, web]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Falha se algum job falhou ou foi cancelado
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTS"
+          case " $RESULTS " in
+            *" failure "*|*" cancelled "*) exit 1 ;;
+          esac

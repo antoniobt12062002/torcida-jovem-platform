@@ -1,0 +1,32 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: ['release/**']
+  workflow_call:
+    inputs:
+      ref:
+        description: Branch/tag a publicar
+        type: string
+        required: false
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Versao
+        run: echo "Publicando $(cat VERSION) em staging"
+      - name: Placeholder de deploy
+        run: |
+          echo "TODO: build da API (imagem Docker) + front e deploy no provedor escolhido; segredos via GitHub Secrets do ambiente staging"
