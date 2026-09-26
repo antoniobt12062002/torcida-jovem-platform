@@ -1291,14 +1291,14 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Sincronizar duas vezes deixa o banco idêntico e a segunda não grava auditoria
-- [ ] Duas sincronizações simultâneas (instâncias subindo juntas) não duplicam linhas nem o `rbac.sync`
-- [ ] Quando algo muda, grava `rbac.sync` na mesma transação, sem ator, com `before`, `after` (estado completo) e o diff (permissões adicionadas, desativadas e reativadas; vínculos adicionados e removidos), suficiente para reconstruir o histórico
-- [ ] Se a auditoria falhar, a sincronização é revertida
-- [ ] Permissão removida do código fica inativa e não é apagada, e não conta nas permissões efetivas
-- [ ] Permissões efetivas são a união dos papéis do usuário, que pode ter vários papéis ativos
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Sincronizar duas vezes deixa o banco idêntico e a segunda não grava auditoria
+- [x] Duas sincronizações simultâneas (instâncias subindo juntas) não duplicam linhas nem o `rbac.sync`
+- [x] Quando algo muda, grava `rbac.sync` na mesma transação, sem ator, com `before`, `after` (estado completo) e o diff (permissões adicionadas, desativadas e reativadas; vínculos adicionados e removidos), suficiente para reconstruir o histórico
+- [x] Se a auditoria falhar, a sincronização é revertida
+- [x] Permissão removida do código fica inativa e não é apagada, e não conta nas permissões efetivas
+- [x] Permissões efetivas são a união dos papéis do usuário, que pode ter vários papéis ativos
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
