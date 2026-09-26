@@ -755,10 +755,10 @@ T67 → T68 → T69 → T70
 
 **Done when**:
 
-- [ ] OpenAPI 3.0.3 válido, contendo só componentes de comunicação e nenhuma regra de negócio
-- [ ] `Cents` é `integer` `int64` e mapeia para `money.Cents` por `x-go-type`
-- [ ] `Problem` tem type, title, status, detail, code, request_id e `errors[]` opcional
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] OpenAPI 3.0.3 válido, contendo só componentes de comunicação e nenhuma regra de negócio
+- [x] `Cents` é `integer` `int64` e mapeia para `money.Cents` por `x-go-type`
+- [x] `Problem` tem type, title, status, detail, code, request_id e `errors[]` opcional
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
