@@ -1730,12 +1730,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `token_hash` único e nenhuma coluna guarda o token; `password_reset_requests` guarda só o HMAC do e-mail; `password_change_attempts` guarda só o usuário e o instante
-- [ ] `tj_app` com SELECT, INSERT e UPDATE em `password_reset_tokens`, sem DELETE
-- [ ] Migração `down` desfaz sem erro
-- [ ] Falha com mensagem clara se o papel `tj_app` não existir
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `token_hash` único e nenhuma coluna guarda o token; `password_reset_requests` guarda só o HMAC do e-mail; `password_change_attempts` guarda só o usuário e o instante
+- [x] `tj_app` com SELECT, INSERT e UPDATE em `password_reset_tokens`, sem DELETE
+- [x] Migração `down` desfaz sem erro
+- [x] Falha com mensagem clara se o papel `tj_app` não existir
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
