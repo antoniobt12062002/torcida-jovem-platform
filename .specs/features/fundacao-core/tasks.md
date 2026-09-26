@@ -1234,11 +1234,11 @@ T74 → T75 → T76 → T77
 
 **Done when**:
 
-- [ ] Ator que possui todas as permissões pedidas passa; faltando qualquer uma, a função devolve exatamente as que faltam
-- [ ] Conjunto vazio de permissões pedidas sempre passa
-- [ ] Usa apenas as permissões do `Principal` recebido, sem cache próprio
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Ator que possui todas as permissões pedidas passa; faltando qualquer uma, a função devolve exatamente as que faltam
+- [x] Conjunto vazio de permissões pedidas sempre passa
+- [x] Usa apenas as permissões do `Principal` recebido, sem cache próprio
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
