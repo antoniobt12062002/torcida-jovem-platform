@@ -393,7 +393,7 @@ export default async function Home() {
 }
 ```
 
-- [ ] **Step 3: Verificar** — `pnpm lint && pnpm exec tsc --noEmit && pnpm build` → ok. Com API e banco de pé, `pnpm start` e abrir `http://localhost:3000` mostra "API online"; com o banco parado, "API indisponível".
+- [ ] **Step 3: Verificar** — `pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm build` → ok. Com API e banco de pé, `pnpm start` e abrir `http://localhost:3000` mostra "API online"; com o banco parado, "API indisponível".
 - [ ] **Step 4: Commit** — `git add web && git commit -m "feat(web): adiciona app Next.js com pagina de status da API"`
 
 ## Chunk 3: CI e documentação
@@ -464,7 +464,7 @@ export default async function Home() {
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: pnpm exec tsc --noEmit
+      - run: pnpm exec next typegen && pnpm exec tsc --noEmit
       - run: pnpm build
 ```
 
