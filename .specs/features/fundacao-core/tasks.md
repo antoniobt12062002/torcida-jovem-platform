@@ -959,9 +959,9 @@ T73 → T74 → T75 → T76
 
 ### Phase 6: Auditoria (tarefas)
 
-### T31: Criar a migração `audit_log` com índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`
+### T31: Criar a migração `audit_log` com ator (tipo e usuário), alvo, resultado, contexto, índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`
 
-**What**: Criar a migração `audit_log` com índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`.  
+**What**: Criar a migração `audit_log` com ator (tipo e usuário), alvo, resultado, contexto, índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`.  
 **Where**: `api/migrations/000002_audit_log.up.sql`  
 **Depends on**: T12, T11  
 **Reuses**: Migração 000001 e o padrão de `tj_app`  
@@ -974,6 +974,7 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
+- [ ] Colunas `actor_type`, `outcome` e `context` presentes; `actor_user_id` só com `actor_type` igual a `user`, e valores fora dos permitidos são recusados pelo banco
 - [ ] Com o papel dono, UPDATE, DELETE e TRUNCATE falham por trigger
 - [ ] Com `tj_app`, só INSERT e SELECT funcionam
 - [ ] Migração `down` desfaz sem erro
@@ -1015,13 +1016,13 @@ T73 → T74 → T75 → T76
 
 ---
 
-### T33: Criar o tipo `Entry`, sua validação e a redação de chaves sensíveis
+### T33: Criar o tipo `Entry`, o catálogo de ações, sua validação e a redação de chaves sensíveis
 
-**What**: Criar o tipo `Entry`, sua validação e a redação de chaves sensíveis.  
+**What**: Criar o tipo `Entry`, o catálogo de ações, sua validação e a redação de chaves sensíveis.  
 **Where**: `api/internal/platform/audit/entry.go`  
 **Depends on**: T32  
 **Reuses**: Lista de chaves sensíveis do `logx`  
-**Requirement**: AUD-01 (ACs 3, 4, 5)
+**Requirement**: AUD-01 (ACs 3, 4, 5); AUD-04 (ACs 7)
 
 **Tools**:
 
@@ -1031,8 +1032,10 @@ T73 → T74 → T75 → T76
 **Done when**:
 
 - [ ] Ação de cancelamento ou ajuste sem motivo é rejeitada
-- [ ] Chaves sensíveis em before e after viram `[redacted]`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] Ação fora do catálogo é rejeitada; o catálogo tem as ações de identidade e de segurança da spec
+- [ ] `actor_user_id` só com `actor_type` igual a `user`; `outcome` e `actor_type` inválidos são rejeitados
+- [ ] Chaves sensíveis em before, after e context viram `[redacted]`
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
@@ -1042,13 +1045,13 @@ T73 → T74 → T75 → T76
 
 ---
 
-### T34: Criar o `Recorder` que grava a entrada na transação do contexto
+### T34: Criar o `Recorder`: `Record` grava na transação do contexto e `RecordSecurity` grava em transação própria
 
-**What**: Criar o `Recorder` que grava a entrada na transação do contexto.  
+**What**: Criar o `Recorder`: `Record` grava na transação do contexto e `RecordSecurity` grava em transação própria.  
 **Where**: `api/internal/platform/audit/recorder.go`  
 **Depends on**: T33  
 **Reuses**: `database.TxFrom` e `Entry`  
-**Requirement**: AUD-01 (ACs 1, 3, 6)
+**Requirement**: AUD-01 (ACs 1, 3, 6); AUD-04 (ACs 6)
 
 **Tools**:
 
@@ -1057,9 +1060,10 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Sem transação no contexto devolve erro e não grava
+- [ ] `Record` sem transação no contexto devolve erro e não grava
 - [ ] O registro contém request_id e ator vindos do contexto
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] `RecordSecurity` grava em transação própria, sem depender de transação de negócio, e devolve erro se a gravação falhar (mapeável para 500 `audit_failed`)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1500,7 +1504,7 @@ T73 → T74 → T75 → T76
 **Where**: `api/internal/identity/app/authenticate.go`  
 **Depends on**: T49  
 **Reuses**: Repositórios da fase, `password`, `audit`  
-**Requirement**: IDN-02 (ACs 1, 2, 3, 4, 7, 8, 10)
+**Requirement**: IDN-02 (ACs 1, 2, 3, 4, 7, 8, 10); AUD-04 (ACs 1, 2, 3, 6)
 
 **Tools**:
 
@@ -1509,11 +1513,12 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
+- [ ] Login bem-sucedido grava `auth.login` na mesma transação da sessão; falha grava `auth.login_failed` (com categoria da falha e hash do e-mail, sem senha nem e-mail em claro) e bloqueio grava `auth.login_blocked`, em transação própria
 - [ ] Nenhuma sequência de falhas bloqueia a conta de forma permanente
 - [ ] Usuário inexistente, senha errada e inativo devolvem o mesmo erro
 - [ ] Quinta falha em 15 minutos bloqueia por 15 minutos
 - [ ] Login bem-sucedido emite novo token
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 11 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1529,7 +1534,7 @@ T73 → T74 → T75 → T76
 **Where**: `api/internal/identity/app/session_service.go`  
 **Depends on**: T50  
 **Reuses**: Repositórios de sessão e de papéis  
-**Requirement**: IDN-02 (ACs 5, 6, 9); RBAC-02 (ACs 5)
+**Requirement**: IDN-02 (ACs 5, 6, 9); RBAC-02 (ACs 5); AUD-04 (ACs 4)
 
 **Tools**:
 
@@ -1538,11 +1543,12 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
+- [ ] Logout grava `auth.logout`
 - [ ] Sessão ociosa ou antiga é inválida
 - [ ] Usuário inativo invalida todas as suas sessões
 - [ ] `last_seen_at` atualiza no máximo uma vez por minuto
 - [ ] Devolve Principal e token CSRF
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -1831,7 +1837,7 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Filtros `entity_type`, `entity_id`, `actor_user_id`, `from` e `to` e `limit` de no máximo 100
+- [ ] Filtros `entity_type`, `entity_id`, `actor_user_id`, `action`, `outcome`, `from` e `to` e `limit` de no máximo 100; o esquema do registro tem ator, alvo, resultado, contexto e `request_id`
 - [ ] Geração de Go e TypeScript sem diferença após regenerar
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
@@ -2132,7 +2138,7 @@ T73 → T74 → T75 → T76
 **Where**: `api/internal/httpapi/e2e_test.go`  
 **Depends on**: T71  
 **Reuses**: `testutil.NewTestDB` e o validador de contrato  
-**Requirement**: IDN-02 (ACs 1, 9); IDN-03 (ACs 2, 3); IDN-04 (ACs 1, 3, 7); IDN-06 (ACs 1, 6); RBAC-03 (ACs 1); RBAC-02 (ACs 1, 2); AUD-03 (ACs 1)
+**Requirement**: IDN-02 (ACs 1, 9); IDN-03 (ACs 2, 3); IDN-04 (ACs 1, 3, 7); IDN-06 (ACs 1, 6); RBAC-03 (ACs 1); RBAC-02 (ACs 1, 2); AUD-03 (ACs 1); AUD-04 (ACs 1, 2, 3, 4, 5)
 
 **Tools**:
 
@@ -2143,8 +2149,9 @@ T73 → T74 → T75 → T76
 
 - [ ] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, atribuir papel, retirar o acesso, desativar, consultar auditoria
 - [ ] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
+- [ ] Eventos de segurança consultáveis: `auth.login`, `auth.login_failed`, `auth.login_blocked`, `auth.logout`, `admin.promote`, `admin.revoke`, `user.roles_set` e `role.change_denied`
 - [ ] Todas as respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 13 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 18 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -2522,6 +2529,7 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | AUD-01 | T32, T33, T34, T35 |
 | AUD-02 | T31 |
 | AUD-03 | T61, T67, T72 |
+| AUD-04 | T33, T34, T50, T51, T72 |
 | MNY-01 | T17, T20 |
 | MNY-02 | T18, T19, T21, T22 |
 | MNY-03 | T20 |
@@ -2532,4 +2540,4 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | API-02 | T3, T4, T5, T23, T25, T58, T68, T74 |
 | PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T68, T71 |
 
-**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped
+**Coverage:** 22 total, 22 mapped to tasks, 0 unmapped

@@ -96,8 +96,8 @@
 - **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) e validador de requisições (`platform/httpx`); a fase 5 foi mesclada no PR #25 (bypass administrativo excepcional, autorizado e registrado no PR). Spec, design e tarefas de Identity/RBAC (fases 6 a 11, T31 a T73) aprovados em 2026-09-26
 - **Completed**: T1 a T30
 - **In-progress** (file:line): none
-- **Next step**: Após o merge do PR de documentação/design, iniciar a fase 6 (auditoria, T31 a T35), em PR próprio
-- **Blockers**: Merge do PR de documentação/design de Identity/RBAC
+- **Next step**: Apresentar spec/design da fase 6; após aprovação, implementar T31 a T35 em PR próprio (branch `feature/fundacao-core-fase-6`)
+- **Blockers**: Merge do PR #26 (aguarda aprovação pela interface do GitHub) e aprovação da spec/design da fase 6 (auditoria e eventos de segurança, AUD-04)
 - **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado)
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-identidade-design
+- **Branch**: feature/fundacao-core-fase-6

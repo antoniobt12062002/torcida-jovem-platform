@@ -58,7 +58,9 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Múltiplos papéis | Um usuário pode ter vários papéis ativos; a permissão efetiva é a união; nega por padrão; não há permissão negativa | Aprovado pelo mantenedor | y |
 | Concessão sem escalada | Ninguém concede uma permissão superior à própria: o ator só concede, retira ou altera papéis cujas permissões estejam todas entre as suas, e nunca altera os próprios papéis nem o próprio vínculo | Aprovado pelo mantenedor; a regra vale para qualquer ator e decide só pelas permissões efetivas, sem exceção por papel; o que cada papel consegue conceder decorre da matriz | y |
 | Último administrador | O sistema impede desativar, retirar o vínculo ou remover as permissões do último usuário ativo que possui `identity:admin:grant`; a CLI `bootstrap-admin` cria o primeiro (ADMIN_SISTEMA por padrão, ou PRESIDENTE) e só roda sem nenhum vínculo administrativo ativo | Evita ficar sem quem administre acesso; o PRESIDENTE, com todas as permissões, pode conceder qualquer papel | n |
-| Conteúdo do registro de auditoria | Sem endereço IP; com `request_id`; retenção indefinida nesta fase | IP é dado pessoal (LGPD) e não é necessário agora | n |
+| Conteúdo do registro de auditoria | Campos: `id`, `occurred_at` (UTC), `actor_type` (`user`, `system` ou `anonymous`), `actor_user_id`, `action`, `entity_type` e `entity_id` (o alvo), `before`, `after`, `outcome` (`success`, `denied` ou `failure`), `reason`, `context` (JSON sem segredos) e `request_id`. Sem endereço IP; retenção indefinida nesta fase | IP é dado pessoal (LGPD) e o `request_id` já correlaciona o evento ao log de acesso; incluir IP só nos eventos de segurança fica como decisão em aberto | n |
+| Falha ao gravar auditoria de segurança | Falha fechada: se o evento não puder ser gravado, a operação responde 500 `audit_failed`, inclusive negações e falhas de login (o corpo não revela se o e-mail existe) | Coerente com a auditoria atômica (AUD-01.2): sem rastro, sem operação | n |
+| Catálogo de ações de auditoria | As ações são constantes em código (`domínio.verbo`); o registrador rejeita ação fora do catálogo | Evita nomes divergentes e permite testar que toda mudança de permissão tem evento | n |
 | Fuso horário | Tudo em UTC (`timestamptz`); conversão para America/Sao_Paulo na borda | Evita ambiguidade de horário de verão e de servidor | n |
 | Arredondamento de percentuais | `ROUND_HALF_UP` (empate arredonda para longe de zero, também nos negativos); taxas em pontos-base (1 bp = 0,01%) | Aprovado pelo mantenedor; segue a semântica de `BigDecimal.ROUND_HALF_UP` | y |
 | Rateio de centavos | O resto é distribuído 1 centavo por parcela, da primeira em diante | Determinístico e reproduzível (ex.: 10000 em 3 partes = 3334, 3333, 3333) | n |
@@ -264,12 +266,31 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Acceptance Criteria**:
 1. WHEN a use case that changes audited data commits THEN the system SHALL have written the audit entry in the same database transaction as the change.
 2. IF writing the audit entry fails THEN the system SHALL roll back the whole transaction and respond 500 with code `audit_failed`.
-3. The system SHALL record for every entry an id (UUID), `occurred_at` (UTC), `actor_user_id` (null only for system actions), `action`, `entity_type`, `entity_id`, `before` (JSON or null), `after` (JSON or null), an optional `reason` and the `request_id`.
+3. The system SHALL record for every entry an id (UUID), `occurred_at` (UTC), `actor_type`, `actor_user_id` (present only when `actor_type` is `user`), `action`, the target as `entity_type` and `entity_id`, `before` (JSON or null), `after` (JSON or null), `outcome`, an optional `reason`, a `context` object (JSON, no secrets) and the `request_id`.
 4. IF an entry has an action of cancellation or extraordinary adjustment and no reason THEN the recorder SHALL reject it with an error.
 5. IF `before` or `after` contains a key named `password`, `password_hash`, `token`, `session_token` or `csrf_token` THEN the recorder SHALL replace its value with `[redacted]`.
 6. IF the recorder is called outside a database transaction THEN it SHALL return an error and SHALL NOT write the entry.
 
 **Independent Test**: Forçar falha na gravação da auditoria e ver a alteração desfeita.
+
+---
+
+### P1: Eventos de segurança
+
+**User Story**: Como presidente, conselheiro fiscal ou administrador de sistema, quero que login, falhas de autenticação e mudanças de acesso fiquem registrados de forma imutável, para investigar tentativas de invasão e abusos de poder.
+
+**Why P1**: Sem esse rastro, não há como saber quem tentou entrar, quem ganhou ou perdeu acesso e quem tentou escalar privilégio.
+
+**Acceptance Criteria**:
+1. WHEN a login succeeds THEN the system SHALL record an entry with action `auth.login` and the user as actor, in the same transaction that creates the session.
+2. WHEN a login fails because the email is unknown, the password is wrong or the user is inactive THEN the system SHALL record an entry with action `auth.login_failed`, outcome `failure`, actor type `anonymous`, the user as target when it exists and a context with the failure category and a hash of the email, and SHALL NOT store the password or the plain email.
+3. WHEN a login attempt is refused because of the lockout THEN the system SHALL record an entry with action `auth.login_blocked` and outcome `denied`.
+4. WHEN a user logs out THEN the system SHALL record an entry with action `auth.logout`.
+5. The system SHALL record an audit entry for every change or denied change of roles, permissions or administrative membership: `admin.promote`, `admin.revoke`, `user.roles_set`, `rbac.sync` and `role.change_denied`.
+6. WHEN a security event is not part of a business change THEN the system SHALL write it in its own transaction; IF that write fails THEN the system SHALL respond 500 with code `audit_failed`.
+7. IF an entry carries an action that is not in the catalog of actions declared in code THEN the recorder SHALL reject it with an error.
+
+**Independent Test**: Errar a senha até o bloqueio e ver `auth.login_failed` e `auth.login_blocked`; promover, retirar e tentar escalar privilégio e ver os eventos correspondentes na consulta de auditoria.
 
 ---
 
@@ -296,7 +317,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 **Acceptance Criteria**:
 1. WHEN an actor with `audit:log:read` calls `GET /api/v1/audit-logs` THEN the system SHALL return entries newest first with cursor pagination, 50 per page by default.
-2. WHEN the filters `entity_type`, `entity_id`, `actor_user_id`, `from` or `to` are supplied THEN the system SHALL return only the entries matching all of them.
+2. WHEN the filters `entity_type`, `entity_id`, `actor_user_id`, `action`, `outcome`, `from` or `to` are supplied THEN the system SHALL return only the entries matching all of them.
 3. IF `limit` exceeds 100 THEN the system SHALL respond 422 with code `invalid_limit`.
 4. IF the actor lacks `audit:log:read` THEN the system SHALL respond 403 with code `forbidden`.
 
@@ -493,6 +514,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | AUD-01 | P1: Registro de auditoria atômico | In Tasks | Pending |
 | AUD-02 | P1: Auditoria imutável | In Tasks | Pending |
 | AUD-03 | P2: Consulta de auditoria | In Tasks | Pending |
+| AUD-04 | P1: Eventos de segurança | In Tasks | Pending |
 | MNY-01 | P1: Tipo monetário em centavos | In Tasks | Implementing |
 | MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |
 | MNY-03 | P2: Rateio e percentuais | In Tasks | Implementing |
@@ -503,7 +525,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | API-02 | P1: Convenções da API | In Tasks | Implementing |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
-**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
+**Coverage:** 22 total, 22 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
 ---
 
