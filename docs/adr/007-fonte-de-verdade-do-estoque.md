@@ -1,8 +1,8 @@
 # ADR-007: O módulo de estoque é a fonte de verdade, baseada em movimentações
 
 - **Date**: 2026-09-26
-- **Status**: Proposed
-- **Deciders**: @antoniobt12062002 (aprovação pendente)
+- **Status**: Accepted
+- **Deciders**: @antoniobt12062002
 - **Tags**: domain, stock, consistency
 
 ## Context and Problem Statement
@@ -24,8 +24,10 @@ Vários módulos tocam em quantidades de produtos: a loja vende, o financeiro re
 
 ## Decision Outcome
 
-Proposed option: **o módulo `estoque` é o único dono das quantidades, registradas como movimentações imutáveis** (entrada, saída, ajuste, devolução). O saldo é derivado das movimentações e mantido na mesma transação.
+Chosen option: **o módulo `estoque` é o único dono das quantidades, registradas como movimentações imutáveis** (entrada, saída, ajuste, devolução). O saldo é calculado a partir dos movimentos e mantido na mesma transação.
 
+- **Estoque baseado em razão de movimentações; o saldo é calculado pelos movimentos.**
+- **Estoque negativo é bloqueado por padrão.** Exceções só ocorrem por ajuste autorizado (permissão específica) e auditado ([ADR-004](004-auditoria-e-imutabilidade-financeira.md)).
 - Loja, compras e eventos **não alteram quantidades diretamente**: chamam o serviço de aplicação de `estoque`.
 - Cada movimentação guarda produto, quantidade, tipo, origem (venda, compra, evento, inventário), usuário e data/hora.
 - Correção de erro é uma nova movimentação de ajuste com motivo, nunca edição.
@@ -39,12 +41,12 @@ Proposed option: **o módulo `estoque` é o único dono das quantidades, registr
 ### Negative Consequences
 
 - Mais tabelas e mais disciplina que uma simples coluna de quantidade.
-- Concorrência (duas vendas do último item) exige bloqueio ou restrição no banco.
+- Como o negativo é bloqueado, a concorrência (duas vendas do último item) exige bloqueio ou restrição no banco.
 - Reservas para a loja virtual (carrinho, pagamento pendente) ainda precisam de definição.
 
 ## Pros and Cons of the Options
 
-### Razão de movimentações ✅ Proposed
+### Razão de movimentações ✅ Chosen
 
 - ✅ Auditável, consistente e coerente com o ADR-004
 - ❌ Modelagem mais elaborada
@@ -61,7 +63,6 @@ Proposed option: **o módulo `estoque` é o único dono das quantidades, registr
 
 ## Open Questions
 
-- Política de estoque negativo (permitido ou bloqueado).
 - Reservas e expiração para pagamentos pendentes.
 - Estoque por variação (tamanho e cor de camiseta) ou por produto.
 

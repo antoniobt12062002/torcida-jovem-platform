@@ -58,13 +58,29 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-008
+- **Decision**: Documentos financeiros ficam em object storage compatível com S3, com bucket privado, URL assinada e metadados no banco; nenhum provedor específico é definido.
+- **Reason**: Durabilidade e custo adequados sem misturar binários ao banco transacional nem travar o provedor.
+- **Trade-off**: Um serviço a mais para proteger; consistência entre banco e bucket fica na aplicação.
+- **Scope**: Módulos que anexam documentos (financeiro em especial). Ver `docs/adr/006-armazenamento-de-documentos.md`.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-009
+- **Decision**: O módulo `estoque` é a fonte de verdade das quantidades, baseada em razão de movimentações; o saldo é calculado pelos movimentos; estoque negativo é bloqueado por padrão e só admite exceção via ajuste autorizado e auditado.
+- **Reason**: Uma única fonte de verdade rastreável e consistente com venda e compra.
+- **Trade-off**: Modelagem mais elaborada e controle de concorrência no banco.
+- **Scope**: `estoque`, `loja`, `eventos` e o fluxo de compra do `financeiro`. Ver `docs/adr/007-fonte-de-verdade-do-estoque.md`.
+- **Date**: 2026-09-27
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: governança (sem feature em `.specs/features/`)
-- **Phase / Task**: Governança concluída, aguardando aprovação do mantenedor
+- **Phase / Task**: Governança aprovada com ajustes; próxima etapa é a spec de fundação
 - **Completed**: CLAUDE.md, `.specs/`, `docs/architecture/`, ADR-001 a ADR-007, SECURITY.md, LICENSE, `docs/development/ai-environment.md`, reorganização de `docs/`
 - **In-progress** (file:line): none
-- **Next step**: Após a aprovação, definir a spec de fundação (auth/RBAC, auditoria, dinheiro, testes com banco real, OpenAPI) e resolver as decisões pendentes listadas na entrega
-- **Blockers**: Aprovação dos ADR-006 e ADR-007 (Proposed) e decisões em aberto
+- **Next step**: Escrever spec, design, tasks e critérios de aceite da fundação (identity, RBAC, auditoria, money, document management, infraestrutura de testes, OpenAPI) e aguardar aprovação
+- **Blockers**: Aprovação da spec de fundação antes de qualquer implementação
 - **Uncommitted files**: none
 - **Branch**: feature/governanca

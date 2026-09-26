@@ -1,8 +1,8 @@
 # ADR-006: Armazenamento de documentos em object storage compatível com S3
 
 - **Date**: 2026-09-26
-- **Status**: Proposed
-- **Deciders**: @antoniobt12062002 (aprovação pendente)
+- **Status**: Accepted
+- **Deciders**: @antoniobt12062002
 - **Tags**: storage, security, finance
 
 ## Context and Problem Statement
@@ -18,18 +18,18 @@ O financeiro exige gestão documental: nota fiscal, recibo, comprovante PIX, con
 
 ## Considered Options
 
-- Object storage compatível com S3 (Cloudflare R2, Backblaze B2, AWS S3 ou similar)
+- Object storage compatível com S3 (provedor a definir)
 - Arquivos em `bytea` no PostgreSQL
 - Sistema de arquivos local do servidor
 
 ## Decision Outcome
 
-Proposed option: **object storage compatível com S3**, com bucket privado e acesso por URL assinada de curta duração emitida pela API após checar a permissão.
+Chosen option: **object storage compatível com S3**, com bucket privado e acesso por URL assinada de curta duração emitida pela API após checar a permissão.
 
 - No banco ficam apenas os metadados: identificador, nome original, tipo, tamanho, hash SHA-256, lançamento associado, usuário e data de envio.
 - O documento em si é imutável: substituir gera nova versão, nunca sobrescreve (alinhado ao [ADR-004](004-auditoria-e-imutabilidade-financeira.md)).
 - Acesso ao documento gera registro de auditoria.
-- A escolha do provedor fica para a decisão de hospedagem, e a API usa um cliente S3 genérico para não travar a escolha.
+- **Nenhum provedor específico é definido neste ADR.** O provedor será decidido posteriormente; a API usa apenas o protocolo S3, por meio de uma interface no `platform`, para não travar a escolha.
 
 ### Positive Consequences
 
@@ -44,7 +44,7 @@ Proposed option: **object storage compatível com S3**, com bucket privado e ace
 
 ## Pros and Cons of the Options
 
-### Object storage S3 ✅ Proposed
+### Object storage S3 ✅ Chosen
 
 - ✅ Durável, barato, independente do servidor
 - ❌ Mais uma peça de infraestrutura
@@ -61,7 +61,7 @@ Proposed option: **object storage compatível com S3**, com bucket privado e ace
 
 ## Open Questions
 
-- Provedor (depende da decisão de hospedagem).
+- Provedor (decisão posterior, sem impacto no código de domínio).
 - Limite de tamanho, tipos aceitos e política de retenção.
 - Varredura de malware nos uploads.
 

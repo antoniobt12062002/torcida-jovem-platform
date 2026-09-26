@@ -31,7 +31,8 @@ Chosen option: **sessão no servidor com cookie `httpOnly`**, sem JWT neste mome
 - Proteção contra CSRF em requisições que alteram estado (validação de `Origin` e token anti-CSRF).
 - Senhas com `argon2id`.
 - **RBAC baseado em permissões, não no nome do papel:** papéis agrupam permissões, e o código verifica a permissão (ex.: `financeiro:lancamento:criar`).
-- Papéis iniciais: `ADMIN`, `PRESIDENTE`, `DIRETOR`, `FINANCEIRO`, `CONSELHO_FISCAL`, `ASSOCIADO`. A matriz de permissões será definida na spec de identidade.
+- Papéis iniciais: `ADMIN`, `PRESIDENTE`, `DIRETOR`, `FINANCEIRO`, `CONSELHO_FISCAL`, `ASSOCIADO`. A matriz completa de permissões será definida na spec de identidade.
+- **Conselho Fiscal (definido):** pode visualizar lançamentos, documentos e relatórios, analisar a prestação anual, emitir parecer e aprovar a prestação de contas. **Não pode** criar, editar ou excluir lançamentos, nem alterar documentos.
 
 ### Positive Consequences
 

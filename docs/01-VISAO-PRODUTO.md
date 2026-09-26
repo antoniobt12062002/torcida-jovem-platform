@@ -69,9 +69,12 @@ Responsável pela análise das contas.
 
 Permissões:
 
-- visualizar documentos;
-- analisar prestação de contas;
-- emitir parecer.
+- visualizar lançamentos, documentos e relatórios;
+- analisar a prestação anual;
+- emitir parecer;
+- aprovar a prestação de contas.
+
+Não pode criar, editar ou excluir lançamentos, nem alterar documentos.
 
 ---
 
