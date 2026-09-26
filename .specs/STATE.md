@@ -74,6 +74,14 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-010
+- **Decision**: O contrato OpenAPI 3.0.3 é a fonte de verdade da comunicação, em fluxo contract-first (contrato, lint, geração, implementação, validação). Há um contrato por módulo em `api/openapi/` mais `common.yaml`, com código gerado por módulo. Ferramentas: `oapi-codegen`, `kin-openapi`, `openapi-typescript` e Redocly; `openapi-fetch` só na primeira tela real. O contrato descreve comunicação e não contém regras de negócio, que ficam nas specs e nos módulos.
+- **Reason**: Uma única fonte de verdade entre servidor, cliente e testes, sem arquivo gigante e respeitando as fronteiras de módulo.
+- **Trade-off**: Código gerado versionado e um job de CI extra; migração para a 3.1 exige revisar os contratos.
+- **Scope**: Toda a API e o front. Ver `docs/adr/008-versao-do-contrato-openapi.md`.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
