@@ -1,0 +1,19 @@
+# Contratos OpenAPI da API (fonte de verdade, em api/openapi/).
+# `pnpm lint:api` faz o lint de cada contrato e `pnpm gen:api` gera um arquivo
+# de tipos TypeScript por contrato. Os caminhos de saída são relativos a este
+# diretório (web/). O common.yaml não é raiz: é validado por meio dos contratos
+# de módulo que o referenciam.
+apis:
+  platform@v1:
+    root: ../api/openapi/platform.yaml
+    x-openapi-ts:
+      output: ./lib/api/platform.d.ts
+
+extends:
+  - recommended
+
+rules:
+  # O código é proprietário (LICENSE); o contrato não declara licença.
+  info-license: off
+  # Rotas de saúde e de plataforma podem não ter resposta 4xx.
+  operation-4xx-response: off

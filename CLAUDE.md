@@ -35,6 +35,10 @@ DATABASE_URL="postgres://tj_app:tj_app_dev@localhost:5432/tj?sslmode=disable" AP
 # Web (web/)
 pnpm install && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build
 
+# Contrato OpenAPI (contract-first): editar api/openapi/*.yaml, depois
+(cd web && pnpm lint:api && pnpm gen:api)   # lint e tipos TypeScript
+(cd api && go generate ./...)                # interfaces e modelos Go
+
 # Script de versão
 bash .github/scripts/test-next-version.sh
 ```

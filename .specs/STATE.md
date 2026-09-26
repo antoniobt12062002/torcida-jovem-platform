@@ -74,13 +74,22 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-010
+- **Decision**: O contrato OpenAPI 3.0.3 é a fonte de verdade da comunicação, em fluxo contract-first (contrato, lint, geração, implementação, validação). Há um contrato por módulo em `api/openapi/` mais `common.yaml`, com código gerado por módulo. Ferramentas: `oapi-codegen`, `kin-openapi`, `openapi-typescript` e Redocly; `openapi-fetch` só na primeira tela real. O contrato descreve comunicação e não contém regras de negócio, que ficam nas specs e nos módulos.
+- **Reason**: Uma única fonte de verdade entre servidor, cliente e testes, sem arquivo gigante e respeitando as fronteiras de módulo.
+- **Trade-off**: Código gerado versionado e um job de CI extra; migração para a 3.1 exige revisar os contratos.
+- **Scope**: Toda a API e o front. Ver `docs/adr/008-versao-do-contrato-openapi.md`.
+- **Date**: 2026-09-26
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 4 concluídas (T1 a T22); a próxima é a fase 5 (contrato OpenAPI, T23 a T29)
-- **Completed**: T1 a T22 (fases 1 a 3 mescladas em #21, #22 e #23; fase 4 na branch `feature/fundacao-core-fase-4`)
+- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) mais o validador de requisições pelo contrato (`platform/httpx`, sem tarefa numerada própria; a numeração das tarefas segue a de `tasks.md`)
+- **Completed**: T1 a T30 e o validador de requisições (fases 1 a 4 mescladas; fase 5 no PR da branch `feature/fundacao-core-fase-5`)
 - **In-progress** (file:line): none
-- **Next step**: Abrir o PR da fase 4; antes de implementar a fase 5, apresentar a ferramenta de OpenAPI escolhida, a justificativa, o fluxo contract-first e o impacto no backend e no frontend
-- **Blockers**: Aprovação da proposta de OpenAPI antes de iniciar a fase 5. Decisão aprovada: o mapeamento de `money.ErrOutOfRange` para 422 `amount_out_of_range` fica para a primeira feature com endpoint monetário
+- **Next step**: Após o merge da fase 5, apresentar o design da modelagem Identity/RBAC (User x Associado, papéis e permissões, sessões, vínculo administrativo, promoção, auditoria de permissões) e aguardar aprovação antes de iniciar a implementação
+- **Blockers**: Aprovação do design de Identity/RBAC
+- **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-4
+- **Branch**: feature/fundacao-core-fase-5

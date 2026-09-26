@@ -33,6 +33,7 @@ jobs:
       docs: ${{ steps.out.outputs.docs }}
       api: ${{ steps.out.outputs.api }}
       web: ${{ steps.out.outputs.web }}
+      contract: ${{ steps.out.outputs.contract }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -48,21 +49,35 @@ jobs:
               - 'api/**'
             web:
               - 'web/**'
+            contract:
+              - 'api/openapi/**'
+              - 'api/internal/**/generate.go'
+              - 'api/internal/**/api.gen.go'
+              - 'api/go.mod'
+              - 'api/go.sum'
+              - 'web/redocly.yaml'
+              - 'web/lib/api/**'
+              - 'web/package.json'
+              - 'web/pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
       - id: out
         env:
           EVENT: ${{ github.event_name }}
           DOCS: ${{ steps.f.outputs.docs }}
           API: ${{ steps.f.outputs.api }}
           WEB: ${{ steps.f.outputs.web }}
+          CONTRACT: ${{ steps.f.outputs.contract }}
         run: |
           if [ "$EVENT" = "pull_request" ]; then
             echo "docs=$DOCS" >> "$GITHUB_OUTPUT"
             echo "api=$API" >> "$GITHUB_OUTPUT"
             echo "web=$WEB" >> "$GITHUB_OUTPUT"
+            echo "contract=$CONTRACT" >> "$GITHUB_OUTPUT"
           else
             echo "docs=true" >> "$GITHUB_OUTPUT"
             echo "api=true" >> "$GITHUB_OUTPUT"
             echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "contract=true" >> "$GITHUB_OUTPUT"
           fi
 
   docs:
@@ -133,9 +148,42 @@ jobs:
         run: pnpm test
       - run: pnpm build
 
+  contract:
+    needs: changes
+    if: needs.changes.outputs.contract == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - name: Instala dependências do front
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+      - name: Lint dos contratos OpenAPI
+        working-directory: web
+        run: pnpm lint:api
+      - name: Código Go gerado está em dia
+        working-directory: api
+        run: |
+          go generate ./...
+          git diff --exit-code -- .
+      - name: Tipos TypeScript gerados estão em dia
+        working-directory: web
+        run: pnpm gen:api:check
+
   ci-gate:
     if: always()
-    needs: [pr-title, changes, docs, api, web]
+    needs: [pr-title, changes, docs, api, web, contract]
     runs-on: ubuntu-latest
     steps:
       - name: Falha se algum job falhou ou foi cancelado

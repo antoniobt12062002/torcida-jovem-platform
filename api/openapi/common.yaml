@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: TJ Platform - componentes compartilhados
+  version: 1.0.0
+  description: |
+    Componentes de comunicação reutilizados pelos contratos dos módulos
+    (platform, identity e os futuros). Este documento não descreve rotas e não
+    contém regras de negócio: elas ficam nas specs e nos módulos de domínio.
+servers:
+  - url: /
+paths: {}
+components:
+  schemas:
+    Problem:
+      type: object
+      description: Erro no formato application/problem+json (RFC 9457).
+      required: [type, title, status, detail, code, request_id]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: Conflict
+        status:
+          type: integer
+          example: 409
+        detail:
+          type: string
+        code:
+          type: string
+          description: Código estável do erro, para o cliente tratar.
+          example: email_taken
+        request_id:
+          type: string
+          description: Identificador da requisição, igual ao cabeçalho X-Request-Id.
+        errors:
+          type: array
+          description: Erros por campo, presente em respostas de validação.
+          items:
+            $ref: '#/components/schemas/FieldError'
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field:
+          type: string
+          example: address.zip
+        code:
+          type: string
+          example: required
+    Cents:
+      type: integer
+      format: int64
+      description: Valor monetário em centavos de real (10000 equivale a R$ 100,00).
+      minimum: -9007199254740991
+      maximum: 9007199254740991
+      example: 12345
+      x-go-type: money.Cents
+      x-go-type-import:
+        path: github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/money
+    Cursor:
+      type: string
+      description: Cursor opaco de paginação, devolvido em next_cursor.
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Quantidade de itens por página.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    CursorParam:
+      name: cursor
+      in: query
+      description: Cursor da página, vindo de next_cursor.
+      required: false
+      schema:
+        $ref: '#/components/schemas/Cursor'
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      description: Token anti-CSRF da sessão, obrigatório em requisições que alteram estado.
+      required: true
+      schema:
+        type: string
+  headers:
+    XRequestId:
+      description: Identificador da requisição.
+      schema:
+        type: string
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: tj_session
+      description: Cookie de sessão emitido no login.
+  responses:
+    BadRequest:
+      description: Corpo da requisição não é um JSON válido (code invalid_json).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Sem sessão válida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Sem permissão, ou CSRF e origem inválidos.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PayloadTooLarge:
+      description: Corpo acima do limite.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ValidationFailed:
+      description: Campos inválidos (code validation_failed, com errors).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalError:
+      description: Erro interno (code internal_error).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: Dependência indisponível (code service_unavailable).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

@@ -83,49 +83,49 @@ T17 → T18 → T19 → T20 → T21 → T22
 ### Phase 5: Contrato OpenAPI
 
 ```
-T23 → T24 → T25 → T26 → T27 → T28 → T29
+T23 → T24 → T25 → T26 → T27 → T28 → T29 → T30
 ```
 
 ### Phase 6: Auditoria
 
 ```
-T30 → T31 → T32 → T33 → T34
+T31 → T32 → T33 → T34 → T35
 ```
 
 ### Phase 7: Autorização e papéis
 
 ```
-T35 → T36 → T37 → T38 → T39
+T36 → T37 → T38 → T39 → T40
 ```
 
 ### Phase 8: Identidade: base
 
 ```
-T40 → T41 → T42 → T43 → T44 → T45 → T46 → T47
+T41 → T42 → T43 → T44 → T45 → T46 → T47 → T48
 ```
 
 ### Phase 9: Identidade: casos de uso
 
 ```
-T48 → T49 → T50 → T51 → T52
+T49 → T50 → T51 → T52 → T53
 ```
 
 ### Phase 10: HTTP: contrato de identidade e middlewares
 
 ```
-T53 → T54 → T55
+T54 → T55 → T56 → T57 → T58
 ```
 
 ### Phase 11: HTTP: handlers e fiação
 
 ```
-T56 → T57 → T58 → T59 → T60 → T61 → T62 → T63
+T59 → T60 → T61 → T62 → T63 → T64 → T65 → T66
 ```
 
 ### Phase 12: Guardrails e documentação
 
 ```
-T64 → T65 → T66 → T67
+T67 → T68 → T69 → T70
 ```
 
 ---
@@ -740,12 +740,12 @@ T64 → T65 → T66 → T67
 
 ### Phase 5: Contrato OpenAPI (tarefas)
 
-### T23: Criar o esqueleto do contrato OpenAPI 3.0.3 com `/healthz`, esquema de erro, `Cents` e parâmetros de paginação
+### T23: Criar o contrato compartilhado `common.yaml`: esquemas `Problem`, `Cents`, `Limit` e `Cursor` e os esquemas de segurança de cookie de sessão e `X-CSRF-Token`
 
-**What**: Criar o esqueleto do contrato OpenAPI 3.0.3 com `/healthz`, esquema de erro, `Cents` e parâmetros de paginação.  
-**Where**: `api/openapi/openapi.yaml`  
+**What**: Criar o contrato compartilhado `common.yaml`: esquemas `Problem`, `Cents`, `Limit` e `Cursor` e os esquemas de segurança de cookie de sessão e `X-CSRF-Token`.  
+**Where**: `api/openapi/common.yaml`  
 **Depends on**: None  
-**Reuses**: Handler `/healthz` existente  
+**Reuses**: Convenções de `problem+json`, paginação e dinheiro da spec  
 **Requirement**: API-01 (ACs 1); API-02 (ACs 1, 5)
 
 **Tools**:
@@ -755,24 +755,24 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Documento válido em OpenAPI 3.0.3
-- [ ] `/healthz` descrito com as respostas 200 e 503
-- [ ] Esquemas `Problem`, `Cents`, `Cursor` e `Limit` definidos
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] OpenAPI 3.0.3 válido, contendo só componentes de comunicação e nenhuma regra de negócio
+- [x] `Cents` é `integer` `int64` e mapeia para `money.Cents` por `x-go-type`
+- [x] `Problem` tem type, title, status, detail, code, request_id e `errors[]` opcional
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
 
-**Commit**: `feat(api): adiciona esqueleto do contrato openapi`
+**Commit**: `feat(api): adiciona contrato compartilhado common`
 
 ---
 
-### T24: Escolher e fixar o gerador de servidor Gin/modelos e o linter de OpenAPI após checar a documentação vigente, e configurar a geração
+### T24: Fazer o teste rápido do `oapi-codegen` com `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo para `common.yaml`, e só então fixar `oapi-codegen` (como tool) e o runtime no `go.mod`
 
-**What**: Escolher e fixar o gerador de servidor Gin/modelos e o linter de OpenAPI após checar a documentação vigente, e configurar a geração.  
-**Where**: `api/oapi-codegen.yaml`  
+**What**: Fazer o teste rápido do `oapi-codegen` com `application/problem+json`, cookie de sessão, `X-CSRF-Token` e `$ref` externo para `common.yaml`, e só então fixar `oapi-codegen` (como tool) e o runtime no `go.mod`.  
+**Where**: `api/go.mod`  
 **Depends on**: T23  
-**Reuses**: Contrato da tarefa anterior  
+**Reuses**: Ferramentas e versões da seção Contrato OpenAPI do design  
 **Requirement**: API-01 (ACs 2, 4)
 
 **Tools**:
@@ -782,24 +782,50 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Versões fixadas com a fonte consultada registrada no commit
-- [ ] Comando de geração reproduzível documentado
-- [ ] Se alguma ferramenta estiver descontinuada, a escolha vai a novo ADR antes de seguir
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Os quatro pontos do teste rápido foram executados e o resultado foi reportado ao mantenedor
+- [x] Se houve incompatibilidade, a execução parou e a solução voltou ao mantenedor antes de fixar qualquer coisa
+- [x] Versões fixadas (`oapi-codegen` v2.8.0, runtime v1.7.0, `kin-openapi` v0.149.0) com a fonte registrada em `docs/development/tooling.md`
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
 
-**Commit**: `chore(api): configura geracao de codigo openapi`
+**Commit**: `build(api): fixa oapi-codegen como tool e o runtime`
 
 ---
 
-### T25: Criar o gatilho `go generate` e versionar o código gerado (interface do servidor e modelos)
+### T25: Criar o contrato do módulo `platform` com `GET /healthz` (200 `ok` e 503 `degraded`), reutilizando `common.yaml`
 
-**What**: Criar o gatilho `go generate` e versionar o código gerado (interface do servidor e modelos).  
-**Where**: `api/internal/platform/apigen/generate.go`  
+**What**: Criar o contrato do módulo `platform` com `GET /healthz` (200 `ok` e 503 `degraded`), reutilizando `common.yaml`.  
+**Where**: `api/openapi/platform.yaml`  
 **Depends on**: T24  
-**Reuses**: `oapi-codegen.yaml`  
+**Reuses**: Handler `/healthz` existente e `common.yaml`  
+**Requirement**: API-01 (ACs 1); API-02 (ACs 1)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Documento OpenAPI 3.0.3 válido que referencia `common.yaml`
+- [x] `/healthz` descrito com as respostas 200 e 503 exatamente como o handler atual
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+
+**Tests**: none  
+**Gate**: build
+
+**Commit**: `feat(api): adiciona contrato do modulo platform`
+
+---
+
+### T26: Criar o gatilho `go generate` do `platform`, a configuração do `oapi-codegen` e versionar o código gerado; o handler de `/healthz` passa a implementar a interface gerada
+
+**What**: Criar o gatilho `go generate` do `platform`, a configuração do `oapi-codegen` e versionar o código gerado; o handler de `/healthz` passa a implementar a interface gerada.  
+**Where**: `api/internal/platform/api/generate.go`  
+**Depends on**: T25  
+**Reuses**: `platform.yaml`, `go tool oapi-codegen` e o handler atual  
 **Requirement**: API-01 (ACs 2)
 
 **Tools**:
@@ -809,25 +835,25 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Gerar duas vezes produz zero diferença
-- [ ] O router atual passa a implementar a interface gerada para `/healthz`
-- [ ] Testes existentes continuam passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Configuração em `api/openapi/codegen/platform.yaml` e código gerado commitado (pacote `platformapi`)
+- [x] Gerar duas vezes produz zero diferença
+- [x] O router atual atende `/healthz` pela interface gerada e o teste existente continua passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
 
-**Commit**: `feat(api): gera interface do servidor a partir do openapi`
+**Commit**: `feat(api): gera interface do servidor do modulo platform`
 
 ---
 
-### T26: Criar o validador de respostas contra o contrato para uso nos testes
+### T27: Criar o validador de respostas contra o contrato de um módulo, para uso nos testes de integração
 
-**What**: Criar o validador de respostas contra o contrato para uso nos testes.  
+**What**: Criar o validador de respostas contra o contrato de um módulo, para uso nos testes de integração.  
 **Where**: `api/internal/platform/testutil/contract.go`  
-**Depends on**: T25  
-**Reuses**: Contrato e código gerado  
+**Depends on**: T26  
+**Reuses**: Contratos em `api/openapi/` e `kin-openapi`  
 **Requirement**: API-01 (ACs 5)
 
 **Tools**:
@@ -837,24 +863,25 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Resposta conforme passa; status, cabeçalho ou corpo divergente falha o teste
-- [ ] `/healthz` é validado por ele
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Resposta conforme passa; status, cabeçalho ou corpo divergente falha o teste
+- [x] Suporta `application/problem+json`
+- [x] `/healthz` é validado por ele
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
 
-**Commit**: `test(platform): valida respostas contra o openapi`
+**Commit**: `test(platform): valida respostas contra o contrato`
 
 ---
 
-### T27: Criar o teste que compara as rotas registradas no Gin com as operações do contrato
+### T28: Criar o teste que compara as rotas registradas no Gin com as operações de todos os contratos de módulo
 
-**What**: Criar o teste que compara as rotas registradas no Gin com as operações do contrato.  
+**What**: Criar o teste que compara as rotas registradas no Gin com as operações de todos os contratos de módulo.  
 **Where**: `api/internal/httpapi/routes_test.go`  
-**Depends on**: T26  
-**Reuses**: `gin.Engine.Routes()`  
+**Depends on**: T27  
+**Reuses**: `gin.Engine.Routes()` e os contratos  
 **Requirement**: API-01 (ACs 6)
 
 **Tools**:
@@ -864,25 +891,25 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Rota sem operação no contrato falha o teste
-- [ ] Operação sem rota também falha (teste negativo com fixture)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Rota sem operação em nenhum contrato falha o teste
+- [x] Operação de contrato sem rota também falha (teste negativo com fixture)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
 
-**Commit**: `test(httpapi): garante paridade entre rotas e contrato`
+**Commit**: `test(httpapi): garante paridade entre rotas e contratos`
 
 ---
 
-### T28: Gerar os tipos TypeScript do contrato e versionar `web/lib/api/schema.d.ts`
+### T29: Adicionar `openapi-typescript` e `@redocly/cli` ao front, os scripts `gen:api` (um arquivo por módulo em `web/lib/api/`) e `lint:api`, e versionar os tipos do `platform`
 
-**What**: Gerar os tipos TypeScript do contrato e versionar `web/lib/api/schema.d.ts`.  
+**What**: Adicionar `openapi-typescript` e `@redocly/cli` ao front, os scripts `gen:api` (um arquivo por módulo em `web/lib/api/`) e `lint:api`, e versionar os tipos do `platform`.  
 **Where**: `web/package.json`  
-**Depends on**: T27, T14  
-**Reuses**: Contrato e `web/`  
-**Requirement**: API-01 (ACs 3)
+**Depends on**: T28, T14  
+**Reuses**: Contratos em `api/openapi/`  
+**Requirement**: API-01 (ACs 3, 4)
 
 **Tools**:
 
@@ -891,23 +918,24 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Script `gen:api` gera o arquivo sem diferença na segunda execução
-- [ ] `tsc` passa com o arquivo gerado
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `gen:api` gera `web/lib/api/platform.d.ts` sem diferença na segunda execução
+- [x] `lint:api` passa nos contratos atuais
+- [x] `tsc` passa com o arquivo gerado; `openapi-fetch` não é instalado agora
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
 
-**Commit**: `feat(web): gera tipos do contrato openapi`
+**Commit**: `feat(web): gera tipos e lint dos contratos openapi`
 
 ---
 
-### T29: Validar o contrato no CI: lint e falha se a geração de Go ou TypeScript produzir diferença
+### T30: Criar o job `contract` no CI (Go e Node): lint, regeneração de Go e TypeScript sem diferença, filtrado por `api/openapi/**`, e incluí-lo no `ci-gate`
 
-**What**: Validar o contrato no CI: lint e falha se a geração de Go ou TypeScript produzir diferença.  
+**What**: Criar o job `contract` no CI (Go e Node): lint, regeneração de Go e TypeScript sem diferença, filtrado por `api/openapi/**`, e incluí-lo no `ci-gate`.  
 **Where**: `.github/workflows/ci.yml`  
-**Depends on**: T28, T13, T16  
-**Reuses**: Jobs `api` e `web`  
+**Depends on**: T29, T13, T16  
+**Reuses**: Jobs `api` e `web` e o filtro `changes`  
 **Requirement**: API-01 (ACs 2, 3, 4)
 
 **Tools**:
@@ -917,20 +945,21 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Alterar o YAML sem regenerar faz o CI falhar
-- [ ] Contrato inválido faz o CI falhar
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Alterar um contrato sem regenerar faz o CI falhar
+- [x] Contrato inválido faz o CI falhar
+- [x] `ci-gate` considera o job `contract`
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
 
-**Commit**: `ci: valida contrato openapi e codigo gerado`
+**Commit**: `ci: valida contratos openapi e codigo gerado`
 
 ---
 
 ### Phase 6: Auditoria (tarefas)
 
-### T30: Criar a migração `audit_log` com índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`
+### T31: Criar a migração `audit_log` com índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`
 
 **What**: Criar a migração `audit_log` com índices, triggers de imutabilidade (UPDATE, DELETE e TRUNCATE) e concessões ao papel `tj_app`; incluir o arquivo `down`.  
 **Where**: `api/migrations/000002_audit_log.up.sql`  
@@ -959,11 +988,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T31: Criar `WithTx` e `TxFrom`, a unidade de trabalho que carrega a transação no contexto
+### T32: Criar `WithTx` e `TxFrom`, a unidade de trabalho que carrega a transação no contexto
 
 **What**: Criar `WithTx` e `TxFrom`, a unidade de trabalho que carrega a transação no contexto.  
 **Where**: `api/internal/platform/database/tx.go`  
-**Depends on**: T30, T6  
+**Depends on**: T31, T6  
 **Reuses**: `database.Open`  
 **Requirement**: AUD-01 (ACs 1, 6)
 
@@ -986,11 +1015,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T32: Criar o tipo `Entry`, sua validação e a redação de chaves sensíveis
+### T33: Criar o tipo `Entry`, sua validação e a redação de chaves sensíveis
 
 **What**: Criar o tipo `Entry`, sua validação e a redação de chaves sensíveis.  
 **Where**: `api/internal/platform/audit/entry.go`  
-**Depends on**: T31  
+**Depends on**: T32  
 **Reuses**: Lista de chaves sensíveis do `logx`  
 **Requirement**: AUD-01 (ACs 3, 4, 5)
 
@@ -1013,11 +1042,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T33: Criar o `Recorder` que grava a entrada na transação do contexto
+### T34: Criar o `Recorder` que grava a entrada na transação do contexto
 
 **What**: Criar o `Recorder` que grava a entrada na transação do contexto.  
 **Where**: `api/internal/platform/audit/recorder.go`  
-**Depends on**: T32  
+**Depends on**: T33  
 **Reuses**: `database.TxFrom` e `Entry`  
 **Requirement**: AUD-01 (ACs 1, 3, 6)
 
@@ -1040,11 +1069,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T34: Criar o teste de atomicidade: falha na auditoria reverte a alteração e sucesso grava as duas na mesma transação
+### T35: Criar o teste de atomicidade: falha na auditoria reverte a alteração e sucesso grava as duas na mesma transação
 
 **What**: Criar o teste de atomicidade: falha na auditoria reverte a alteração e sucesso grava as duas na mesma transação.  
 **Where**: `api/internal/platform/audit/atomicity_test.go`  
-**Depends on**: T33  
+**Depends on**: T34  
 **Reuses**: `Recorder` e `WithTx`  
 **Requirement**: AUD-01 (ACs 1, 2)
 
@@ -1069,7 +1098,7 @@ T64 → T65 → T66 → T67
 
 ### Phase 7: Autorização e papéis (tarefas)
 
-### T35: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, sessions e login_attempts, com `down` e concessões
+### T36: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, sessions e login_attempts, com `down` e concessões
 
 **What**: Criar a migração de identidade: users, roles, permissions, role_permissions, user_roles, sessions e login_attempts, com `down` e concessões.  
 **Where**: `api/migrations/000003_identity.up.sql`  
@@ -1099,11 +1128,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T36: Criar o tipo `Permission` com validação de formato
+### T37: Criar o tipo `Permission` com validação de formato
 
 **What**: Criar o tipo `Permission` com validação de formato.  
 **Where**: `api/internal/platform/authz/permission.go`  
-**Depends on**: T35  
+**Depends on**: T36  
 **Reuses**: Nenhum (pacote novo)  
 **Requirement**: RBAC-01 (ACs 1)
 
@@ -1126,11 +1155,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T37: Criar `Principal` e `Require`
+### T38: Criar `Principal` e `Require`
 
 **What**: Criar `Principal` e `Require`.  
 **Where**: `api/internal/platform/authz/authz.go`  
-**Depends on**: T36  
+**Depends on**: T37  
 **Reuses**: `Permission`  
 **Requirement**: RBAC-02 (ACs 2, 3)
 
@@ -1153,11 +1182,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T38: Criar a matriz papel-permissão em código com o teste de invariante do Conselho Fiscal
+### T39: Criar a matriz papel-permissão em código com o teste de invariante do Conselho Fiscal
 
 **What**: Criar a matriz papel-permissão em código com o teste de invariante do Conselho Fiscal.  
 **Where**: `api/internal/identity/app/roles_matrix.go`  
-**Depends on**: T37  
+**Depends on**: T38  
 **Reuses**: `Permission`  
 **Requirement**: RBAC-01 (ACs 3, 4)
 
@@ -1181,11 +1210,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T39: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas
+### T40: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas
 
 **What**: Criar o repositório de papéis com sincronização idempotente e cálculo de permissões efetivas.  
 **Where**: `api/internal/identity/infra/role_repository.go`  
-**Depends on**: T38  
+**Depends on**: T39  
 **Reuses**: `roles_matrix.go`  
 **Requirement**: RBAC-01 (ACs 2, 5, 6)
 
@@ -1211,7 +1240,7 @@ T64 → T65 → T66 → T67
 
 ### Phase 8: Identidade: base (tarefas)
 
-### T40: Criar hash e verificação de senha com argon2id
+### T41: Criar hash e verificação de senha com argon2id
 
 **What**: Criar hash e verificação de senha com argon2id.  
 **Where**: `api/internal/platform/password/argon2.go`  
@@ -1239,11 +1268,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T41: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas
+### T42: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas
 
 **What**: Criar a lista embutida de senhas comuns ou comprometidas e a verificação sem diferenciar maiúsculas.  
 **Where**: `api/internal/platform/password/denylist.go`  
-**Depends on**: T40  
+**Depends on**: T41  
 **Reuses**: Diretiva `go:embed` sobre `denylist.txt`  
 **Requirement**: IDN-05 (ACs 4)
 
@@ -1267,11 +1296,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T42: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para papéis administrativos, 8 só para ASSOCIADO, máximo 128 pontos de código)
+### T43: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para papéis administrativos, 8 só para ASSOCIADO, máximo 128 pontos de código)
 
 **What**: Criar a entidade de usuário, a normalização de e-mail e a política de senha por papel (10 para papéis administrativos, 8 só para ASSOCIADO, máximo 128 pontos de código).  
 **Where**: `api/internal/identity/domain/user.go`  
-**Depends on**: T41  
+**Depends on**: T42  
 **Reuses**: Nenhum (pacote novo)  
 **Requirement**: IDN-01 (ACs 3); IDN-04 (ACs 2); IDN-05 (ACs 1, 2, 3, 7)
 
@@ -1296,11 +1325,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T43: Criar o repositório de usuários
+### T44: Criar o repositório de usuários
 
 **What**: Criar o repositório de usuários.  
 **Where**: `api/internal/identity/infra/user_repository.go`  
-**Depends on**: T42  
+**Depends on**: T43  
 **Reuses**: `user.go`  
 **Requirement**: IDN-04 (ACs 1, 2, 3)
 
@@ -1323,11 +1352,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T44: Criar o repositório de sessões (hash do token, revogação, expiração)
+### T45: Criar o repositório de sessões (hash do token, revogação, expiração)
 
 **What**: Criar o repositório de sessões (hash do token, revogação, expiração).  
 **Where**: `api/internal/identity/infra/session_repository.go`  
-**Depends on**: T43  
+**Depends on**: T44  
 **Reuses**: `user_repository.go`  
 **Requirement**: IDN-02 (ACs 2, 5, 6)
 
@@ -1350,11 +1379,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T45: Criar o repositório de tentativas de login
+### T46: Criar o repositório de tentativas de login
 
 **What**: Criar o repositório de tentativas de login.  
 **Where**: `api/internal/identity/infra/attempt_repository.go`  
-**Depends on**: T44  
+**Depends on**: T45  
 **Reuses**: `session_repository.go`  
 **Requirement**: IDN-02 (ACs 8)
 
@@ -1377,11 +1406,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T46: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão
+### T47: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão
 
 **What**: Criar o caso de uso de login: verificação de senha, bloqueio por tentativas, erro uniforme e rotação de sessão.  
 **Where**: `api/internal/identity/app/authenticate.go`  
-**Depends on**: T45  
+**Depends on**: T46  
 **Reuses**: Repositórios da fase, `password`, `audit`  
 **Requirement**: IDN-02 (ACs 1, 2, 3, 4, 7, 8, 10)
 
@@ -1406,11 +1435,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T47: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 12 horas), logout e atualização limitada de `last_seen_at`
+### T48: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 12 horas), logout e atualização limitada de `last_seen_at`
 
 **What**: Criar o serviço de sessão: validação (ociosidade de 60 minutos e teto de 12 horas), logout e atualização limitada de `last_seen_at`.  
 **Where**: `api/internal/identity/app/session_service.go`  
-**Depends on**: T46  
+**Depends on**: T47  
 **Reuses**: Repositórios de sessão e de papéis  
 **Requirement**: IDN-02 (ACs 5, 6, 9); RBAC-02 (ACs 5)
 
@@ -1437,7 +1466,7 @@ T64 → T65 → T66 → T67
 
 ### Phase 9: Identidade: casos de uso (tarefas)
 
-### T48: Criar o caso de uso de criação de usuário
+### T49: Criar o caso de uso de criação de usuário
 
 **What**: Criar o caso de uso de criação de usuário.  
 **Where**: `api/internal/identity/app/create_user.go`  
@@ -1466,11 +1495,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T49: Criar o caso de uso de desativação e reativação de usuário
+### T50: Criar o caso de uso de desativação e reativação de usuário
 
 **What**: Criar o caso de uso de desativação e reativação de usuário.  
 **Where**: `api/internal/identity/app/deactivate_user.go`  
-**Depends on**: T48  
+**Depends on**: T49  
 **Reuses**: `WithTx` e `audit.Recorder`  
 **Requirement**: IDN-04 (ACs 3, 4); RBAC-02 (ACs 3, 5)
 
@@ -1494,11 +1523,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T50: Criar o caso de uso de troca de senha
+### T51: Criar o caso de uso de troca de senha
 
 **What**: Criar o caso de uso de troca de senha.  
 **Where**: `api/internal/identity/app/change_password.go`  
-**Depends on**: T49  
+**Depends on**: T50  
 **Reuses**: `password` e `audit.Recorder`  
 **Requirement**: IDN-04 (ACs 5, 6, 9); IDN-05 (ACs 1, 2, 3, 4, 6)
 
@@ -1523,11 +1552,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T51: Criar o caso de uso de atribuição de papéis
+### T52: Criar o caso de uso de atribuição de papéis
 
 **What**: Criar o caso de uso de atribuição de papéis.  
 **Where**: `api/internal/identity/app/assign_roles.go`  
-**Depends on**: T50  
+**Depends on**: T51  
 **Reuses**: Repositório de papéis e `audit.Recorder`  
 **Requirement**: IDN-04 (ACs 7); RBAC-01 (ACs 5); RBAC-02 (ACs 3); IDN-05 (ACs 5)
 
@@ -1553,11 +1582,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T52: Criar o caso de uso de listagem de usuários com paginação por cursor
+### T53: Criar o caso de uso de listagem de usuários com paginação por cursor
 
 **What**: Criar o caso de uso de listagem de usuários com paginação por cursor.  
 **Where**: `api/internal/identity/app/list_users.go`  
-**Depends on**: T51  
+**Depends on**: T52  
 **Reuses**: Convenção de cursor  
 **Requirement**: IDN-04 (ACs 8); API-02 (ACs 5)
 
@@ -1583,13 +1612,13 @@ T64 → T65 → T66 → T67
 
 ### Phase 10: HTTP: contrato de identidade e middlewares (tarefas)
 
-### T53: Descrever no contrato as rotas de auth, usuários, papéis e auditoria e regenerar o código e os tipos
+### T54: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar, listar, desativar, papéis) e roles
 
-**What**: Descrever no contrato as rotas de auth, usuários, papéis e auditoria e regenerar o código e os tipos.  
-**Where**: `api/openapi/openapi.yaml`  
-**Depends on**: T25, T28, T52  
-**Reuses**: Contrato base  
-**Requirement**: API-01 (ACs 1, 2, 3); IDN-02 (ACs 1, 9); IDN-04 (ACs 1, 8); AUD-03 (ACs 1, 2, 3, 4)
+**What**: Criar o contrato do módulo `identity`: auth (login, logout, `me`, troca de senha), users (criar, listar, desativar, papéis) e roles.  
+**Where**: `api/openapi/identity.yaml`  
+**Depends on**: T26, T29, T53  
+**Reuses**: `common.yaml` e o padrão de `platform.yaml`  
+**Requirement**: API-01 (ACs 1); IDN-02 (ACs 1, 9); IDN-04 (ACs 1, 8)
 
 **Tools**:
 
@@ -1598,23 +1627,76 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Geração de Go e TypeScript sem diferença após regenerar
-- [ ] Cada rota tem respostas de erro `Problem`
-- [ ] Cookie de sessão e cabeçalho `X-CSRF-Token` descritos
+- [ ] Cada rota tem respostas de erro `Problem` e paginação por cursor nas listas
+- [ ] Cookie de sessão e `X-CSRF-Token` descritos; nenhuma regra de negócio no contrato
+- [ ] Lint passa
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
 
-**Commit**: `feat(api): descreve rotas de identidade e auditoria no contrato`
+**Commit**: `feat(api): adiciona contrato do modulo identity`
 
 ---
 
-### T54: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado
+### T55: Criar o gatilho `go generate` do `identity`, sua configuração do `oapi-codegen` e regenerar os tipos TypeScript
+
+**What**: Criar o gatilho `go generate` do `identity`, sua configuração do `oapi-codegen` e regenerar os tipos TypeScript.  
+**Where**: `api/internal/identity/http/generate.go`  
+**Depends on**: T54  
+**Reuses**: `identity.yaml` e o gatilho do `platform`  
+**Requirement**: API-01 (ACs 2, 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Configuração em `api/openapi/codegen/identity.yaml` e código gerado commitado (pacote `identityhttp`)
+- [ ] `pnpm gen:api` gera `web/lib/api/identity.d.ts`
+- [ ] Gerar duas vezes produz zero diferença
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+
+**Tests**: none  
+**Gate**: build
+
+**Commit**: `feat(identity): gera interface do servidor do modulo`
+
+---
+
+### T56: Acrescentar a consulta de auditoria (`GET /api/v1/audit-logs`) ao contrato do `platform` e regenerar o código e os tipos
+
+**What**: Acrescentar a consulta de auditoria (`GET /api/v1/audit-logs`) ao contrato do `platform` e regenerar o código e os tipos.  
+**Where**: `api/openapi/platform.yaml`  
+**Depends on**: T55  
+**Reuses**: `common.yaml` (`Cursor`, `Limit`, `Problem`)  
+**Requirement**: AUD-03 (ACs 1, 2, 3, 4); API-01 (ACs 1, 2, 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Filtros `entity_type`, `entity_id`, `actor_user_id`, `from` e `to` e `limit` de no máximo 100
+- [ ] Geração de Go e TypeScript sem diferença após regenerar
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+
+**Tests**: none  
+**Gate**: build
+
+**Commit**: `feat(api): adiciona consulta de auditoria ao contrato platform`
+
+---
+
+### T57: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado
 
 **What**: Criar o middleware `Authn`: cookie para sessão para Principal no contexto, com 401 padronizado.  
 **Where**: `api/internal/platform/httpx/authn.go`  
-**Depends on**: T53  
+**Depends on**: T56  
 **Reuses**: Interface `SessionValidator`  
 **Requirement**: RBAC-02 (ACs 1, 5, 6); IDN-02 (ACs 5)
 
@@ -1638,11 +1720,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T55: Criar o middleware de CSRF e origem
+### T58: Criar o middleware de CSRF e origem
 
 **What**: Criar o middleware de CSRF e origem.  
 **Where**: `api/internal/platform/httpx/csrf.go`  
-**Depends on**: T54  
+**Depends on**: T57  
 **Reuses**: `ALLOWED_ORIGINS` da config  
 **Requirement**: IDN-03 (ACs 1, 2, 3, 4, 5)
 
@@ -1668,7 +1750,7 @@ T64 → T65 → T66 → T67
 
 ### Phase 11: HTTP: handlers e fiação (tarefas)
 
-### T56: Criar os handlers de login, logout, `me` e troca de senha
+### T59: Criar os handlers de login, logout, `me` e troca de senha
 
 **What**: Criar os handlers de login, logout, `me` e troca de senha.  
 **Where**: `api/internal/identity/http/auth_handler.go`  
@@ -1698,11 +1780,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T57: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários
+### T60: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários
 
 **What**: Criar os handlers de criação, desativação, atribuição de papéis e listagem de usuários.  
 **Where**: `api/internal/identity/http/users_handler.go`  
-**Depends on**: T56  
+**Depends on**: T59  
 **Reuses**: Casos de uso e código gerado  
 **Requirement**: IDN-04 (ACs 1, 2, 3, 4, 7, 8, 9)
 
@@ -1726,11 +1808,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T58: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`
+### T61: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`
 
 **What**: Criar o serviço de consulta e o handler `GET /api/v1/audit-logs`.  
 **Where**: `api/internal/platform/audit/http.go`  
-**Depends on**: T57  
+**Depends on**: T60  
 **Reuses**: Cursor keyset por (occurred_at, id)  
 **Requirement**: AUD-03 (ACs 1, 2, 3, 4)
 
@@ -1754,11 +1836,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T59: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
+### T62: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
 
 **What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
 **Where**: `api/internal/httpapi/router.go`  
-**Depends on**: T58, T54, T55, T5  
+**Depends on**: T61, T57, T58, T5  
 **Reuses**: Router atual e `gin.Logger` a substituir  
 **Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2); PLT-01 (ACs 3)
 
@@ -1782,11 +1864,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T60: Criar a lógica do primeiro administrador
+### T63: Criar a lógica do primeiro administrador
 
 **What**: Criar a lógica do primeiro administrador.  
 **Where**: `api/internal/identity/app/bootstrap_admin.go`  
-**Depends on**: T59  
+**Depends on**: T62  
 **Reuses**: `create_user.go` e `password`  
 **Requirement**: IDN-01 (ACs 1, 2, 3); IDN-05 (ACs 1)
 
@@ -1810,11 +1892,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T61: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente
+### T64: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente
 
 **What**: Criar o comando `bootstrap-admin`, com a senha só por variável de ambiente.  
 **Where**: `api/cmd/bootstrap-admin/main.go`  
-**Depends on**: T60  
+**Depends on**: T63  
 **Reuses**: `bootstrap_admin.go`  
 **Requirement**: IDN-01 (ACs 1, 4)
 
@@ -1837,11 +1919,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T62: Ligar config, logger, sincronização de papéis e router no ponto de entrada da API
+### T65: Ligar config, logger, sincronização de papéis e router no ponto de entrada da API
 
 **What**: Ligar config, logger, sincronização de papéis e router no ponto de entrada da API.  
 **Where**: `api/cmd/api/main.go`  
-**Depends on**: T61, T1  
+**Depends on**: T64, T1  
 **Reuses**: `main.go` atual  
 **Requirement**: PLT-01 (ACs 1, 5, 6); RBAC-01 (ACs 2)
 
@@ -1865,11 +1947,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T63: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP
+### T66: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP
 
 **What**: Criar o teste ponta a ponta do fluxo de identidade e auditoria via HTTP.  
 **Where**: `api/internal/httpapi/e2e_test.go`  
-**Depends on**: T62  
+**Depends on**: T65  
 **Reuses**: `testutil.NewTestDB` e o validador de contrato  
 **Requirement**: IDN-02 (ACs 1, 9); IDN-03 (ACs 2, 3); IDN-04 (ACs 1, 3, 7); RBAC-02 (ACs 1, 2); AUD-03 (ACs 1)
 
@@ -1895,7 +1977,7 @@ T64 → T65 → T66 → T67
 
 ### Phase 12: Guardrails e documentação (tarefas)
 
-### T64: Criar o teste de fronteiras entre módulos, baseado em análise de imports
+### T67: Criar o teste de fronteiras entre módulos, baseado em análise de imports
 
 **What**: Criar o teste de fronteiras entre módulos, baseado em análise de imports.  
 **Where**: `api/internal/architecture_test.go`  
@@ -1923,11 +2005,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T65: Registrar AD-010 a AD-013 em `.specs/STATE.md`, após a aprovação do design
+### T68: Registrar AD-011 a AD-013 em `.specs/STATE.md`
 
-**What**: Registrar AD-010 a AD-013 em `.specs/STATE.md`, após a aprovação do design.  
+**What**: Registrar AD-011 a AD-013 em `.specs/STATE.md`.  
 **Where**: `.specs/STATE.md`  
-**Depends on**: T64  
+**Depends on**: T67  
 **Reuses**: Formato dos AD existentes  
 **Requirement**: API-01 (ACs 1); TST-01 (ACs 1); RBAC-02 (ACs 3); API-02 (ACs 1)
 
@@ -1938,7 +2020,7 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Quatro decisões novas, sem tocar na seção Handoff além de atualizá-la
+- [ ] Três decisões novas (AD-011 a AD-013), sem tocar na seção Handoff além de atualizá-la
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
@@ -1948,11 +2030,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T66: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato
+### T69: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato
 
 **What**: Atualizar a visão geral da arquitetura com os pacotes de `platform`, os papéis de banco e o contrato.  
 **Where**: `docs/architecture/architecture-overview.md`  
-**Depends on**: T65  
+**Depends on**: T68  
 **Reuses**: Documento atual  
 **Requirement**: API-01 (ACs 1)
 
@@ -1974,11 +2056,11 @@ T64 → T65 → T66 → T67
 
 ---
 
-### T67: Documentar como rodar testes de integração, migrar e criar o primeiro administrador
+### T70: Documentar como rodar testes de integração, migrar e criar o primeiro administrador
 
 **What**: Documentar como rodar testes de integração, migrar e criar o primeiro administrador.  
 **Where**: `docs/CONTRIBUTING.md`  
-**Depends on**: T66  
+**Depends on**: T69  
 **Reuses**: Documento atual  
 **Requirement**: TST-01 (ACs 1, 5); IDN-01 (ACs 1)
 
@@ -2071,6 +2153,9 @@ T64 → T65 → T66 → T67
 | T65 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T66 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T67 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T68 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T69 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T70 | 1 arquivo principal, com seu teste | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -2107,44 +2192,47 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T27 | T26 | T26 | ✅ Match |
 | T28 | T27 | T27 | ✅ Match |
 | T29 | T28 | T28 | ✅ Match |
-| T30 | - | - | ✅ Match |
-| T31 | T30 | T30 | ✅ Match |
+| T30 | T29 | T29 | ✅ Match |
+| T31 | - | - | ✅ Match |
 | T32 | T31 | T31 | ✅ Match |
 | T33 | T32 | T32 | ✅ Match |
 | T34 | T33 | T33 | ✅ Match |
-| T35 | - | - | ✅ Match |
-| T36 | T35 | T35 | ✅ Match |
+| T35 | T34 | T34 | ✅ Match |
+| T36 | - | - | ✅ Match |
 | T37 | T36 | T36 | ✅ Match |
 | T38 | T37 | T37 | ✅ Match |
 | T39 | T38 | T38 | ✅ Match |
-| T40 | - | - | ✅ Match |
-| T41 | T40 | T40 | ✅ Match |
+| T40 | T39 | T39 | ✅ Match |
+| T41 | - | - | ✅ Match |
 | T42 | T41 | T41 | ✅ Match |
 | T43 | T42 | T42 | ✅ Match |
 | T44 | T43 | T43 | ✅ Match |
 | T45 | T44 | T44 | ✅ Match |
 | T46 | T45 | T45 | ✅ Match |
 | T47 | T46 | T46 | ✅ Match |
-| T48 | - | - | ✅ Match |
-| T49 | T48 | T48 | ✅ Match |
+| T48 | T47 | T47 | ✅ Match |
+| T49 | - | - | ✅ Match |
 | T50 | T49 | T49 | ✅ Match |
 | T51 | T50 | T50 | ✅ Match |
 | T52 | T51 | T51 | ✅ Match |
-| T53 | - | - | ✅ Match |
-| T54 | T53 | T53 | ✅ Match |
+| T53 | T52 | T52 | ✅ Match |
+| T54 | - | - | ✅ Match |
 | T55 | T54 | T54 | ✅ Match |
-| T56 | - | - | ✅ Match |
+| T56 | T55 | T55 | ✅ Match |
 | T57 | T56 | T56 | ✅ Match |
 | T58 | T57 | T57 | ✅ Match |
-| T59 | T58 | T58 | ✅ Match |
+| T59 | - | - | ✅ Match |
 | T60 | T59 | T59 | ✅ Match |
 | T61 | T60 | T60 | ✅ Match |
 | T62 | T61 | T61 | ✅ Match |
 | T63 | T62 | T62 | ✅ Match |
-| T64 | - | - | ✅ Match |
+| T64 | T63 | T63 | ✅ Match |
 | T65 | T64 | T64 | ✅ Match |
 | T66 | T65 | T65 | ✅ Match |
-| T67 | T66 | T66 | ✅ Match |
+| T67 | - | - | ✅ Match |
+| T68 | T67 | T67 | ✅ Match |
+| T69 | T68 | T68 | ✅ Match |
+| T70 | T69 | T69 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -2172,74 +2260,77 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T20: m_alloc | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
 | T21: m_guard | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T22: m_ts | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T23: oa_spec | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T24: oa_cfg | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T25: oa_gen | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T26: oa_contract | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T27: oa_routes | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T28: oa_ts | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T29: oa_ci | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T30: a_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T31: a_tx | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T32: a_entry | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T33: a_rec | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T34: a_atom | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T35: r_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T36: r_perm | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T37: r_authz | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T38: r_matrix | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T39: r_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T40: pw | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T41: pw_deny | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T42: u_dom | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T43: u_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T44: s_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T45: at_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T46: authn | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T47: sess | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T48: uc_create | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T49: uc_deact | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T50: uc_pw | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T51: uc_roles | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T52: uc_list | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T53: oa_paths | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T54: mw_authn | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T55: mw_csrf | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T56: h_auth | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T57: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T58: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T59: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T60: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T61: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T62: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T63: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T64: arch | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
-| T65: state | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T66: docs_arch | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
-| T67: docs_contrib | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T23: oa_common | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T24: oa_spike | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T25: oa_platform | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T26: oa_gen | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T27: oa_contract | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T28: oa_routes | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T29: oa_ts | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T30: oa_ci | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T31: a_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T32: a_tx | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T33: a_entry | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T34: a_rec | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T35: a_atom | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T36: r_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T37: r_perm | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T38: r_authz | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T39: r_matrix | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T40: r_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T41: pw | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T42: pw_deny | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T43: u_dom | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T44: u_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T45: s_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T46: at_repo | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T47: authn | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T48: sess | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T49: uc_create | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T50: uc_deact | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T51: uc_pw | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T52: uc_roles | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T53: uc_list | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T54: oa_identity | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T55: oa_identity_gen | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T56: oa_audit | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T57: mw_authn | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T58: mw_csrf | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T59: h_auth | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T60: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T61: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T62: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T63: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T64: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T65: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T66: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T67: arch | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
+| T68: state | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T69: docs_arch | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
+| T70: docs_contrib | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
 
 ## Requirement Coverage
 
 | Requirement ID | Tasks |
 | -------------- | ----- |
-| IDN-01 | T40, T42, T60, T61, T67 |
-| IDN-02 | T35, T44, T45, T46, T47, T53, T54, T56, T63 |
-| IDN-03 | T55, T63 |
-| IDN-04 | T40, T42, T43, T48, T49, T50, T51, T52, T53, T56, T57, T63 |
-| IDN-05 | T35, T41, T42, T48, T50, T51, T60 |
-| RBAC-01 | T35, T36, T38, T39, T51, T62 |
-| RBAC-02 | T37, T47, T48, T49, T51, T54, T59, T63, T65 |
-| AUD-01 | T31, T32, T33, T34 |
-| AUD-02 | T30 |
-| AUD-03 | T53, T58, T63 |
+| IDN-01 | T41, T43, T63, T64, T70 |
+| IDN-02 | T36, T45, T46, T47, T48, T54, T57, T59, T66 |
+| IDN-03 | T58, T66 |
+| IDN-04 | T41, T43, T44, T49, T50, T51, T52, T53, T54, T59, T60, T66 |
+| IDN-05 | T36, T42, T43, T49, T51, T52, T63 |
+| RBAC-01 | T36, T37, T39, T40, T52, T65 |
+| RBAC-02 | T38, T48, T49, T50, T52, T57, T62, T66, T68 |
+| AUD-01 | T32, T33, T34, T35 |
+| AUD-02 | T31 |
+| AUD-03 | T56, T61, T66 |
 | MNY-01 | T17, T20 |
 | MNY-02 | T18, T19, T21, T22 |
 | MNY-03 | T20 |
-| TST-01 | T7, T8, T10, T11, T12, T13, T65, T67 |
-| TST-02 | T64 |
+| TST-01 | T7, T8, T10, T11, T12, T13, T68, T70 |
+| TST-02 | T67 |
 | TST-03 | T14, T15, T16, T22 |
-| API-01 | T23, T24, T25, T26, T27, T28, T29, T53, T65, T66 |
-| API-02 | T3, T4, T5, T23, T52, T59, T65 |
-| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T59, T62 |
+| API-01 | T23, T24, T25, T26, T27, T28, T29, T30, T54, T55, T56, T68, T69 |
+| API-02 | T3, T4, T5, T23, T25, T53, T62, T68 |
+| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T62, T65 |
 
 **Coverage:** 19 total, 19 mapped to tasks, 0 unmapped

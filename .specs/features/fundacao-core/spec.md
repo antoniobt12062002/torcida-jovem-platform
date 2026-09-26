@@ -14,7 +14,7 @@ A fundação foi dividida em duas features. Esta, `fundacao-core`, entrega ident
 - [ ] Toda alteração de dados auditados grava, na mesma transação, um registro que nem a aplicação consegue alterar ou apagar.
 - [ ] Valores monetários em centavos inteiros, com formatação, serialização, rateio e percentuais exatos no Go e no TypeScript.
 - [ ] Testes de integração contra PostgreSQL real no CI, verificação automática de fronteiras entre módulos e testes de front.
-- [ ] Contrato OpenAPI como fonte de verdade, com código do servidor e tipos TypeScript gerados e conferidos no CI.
+- [ ] Contrato OpenAPI como fonte de verdade, um por módulo, com código do servidor e tipos TypeScript gerados e conferidos no CI.
 
 ## Out of Scope
 
@@ -63,8 +63,11 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Cobertura | Sem meta global; o pacote de dinheiro exige 95% de cobertura de instruções | Lógica pura e crítica, fácil de cobrir | n |
 | Formato de erro | `application/problem+json` (RFC 9457) com `code` e `request_id`; JSON malformado dá 400, validação dá 422 | Padrão aberto e previsível para o cliente gerado | n |
 | Versão da API | Prefixo `/api/v1`; `/healthz` permanece na raiz | Permite evoluir sem quebrar clientes | n |
-| Contrato OpenAPI | OpenAPI 3.0.3, spec-first, código gerado versionado, CI falha com diferença | 3.0.3 tem o melhor suporte nos geradores; versionar o gerado torna a revisão visível | n |
-| Ferramentas de geração e lint | Geradores e linter de OpenAPI são escolhidos e fixados na tarefa T24, após checar a documentação vigente | Aprovado: nenhuma versão é fixada sem checar a documentação vigente | y |
+| Contrato OpenAPI | OpenAPI 3.0.3 (ADR-008), contract-first, um contrato por módulo em `api/openapi/` (`platform.yaml`, `identity.yaml`, e os dos módulos futuros) mais `common.yaml` compartilhado; código gerado por módulo e versionado; CI falha com diferença | Aprovado pelo mantenedor; evita arquivo único gigante e respeita as fronteiras de módulo | y |
+| Ferramentas de geração e lint | `oapi-codegen` (servidor Gin, modo strict), `kin-openapi` (validação de respostas nos testes), `openapi-typescript` (tipos do front) e Redocly (lint); `openapi-fetch` só na primeira tela real. Versões fixadas na tarefa T24 depois de um teste rápido de `application/problem+json`, cookie de sessão e `X-CSRF-Token`; se houver incompatibilidade, a solução volta ao mantenedor antes de ser fixada | Aprovado; nenhuma versão é fixada sem checar a documentação vigente | y |
+| Conteúdo do `common.yaml` | Somente componentes realmente compartilhados: erros, paginação, IDs, Money e estruturas comuns; nenhuma entidade de domínio. O componente `Id` (UUID) entra quando o primeiro contrato precisar | Aprovado pelo mantenedor; evita acoplar módulos por meio de um arquivo comum | y |
+| Validação de requisições pelo contrato | O contrato valida estrutura, tipos, formatos, enums e campos obrigatórios (corpo, query e path), de forma automática, por middleware próprio em `platform/httpx` sobre o `kin-openapi`; regras de negócio, autenticação e autorização ficam nos módulos de domínio. Rota sem operação no contrato segue para o handler (recusá-la em produção é decisão futura) | O `gin-middleware` v1.1.0 entrega ao tratador só a mensagem em texto, sem os erros por campo que API-02.4 exige; o contrato não muda para se adequar à ferramenta. Aprovado pelo mantenedor (opção A) | y |
+| Limite de responsabilidade do contrato | O OpenAPI define contratos de comunicação (caminhos, esquemas, segurança, exemplos) e não contém regras de negócio, que permanecem nas specs e nos módulos de domínio | Aprovado pelo mantenedor; evita duplicar regra em dois lugares | y |
 | Limpeza de sessões e tentativas | Registros expirados são ignorados e podem ser removidos de forma oportunista; sem job de purga | Evita infraestrutura de tarefas agendadas nesta fase | n |
 | Papéis de banco | Migrações rodam com o papel dono; a API roda com um papel de aplicação sem DDL e sem UPDATE/DELETE em auditoria | Defesa em profundidade para o ADR-004 | n |
 
@@ -364,14 +367,14 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: O front consome tipos gerados; sem o contrato, as camadas divergem em silêncio.
 
 **Acceptance Criteria**:
-1. The system SHALL keep `api/openapi/openapi.yaml`, in OpenAPI 3.0.3, as the source of truth for every HTTP route under `/api/v1`.
-2. WHEN the specification changes THEN the generated server interface and models SHALL be regenerated and committed, and CI SHALL fail if generation produces a difference.
-3. WHEN the specification changes THEN the TypeScript types at `web/lib/api/schema.d.ts` SHALL be regenerated and committed, and CI SHALL fail if generation produces a difference.
-4. IF the specification fails linting THEN CI SHALL fail.
-5. WHEN an integration test calls an implemented endpoint THEN the response status, headers and body SHALL be validated against the specification, and a mismatch SHALL fail the test.
-6. IF a route is registered in the Gin router without a matching operation in the specification THEN a test SHALL fail.
+1. The system SHALL keep the HTTP contract as OpenAPI 3.0.3 documents under `api/openapi/`, one per module plus the shared `common.yaml`, as the source of truth for every HTTP route under `/api/v1`.
+2. WHEN a module contract changes THEN the generated server interface and models of that module SHALL be regenerated and committed, and CI SHALL fail if generation produces a difference.
+3. WHEN a module contract changes THEN the TypeScript types under `web/lib/api/` SHALL be regenerated and committed, and CI SHALL fail if generation produces a difference.
+4. IF any contract fails linting THEN CI SHALL fail.
+5. WHEN an integration test calls an implemented endpoint THEN the response status, headers and body SHALL be validated against the contract of the module that owns the endpoint, and a mismatch SHALL fail the test.
+6. IF a route is registered in the Gin router without a matching operation in any module contract THEN a test SHALL fail.
 
-**Independent Test**: Alterar o YAML sem regenerar e ver o CI falhar.
+**Independent Test**: Alterar o YAML de um módulo sem regenerar e ver o CI falhar.
 
 ---
 
@@ -445,7 +448,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Pending |
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
-| API-01 | P1: Contrato OpenAPI | In Tasks | Pending |
+| API-01 | P1: Contrato OpenAPI | In Tasks | Implementing |
 | API-02 | P1: Convenções da API | In Tasks | Implementing |
 | PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
 
