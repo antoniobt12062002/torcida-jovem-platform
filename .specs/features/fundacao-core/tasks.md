@@ -289,11 +289,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `Open` recebe o logger e nunca registra valores de parâmetros
-- [ ] Importações em `cmd/api/main.go` atualizadas e o build continua passando
-- [ ] `git mv` preserva o histórico do arquivo
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] `Open` recebe o logger e nunca registra valores de parâmetros
+- [x] Importações em `cmd/api/main.go` atualizadas e o build continua passando
+- [x] `git mv` preserva o histórico do arquivo
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -317,9 +317,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Script idempotente cria os dois papéis com senhas de desenvolvimento
-- [ ] Papel `tj_app` não tem DDL nem superusuário
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Script idempotente cria os dois papéis com senhas de desenvolvimento
+- [x] Papel `tj_app` não tem DDL nem superusuário
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
@@ -343,10 +343,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `docker compose config` valida
-- [ ] `docker compose up -d db` seguido de `migrate` conclui com o papel dono
-- [ ] Migração 000001 aplicada continua funcionando
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `docker compose config` valida
+- [x] `docker compose up -d db` seguido de `migrate` conclui com o papel dono
+- [x] Migração 000001 aplicada continua funcionando
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
@@ -370,9 +370,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Nenhum segredo real no arquivo
-- [ ] Todas as variáveis lidas por `config.Load` estão presentes ou documentadas
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Nenhum segredo real no arquivo
+- [x] Todas as variáveis lidas por `config.Load` estão presentes ou documentadas
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
@@ -396,11 +396,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Arquivo com a tag `integration`; sem a tag, `go test ./...` não exige Docker
-- [ ] Sem Docker e com a tag, o teste falha citando Docker
-- [ ] Teste de fumaça conecta e confirma que os papéis existem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Arquivo com a tag `integration`; sem a tag, `go test ./...` não exige Docker
+- [x] Sem Docker e com a tag, o teste falha citando Docker
+- [x] Teste de fumaça conecta e confirma que os papéis existem
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -424,11 +424,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Aplica a migração 000001 e o `pgcrypto` fica disponível
-- [ ] Reexecutar é idempotente
-- [ ] API não chama `Migrate` na partida
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Aplica a migração 000001 e o `pgcrypto` fica disponível
+- [x] Reexecutar é idempotente
+- [x] API não chama `Migrate` na partida
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -452,11 +452,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Teste prova que dados de um teste não aparecem em outro
-- [ ] O pool usa `tj_app`, não o dono
-- [ ] Banco do teste é removido ao final
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Teste prova que dados de um teste não aparecem em outro
+- [x] O pool usa `tj_app`, não o dono
+- [x] Banco do teste é removido ao final
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -480,9 +480,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Job `api` roda os testes de integração
-- [ ] O CI fica verde com os testes existentes
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Job `api` roda os testes de integração
+- [x] O CI fica verde com os testes existentes
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build

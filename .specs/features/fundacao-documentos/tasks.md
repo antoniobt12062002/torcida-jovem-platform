@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-documentos/design.md`
-**Status**: Approved (2026-09-27); execução em lotes pequenos, por fase
+**Status**: Approved (2026-09-26); execução em lotes pequenos, por fase
 
 **Pré-requisito**: `fundacao-core` concluída (usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e as migrações da core).
 

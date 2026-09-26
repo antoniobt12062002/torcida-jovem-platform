@@ -1,7 +1,7 @@
 # Fundação Documentos Design
 
 **Spec**: `.specs/features/fundacao-documentos/spec.md`
-**Status**: Approved (2026-09-27), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída.
+**Status**: Approved (2026-09-26), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída.
 
 Decisões ativas do projeto respeitadas: AD-001 a AD-009, em especial AD-008 (object storage S3, sem provedor definido). Nenhuma é substituída.
 

@@ -23,12 +23,14 @@ Specify → Design → Tasks → Implement → Validate. Specs em `.specs/featur
 ## Comandos
 
 ```bash
-# Banco local
+# Banco local (papéis: tj_owner migra, tj_app é usado pela API; para recriar o banco: docker compose down -v)
+cp .env.example .env
 docker compose up -d db && docker compose --profile tools run --rm migrate
 
 # API (api/)
 go vet ./... && go test ./... && go build ./...
-DATABASE_URL="postgres://tj:tj@localhost:5432/tj?sslmode=disable" go run ./cmd/api
+go test -tags=integration ./...   # exige Docker (testcontainers)
+DATABASE_URL="postgres://tj_app:tj_app_dev@localhost:5432/tj?sslmode=disable" APP_ENV=development COOKIE_SECURE=false go run ./cmd/api
 
 # Web (web/)
 pnpm install && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm build
