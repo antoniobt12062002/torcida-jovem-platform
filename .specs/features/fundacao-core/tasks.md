@@ -317,9 +317,9 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Script idempotente cria os dois papéis com senhas de desenvolvimento
-- [ ] Papel `tj_app` não tem DDL nem superusuário
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Script idempotente cria os dois papéis com senhas de desenvolvimento
+- [x] Papel `tj_app` não tem DDL nem superusuário
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
