@@ -105,9 +105,9 @@ func FoundationContributions() []Contribution {
 				{Permission: "identity:user:read", Description: "Listar usuários"},
 				{Permission: "identity:user:create", Description: "Criar usuários"},
 				{Permission: "identity:user:update", Description: "Desativar e reativar usuários"},
-				{Permission: "identity:role:assign", Description: "Atribuir papéis a quem tem vínculo administrativo"},
-				{Permission: "identity:admin:grant", Description: "Conceder acesso administrativo (promoção)"},
-				{Permission: "identity:admin:revoke", Description: "Retirar acesso administrativo"},
+				{Permission: "identity:role:assign", Description: "Atribuir papéis a quem tem vínculo de gestão"},
+				{Permission: "identity:admin:grant", Description: "Conceder acesso de gestão (promoção)"},
+				{Permission: "identity:admin:revoke", Description: "Retirar acesso de gestão"},
 			},
 			Grants: map[domain.Role][]authz.Permission{
 				domain.RoleAdminSistema: {
