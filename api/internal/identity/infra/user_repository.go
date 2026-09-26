@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"regexp"
@@ -15,6 +16,12 @@ import (
 )
 
 var uuidFormat = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// bytesParam makes GORM pass a []byte as one bound value; without it, GORM
+// expands a byte slice into a list of numbers inside "VALUES (?".
+type bytesParam []byte
+
+func (b bytesParam) Value() (driver.Value, error) { return []byte(b), nil }
 
 // conn is the transaction of the use case when there is one, else the pool.
 func conn(ctx context.Context, db *gorm.DB) *gorm.DB {

@@ -39,7 +39,7 @@ const sessionColumns = `id::text AS id, user_id::text AS user_id, csrf_token, cr
 func (r *SessionRepository) Create(ctx context.Context, userID string, tokenHash []byte, csrfToken string, expiresAt time.Time) (domain.Session, error) {
 	var row sessionRow
 	err := conn(ctx, r.db).Raw(`INSERT INTO sessions (user_id, token_hash, csrf_token, expires_at)
-		VALUES (?::uuid, ?, ?, ?) RETURNING `+sessionColumns, userID, tokenHash, csrfToken, expiresAt).Scan(&row).Error
+		VALUES (?::uuid, ?, ?, ?) RETURNING `+sessionColumns, userID, bytesParam(tokenHash), csrfToken, expiresAt).Scan(&row).Error
 	if err != nil {
 		return domain.Session{}, fmt.Errorf("sessão: criar: %w", err)
 	}
@@ -50,7 +50,7 @@ func (r *SessionRepository) Create(ctx context.Context, userID string, tokenHash
 // revoked and expired sessions too; the session service decides validity.
 func (r *SessionRepository) FindByToken(ctx context.Context, token string) (domain.Session, error) {
 	var rows []sessionRow
-	err := conn(ctx, r.db).Raw("SELECT "+sessionColumns+" FROM sessions WHERE token_hash = ?", domain.HashSessionToken(token)).Scan(&rows).Error
+	err := conn(ctx, r.db).Raw("SELECT "+sessionColumns+" FROM sessions WHERE token_hash = ?", bytesParam(domain.HashSessionToken(token))).Scan(&rows).Error
 	if err != nil {
 		return domain.Session{}, fmt.Errorf("sessão: consultar: %w", err)
 	}

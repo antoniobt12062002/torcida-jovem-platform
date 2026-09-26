@@ -1610,10 +1610,10 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Conta falhas por hash do e-mail na janela de 15 minutos
-- [ ] Sucesso zera a contagem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Conta falhas por hash do e-mail na janela de 15 minutos
+- [x] Sucesso zera a contagem
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
