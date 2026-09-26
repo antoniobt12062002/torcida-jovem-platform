@@ -534,11 +534,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `pnpm test` executa `*.test.ts` e `*.test.tsx` em jsdom
-- [ ] O teste de fumaça (`web/lib/smoke.test.ts`) passa
-- [ ] Lint e `tsc` continuam passando
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `pnpm test` executa `*.test.ts` e `*.test.tsx` em jsdom
+- [x] O teste de fumaça (`web/lib/smoke.test.ts`) passa
+- [x] Lint e `tsc` continuam passando
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 1 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: unit  
 **Gate**: build
