@@ -1912,13 +1912,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:admin:revoke` e motivo
-- [ ] Encerra o vínculo, remove todos os papéis diferentes de ASSOCIADO, revoga as sessões do alvo e grava `admin.revoke`, na mesma transação
-- [ ] Retirar o último usuário ativo com `identity:admin:grant` devolve 409 `last_admin`
-- [ ] Alvo sem vínculo ativo devolve 409 `not_admin`
-- [ ] Ator não retira acesso de quem tem permissões que ele não possui (403 `privilege_escalation`) nem o próprio (403 `self_change_forbidden`), e a tentativa negada grava `role.change_denied`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:admin:revoke` e motivo
+- [x] Encerra o vínculo, remove todos os papéis diferentes de ASSOCIADO, revoga as sessões do alvo e grava `admin.revoke`, na mesma transação
+- [x] Retirar o último usuário ativo com `identity:admin:grant` devolve 409 `last_admin`
+- [x] Alvo sem vínculo ativo devolve 409 `not_admin`
+- [x] Ator não retira acesso de quem tem permissões que ele não possui (403 `privilege_escalation`) nem o próprio (403 `self_change_forbidden`), e a tentativa negada grava `role.change_denied`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

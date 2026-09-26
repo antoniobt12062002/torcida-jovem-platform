@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
@@ -32,3 +33,5 @@ type (
 )
 
 var errNotConfigured = errors.New("identidade: caso de uso mal configurado")
+
+func reasonBlank(reason string) bool { return strings.TrimSpace(reason) == "" }
