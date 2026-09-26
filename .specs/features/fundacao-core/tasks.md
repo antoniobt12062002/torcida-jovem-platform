@@ -1004,10 +1004,10 @@ T73 → T74 → T75 → T76
 
 **Done when**:
 
-- [ ] Erro no callback reverte a transação
-- [ ] `TxFrom` sem transação devolve `ok=false`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Erro no callback reverte a transação
+- [x] `TxFrom` sem transação devolve `ok=false`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
