@@ -93,11 +93,11 @@
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 5 concluídas (T1 a T30) e validador de requisições (`platform/httpx`); a fase 5 foi mesclada no PR #25 (bypass administrativo excepcional, autorizado e registrado no PR). Spec, design e tarefas de Identity/RBAC (fases 6 a 11, T31 a T73) aprovados em 2026-09-26
-- **Completed**: T1 a T30
+- **Phase / Task**: Fases 1 a 6 mescladas (T1 a T35); fase 7 (T36 a T42) no PR da branch `feature/fundacao-core-fase-7`. Próxima: fase 8 (identidade: base, T43 a T52), a apresentar antes de implementar
+- **Completed**: T1 a T42
 - **In-progress** (file:line): none
-- **Next step**: Implementar a fase 6 (T31 a T35), tests-first, no PR da branch `feature/fundacao-core-fase-6`
+- **Next step**: Após o merge da fase 7, apresentar spec/design/decisões da fase 8 (senha, usuários, vínculo administrativo, sessões, login) e aguardar aprovação
 - **Blockers**: none
 - **Future decisions**: Recusar em produção rotas sem operação no contrato (hoje o validador as deixa passar); ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-6
+- **Branch**: feature/fundacao-core-fase-7
