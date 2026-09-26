@@ -562,8 +562,8 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] `pnpm test` roda antes de `pnpm build` no job `web`
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] `pnpm test` roda antes de `pnpm build` no job `web`
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
