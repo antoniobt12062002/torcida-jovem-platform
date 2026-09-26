@@ -589,10 +589,10 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Overflow de soma e subtração devolve `ErrOverflow` sem dar a volta
-- [ ] Nenhuma função aceita ou devolve float32 ou float64 (verificado por teste que inspeciona a API do pacote)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Overflow de soma e subtração devolve `ErrOverflow` sem dar a volta
+- [x] Nenhuma função aceita ou devolve float32 ou float64 (verificado por teste que inspeciona a API do pacote)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
