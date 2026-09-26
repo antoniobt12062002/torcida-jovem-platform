@@ -1,6 +1,11 @@
 package domain
 
-import "time"
+import (
+	"encoding/base64"
+	"encoding/json"
+	"regexp"
+	"time"
+)
 
 // MembershipSummary is what a user listing shows of the active administrative
 // membership.
@@ -32,3 +37,33 @@ type ListCursor struct {
 	CreatedAt time.Time
 	ID        string
 }
+
+// EncodeCursor turns the position into the opaque string clients send back.
+func EncodeCursor(c ListCursor) string {
+	b, _ := json.Marshal(cursorWire{T: c.CreatedAt.UTC().Format(time.RFC3339Nano), ID: c.ID})
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// DecodeCursor parses a cursor; anything that is not one is ErrInvalidCursor.
+func DecodeCursor(s string) (ListCursor, error) {
+	raw, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return ListCursor{}, ErrInvalidCursor
+	}
+	var w cursorWire
+	if err := json.Unmarshal(raw, &w); err != nil {
+		return ListCursor{}, ErrInvalidCursor
+	}
+	t, err := time.Parse(time.RFC3339Nano, w.T)
+	if err != nil || !uuidCursorID.MatchString(w.ID) {
+		return ListCursor{}, ErrInvalidCursor
+	}
+	return ListCursor{CreatedAt: t, ID: w.ID}, nil
+}
+
+type cursorWire struct {
+	T  string `json:"t"`
+	ID string `json:"id"`
+}
+
+var uuidCursorID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)

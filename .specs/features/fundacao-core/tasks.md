@@ -1973,12 +1973,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Exige `identity:user:read`
-- [ ] Cursor por (`created_at`, `id`), 50 por página por padrão e no máximo 100 (acima disso, 422 `invalid_limit`), com `next_cursor`
-- [ ] Filtros `active` e `role`; cada item traz os papéis e o resumo do vínculo administrativo ativo
-- [ ] Nunca devolve hash de senha, token nem tentativas
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Exige `identity:user:read`
+- [x] Cursor por (`created_at`, `id`), 50 por página por padrão e no máximo 100 (acima disso, 422 `invalid_limit`), com `next_cursor`
+- [x] Filtros `active` e `role`; cada item traz os papéis e o resumo do vínculo administrativo ativo
+- [x] Nunca devolve hash de senha, token nem tentativas
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

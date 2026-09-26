@@ -5,6 +5,7 @@ package infra_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -297,5 +298,105 @@ func TestSetMustChangePasswordChangesOnlyTheFlag(t *testing.T) {
 	}
 	if err := repo.SetMustChangePassword(context.Background(), "0f8fad5b-d9cb-469f-a165-70867728950e", true); !errors.Is(err, domain.ErrUserNotFound) {
 		t.Errorf("err = %v", err)
+	}
+}
+
+func mkListed(t *testing.T, e env, repo *infra.UserRepository, email string, roles ...domain.Role) domain.User {
+	t.Helper()
+	u, err := repo.Create(context.Background(), newDomainUser(email))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(roles) == 0 {
+		roles = []domain.Role{domain.RoleAssociado}
+	}
+	if err := repo.SetRoles(context.Background(), u.ID, roles); err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+// IDN-04.8: cursor por (created_at, id), do mais novo para o mais antigo.
+func TestListPagesByCursorNewestFirstWithoutRepetitionOrGaps(t *testing.T) {
+	e, repo := newUserRepo(t)
+	if _, err := e.repo.Sync(context.Background(), matrix(t)); err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for i := range 5 {
+		ids = append(ids, mkListed(t, e, repo, "u"+string(rune('a'+i))+"@exemplo.com").ID)
+	}
+
+	var got []string
+	var cursor *domain.ListCursor
+	for range 5 {
+		page, err := repo.List(context.Background(), domain.ListFilter{}, cursor, 2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range page {
+			got = append(got, it.ID)
+		}
+		if len(page) < 2 {
+			break
+		}
+		last := page[len(page)-1]
+		cursor = &domain.ListCursor{CreatedAt: last.CreatedAt, ID: last.ID}
+	}
+
+	want := slices.Clone(ids)
+	slices.Reverse(want)
+	if !slices.Equal(got, want) {
+		t.Errorf("ordem = %v, esperado %v (mais novo primeiro)", got, want)
+	}
+}
+
+func TestListFiltersByActiveAndRoleAndCarriesRolesAndTheMembershipSummary(t *testing.T) {
+	e, repo := newUserRepo(t)
+	if _, err := e.repo.Sync(context.Background(), matrix(t)); err != nil {
+		t.Fatal(err)
+	}
+	members := infra.NewAdminMembershipRepository(e.app)
+	tes := mkListed(t, e, repo, "tes@exemplo.com", domain.RoleAssociado, domain.RoleTesouraria)
+	m, _ := domain.NewAdminMembership(tes.ID, "eleito tesoureiro na assembleia", nil, time.Now().UTC())
+	if _, err := members.Grant(context.Background(), m); err != nil {
+		t.Fatal(err)
+	}
+	off := mkListed(t, e, repo, "off@exemplo.com")
+	_ = repo.SetActive(context.Background(), off.ID, false)
+	mkListed(t, e, repo, "plain@exemplo.com")
+
+	yes, no := true, false
+	role := domain.RoleTesouraria
+	byRole, err := repo.List(context.Background(), domain.ListFilter{Role: &role}, nil, 10)
+	if err != nil || len(byRole) != 1 || byRole[0].ID != tes.ID {
+		t.Fatalf("por papel = %+v, %v", byRole, err)
+	}
+	if got := byRole[0]; got.AdminMembership == nil || got.AdminMembership.Reason != "eleito tesoureiro na assembleia" ||
+		!slices.Contains(got.Roles, domain.RoleTesouraria) || !slices.Contains(got.Roles, domain.RoleAssociado) || got.Email != "tes@exemplo.com" {
+		t.Errorf("item = %+v", got)
+	}
+	if inactive, _ := repo.List(context.Background(), domain.ListFilter{Active: &no}, nil, 10); len(inactive) != 1 || inactive[0].ID != off.ID || inactive[0].Active {
+		t.Errorf("inativos = %+v", inactive)
+	}
+	if active, _ := repo.List(context.Background(), domain.ListFilter{Active: &yes}, nil, 10); len(active) != 2 {
+		t.Errorf("ativos = %d", len(active))
+	}
+	all, _ := repo.List(context.Background(), domain.ListFilter{}, nil, 10)
+	if len(all) != 3 {
+		t.Errorf("todos = %d", len(all))
+	}
+	for _, it := range all {
+		if it.ID != tes.ID && it.AdminMembership != nil {
+			t.Errorf("só quem tem vínculo ativo traz o resumo: %+v", it)
+		}
+	}
+}
+
+func TestListWithNoUsersIsEmpty(t *testing.T) {
+	_, repo := newUserRepo(t)
+
+	if page, err := repo.List(context.Background(), domain.ListFilter{}, nil, 10); err != nil || len(page) != 0 {
+		t.Errorf("page = %v, err = %v", page, err)
 	}
 }
