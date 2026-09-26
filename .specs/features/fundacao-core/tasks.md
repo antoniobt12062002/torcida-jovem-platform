@@ -424,11 +424,11 @@ T64 → T65 → T66 → T67
 
 **Done when**:
 
-- [ ] Aplica a migração 000001 e o `pgcrypto` fica disponível
-- [ ] Reexecutar é idempotente
-- [ ] API não chama `Migrate` na partida
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Aplica a migração 000001 e o `pgcrypto` fica disponível
+- [x] Reexecutar é idempotente
+- [x] API não chama `Migrate` na partida
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
