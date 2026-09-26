@@ -1583,10 +1583,10 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Só o hash SHA-256 é gravado
-- [ ] Revogar todas as sessões de um usuário funciona em uma transação
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Só o hash SHA-256 é gravado
+- [x] Revogar todas as sessões de um usuário funciona em uma transação
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
