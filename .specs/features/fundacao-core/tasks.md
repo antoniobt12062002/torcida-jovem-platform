@@ -2342,39 +2342,11 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T78: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
-
-**What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
-**Where**: `api/internal/httpapi/router.go`  
-**Depends on**: T77, T72, T73, T5  
-**Reuses**: Router atual e `gin.Logger` a substituir  
-**Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2); PLT-01 (ACs 3)
-
-**Tools**:
-
-- MCP: NONE
-- Skill: NONE
-
-**Done when**:
-
-- [ ] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
-- [ ] Substitui o `gin.Logger` pelo log de acesso próprio
-- [ ] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
-
-**Tests**: integration  
-**Gate**: full
-
-**Commit**: `feat(httpapi): liga middlewares e nega rotas por padrao`
-
----
-
-### T79: Criar a lógica do primeiro administrador
+### T78: Criar a lógica do primeiro administrador
 
 **What**: Criar a lógica do primeiro administrador.  
 **Where**: `api/internal/identity/app/bootstrap_admin.go`  
-**Depends on**: T78  
+**Depends on**: T77  
 **Reuses**: `create_user.go`, `AdminMembership` e `password`  
 **Requirement**: IDN-01 (ACs 1, 2, 3); IDN-05 (ACs 1)
 
@@ -2395,6 +2367,37 @@ T83 → T84 → T85 → T86
 **Gate**: full
 
 **Commit**: `feat(identity): adiciona logica do primeiro administrador`
+
+---
+
+### T79: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
+
+**What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
+**Where**: `api/internal/httpapi/router.go`  
+**Depends on**: T78, T72, T73, T5  
+**Reuses**: Router atual e `gin.Logger` a substituir  
+**Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2, 7); PLT-01 (ACs 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
+- [ ] Substitui o `gin.Logger` pelo log de acesso próprio
+- [ ] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem; `/healthz` fica fora da checagem de origem
+- [ ] Cadeias: públicas (RequestID, origem, limite de corpo, validação do contrato, handler) e autenticadas (RequestID, recover, log de acesso, limite de corpo, origem, Authn, CSRF, validação do contrato, handler)
+- [ ] Limite de corpo de 1 MiB nas rotas autenticadas e 64 KiB nas públicas, com 413 `payload_too_large` descrito no `common.yaml` e nas operações com corpo
+- [ ] Rota registrada no Gin sem operação no contrato faz o router falhar na partida; o teste de paridade compara as rotas do engine com as operações e `contractPendingRoutes` fica vazia
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(httpapi): liga middlewares e nega rotas por padrao`
 
 ---
 
@@ -2443,6 +2446,7 @@ T83 → T84 → T85 → T86
 
 - [ ] Falha de configuração encerra o processo nomeando a variável
 - [ ] Sincronização de papéis roda na partida
+- [ ] Em desenvolvimento o e-mail usa `EMAIL_PROVIDER=log`, que não registra token, URL completa nem senha temporária
 - [ ] Migrações não rodam na partida
 - [ ] Build passa
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
@@ -2855,8 +2859,8 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T75: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T76: h_admin | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T77: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T78: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T79: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T78: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T79: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T80: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
 | T81: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
 | T82: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
@@ -2869,16 +2873,16 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 
 | Requirement ID | Tasks |
 | -------------- | ----- |
-| IDN-01 | T46, T48, T79, T80, T86 |
+| IDN-01 | T46, T48, T78, T80, T86 |
 | IDN-02 | T36, T52, T53, T54, T55, T69, T72, T74, T82 |
 | IDN-03 | T73, T82 |
 | IDN-04 | T46, T48, T50, T57, T58, T59, T60, T61, T64, T65, T69, T74, T75, T82 |
-| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T68, T79 |
+| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T68, T78 |
 | IDN-06 | T36, T49, T51, T62, T63, T64, T69, T76, T82 |
 | IDN-07 | T43, T57, T58, T66, T67, T69, T73, T74, T82 |
 | IDN-08 | T56, T68, T69, T76, T82 |
 | RBAC-01 | T36, T37, T41, T42, T64, T81 |
-| RBAC-02 | T37, T38, T39, T55, T59, T60, T62, T63, T64, T68, T72, T78, T82, T84 |
+| RBAC-02 | T37, T38, T39, T55, T59, T60, T62, T63, T64, T68, T72, T79, T82, T84 |
 | RBAC-03 | T40, T60, T62, T63, T64, T68, T76, T82 |
 | AUD-01 | T32, T33, T34, T35 |
 | AUD-02 | T31 |
@@ -2891,8 +2895,8 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | TST-02 | T83 |
 | TST-03 | T14, T15, T16, T22 |
 | API-01 | T23, T24, T25, T26, T27, T28, T29, T30, T69, T70, T71, T84, T85 |
-| API-02 | T3, T4, T5, T23, T25, T65, T78, T84 |
-| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T43, T78, T81 |
+| API-02 | T3, T4, T5, T23, T25, T65, T79, T84 |
+| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T43, T79, T81 |
 | EML-01 | T43, T45, T66 |
 
 **Coverage:** 25 total, 25 mapped to tasks, 0 unmapped
