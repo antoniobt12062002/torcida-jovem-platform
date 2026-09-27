@@ -2416,11 +2416,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Não existe flag de senha
-- [ ] Sem `BOOTSTRAP_ADMIN_PASSWORD` sai com código diferente de zero
-- [ ] `--role` aceita só ADMIN_SISTEMA (padrão) ou PRESIDENTE
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Não existe flag de senha
+- [x] Sem `BOOTSTRAP_ADMIN_PASSWORD` sai com código diferente de zero
+- [x] `--role` aceita só ADMIN_SISTEMA (padrão) ou PRESIDENTE
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
