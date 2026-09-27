@@ -75,6 +75,16 @@ func (r *AdminMembershipRepository) Active(ctx context.Context, userID string) (
 	return rows[0].membership(), true, nil
 }
 
+// AnyActive reports whether any user holds an active administrative membership.
+func (r *AdminMembershipRepository) AnyActive(ctx context.Context) (bool, error) {
+	var exists bool
+	err := conn(ctx, r.db).Raw("SELECT EXISTS (SELECT 1 FROM admin_memberships WHERE revoked_at IS NULL)").Scan(&exists).Error
+	if err != nil {
+		return false, fmt.Errorf("vínculo administrativo: existe algum ativo: %w", err)
+	}
+	return exists, nil
+}
+
 // History lists every membership of the user, newest first.
 func (r *AdminMembershipRepository) History(ctx context.Context, userID string) ([]domain.AdminMembership, error) {
 	if !uuidFormat.MatchString(userID) {

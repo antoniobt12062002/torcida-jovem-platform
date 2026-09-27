@@ -82,7 +82,21 @@ func writeContractProblem(c *gin.Context, err error) {
 		WriteProblem(c, http.StatusBadRequest, "invalid_json", "O corpo da requisição não é um JSON válido.")
 		return
 	}
-	WriteProblem(c, http.StatusUnprocessableEntity, "validation_failed", "Um ou mais campos são inválidos.", fields...)
+	code, detail := "validation_failed", "Um ou mais campos são inválidos."
+	if limitOutOfRange(fields) {
+		code, detail = "invalid_limit", "O limite deve estar entre 1 e 100."
+	}
+	WriteProblem(c, http.StatusUnprocessableEntity, code, detail, fields...)
+}
+
+// limitOutOfRange reports a `limit` (API-02.5) below its minimum or above its maximum.
+func limitOutOfRange(fields []FieldError) bool {
+	for _, f := range fields {
+		if f.Field == "limit" && (f.Code == "too_small" || f.Code == "too_large") {
+			return true
+		}
+	}
+	return false
 }
 
 // fieldErrors flattens a kin-openapi error into per-field errors. malformed is

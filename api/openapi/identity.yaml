@@ -54,6 +54,8 @@ paths:
                 $ref: 'common.yaml#/components/schemas/Problem'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '429':
@@ -114,6 +116,8 @@ paths:
           $ref: 'common.yaml#/components/responses/Unauthorized'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '429':
@@ -146,6 +150,8 @@ paths:
           $ref: 'common.yaml#/components/responses/BadRequest'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -173,6 +179,8 @@ paths:
                 $ref: 'common.yaml#/components/schemas/Problem'
         '403':
           $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -237,6 +245,8 @@ paths:
           $ref: 'common.yaml#/components/responses/Forbidden'
         '409':
           $ref: 'common.yaml#/components/responses/Conflict'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -312,6 +322,8 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '409':
           $ref: 'common.yaml#/components/responses/Conflict'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -343,6 +355,8 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '409':
           $ref: 'common.yaml#/components/responses/Conflict'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -375,6 +389,8 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '409':
           $ref: 'common.yaml#/components/responses/Conflict'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
@@ -416,6 +432,8 @@ paths:
           $ref: 'common.yaml#/components/responses/NotFound'
         '409':
           $ref: 'common.yaml#/components/responses/Conflict'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
         '422':
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':

@@ -2240,15 +2240,15 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `me` inclui `must_change_password` e o vínculo administrativo ativo, quando houver
-- [ ] Cookie `tj_session` com HttpOnly, Secure, SameSite=Lax e Path=/
-- [ ] Erros idênticos para credenciais inválidas
-- [ ] 429 traz `Retry-After`
-- [ ] A solicitação de recuperação devolve 202 com o corpo fixo, exista ou não a conta
-- [ ] A confirmação devolve 400 `invalid_reset_token` idêntico para token desconhecido, expirado e usado, e 422 com o código da política
-- [ ] Respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `me` inclui `must_change_password` e o vínculo administrativo ativo, quando houver
+- [x] Cookie `tj_session` com HttpOnly, Secure, SameSite=Lax e Path=/
+- [x] Erros idênticos para credenciais inválidas
+- [x] 429 traz `Retry-After`
+- [x] A solicitação de recuperação devolve 202 com o corpo fixo, exista ou não a conta
+- [x] A confirmação devolve 400 `invalid_reset_token` idêntico para token desconhecido, expirado e usado, e 422 com o código da política
+- [x] Respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2272,11 +2272,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Respostas nunca contêm hash de senha nem token
-- [ ] Erros mapeados: 409 `email_taken`, `last_admin` e `admin_membership_required`, 403 `forbidden`, `privilege_escalation` e `self_change_forbidden`
-- [ ] Respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Respostas nunca contêm hash de senha nem token
+- [x] Erros mapeados: 409 `email_taken`, `last_admin` e `admin_membership_required`, 403 `forbidden`, `privilege_escalation` e `self_change_forbidden`
+- [x] Respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2300,12 +2300,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
-- [ ] Respostas validadas contra o contrato
-- [ ] Nenhuma resposta contém hash de senha nem token
-- [ ] `POST /api/v1/users/{id}/password-reset` devolve 200 com a senha temporária uma única vez e `Cache-Control: no-store`, sem registrá-la em log nem auditoria; erros mapeados: 422 `reason_required`, 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
+- [x] Respostas validadas contra o contrato
+- [x] Nenhuma resposta contém hash de senha nem token
+- [x] `POST /api/v1/users/{id}/password-reset` devolve 200 com a senha temporária uma única vez e `Cache-Control: no-store`, sem registrá-la em log nem auditoria; erros mapeados: 422 `reason_required`, 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2329,11 +2329,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Ordem decrescente e filtros combinados por E
-- [ ] `limit` acima de 100 devolve 422 `invalid_limit`
-- [ ] Sem `audit:log:read` devolve 403
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Ordem decrescente e filtros combinados por E
+- [x] `limit` acima de 100 devolve 422 `invalid_limit`
+- [x] Sem `audit:log:read` devolve 403
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2342,39 +2342,11 @@ T83 → T84 → T85 → T86
 
 ---
 
-### T78: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
-
-**What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
-**Where**: `api/internal/httpapi/router.go`  
-**Depends on**: T77, T72, T73, T5  
-**Reuses**: Router atual e `gin.Logger` a substituir  
-**Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2); PLT-01 (ACs 3)
-
-**Tools**:
-
-- MCP: NONE
-- Skill: NONE
-
-**Done when**:
-
-- [ ] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
-- [ ] Substitui o `gin.Logger` pelo log de acesso próprio
-- [ ] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 5 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
-
-**Tests**: integration  
-**Gate**: full
-
-**Commit**: `feat(httpapi): liga middlewares e nega rotas por padrao`
-
----
-
-### T79: Criar a lógica do primeiro administrador
+### T78: Criar a lógica do primeiro administrador
 
 **What**: Criar a lógica do primeiro administrador.  
 **Where**: `api/internal/identity/app/bootstrap_admin.go`  
-**Depends on**: T78  
+**Depends on**: T77  
 **Reuses**: `create_user.go`, `AdminMembership` e `password`  
 **Requirement**: IDN-01 (ACs 1, 2, 3); IDN-05 (ACs 1)
 
@@ -2385,16 +2357,47 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap-admin` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
-- [ ] Recusa se já existir qualquer vínculo administrativo ativo
-- [ ] Recusa senha ausente ou fora da política de administrador (10 caracteres)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap-admin` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
+- [x] Recusa se já existir qualquer vínculo administrativo ativo
+- [x] Recusa senha ausente ou fora da política de administrador (10 caracteres)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
 
 **Commit**: `feat(identity): adiciona logica do primeiro administrador`
+
+---
+
+### T79: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão
+
+**What**: Ligar middlewares e handlers no router com lista pública explícita e rotas negadas por padrão.  
+**Where**: `api/internal/httpapi/router.go`  
+**Depends on**: T78, T72, T73, T5  
+**Reuses**: Router atual e `gin.Logger` a substituir  
+**Requirement**: RBAC-02 (ACs 1, 4); API-02 (ACs 1, 2, 7); PLT-01 (ACs 3)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
+- [x] Substitui o `gin.Logger` pelo log de acesso próprio
+- [x] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem; `/healthz` fica fora da checagem de origem
+- [x] Cadeias: públicas (RequestID, origem, limite de corpo, validação do contrato, handler) e autenticadas (RequestID, recover, log de acesso, limite de corpo, origem, Authn, CSRF, validação do contrato, handler)
+- [x] Limite de corpo de 1 MiB nas rotas autenticadas e 64 KiB nas públicas, com 413 `payload_too_large` descrito no `common.yaml` e nas operações com corpo
+- [x] Rota registrada no Gin sem operação no contrato faz o router falhar na partida; o teste de paridade compara as rotas do engine com as operações e `contractPendingRoutes` fica vazia
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(httpapi): liga middlewares e nega rotas por padrao`
 
 ---
 
@@ -2413,11 +2416,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Não existe flag de senha
-- [ ] Sem `BOOTSTRAP_ADMIN_PASSWORD` sai com código diferente de zero
-- [ ] `--role` aceita só ADMIN_SISTEMA (padrão) ou PRESIDENTE
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Não existe flag de senha
+- [x] Sem `BOOTSTRAP_ADMIN_PASSWORD` sai com código diferente de zero
+- [x] `--role` aceita só ADMIN_SISTEMA (padrão) ou PRESIDENTE
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
@@ -2441,11 +2444,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Falha de configuração encerra o processo nomeando a variável
-- [ ] Sincronização de papéis roda na partida
-- [ ] Migrações não rodam na partida
-- [ ] Build passa
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Falha de configuração encerra o processo nomeando a variável
+- [x] Sincronização de papéis roda na partida
+- [x] Em desenvolvimento o e-mail usa `EMAIL_PROVIDER=log`, que não registra token, URL completa nem senha temporária
+- [x] Migrações não rodam na partida
+- [x] Build passa
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
@@ -2469,12 +2473,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, recuperar o acesso por e-mail (solicitação, token, redefinição e sessões antigas revogadas), disparar a redefinição administrativa, atribuir papel, retirar o acesso, desativar, consultar auditoria
-- [ ] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
-- [ ] Eventos de segurança consultáveis: `auth.login`, `auth.login_failed`, `auth.login_blocked`, `auth.logout`, `admin.promote`, `admin.revoke`, `user.roles_set` e `role.change_denied`
-- [ ] Todas as respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 22 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, recuperar o acesso por e-mail (solicitação, token, redefinição e sessões antigas revogadas), disparar a redefinição administrativa, atribuir papel, retirar o acesso, desativar, consultar auditoria
+- [x] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
+- [x] Eventos de segurança consultáveis: `auth.login`, `auth.login_failed`, `auth.login_blocked`, `auth.logout`, `admin.promote`, `admin.revoke`, `user.roles_set` e `role.change_denied`
+- [x] Todas as respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 22 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -2855,8 +2859,8 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T75: h_users | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T76: h_admin | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T77: h_audit | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T78: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
-| T79: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T78: boot_app | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T79: router | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T80: boot_cli | Lógica pura, middleware ou CLI | unit | unit | ✅ OK |
 | T81: main | Contrato, config, CI, Docker, docs ou tipos sem lógica | none | none | ✅ OK |
 | T82: e2e | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
@@ -2869,16 +2873,16 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 
 | Requirement ID | Tasks |
 | -------------- | ----- |
-| IDN-01 | T46, T48, T79, T80, T86 |
+| IDN-01 | T46, T48, T78, T80, T86 |
 | IDN-02 | T36, T52, T53, T54, T55, T69, T72, T74, T82 |
 | IDN-03 | T73, T82 |
 | IDN-04 | T46, T48, T50, T57, T58, T59, T60, T61, T64, T65, T69, T74, T75, T82 |
-| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T68, T79 |
+| IDN-05 | T36, T47, T48, T59, T61, T62, T67, T68, T78 |
 | IDN-06 | T36, T49, T51, T62, T63, T64, T69, T76, T82 |
 | IDN-07 | T43, T57, T58, T66, T67, T69, T73, T74, T82 |
 | IDN-08 | T56, T68, T69, T76, T82 |
 | RBAC-01 | T36, T37, T41, T42, T64, T81 |
-| RBAC-02 | T37, T38, T39, T55, T59, T60, T62, T63, T64, T68, T72, T78, T82, T84 |
+| RBAC-02 | T37, T38, T39, T55, T59, T60, T62, T63, T64, T68, T72, T79, T82, T84 |
 | RBAC-03 | T40, T60, T62, T63, T64, T68, T76, T82 |
 | AUD-01 | T32, T33, T34, T35 |
 | AUD-02 | T31 |
@@ -2891,8 +2895,8 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | TST-02 | T83 |
 | TST-03 | T14, T15, T16, T22 |
 | API-01 | T23, T24, T25, T26, T27, T28, T29, T30, T69, T70, T71, T84, T85 |
-| API-02 | T3, T4, T5, T23, T25, T65, T78, T84 |
-| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T43, T78, T81 |
+| API-02 | T3, T4, T5, T23, T25, T65, T79, T84 |
+| PLT-01 | T1, T2, T5, T6, T7, T8, T9, T11, T43, T79, T81 |
 | EML-01 | T43, T45, T66 |
 
 **Coverage:** 25 total, 25 mapped to tasks, 0 unmapped

@@ -255,6 +255,18 @@ Contrato em `api/openapi/identity.yaml` (fonte de verdade); a validação do con
 
 ---
 
+## Fiação HTTP (fase 11)
+
+- **Handlers finos:** `identity/http` implementa a interface strict gerada (`identityhttp.StrictServerInterface`): lê o `Principal` do contexto, chama o caso de uso e converte o resultado. Regra de negócio fica nos casos de uso, e uma tabela única traduz erros de domínio em `code` e status (a da fase 10). `audit/http.go` implementa a consulta de auditoria; `audit` não importa `identity`, e o router faz a composição.
+- **Adaptador de sessão:** um adaptador em `identity/http` converte `SessionService.Validate` em `httpx.SessionInfo`, mapeando os erros para `httpx.ErrUnauthenticated` e `httpx.ErrSessionExpired`. O ator da auditoria entra por `OnAuthenticated` (`audit.WithActor`).
+- **Router:** `httpapi.NewRouter(Deps)` monta as duas cadeias da fase 10, com a lista pública explícita (`/healthz`, login e as duas rotas de recuperação). `/healthz` é GET técnico, fora da checagem de origem. Limite de corpo: 1 MiB nas rotas autenticadas e 64 KiB nas públicas, com 413 `payload_too_large` descrito no `common.yaml` e referenciado pelas operações com corpo.
+- **Contrato como fonte de verdade:** rota registrada no Gin sem operação correspondente faz o `NewRouter` falhar na partida; o teste de paridade lista as rotas do engine e as operações dos contratos e exige igualdade, e `contractPendingRoutes` fica vazia.
+- **Primeiro administrador:** `app.BootstrapAdmin` (papel `ADMIN_SISTEMA` por padrão ou `PRESIDENTE`) cria o usuário com vínculo de motivo `bootstrap-admin` e grava `user.bootstrap` sem ator; recusa se houver vínculo administrativo ativo. O comando `cmd/bootstrap-admin` lê a senha só de `BOOTSTRAP_ADMIN_PASSWORD`, aceita `--role`, e nunca imprime nem registra a senha. Nenhuma permissão é acrescentada: vale a matriz.
+- **Entrada da API:** `cmd/api` carrega a config (falha nomeando a variável), abre o banco como `tj_app`, sincroniza papéis e permissões (com auditoria do que mudou), monta o router e sobe o servidor. Migrações não rodam na partida. Em desenvolvimento o e-mail usa `EMAIL_PROVIDER=log`, que registra só o domínio do destinatário e o assunto, nunca o corpo, o token, a URL nem a senha temporária.
+- **E2E:** `httpapi/e2e_test.go` sobe o router real contra PostgreSQL (testcontainers) com relógio injetável e valida cada resposta contra o contrato.
+
+---
+
 ## Modelo de identidade
 
 Aprovado com ajustes em 2026-09-26 (aguarda nova aprovação para implementar).
@@ -430,7 +442,7 @@ CREATE INDEX password_change_attempts_idx ON password_change_attempts (user_id, 
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T78 |
+| O `gin.Logger` padrão registra o caminho completo com a query string | `api/internal/httpapi/router.go:16` | Vazamento de tokens ou dados em parâmetros de URL | Substituir pelo `AccessLog` próprio, sem query string (PLT-01.3), tarefas T5 e T79 |
 | O logger padrão do GORM pode registrar valores de parâmetros (ex.: hash de senha em consulta lenta) | `api/internal/database/database.go:11` | Segredo em log | Logger do GORM com consultas parametrizadas (PLT-01.7), tarefa T6 |
 | A API e as migrações usam o mesmo superusuário `tj` | `docker-compose.yml:5` | A aplicação poderia alterar ou apagar auditoria | Dois papéis (`tj_owner`, `tj_app`) e trigger de imutabilidade (AUD-02), tarefas T7 a T9 |
 | A `DATABASE_URL` de exemplo usa o superusuário | `.env.example:1` | Convida a rodar a API sem separação de papéis | Exemplo passa a usar `tj_app`, com `MIGRATE_DATABASE_URL` do dono (T9) |

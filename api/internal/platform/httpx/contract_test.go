@@ -48,7 +48,7 @@ paths:
     get:
       operationId: listThings
       parameters:
-        - {name: limit, in: query, schema: {type: integer, minimum: 1}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100}}
       responses:
         '200': {description: ok}
 `
@@ -173,6 +173,31 @@ func TestValidatorReportsInvalidQueryParameter(t *testing.T) {
 	}
 	if p := decodeContractProblem(t, rec); !hasError(p.Errors, "limit", "invalid_type") {
 		t.Errorf("errors = %+v", p.Errors)
+	}
+}
+
+// API-02.5: o limite fora de 1 a 100 tem código próprio, sem perder o erro por campo.
+func TestValidatorNamesTheCodeInvalidLimitWhenTheLimitIsOutOfRange(t *testing.T) {
+	for target, field := range map[string]string{
+		"/api/v1/things?limit=101": "too_large",
+		"/api/v1/things?limit=0":   "too_small",
+	} {
+		var reached bool
+		rec := doContract(engine(t, &reached, nil), http.MethodGet, target, "")
+
+		p := decodeContractProblem(t, rec)
+		if rec.Code != http.StatusUnprocessableEntity || reached || p.Code != "invalid_limit" || !hasError(p.Errors, "limit", field) {
+			t.Errorf("%s: status = %d, code = %q, errors = %+v", target, rec.Code, p.Code, p.Errors)
+		}
+	}
+}
+
+func TestValidatorKeepsValidationFailedWhenTheLimitIsNotANumber(t *testing.T) {
+	var reached bool
+	rec := doContract(engine(t, &reached, nil), http.MethodGet, "/api/v1/things?limit=abc", "")
+
+	if p := decodeContractProblem(t, rec); p.Code != "validation_failed" {
+		t.Errorf("code = %q", p.Code)
 	}
 }
 

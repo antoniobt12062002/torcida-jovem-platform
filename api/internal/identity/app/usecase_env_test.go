@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -168,6 +169,17 @@ func (e *ucEnv) count(t *testing.T, table string) int64 {
 		t.Fatal(err)
 	}
 	return n
+}
+
+// dumpAudit is every audit entry as text, to check what never reaches the trail.
+func (e *ucEnv) dumpAudit(t *testing.T) string {
+	t.Helper()
+	var rows []string
+	err := e.owner.Raw("SELECT concat_ws(' ', action, entity_id, reason, before::text, after::text, context::text) FROM audit_log").Scan(&rows).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.Join(rows, "\n")
 }
 
 func (e *ucEnv) breakAudit(t *testing.T) {

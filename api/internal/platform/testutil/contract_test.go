@@ -14,10 +14,15 @@ import (
 	platformapi "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/api"
 )
 
+// healthOnly serves the health check only; the audit query is not under test here.
+type healthOnly struct{ platformapi.HealthHandler }
+
+func (healthOnly) GetAuditLogs(*gin.Context, platformapi.GetAuditLogsParams) {}
+
 func healthEngine(ping func(context.Context) error) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	platformapi.RegisterHandlers(r, platformapi.HealthHandler{Ping: ping})
+	platformapi.RegisterHandlers(r, healthOnly{platformapi.HealthHandler{Ping: ping}})
 	return r
 }
 

@@ -40,6 +40,15 @@ type CreateUserInput struct {
 
 const maxNameLen = 120
 
+// validName trims the name and checks it: not empty, at most 120 characters, no control characters.
+func validName(raw string) (string, error) {
+	name := strings.TrimSpace(raw)
+	if name == "" || utf8.RuneCountInString(name) > maxNameLen || strings.ContainsFunc(name, unicode.IsControl) {
+		return "", domain.ErrInvalidName
+	}
+	return name, nil
+}
+
 // Execute checks the permission first, then validates the input, hashes the
 // password and, in one transaction, creates the user and audits `user.create`.
 func (uc *CreateUser) Execute(ctx context.Context, in CreateUserInput) (domain.User, error) {
@@ -53,9 +62,9 @@ func (uc *CreateUser) Execute(ctx context.Context, in CreateUserInput) (domain.U
 	if err != nil {
 		return domain.User{}, domain.ErrInvalidEmail
 	}
-	name := strings.TrimSpace(in.Name)
-	if name == "" || utf8.RuneCountInString(name) > maxNameLen || strings.ContainsFunc(name, unicode.IsControl) {
-		return domain.User{}, domain.ErrInvalidName
+	name, err := validName(in.Name)
+	if err != nil {
+		return domain.User{}, err
 	}
 	roles := []domain.Role{domain.RoleAssociado}
 	if err := domain.ValidatePassword(in.Password, roles, uc.Denylist); err != nil {
