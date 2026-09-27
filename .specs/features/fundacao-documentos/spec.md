@@ -1,6 +1,6 @@
 # Fundação Documentos Specification
 
-Status: Aprovada com ajustes em 2026-09-27. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core` (concluída e validada). Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Implementada e mesclada em `develop` (PR #38, 2026-09-27); validação final da feature em andamento. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core` (concluída e validada). Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
@@ -138,10 +138,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| DOC-01 | P2: Armazenamento de documentos | In Tasks | Implementing |
-| DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Implementing |
-| DOC-03 | P2: Configuração do storage | In Tasks | Implementing |
-| DOC-04 | P2: Consulta de documentos por dono | In Tasks | Implementing |
+| DOC-01 | P2: Armazenamento de documentos | Done | Implemented |
+| DOC-02 | P2: Acesso a documentos por URL assinada | Done | Implemented |
+| DOC-03 | P2: Configuração do storage | Done | Implemented |
+| DOC-04 | P2: Consulta de documentos por dono | Done | Implemented |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
