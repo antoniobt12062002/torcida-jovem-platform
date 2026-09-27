@@ -173,12 +173,12 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] SDK e versão conferidos na documentação vigente (AWS SDK for Go v2, `service/s3`, confirmado em T3)
-- [ ] `PresignGet(ctx, key, ttl)` passa o TTL recebido sem alterar; um teste de integração decodifica a URL gerada e confere que `X-Amz-Expires` é exatamente o TTL pedido (DOC-02.4)
-- [ ] Objeto pedido sem assinatura é recusado (DOC-02.5, contra o emulador real)
-- [ ] Só usa o protocolo S3, sem recursos de um provedor específico
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] SDK e versão conferidos na documentação vigente (AWS SDK for Go v2, `service/s3`, confirmado em T3)
+- [x] `PresignGet(ctx, key, ttl)` passa o TTL recebido sem alterar; um teste de integração decodifica a URL gerada e confere que `X-Amz-Expires` é exatamente o TTL pedido (DOC-02.4)
+- [x] Objeto pedido sem assinatura é recusado (DOC-02.5, contra o emulador real)
+- [x] Só usa o protocolo S3, sem recursos de um provedor específico
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
