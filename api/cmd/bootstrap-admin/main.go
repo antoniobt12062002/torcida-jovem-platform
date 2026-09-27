@@ -45,7 +45,7 @@ func run(args []string, d deps) int {
 	name := fs.String("name", "", "nome do administrador (obrigatório)")
 	role := fs.String("role", string(domain.RoleAdminSistema), "papel: ADMIN_SISTEMA (padrão) ou PRESIDENTE")
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(d.stderr, "opções inválidas; use --email, --name e --role (a senha vai só em "+passwordVariable+")")
+		_, _ = fmt.Fprintln(d.stderr, "opções inválidas; use --email, --name e --role (a senha vai só em "+passwordVariable+")")
 		return 2
 	}
 
@@ -71,12 +71,12 @@ func run(args []string, d deps) int {
 	if err != nil {
 		return fail(d, explain(err, pw))
 	}
-	fmt.Fprintf(d.stdout, "Administrador criado: %s (%s). A troca de senha é obrigatória no primeiro acesso.\n", strings.ToLower(strings.TrimSpace(*email)), *role)
+	_, _ = fmt.Fprintf(d.stdout, "Administrador criado: %s (%s). A troca de senha é obrigatória no primeiro acesso.\n", strings.ToLower(strings.TrimSpace(*email)), *role)
 	return 0
 }
 
 func fail(d deps, msg string) int {
-	fmt.Fprintln(d.stderr, "erro: "+msg)
+	_, _ = fmt.Fprintln(d.stderr, "erro: "+msg)
 	return 1
 }
 

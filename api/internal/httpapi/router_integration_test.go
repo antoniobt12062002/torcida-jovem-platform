@@ -62,12 +62,11 @@ func seedUser(t *testing.T, mod *identity.Module, mustChange bool, roles ...doma
 	if err := mod.Users.SetRoles(context.Background(), u.ID, append([]domain.Role{domain.RoleAssociado}, roles...)); err != nil {
 		t.Fatal(err)
 	}
-	for range roles {
+	if len(roles) > 0 {
 		m, _ := domain.NewAdminMembership(u.ID, "membro da diretoria eleita", nil, time.Now())
 		if _, err := mod.Members.Grant(context.Background(), m); err != nil {
 			t.Fatal(err)
 		}
-		break
 	}
 	return u
 }
