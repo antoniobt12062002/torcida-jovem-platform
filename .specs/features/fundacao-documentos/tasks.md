@@ -234,17 +234,17 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `StoreInput` e `AccessInput` carregam `Actor authz.Principal` e `RequiredPermission authz.Permission`; o serviço não declara nem importa nenhuma permissão própria
-- [ ] Extensão fora de `.pdf`, `.jpg`, `.jpeg`, `.png` e `.webp` é recusada antes de ler o conteúdo
-- [ ] Tipo detectado pelo conteúdo deve coincidir com a extensão
-- [ ] Limite de 10 MiB e tipos por conteúdo aplicados antes de gravar metadados
-- [ ] Versão nova referencia a anterior e não altera o objeto antigo; `status` gravado como `ACTIVE`
-- [ ] Falha ao gravar metadados remove só o objeto recém-criado
-- [ ] `document.create` e `document.access` auditados na transação
-- [ ] Sem a permissão recebida não escreve nem gera URL
-- [ ] `AccessURL` recebe sempre um id exato (uma versão específica); nenhuma lógica de "versão mais recente" dentro do serviço
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 15 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `StoreInput` e `AccessInput` carregam `Actor authz.Principal` e `RequiredPermission authz.Permission`; o serviço não declara nem importa nenhuma permissão própria
+- [x] Extensão fora de `.pdf`, `.jpg`, `.jpeg`, `.png` e `.webp` é recusada antes de ler o conteúdo
+- [x] Tipo detectado pelo conteúdo deve coincidir com a extensão
+- [x] Limite de 10 MiB e tipos por conteúdo aplicados antes de gravar metadados
+- [x] Versão nova referencia a anterior e não altera o objeto antigo; `status` gravado como `ACTIVE`
+- [x] Falha ao gravar metadados remove só o objeto recém-criado
+- [x] `document.create` e `document.access` auditados na transação
+- [x] Sem a permissão recebida não escreve nem gera URL
+- [x] `AccessURL` recebe sempre um id exato (uma versão específica); nenhuma lógica de "versão mais recente" dentro do serviço
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 15 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
