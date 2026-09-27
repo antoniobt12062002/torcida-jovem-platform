@@ -1,7 +1,7 @@
 # Fundação Documentos Design
 
 **Spec**: `.specs/features/fundacao-documentos/spec.md`
-**Status**: Approved (2026-09-26), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída.
+**Status**: Approved (2026-09-27), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída e validada.
 
 Decisões ativas do projeto respeitadas: AD-001 a AD-009, em especial AD-008 (object storage S3, sem provedor definido). Nenhuma é substituída.
 
@@ -9,12 +9,12 @@ Decisões ativas do projeto respeitadas: AD-001 a AD-009, em especial AD-008 (ob
 
 ## Architecture Overview
 
-O serviço de documentos combina permissão, storage e banco. O arquivo vai ao bucket privado por streaming; os metadados e a auditoria entram numa única transação.
+O serviço de documentos combina permissão, storage e banco. `platform/documents` não declara nenhuma permissão própria: cada chamada recebe o `authz.Principal` do ator e a `authz.Permission` exigida, e só repassa para `authz.Require` — quem decide o nome e o dono da permissão é sempre o módulo chamador (ver Tech Decisions). O arquivo vai ao bucket privado por streaming; os metadados e a auditoria entram numa única transação.
 
 ```mermaid
 graph TD
-    UC[módulo chamador] --> SVC[documents.Service]
-    SVC --> AZ[authz.Require]
+    UC[módulo chamador<br/>decide a permissão e o owner_type/owner_id] --> SVC[documents.Service]
+    SVC --> AZ["authz.Require(actor, permissão recebida)"]
     SVC --> VAL[validação: extensão, tamanho, conteúdo]
     SVC --> ST[storage.Storage - protocolo S3]
     SVC --> TX[database.WithTx]
@@ -23,7 +23,7 @@ graph TD
     ST --> S3[(bucket privado)]
 ```
 
-Ordem em `Store`: permissão, validação de extensão, leitura em streaming com limite de 10 MiB e detecção do tipo pelo conteúdo, envio ao storage calculando o SHA-256, e então a transação com metadados e auditoria. Se a transação falha, apenas o objeto recém-criado é removido.
+Ordem em `Store`: permissão (a que o chamador passou), validação de extensão, leitura em streaming com limite de 10 MiB e detecção do tipo pelo conteúdo, envio ao storage calculando o SHA-256, e então a transação com metadados (`status = ACTIVE`) e auditoria. Se a transação falha, apenas o objeto recém-criado é removido. `AccessURL` e `ListByOwner` seguem a mesma regra: primeiro a permissão recebida, depois a operação; `ListByOwner` não audita (leitura de metadados, não de conteúdo) e não gera URL.
 
 ---
 
@@ -34,16 +34,17 @@ Ordem em `Store`: permissão, validação de extensão, leitura em streaming com
 | Component | Location | How to Use |
 |---|---|---|
 | Unidade de trabalho e auditoria | `platform/database` e `platform/audit` (da `fundacao-core`) | `WithTx` e `Recorder.Record` na mesma transação |
-| Permissões | `platform/authz` | `Require` para `document:file:create` e `document:file:read` |
-| Infraestrutura de testes | `platform/testutil` | `NewTestDB` e o helper de contêiner como modelo do emulador S3 |
-| Configuração | `api/internal/config/config.go` | Novos campos de S3 e de validade da URL |
+| Permissões | `platform/authz` | `Require(ctx, actor, permissão recebida do chamador)`; nenhuma permissão declarada por `platform/documents` |
+| Infraestrutura de testes | `platform/testutil` | `NewTestDB` e `SharedS3` (novo, T3), no mesmo padrão de `SharedPostgres` |
+| Configuração | `api/internal/config/config.go` | Novos campos de S3 e de validade da URL (T1) |
 
 ### Integration Points
 
 | System | Integration Method |
 |---|---|
-| Object storage S3 | Cliente S3 atrás da interface `storage.Storage`, endpoint configurável e estilo de path opcional; SDK a confirmar na tarefa T4 |
+| Object storage S3 | Cliente S3 atrás da interface `storage.Storage`, endpoint configurável e estilo de path opcional; AWS SDK for Go v2 (`service/s3`), confirmado na tarefa T4 — o mesmo cliente que valida o emulador em T3 |
 | PostgreSQL | Migração `000005_documents`, com `tj_app` sem UPDATE e DELETE |
+| Emulador de testes | Garage v2.4.1 (`platform/testutil/s3.go`), único processo com `--single-node --default-bucket`; valida o adaptador S3 e os fluxos da aplicação, mas não é garantia completa do comportamento de um provedor S3 de produção (ver Risks & Concerns) |
 
 ---
 
@@ -58,9 +59,12 @@ Ordem em `Store`: permissão, validação de extensão, leitura em streaming com
 
 ### platform/documents
 
-- **Purpose**: Guardar, versionar e dar acesso a documentos, com permissão e auditoria.
+- **Purpose**: Guardar, versionar, listar e dar acesso a documentos, aplicando a permissão que o chamador exigir, sem conhecer nenhuma permissão de negócio.
 - **Location**: `api/internal/platform/documents/`
-- **Interfaces**: `Service.Store(ctx, StoreInput) (Document, error)`; `Service.AccessURL(ctx, id uuid.UUID) (string, error)`.
+- **Interfaces**:
+  - `Service.Store(ctx, StoreInput) (Document, error)` — `StoreInput` carrega `Actor authz.Principal`, `RequiredPermission authz.Permission`, `OwnerType`, `OwnerID`, `Filename`, `Content io.Reader`, `UploadedBy`.
+  - `Service.AccessURL(ctx, AccessInput) (string, error)` — `AccessInput` carrega `Actor`, `RequiredPermission`, `ID uuid.UUID`.
+  - `Service.ListByOwner(ctx, ListInput) ([]Document, error)` — `ListInput` carrega `Actor`, `RequiredPermission`, `OwnerType`, `OwnerID`; valida só o formato de `OwnerType` (`[a-z0-9_]+\.[a-z0-9_]+`), sem catálogo fixo.
 - **Dependencies**: `storage`, `audit`, `authz`, `database`.
 
 ---
@@ -82,14 +86,15 @@ CREATE TABLE documents (
   storage_key       text NOT NULL UNIQUE,
   version           int NOT NULL CHECK (version >= 1),
   supersedes_id     uuid UNIQUE REFERENCES documents,
+  status            text NOT NULL DEFAULT 'ACTIVE',
   uploaded_by       uuid NOT NULL REFERENCES users,
   uploaded_at       timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
+CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id, uploaded_at DESC);
 -- GRANT INSERT, SELECT ON documents TO tj_app (sem UPDATE e DELETE)
 ```
 
-**Relationships**: `documents.supersedes_id` forma a cadeia de versões, e o `UNIQUE` impede bifurcação. O documento pertence a uma entidade de outro módulo por `owner_type` e `owner_id`, sem chave estrangeira, porque o dono é definido por cada módulo.
+**Relationships**: `documents.supersedes_id` forma a cadeia de versões, e o `UNIQUE` impede bifurcação. O documento pertence a uma entidade de outro módulo por `owner_type` e `owner_id`, sem chave estrangeira, porque o dono é definido por cada módulo. `status` nasce sempre `ACTIVE`; sem `UPDATE` concedido a `tj_app`, nenhuma transição é possível nesta feature — o campo existe para um estado futuro (ex.: quarentena) sem exigir migração de schema quando isso for decidido, mas nenhuma tarefa desta tabela implementa transição.
 
 ---
 
@@ -100,8 +105,9 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Extensão fora da lista | `document_extension_not_allowed`, antes de ler o conteúdo | Arquivo recusado |
 | Tipo divergente da extensão ou fora da lista | `document_type_mismatch` ou `document_type_not_allowed` | Arquivo recusado |
 | Arquivo acima de 10 MiB | `document_too_large`, antes de gravar metadados | Arquivo recusado |
-| Sem permissão | Erro de proibido, sem escrita e sem URL | Acesso negado |
+| Sem a permissão que o chamador exigiu | Erro de proibido, sem escrita, sem URL e sem linha listada | Acesso negado |
 | Documento inexistente | Erro de não encontrado, sem URL | Não encontrado |
+| `owner_type` fora do formato técnico | `document_owner_type_invalid`, antes de consultar o banco | Chamada recusada |
 | Falha no upload ao storage | Erro antes de gravar metadados | Nenhum documento registrado |
 | Falha ao gravar metadados após upload | Remove só o objeto recém-criado | Nenhum documento registrado, sem órfão |
 | Storage inalcançável | Devolve o erro do storage, sem gravar metadados | Tentar mais tarde |
@@ -112,11 +118,11 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| SDK S3 e emulador local não foram verificados na documentação vigente | não se aplica (ainda não instalados) | Ferramenta descontinuada ou com licença inadequada | As tarefas T3 e T4 checam documentação, licença e manutenção e registram a fonte antes de fixar versão |
 | Objeto enviado e metadados gravados em sistemas diferentes | não se aplica (ainda não implementado) | Objeto órfão se a transação falhar | Remover só o objeto recém-criado e teste de falha simulada (DOC-01.7) |
 | Detecção de tipo pelo conteúdo pode ser enganada por arquivos poliglotas | não se aplica | Arquivo malicioso com aparência de imagem | Sem varredura de malware nesta fase (fora de escopo); acesso só por URL assinada curta e permissão |
 | URL assinada vaza por compartilhamento do link | não se aplica | Acesso por terceiros durante 300 segundos | Validade curta e auditoria de cada emissão |
 | A migração depende do papel `tj_app`, criado fora dela | `docs/architecture/architecture-overview.md` | Falha em ambiente sem o papel | Migração falha com mensagem clara; o script local e o helper de testes criam o papel |
+| Nenhum emulador S3 local gratuito verificado aplica a expiração de uma URL assinada (só a assinatura em si) — testado em MinIO (descontinuado antes de testar), LocalStack (descartado antes de testar por exigir conta), SeaweedFS 4.47 e Garage v2.4.1, ambos aceitando uma URL 7s após um TTL de 3s | `api/internal/platform/testutil/s3.go` | A aplicação da expiração em produção não é coberta por teste automatizado neste repositório | DOC-02.4 verifica só o que esta aplicação controla: o TTL pedido chega inalterado ao adaptador e aparece como `X-Amz-Expires` na URL gerada. A aplicação efetiva da expiração é responsabilidade do provedor S3 de produção (comportamento padrão documentado pela AWS) e só é verificável nesse ambiente — risco residual aceito e registrado, não coberto por teste local |
 
 ---
 
@@ -128,3 +134,7 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Versionamento | Nova linha com `version + 1` e `supersedes_id` | Imutabilidade (ADR-004); o objeto antigo nunca muda |
 | Remoção de objeto | Só do objeto recém-criado quando o registro falha | Não viola a proibição de apagar documentos, pois o objeto nunca foi referenciado |
 | Chave do objeto | `documents/<uuid>` | Não expõe o nome original e evita colisão |
+| Permissão | Parâmetro de cada chamada (`RequiredPermission authz.Permission` no Input), nunca uma constante do pacote | `platform` não decide nome nem dono de permissão de negócio; o módulo consumidor decide |
+| "Versão atual" | Não existe no serviço; cada `id` é uma versão específica | Rastrear "o vigente" é estado de negócio do módulo dono, não de infraestrutura |
+| Status | Coluna `status`, só `ACTIVE` nesta feature, sem `UPDATE` concedido | Prepara espaço para estados futuros sem exigir nova migração, sem construir workflow agora |
+| Formato de `owner_type` | Regex técnica (`[a-z0-9_]+\.[a-z0-9_]+`), sem lista fixa de módulos | `platform/documents` não pode conhecer os módulos que ainda não existem |

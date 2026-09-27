@@ -33,6 +33,19 @@ type Config struct {
 	EmailProvider string // "log" or "disabled"; real providers arrive later
 	EmailFrom     string
 	AppBaseURL    string // base of the links sent by e-mail, without trailing slash
+
+	// StorageEnabled gates the S3 variables below: nothing in the API requires
+	// object storage yet, so it stays off unless a consuming module needs it.
+	StorageEnabled bool
+	S3Endpoint     string
+	S3Region       string
+	S3Bucket       string
+	// S3AccessKey and S3SecretKey are secrets: they never appear in an error
+	// message or a log.
+	S3AccessKey    string
+	S3SecretKey    string
+	S3UsePathStyle bool // required by local S3 emulators
+	DocumentURLTTL time.Duration
 }
 
 // devAuthHashKey is used only when APP_ENV=development and AUTH_HASH_KEY is unset.
@@ -107,6 +120,9 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	if err := loadEmail(&cfg); err != nil {
+		return Config{}, err
+	}
+	if err := loadStorage(&cfg); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
@@ -195,6 +211,61 @@ func loadEmail(cfg *Config) error {
 		cfg.AppBaseURL = strings.TrimSuffix(base, "/")
 	}
 	return nil
+}
+
+// loadStorage reads the S3 object storage configuration (DOC-03). Storage stays
+// disabled by default: nothing in the API consumes it yet. When enabled, the
+// five S3 variables are all required, named individually so a missing one is
+// unambiguous; no value read here is ever echoed back in an error.
+func loadStorage(cfg *Config) error {
+	enabled, err := boolEnv("STORAGE_ENABLED", false)
+	if err != nil {
+		return err
+	}
+	cfg.StorageEnabled = enabled
+
+	ttl, err := positiveInt("DOCUMENT_URL_TTL_SECONDS", 300)
+	if err != nil {
+		return err
+	}
+	cfg.DocumentURLTTL = time.Duration(ttl) * time.Second
+
+	cfg.S3UsePathStyle, err = boolEnv("S3_USE_PATH_STYLE", false)
+	if err != nil {
+		return err
+	}
+	if !enabled {
+		return nil
+	}
+	for _, v := range []struct {
+		name string
+		dst  *string
+	}{
+		{"S3_ENDPOINT", &cfg.S3Endpoint},
+		{"S3_REGION", &cfg.S3Region},
+		{"S3_BUCKET", &cfg.S3Bucket},
+		{"S3_ACCESS_KEY", &cfg.S3AccessKey},
+		{"S3_SECRET_KEY", &cfg.S3SecretKey},
+	} {
+		val := os.Getenv(v.name)
+		if val == "" {
+			return invalid(v.name, "e obrigatoria quando STORAGE_ENABLED=true")
+		}
+		*v.dst = val
+	}
+	return nil
+}
+
+func boolEnv(name string, def bool) (bool, error) {
+	raw := os.Getenv(name)
+	if raw == "" {
+		return def, nil
+	}
+	v, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, invalid(name, "deve ser true ou false")
+	}
+	return v, nil
 }
 
 func boundedInt(name string, def, maxValue int) (int, error) {
