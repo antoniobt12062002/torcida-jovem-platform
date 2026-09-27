@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -330,4 +331,56 @@ func TestAuditQueryReturnsTheStoredFields(t *testing.T) {
 	if it["before"].(map[string]any)["roles"].([]any)[0] != "ASSOCIADO" || len(it["after"].(map[string]any)["roles"].([]any)) != 2 || it["context"].(map[string]any)["k"] != "v" {
 		t.Errorf("antes, depois e contexto = %v", it)
 	}
+}
+
+// Edge case: banco indisponível durante a consulta responde 503
+// service_unavailable, não 500, e sem vazar o driver ou a string de conexão.
+func TestAuditQueryAnswersServiceUnavailableWhenTheDatabaseIsDown(t *testing.T) {
+	down := testutil.NewTestDB(t)
+	sqlDB, err := down.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB.Close() // simula o banco caindo no meio da requisição
+
+	authorizer, err := authz.NewAuthorizer([]authz.Definition{{Permission: audit.ReadPermission}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec, err := platformapi.GetSpec()
+	if err != nil {
+		t.Fatal(err)
+	}
+	validate, err := httpx.NewContractValidator(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.Use(httpx.RequestID())
+	r.Use(httpx.Authn(httpx.AuthnConfig{Validator: staticSession{principal(audit.ReadPermission)}}))
+	wrapper := platformapi.ServerInterfaceWrapper{
+		Handler: struct {
+			platformapi.HealthHandler
+			audit.Handler
+		}{Handler: audit.Handler{Query: &audit.Query{Authz: authorizer, DB: down}}},
+	}
+	r.GET("/api/v1/audit-logs", validate, wrapper.GetAuditLogs)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit-logs", nil)
+	req.AddCookie(&http.Cookie{Name: "tj_session", Value: "ok"})
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	var p struct{ Code string }
+	_ = json.Unmarshal(w.Body.Bytes(), &p)
+	if w.Code != http.StatusServiceUnavailable || p.Code != "service_unavailable" {
+		t.Fatalf("status = %d, corpo = %s", w.Code, w.Body.String())
+	}
+	for _, leak := range []string{"tj_app_dev", "connection", "sql:", "gorm", "pgconn"} {
+		if strings.Contains(strings.ToLower(w.Body.String()), leak) {
+			t.Errorf("a resposta não pode vazar detalhe do driver ou da conexão (%q): %s", leak, w.Body.String())
+		}
+	}
+	testutil.LoadContracts(t).ValidateResponse(t, req, w)
 }

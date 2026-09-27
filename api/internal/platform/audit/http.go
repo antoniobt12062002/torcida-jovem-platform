@@ -9,6 +9,7 @@ import (
 
 	platformapi "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/api"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 )
 
@@ -51,6 +52,8 @@ func (h Handler) GetAuditLogs(c *gin.Context, params platformapi.GetAuditLogsPar
 		httpx.WriteProblem(c, http.StatusUnprocessableEntity, "invalid_limit", "O limite deve estar entre 1 e 100.")
 	case errors.Is(err, ErrInvalidCursor):
 		httpx.WriteProblem(c, http.StatusUnprocessableEntity, "invalid_cursor", "Cursor inválido.")
+	case database.Unavailable(err):
+		httpx.WriteProblem(c, http.StatusServiceUnavailable, "service_unavailable", "Serviço temporariamente indisponível. Tente novamente em instantes.")
 	case err != nil:
 		httpx.WriteProblem(c, http.StatusInternalServerError, "internal_error", "Erro interno. Informe o request_id ao suporte.")
 	default:

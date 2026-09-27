@@ -410,6 +410,15 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Dependência indisponível (code service_unavailable). */
+        ServiceUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Sem sessão válida. */
         Unauthorized: {
             headers: {
@@ -492,6 +501,7 @@ export interface operations {
             422: components["responses"]["ValidationFailed"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     logout: {
@@ -516,6 +526,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     getMe: {
@@ -538,6 +549,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     changePassword: {
@@ -570,6 +582,7 @@ export interface operations {
             422: components["responses"]["ValidationFailed"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     requestPasswordReset: {
@@ -604,6 +617,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     confirmPasswordReset: {
@@ -639,6 +653,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     listUsers: {
@@ -670,6 +685,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     createUser: {
@@ -704,6 +720,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     deactivateUser: {
@@ -733,6 +750,7 @@ export interface operations {
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     reactivateUser: {
@@ -761,6 +779,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     setUserRoles: {
@@ -796,6 +815,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     grantAdminMembership: {
@@ -831,6 +851,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     revokeAdminMembership: {
@@ -866,6 +887,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     resetUserPassword: {
@@ -905,6 +927,7 @@ export interface operations {
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
 }

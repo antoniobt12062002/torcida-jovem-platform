@@ -1,6 +1,7 @@
 package identityhttp
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
 // A resposta lista papéis e permissões em ordem estável, seja qual for a do banco.
@@ -80,6 +82,8 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 		{&app.LockedError{RetryAfter: time.Minute}, http.StatusTooManyRequests, "login_blocked"},
 		{&app.PasswordChangeBlockedError{RetryAfter: time.Minute}, http.StatusTooManyRequests, "password_change_blocked"},
 		{fmt.Errorf("%w: disco cheio", audit.ErrWrite), http.StatusInternalServerError, "audit_failed"},
+		{database.ErrUnavailable, http.StatusServiceUnavailable, "service_unavailable"},
+		{fmt.Errorf("abrir conexão dsn=postgres://tj_app:segredo-de-conexao@host: %w", driver.ErrBadConn), http.StatusServiceUnavailable, "service_unavailable"},
 		{errors.New("segredo-interno: falha do banco"), http.StatusInternalServerError, "internal_error"},
 	}
 	h := &Handler{}
@@ -97,8 +101,9 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 			if w.Code != tc.status || p.Code != tc.code || w.Header().Get("Content-Type") != "application/problem+json" {
 				t.Errorf("%v: status = %d, code = %q", err, w.Code, p.Code)
 			}
-			if tc.status == http.StatusInternalServerError && (strings.Contains(w.Body.String(), "segredo-interno") || strings.Contains(w.Body.String(), "disco cheio")) {
-				t.Errorf("o corpo do 500 não pode vazar o erro interno: %s", w.Body.String())
+			if (tc.status == http.StatusInternalServerError || tc.status == http.StatusServiceUnavailable) &&
+				(strings.Contains(w.Body.String(), "segredo-interno") || strings.Contains(w.Body.String(), "disco cheio") || strings.Contains(w.Body.String(), "segredo-de-conexao")) {
+				t.Errorf("o corpo não pode vazar detalhe interno: %s", w.Body.String())
 			}
 		}
 	}

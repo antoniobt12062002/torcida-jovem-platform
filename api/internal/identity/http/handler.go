@@ -16,6 +16,7 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 )
 
@@ -175,6 +176,9 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 	case errors.Is(err, domain.ErrInvalidResetToken):
 		httpx.WriteProblem(c, http.StatusBadRequest, "invalid_reset_token", "O link de recuperação é inválido ou expirou.")
 	case mapped(c, err):
+	case database.Unavailable(err):
+		h.logInternal(c, err)
+		httpx.WriteProblem(c, http.StatusServiceUnavailable, "service_unavailable", "Serviço temporariamente indisponível. Tente novamente em instantes.")
 	case errors.Is(err, audit.ErrWrite):
 		h.logInternal(c, err)
 		httpx.WriteProblem(c, http.StatusInternalServerError, "audit_failed", "Não foi possível registrar a auditoria; nada foi alterado.")
