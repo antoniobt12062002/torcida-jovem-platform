@@ -2272,11 +2272,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Respostas nunca contêm hash de senha nem token
-- [ ] Erros mapeados: 409 `email_taken`, `last_admin` e `admin_membership_required`, 403 `forbidden`, `privilege_escalation` e `self_change_forbidden`
-- [ ] Respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Respostas nunca contêm hash de senha nem token
+- [x] Erros mapeados: 409 `email_taken`, `last_admin` e `admin_membership_required`, 403 `forbidden`, `privilege_escalation` e `self_change_forbidden`
+- [x] Respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 7 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

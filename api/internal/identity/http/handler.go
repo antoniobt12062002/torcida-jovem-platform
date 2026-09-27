@@ -170,19 +170,11 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 		httpx.WriteProblem(c, http.StatusUnauthorized, "unauthenticated", "É preciso entrar para continuar.")
 	case errors.Is(err, authz.ErrForbidden):
 		httpx.WriteProblem(c, http.StatusForbidden, "forbidden", "Você não tem permissão para esta ação.")
-	case errors.Is(err, domain.ErrPrivilegeEscalation), errors.Is(err, domain.ErrSelfChangeForbidden), errors.Is(err, domain.ErrInvalidCurrentPassword):
-		httpx.WriteProblem(c, http.StatusForbidden, err.Error(), "Ação não permitida.")
 	case errors.Is(err, domain.ErrUserNotFound):
 		httpx.WriteProblem(c, http.StatusNotFound, "not_found", "Usuário não encontrado.")
-	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrLastAdmin), errors.Is(err, domain.ErrAlreadyAdmin),
-		errors.Is(err, domain.ErrNotAdmin), errors.Is(err, domain.ErrUserInactive), errors.Is(err, domain.ErrAdminMembershipRequired):
-		httpx.WriteProblem(c, http.StatusConflict, err.Error(), "A operação conflita com o estado atual.")
 	case errors.Is(err, domain.ErrInvalidResetToken):
 		httpx.WriteProblem(c, http.StatusBadRequest, "invalid_reset_token", "O link de recuperação é inválido ou expirou.")
-	case errors.Is(err, domain.ErrPasswordUnchanged), errors.Is(err, domain.ErrReasonRequired), errors.Is(err, domain.ErrAdminRoleRequired),
-		errors.Is(err, domain.ErrInvalidLimit), errors.Is(err, domain.ErrInvalidCursor), errors.Is(err, domain.ErrInvalidName),
-		errors.Is(err, domain.ErrInvalidEmail), errors.Is(err, domain.ErrUnknownRole):
-		httpx.WriteProblem(c, http.StatusUnprocessableEntity, err.Error(), "Dados inválidos.")
+	case mapped(c, err):
 	case errors.Is(err, audit.ErrWrite):
 		h.logInternal(c, err)
 		httpx.WriteProblem(c, http.StatusInternalServerError, "audit_failed", "Não foi possível registrar a auditoria; nada foi alterado.")
@@ -190,6 +182,32 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 		h.logInternal(c, err)
 		httpx.WriteProblem(c, http.StatusInternalServerError, "internal_error", "Erro interno. Informe o request_id ao suporte.")
 	}
+}
+
+// sentinels are the domain errors whose message is the API code, by status.
+var sentinels = []struct {
+	status int
+	errs   []error
+}{
+	{http.StatusForbidden, []error{domain.ErrPrivilegeEscalation, domain.ErrSelfChangeForbidden, domain.ErrInvalidCurrentPassword}},
+	{http.StatusConflict, []error{domain.ErrEmailTaken, domain.ErrLastAdmin, domain.ErrAlreadyAdmin, domain.ErrNotAdmin, domain.ErrUserInactive, domain.ErrAdminMembershipRequired}},
+	{http.StatusUnprocessableEntity, []error{
+		domain.ErrPasswordUnchanged, domain.ErrReasonRequired, domain.ErrAdminRoleRequired, domain.ErrInvalidLimit, domain.ErrInvalidCursor,
+		domain.ErrInvalidName, domain.ErrInvalidEmail, domain.ErrUnknownRole,
+	}},
+}
+
+// mapped answers with the status and the code of a sentinel, wrapped or not.
+func mapped(c *gin.Context, err error) bool {
+	for _, group := range sentinels {
+		for _, sentinel := range group.errs {
+			if errors.Is(err, sentinel) {
+				httpx.WriteProblem(c, group.status, sentinel.Error(), "A operação não pôde ser concluída.")
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (h *Handler) logInternal(c *gin.Context, err error) {
