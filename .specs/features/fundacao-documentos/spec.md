@@ -37,11 +37,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 |---|---|---|---|
 | Documentos aceitos | Até 10 MiB; PDF, JPG, PNG e WebP; extensões fora dessa lista são bloqueadas; o tipo é detectado pelo conteúdo e deve coincidir com a extensão | Definido pelo mantenedor; cobre FIN-001 seção 15 | y |
 | Fluxo de upload e download | Upload passa pela API (streaming para o S3); download por URL assinada com validade de 300 segundos | Permite validar tipo, tamanho e permissão antes de gravar | y |
-| Emulador de S3 local | Um emulador compatível com S3 será escolhido na tarefa correspondente, apenas para desenvolvimento e testes | Não define provedor de produção (ADR-006); a escolha exige checar licença e manutenção atuais | n |
+| Emulador de S3 local | Garage v2.4.1 (AGPL-3.0, ativo), só para desenvolvimento e testes — MinIO (arquivado em 2026-04) e LocalStack (exige conta desde 2026-03) foram descartados. O emulador valida o adaptador S3 e os fluxos da aplicação, mas não é garantia completa do comportamento de um provedor S3 de produção (ver "Limite do emulador S3 local") | Não define provedor de produção (ADR-006); AGPL só se aplica ao servidor de teste, nunca ao código deste repositório | y |
 | Autorização parametrizada | `platform/documents` não declara nem embute nenhuma permissão de negócio. Cada operação (`Store`, `AccessURL`, `ListByOwner`) recebe do chamador o `authz.Principal` e a `authz.Permission` exigida, e só aplica `authz.Require`; o nome e o dono da permissão (ex.: `financeiro:documento:create`, quando o financeiro tiver spec própria) são decisão do módulo consumidor, nunca de `platform` | Aprovado pelo mantenedor: nenhuma regra de negócio de documentos entra em `platform` | y |
 | Formato de `owner_type` | Validação só técnica (não vazio, tamanho razoável, caracteres de identificador com um separador — ex.: `financeiro.lancamento`); nenhum catálogo fixo de valores aceitos, para não acoplar `platform/documents` aos módulos que ainda não existem | Aprovado pelo mantenedor | y |
 | Versão atual de um documento | `platform/documents` não rastreia "qual é a versão mais recente" de um documento; cada versão é sua própria linha e seu próprio `id`. O módulo consumidor guarda qual `id` é o vigente e o atualiza ao gravar uma nova versão | Aprovado pelo mantenedor: isso é estado de negócio, não infraestrutura | y |
 | Status técnico do documento | Campo `status`, com `ACTIVE` como único valor emitido nesta feature; existe para permitir estados futuros (ex.: quarentena, rejeitado) sem migração de schema, mas nenhum workflow de transição é implementado agora | Aprovado pelo mantenedor | y |
+| Limite do emulador S3 local | Nenhum emulador S3 local gratuito verificado (MinIO, LocalStack, SeaweedFS, Garage) aplica a expiração de uma URL assinada — só a assinatura em si. É lacuna documentada do ecossistema (ex.: o S3Mock da Adobe declara isso abertamente), não falha de escolha. A aplicação é responsável só por pedir e gerar a URL com o TTL correto (verificado localmente, decodificando `X-Amz-Expires`); a aplicação efetiva da expiração é responsabilidade do provedor S3 e só é verificável de fato num ambiente com um provedor de produção | Aprovado pelo mantenedor, depois de testar MinIO (descontinuado), LocalStack (exige conta) e SeaweedFS e Garage (nenhum aplica expiração) | y |
 | Dependências da `fundacao-core` | Usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e o sistema de migrações da core | Evita duplicar infraestrutura | y |
 | SDK de S3 e emulador | Escolhidos e fixados nas tarefas T3 e T4, após checar a documentação vigente | Aprovado: nenhuma versão é fixada sem checar a documentação vigente | y |
 
@@ -85,11 +86,11 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 1. WHEN an actor holding the caller-supplied required permission requests access to a document by its exact id THEN the system SHALL return a presigned GET URL valid for 300 seconds and record an audit entry with action `document.access` naming the document and the actor.
 2. IF the actor lacks the caller-supplied required permission THEN the system SHALL return a forbidden error and SHALL NOT generate a URL.
 3. IF the document id does not exist THEN the system SHALL return a not-found error and SHALL NOT generate a URL.
-4. IF a presigned URL is used after its expiry THEN the storage SHALL reject the request, verified in an integration test with a one-second validity.
+4. WHEN the system requests a presigned GET URL from the storage adapter THEN it SHALL pass the configured TTL through unchanged, and the generated URL SHALL carry that same value in its `X-Amz-Expires` query parameter, verified in an integration test that decodes the URL. Enforcing that a request made after the URL's expiry is rejected is the storage provider's responsibility, not this system's, and is out of reach of a local test: see the Assumption "Limite do emulador S3 local".
 5. IF an object is requested from the bucket without a valid signature THEN the storage SHALL reject the request, verified in an integration test.
 6. The system SHALL NOT resolve "the current version" of a document on the caller's behalf: access is always requested by the exact id of one specific version, and tracking which version is current is the calling module's responsibility.
 
-**Independent Test**: Gerar a URL, baixar o arquivo, esperar expirar e ver a recusa.
+**Independent Test**: Gerar a URL, conferir o `X-Amz-Expires` na própria URL, baixar o arquivo e ver que uma cópia sem assinatura é recusada.
 
 ---
 
@@ -138,7 +139,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
 | DOC-01 | P2: Armazenamento de documentos | In Tasks | Implementing |
-| DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Pending |
+| DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Implementing |
 | DOC-03 | P2: Configuração do storage | In Tasks | Implementing |
 | DOC-04 | P2: Consulta de documentos por dono | In Tasks | Pending |
 

@@ -34,16 +34,17 @@ Ordem em `Store`: permissão (a que o chamador passou), validação de extensão
 | Component | Location | How to Use |
 |---|---|---|
 | Unidade de trabalho e auditoria | `platform/database` e `platform/audit` (da `fundacao-core`) | `WithTx` e `Recorder.Record` na mesma transação |
-| Permissões | `platform/authz` | `Require` para `document:file:create` e `document:file:read` |
-| Infraestrutura de testes | `platform/testutil` | `NewTestDB` e o helper de contêiner como modelo do emulador S3 |
-| Configuração | `api/internal/config/config.go` | Novos campos de S3 e de validade da URL |
+| Permissões | `platform/authz` | `Require(ctx, actor, permissão recebida do chamador)`; nenhuma permissão declarada por `platform/documents` |
+| Infraestrutura de testes | `platform/testutil` | `NewTestDB` e `SharedS3` (novo, T3), no mesmo padrão de `SharedPostgres` |
+| Configuração | `api/internal/config/config.go` | Novos campos de S3 e de validade da URL (T1) |
 
 ### Integration Points
 
 | System | Integration Method |
 |---|---|
-| Object storage S3 | Cliente S3 atrás da interface `storage.Storage`, endpoint configurável e estilo de path opcional; SDK a confirmar na tarefa T4 |
+| Object storage S3 | Cliente S3 atrás da interface `storage.Storage`, endpoint configurável e estilo de path opcional; AWS SDK for Go v2 (`service/s3`), confirmado na tarefa T4 — o mesmo cliente que valida o emulador em T3 |
 | PostgreSQL | Migração `000005_documents`, com `tj_app` sem UPDATE e DELETE |
+| Emulador de testes | Garage v2.4.1 (`platform/testutil/s3.go`), único processo com `--single-node --default-bucket`; valida o adaptador S3 e os fluxos da aplicação, mas não é garantia completa do comportamento de um provedor S3 de produção (ver Risks & Concerns) |
 
 ---
 
@@ -117,11 +118,11 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id, uploaded_at
 
 | Concern | Location (file:line) | Impact | Mitigation |
 |---|---|---|---|
-| SDK S3 e emulador local não foram verificados na documentação vigente | não se aplica (ainda não instalados) | Ferramenta descontinuada ou com licença inadequada | As tarefas T3 e T4 checam documentação, licença e manutenção e registram a fonte antes de fixar versão |
 | Objeto enviado e metadados gravados em sistemas diferentes | não se aplica (ainda não implementado) | Objeto órfão se a transação falhar | Remover só o objeto recém-criado e teste de falha simulada (DOC-01.7) |
 | Detecção de tipo pelo conteúdo pode ser enganada por arquivos poliglotas | não se aplica | Arquivo malicioso com aparência de imagem | Sem varredura de malware nesta fase (fora de escopo); acesso só por URL assinada curta e permissão |
 | URL assinada vaza por compartilhamento do link | não se aplica | Acesso por terceiros durante 300 segundos | Validade curta e auditoria de cada emissão |
 | A migração depende do papel `tj_app`, criado fora dela | `docs/architecture/architecture-overview.md` | Falha em ambiente sem o papel | Migração falha com mensagem clara; o script local e o helper de testes criam o papel |
+| Nenhum emulador S3 local gratuito verificado aplica a expiração de uma URL assinada (só a assinatura em si) — testado em MinIO (descontinuado antes de testar), LocalStack (descartado antes de testar por exigir conta), SeaweedFS 4.47 e Garage v2.4.1, ambos aceitando uma URL 7s após um TTL de 3s | `api/internal/platform/testutil/s3.go` | A aplicação da expiração em produção não é coberta por teste automatizado neste repositório | DOC-02.4 verifica só o que esta aplicação controla: o TTL pedido chega inalterado ao adaptador e aparece como `X-Amz-Expires` na URL gerada. A aplicação efetiva da expiração é responsabilidade do provedor S3 de produção (comportamento padrão documentado pela AWS) e só é verificável nesse ambiente — risco residual aceito e registrado, não coberto por teste local |
 
 ---
 

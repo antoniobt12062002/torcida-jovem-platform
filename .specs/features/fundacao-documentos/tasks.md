@@ -135,7 +135,7 @@ T5 → T6 → T7
 **Where**: `api/internal/platform/testutil/s3.go`  
 **Depends on**: T2  
 **Reuses**: `testutil/postgres.go` como modelo  
-**Requirement**: DOC-02 (ACs 4, 5)
+**Requirement**: DOC-02 (AC 5)
 
 **Tools**:
 
@@ -144,11 +144,12 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Escolha e fonte consultada registradas no commit; se o candidato for inadequado, escolher outro
-- [ ] Helper sobe o emulador e cria um bucket privado
-- [ ] Teste de fumaça grava e lê um objeto
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Escolha e fonte consultada registradas no commit; se o candidato for inadequado, escolher outro (MinIO e LocalStack descartados por licença/manutenção; se o candidato escolhido não recusar requisição sem assinatura, escolher outro)
+- [x] Helper sobe o emulador e cria um bucket privado
+- [x] Teste de fumaça grava e lê um objeto
+- [x] Nenhum teste afirma que o emulador recusa URL assinada expirada (DOC-02.4 mudou de responsável; ver spec e design)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 2 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
@@ -172,9 +173,9 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] SDK e versão conferidos na documentação vigente
-- [ ] URL assinada com validade de 1 segundo é recusada após expirar
-- [ ] Objeto pedido sem assinatura é recusado
+- [ ] SDK e versão conferidos na documentação vigente (AWS SDK for Go v2, `service/s3`, confirmado em T3)
+- [ ] `PresignGet(ctx, key, ttl)` passa o TTL recebido sem alterar; um teste de integração decodifica a URL gerada e confere que `X-Amz-Expires` é exatamente o TTL pedido (DOC-02.4)
+- [ ] Objeto pedido sem assinatura é recusado (DOC-02.5, contra o emulador real)
 - [ ] Só usa o protocolo S3, sem recursos de um provedor específico
 - [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
