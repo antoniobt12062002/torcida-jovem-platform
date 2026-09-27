@@ -3,7 +3,6 @@ package httpapi
 import (
 	"context"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"sort"
 	"testing"
@@ -12,19 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ginParam = regexp.MustCompile(`:([A-Za-z0-9_]+)`)
-
-// routeKeys turns the routes registered in Gin into "METHOD /path/{param}".
-func routeKeys(routes []gin.RouteInfo) []string {
-	keys := make([]string, 0, len(routes))
-	for _, r := range routes {
-		keys = append(keys, r.Method+" "+ginParam.ReplaceAllString(r.Path, "{$1}"))
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// contractKeys lists "METHOD /path" for every operation of every module contract.
+// contractKeys lists "METHOD /path" for every operation of every module contract
+// found in api/openapi, read from the files (independent of the embedded specs).
 func contractKeys(t *testing.T) []string {
 	t.Helper()
 	files, err := filepath.Glob("../../openapi/*.yaml")
@@ -45,51 +33,18 @@ func contractKeys(t *testing.T) []string {
 		if err := doc.Validate(context.Background()); err != nil {
 			t.Fatalf("contrato inválido %s: %v", f, err)
 		}
-		for path, item := range doc.Paths.Map() {
-			for method := range item.Operations() {
-				keys = append(keys, method+" "+path)
-			}
-		}
+		keys = append(keys, operationKeys(doc)...)
 	}
 	sort.Strings(keys)
 	return keys
 }
 
-// parity returns the routes with no operation in any contract and the
-// contract operations with no route.
-func parity(routes, operations []string) (routesWithoutContract, operationsWithoutRoute []string) {
-	for _, r := range routes {
-		if !slices.Contains(operations, r) {
-			routesWithoutContract = append(routesWithoutContract, r)
-		}
-	}
-	for _, o := range operations {
-		if !slices.Contains(routes, o) {
-			operationsWithoutRoute = append(operationsWithoutRoute, o)
-		}
-	}
-	return routesWithoutContract, operationsWithoutRoute
-}
-
-// contractPendingRoutes (contract_pending_routes) lists contract operations
-// whose handlers do not exist yet. It is temporary: phase 10 creates the identity
-// contract before the handlers of phase 11, which must empty this list.
-var contractPendingRoutes = []string{
-	"GET /api/v1/audit-logs", "GET /api/v1/auth/me", "GET /api/v1/users",
-	"POST /api/v1/auth/login", "POST /api/v1/auth/logout", "POST /api/v1/auth/password",
-	"POST /api/v1/auth/password-reset/confirm", "POST /api/v1/auth/password-reset/request",
-	"POST /api/v1/users", "POST /api/v1/users/{id}/admin-membership", "POST /api/v1/users/{id}/admin-membership/revoke",
-	"POST /api/v1/users/{id}/deactivate", "POST /api/v1/users/{id}/password-reset", "POST /api/v1/users/{id}/reactivate",
-	"PUT /api/v1/users/{id}/roles",
-}
-
-// API-01.6: toda rota registrada no Gin existe em algum contrato de módulo, e
-// toda operação de contrato tem rota, salvo as pendentes explicitamente listadas.
-func TestEveryRegisteredRouteHasAContractOperation(t *testing.T) {
-	router := NewRouter(func(context.Context) error { return nil })
+// API-01.6: toda rota registrada no Gin existe em algum contrato de módulo e toda
+// operação de contrato tem rota. Não há mais lista de pendências.
+func TestEveryRegisteredRouteHasAContractOperationAndViceVersa(t *testing.T) {
+	router := NewRouter(testDeps(nil))
 
 	withoutContract, withoutRoute := parity(routeKeys(router.Routes()), contractKeys(t))
-	withoutRoute = slices.DeleteFunc(withoutRoute, func(k string) bool { return slices.Contains(contractPendingRoutes, k) })
 
 	if len(withoutContract) > 0 {
 		t.Errorf("rotas registradas sem operação em nenhum contrato: %v", withoutContract)
@@ -97,6 +52,31 @@ func TestEveryRegisteredRouteHasAContractOperation(t *testing.T) {
 	if len(withoutRoute) > 0 {
 		t.Errorf("operações de contrato sem rota registrada: %v", withoutRoute)
 	}
+	if len(routeKeys(router.Routes())) != 16 {
+		t.Errorf("rotas = %d, esperado 16 (healthz, auditoria e 14 de identidade)", len(routeKeys(router.Routes())))
+	}
+}
+
+// O contrato lido dos arquivos e as rotas do router são exatamente a mesma lista.
+func TestRoutesAndContractFilesAreTheSameList(t *testing.T) {
+	router := NewRouter(testDeps(nil))
+
+	if !slices.Equal(routeKeys(router.Routes()), contractKeys(t)) {
+		t.Errorf("rotas = %v; contrato = %v", routeKeys(router.Routes()), contractKeys(t))
+	}
+}
+
+// Decisão 5: uma rota registrada sem operação no contrato é recusada.
+func TestNewRouterRefusesARouteWithoutAContractOperation(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("um roteador com rota fora do contrato deveria falhar na montagem")
+		}
+	}()
+	d := testDeps(nil)
+	d.extraRoutes = func(r gin.IRoutes) { r.GET("/api/v1/fora-do-contrato", func(*gin.Context) {}) }
+
+	NewRouter(d)
 }
 
 func TestParityDetectsARouteWithoutOperation(t *testing.T) {
@@ -132,24 +112,5 @@ func TestRouteKeysConvertGinParametersToOpenAPIStyle(t *testing.T) {
 	got := routeKeys(r.Routes())
 	if !slices.Equal(got, []string{"DELETE /api/v1/users/{id}/sessions/{session_id}"}) {
 		t.Errorf("routeKeys = %v", got)
-	}
-}
-
-// A lista de pendências só pode guardar operações reais que ainda não têm rota:
-// registrar o handler obriga a tirar a operação da lista.
-func TestPendingRoutesAreRealContractOperationsWithoutARoute(t *testing.T) {
-	router := NewRouter(func(context.Context) error { return nil })
-	contract, registered := contractKeys(t), routeKeys(router.Routes())
-
-	for _, pending := range contractPendingRoutes {
-		if !slices.Contains(contract, pending) {
-			t.Errorf("%s está pendente, mas não existe em nenhum contrato", pending)
-		}
-		if slices.Contains(registered, pending) {
-			t.Errorf("%s já tem rota: remova-a de contractPendingRoutes", pending)
-		}
-	}
-	if !slices.IsSorted(contractPendingRoutes) {
-		t.Error("mantenha a lista ordenada")
 	}
 }

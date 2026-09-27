@@ -2385,14 +2385,14 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
-- [ ] Substitui o `gin.Logger` pelo log de acesso próprio
-- [ ] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem; `/healthz` fica fora da checagem de origem
-- [ ] Cadeias: públicas (RequestID, origem, limite de corpo, validação do contrato, handler) e autenticadas (RequestID, recover, log de acesso, limite de corpo, origem, Authn, CSRF, validação do contrato, handler)
-- [ ] Limite de corpo de 1 MiB nas rotas autenticadas e 64 KiB nas públicas, com 413 `payload_too_large` descrito no `common.yaml` e nas operações com corpo
-- [ ] Rota registrada no Gin sem operação no contrato faz o router falhar na partida; o teste de paridade compara as rotas do engine com as operações e `contractPendingRoutes` fica vazia
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Teste percorre `Routes()` e falha se uma rota não estiver na lista pública nem protegida
+- [x] Substitui o `gin.Logger` pelo log de acesso próprio
+- [x] `/healthz` continua público e as únicas outras rotas públicas são o login e as duas de recuperação de acesso, com checagem de origem; `/healthz` fica fora da checagem de origem
+- [x] Cadeias: públicas (RequestID, origem, limite de corpo, validação do contrato, handler) e autenticadas (RequestID, recover, log de acesso, limite de corpo, origem, Authn, CSRF, validação do contrato, handler)
+- [x] Limite de corpo de 1 MiB nas rotas autenticadas e 64 KiB nas públicas, com 413 `payload_too_large` descrito no `common.yaml` e nas operações com corpo
+- [x] Rota registrada no Gin sem operação no contrato faz o router falhar na partida; o teste de paridade compara as rotas do engine com as operações e `contractPendingRoutes` fica vazia
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 8 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

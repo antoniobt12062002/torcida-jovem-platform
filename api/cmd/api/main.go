@@ -12,8 +12,15 @@ import (
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/config"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/httpapi"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/email"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/logx"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/password"
 )
 
 func main() {
@@ -27,9 +34,35 @@ func main() {
 		log.Fatal(err)
 	}
 
+	recorder := audit.NewRecorder(db, logger)
+	matrix, err := app.BuildMatrix(app.FoundationContributions()...)
+	if err != nil {
+		log.Fatalf("matriz de papéis inválida: %v", err)
+	}
+	authorizer, err := authz.NewAuthorizer(matrix.Definitions, audit.DeniedHook(recorder))
+	if err != nil {
+		log.Fatalf("autorizador: %v", err)
+	}
+	hasher, err := password.NewHasher(password.Params{MemoryKiB: cfg.Argon2MemoryKiB, Iterations: cfg.Argon2Iterations, Parallelism: cfg.Argon2Parallelism})
+	if err != nil {
+		log.Fatalf("parâmetros do Argon2: %v", err)
+	}
+	sender, err := email.NewSender(cfg.EmailProvider, logger)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mod := identity.New(identity.Deps{
+		DB: db, Recorder: recorder, Authorizer: authorizer, Matrix: matrix, Hasher: hasher, Denylist: password.DefaultDenylist(),
+		Sender: sender, Log: logger, HashKey: cfg.AuthHashKey, SessionIdle: cfg.SessionIdle, SessionAbsolute: cfg.SessionAbsolute,
+		ResetTTL: cfg.PasswordResetTTL, BaseURL: cfg.AppBaseURL,
+	})
+
 	srv := &http.Server{
-		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.NewRouter(database.Ping(db)),
+		Addr: ":" + cfg.Port,
+		Handler: httpapi.NewRouter(httpapi.Deps{
+			Ping: database.Ping(db), Identity: mod, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: logger,
+			AllowedOrigins: cfg.AllowedOrigins, Cookie: httpx.SessionCookie{Domain: cfg.CookieDomain, Secure: cfg.CookieSecure},
+		}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	go func() {

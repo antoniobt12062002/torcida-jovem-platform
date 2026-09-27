@@ -238,3 +238,16 @@ func TestLoginAndRecoveryRequestsDoNotValidateTheEmailFormat(t *testing.T) {
 		}
 	}
 }
+
+// API-02.7: toda operação com corpo descreve o 413 payload_too_large em problem+json.
+func TestOperationsWithABodyDescribeThe413Response(t *testing.T) {
+	for _, o := range operations(loadIdentity(t)) {
+		if o.op.RequestBody == nil {
+			continue
+		}
+		r := o.op.Responses.Value("413")
+		if r == nil || r.Value.Content.Get("application/problem+json") == nil {
+			t.Errorf("%s recebe corpo e deveria descrever o 413 em problem+json", o.key)
+		}
+	}
+}
