@@ -2240,15 +2240,15 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] `me` inclui `must_change_password` e o vínculo administrativo ativo, quando houver
-- [ ] Cookie `tj_session` com HttpOnly, Secure, SameSite=Lax e Path=/
-- [ ] Erros idênticos para credenciais inválidas
-- [ ] 429 traz `Retry-After`
-- [ ] A solicitação de recuperação devolve 202 com o corpo fixo, exista ou não a conta
-- [ ] A confirmação devolve 400 `invalid_reset_token` idêntico para token desconhecido, expirado e usado, e 422 com o código da política
-- [ ] Respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `me` inclui `must_change_password` e o vínculo administrativo ativo, quando houver
+- [x] Cookie `tj_session` com HttpOnly, Secure, SameSite=Lax e Path=/
+- [x] Erros idênticos para credenciais inválidas
+- [x] 429 traz `Retry-After`
+- [x] A solicitação de recuperação devolve 202 com o corpo fixo, exista ou não a conta
+- [x] A confirmação devolve 400 `invalid_reset_token` idêntico para token desconhecido, expirado e usado, e 422 com o código da política
+- [x] Respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 12 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
