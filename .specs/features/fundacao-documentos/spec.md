@@ -141,7 +141,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 | DOC-01 | P2: Armazenamento de documentos | In Tasks | Implementing |
 | DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Implementing |
 | DOC-03 | P2: Configuração do storage | In Tasks | Implementing |
-| DOC-04 | P2: Consulta de documentos por dono | In Tasks | Pending |
+| DOC-04 | P2: Consulta de documentos por dono | In Tasks | Implementing |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 

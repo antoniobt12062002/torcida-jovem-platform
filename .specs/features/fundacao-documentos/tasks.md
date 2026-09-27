@@ -268,13 +268,13 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `ListInput` carrega `Actor`, `RequiredPermission`, `OwnerType`, `OwnerID`
-- [ ] Resultado ordenado do mais novo para o mais antigo, usando o índice de T5
-- [ ] `owner_type` vazio, maior que 100 caracteres ou fora do formato `[a-z0-9_]+\.[a-z0-9_]+` é `document_owner_type_invalid`, sem consultar o banco; nenhuma lista fixa de valores aceitos
-- [ ] Sem a permissão recebida não devolve nenhuma linha
-- [ ] Não gera URL nem grava evento de auditoria
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `ListInput` carrega `Actor`, `RequiredPermission`, `OwnerType`, `OwnerID`
+- [x] Resultado ordenado do mais novo para o mais antigo, usando o índice de T5
+- [x] `owner_type` vazio, maior que 100 caracteres ou fora do formato `[a-z0-9_]+\.[a-z0-9_]+` é `document_owner_type_invalid`, sem consultar o banco; nenhuma lista fixa de valores aceitos
+- [x] Sem a permissão recebida não devolve nenhuma linha
+- [x] Não gera URL nem grava evento de auditoria
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
