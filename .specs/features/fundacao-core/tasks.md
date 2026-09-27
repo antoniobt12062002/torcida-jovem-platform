@@ -2585,9 +2585,9 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Comandos copiáveis e conferidos
-- [ ] Lint de markdown e links passam
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Comandos copiáveis e conferidos
+- [x] Lint de markdown e links passam
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build

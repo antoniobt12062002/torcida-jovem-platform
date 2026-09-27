@@ -611,7 +611,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | MNY-01 | P1: Tipo monetário em centavos | In Tasks | Implementing |
 | MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |
 | MNY-03 | P2: Rateio e percentuais | In Tasks | Implementing |
-| TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Pending |
+| TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Implementing |
 | TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Implementing |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
 | API-01 | P1: Contrato OpenAPI | In Tasks | Implementing |
