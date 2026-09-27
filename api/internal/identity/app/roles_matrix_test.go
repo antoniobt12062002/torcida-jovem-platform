@@ -131,10 +131,52 @@ func TestFoundationProvisionalMatrix(t *testing.T) {
 			t.Errorf("%s não tem permissões da fundação, tem %v", r, got)
 		}
 	}
-	for _, p := range []authz.Permission{"identity:admin:grant", "identity:admin:revoke", "identity:role:assign", "audit:log:read"} {
-		if !m.Has(domain.RoleAdminSistema, p) {
-			t.Errorf("ADMIN_SISTEMA deveria ter %s", p)
+}
+
+// AD-011: ADMIN_SISTEMA recebe exatamente as permissões técnicas da
+// fundação (identity e audit) e nenhuma permissão institucional — nem de
+// financeiro, nem de qualquer outro módulo de negócio.
+func TestAdminSistemaHasExactlyTheTechnicalPermissionsAndNoInstitutionalOne(t *testing.T) {
+	m := foundation(t)
+	want := []authz.Permission{
+		"audit:log:read", "identity:admin:grant", "identity:admin:revoke", "identity:role:assign",
+		"identity:user:create", "identity:user:read", "identity:user:reset_password", "identity:user:update",
+	}
+
+	got := perms(m, domain.RoleAdminSistema)
+
+	if !slices.Equal(got, want) {
+		t.Errorf("ADMIN_SISTEMA = %v, esperado exatamente %v", got, want)
+	}
+	for _, p := range got {
+		if strings.HasPrefix(string(p), "financeiro:") {
+			t.Errorf("ADMIN_SISTEMA não pode ter permissão institucional: %s", p)
 		}
+	}
+}
+
+// PRESIDENTE cobre o catálogo inteiro (identity, audit e financeiro), sem
+// wildcard: a abrangência vem de cada permissão declarada estar ligada a ele.
+func TestPresidenteCoversTheWholeCatalog(t *testing.T) {
+	m := foundation(t)
+	want := []authz.Permission{
+		"audit:log:read", "financeiro:parecer:opine", "financeiro:prestacao_contas:approve", "financeiro:prestacao_contas:read",
+		"identity:admin:grant", "identity:admin:revoke", "identity:role:assign", "identity:user:create",
+		"identity:user:read", "identity:user:reset_password", "identity:user:update",
+	}
+
+	got := perms(m, domain.RolePresidente)
+
+	if !slices.Equal(got, want) {
+		t.Errorf("PRESIDENTE = %v, esperado exatamente %v", got, want)
+	}
+	var defs []authz.Permission
+	for _, d := range m.Definitions {
+		defs = append(defs, d.Permission)
+	}
+	slices.Sort(defs)
+	if !slices.Equal(got, defs) {
+		t.Errorf("PRESIDENTE deveria cobrir exatamente o catálogo de definições: %v x %v", got, defs)
 	}
 }
 

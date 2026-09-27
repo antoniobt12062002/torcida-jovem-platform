@@ -99,6 +99,8 @@ paths:
           $ref: 'common.yaml#/components/responses/ValidationFailed'
         '500':
           $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
 components:
   securitySchemes:
     sessionCookie:

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
 // Errors a SessionValidator returns; Authn maps them to 401 responses. Any
@@ -138,6 +139,9 @@ func Authn(cfg AuthnConfig) gin.HandlerFunc {
 			return
 		case errors.Is(err, ErrUnauthenticated):
 			WriteProblem(c, http.StatusUnauthorized, "unauthenticated", "É preciso entrar para continuar.")
+			return
+		case database.Unavailable(err):
+			WriteProblem(c, http.StatusServiceUnavailable, "service_unavailable", "Serviço temporariamente indisponível. Tente novamente em instantes.")
 			return
 		case err != nil:
 			WriteProblem(c, http.StatusInternalServerError, "internal_error", "Erro interno. Informe o request_id ao suporte.")

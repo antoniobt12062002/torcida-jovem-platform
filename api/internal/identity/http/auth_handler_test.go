@@ -87,6 +87,10 @@ func TestMeShowsTheMembershipSummaryOnlyWithReasonAndDateOrNull(t *testing.T) {
 	if !slices.Equal(keys(m), []string{"granted_at", "reason"}) || m["reason"] != "membro da diretoria eleita" {
 		t.Errorf("admin_membership = %v", m)
 	}
+	// AUD-01.3: granted_at sai em UTC, seja qual for o fuso do banco ou do processo.
+	if granted, _ := m["granted_at"].(string); !strings.HasSuffix(granted, "Z") {
+		t.Errorf("granted_at = %q, deveria terminar em Z (UTC)", granted)
+	}
 	if v, present := without["admin_membership"]; !present || v != nil {
 		t.Errorf("sem vínculo, admin_membership deveria ser null: %v (presente: %v)", v, present)
 	}

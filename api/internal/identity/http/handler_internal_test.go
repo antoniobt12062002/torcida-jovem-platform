@@ -1,9 +1,12 @@
 package identityhttp
 
 import (
+	"bytes"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -17,6 +20,7 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
 // A resposta lista papéis e permissões em ordem estável, seja qual for a do banco.
@@ -29,6 +33,29 @@ func TestRolesAndPermissionsAreListedInAStableOrder(t *testing.T) {
 	}
 	if !slices.Equal(perms, []string{"audit:log:read", "identity:user:read", "identity:user:update"}) {
 		t.Errorf("permissions = %v", perms)
+	}
+}
+
+// AUD-01.3 (mesma regra vale para o restante da API): created_at e granted_at
+// sempre saem em UTC, seja qual for o fuso do driver.
+func TestUserOutNormalizesTimestampsToUTC(t *testing.T) {
+	brt := time.FixedZone("BRT", -3*3600)
+	local := time.Date(2026, 9, 26, 9, 0, 0, 0, brt) // 12:00 UTC
+
+	u := userOut(domain.UserSummary{
+		ID: "0f8fad5b-d9cb-469f-a165-70867728950e", CreatedAt: local,
+		AdminMembership: &domain.MembershipSummary{Reason: "x", GrantedAt: local},
+	})
+
+	if u.CreatedAt.Location() != time.UTC || !u.CreatedAt.Equal(local) {
+		t.Errorf("created_at = %v", u.CreatedAt)
+	}
+	if u.AdminMembership.GrantedAt.Location() != time.UTC || !u.AdminMembership.GrantedAt.Equal(local) {
+		t.Errorf("granted_at = %v", u.AdminMembership.GrantedAt)
+	}
+	body, _ := json.Marshal(u)
+	if !strings.Contains(string(body), `"created_at":"2026-09-26T12:00:00Z"`) || !strings.Contains(string(body), `"granted_at":"2026-09-26T12:00:00Z"`) {
+		t.Errorf("JSON = %s", body)
 	}
 }
 
@@ -80,6 +107,8 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 		{&app.LockedError{RetryAfter: time.Minute}, http.StatusTooManyRequests, "login_blocked"},
 		{&app.PasswordChangeBlockedError{RetryAfter: time.Minute}, http.StatusTooManyRequests, "password_change_blocked"},
 		{fmt.Errorf("%w: disco cheio", audit.ErrWrite), http.StatusInternalServerError, "audit_failed"},
+		{database.ErrUnavailable, http.StatusServiceUnavailable, "service_unavailable"},
+		{fmt.Errorf("abrir conexão dsn=postgres://tj_app:segredo-de-conexao@host: %w", driver.ErrBadConn), http.StatusServiceUnavailable, "service_unavailable"},
 		{errors.New("segredo-interno: falha do banco"), http.StatusInternalServerError, "internal_error"},
 	}
 	h := &Handler{}
@@ -97,9 +126,30 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 			if w.Code != tc.status || p.Code != tc.code || w.Header().Get("Content-Type") != "application/problem+json" {
 				t.Errorf("%v: status = %d, code = %q", err, w.Code, p.Code)
 			}
-			if tc.status == http.StatusInternalServerError && (strings.Contains(w.Body.String(), "segredo-interno") || strings.Contains(w.Body.String(), "disco cheio")) {
-				t.Errorf("o corpo do 500 não pode vazar o erro interno: %s", w.Body.String())
+			if (tc.status == http.StatusInternalServerError || tc.status == http.StatusServiceUnavailable) &&
+				(strings.Contains(w.Body.String(), "segredo-interno") || strings.Contains(w.Body.String(), "disco cheio") || strings.Contains(w.Body.String(), "segredo-de-conexao")) {
+				t.Errorf("o corpo não pode vazar detalhe interno: %s", w.Body.String())
 			}
 		}
+	}
+}
+
+// Segurança: um erro interno que veio do driver e menciona um e-mail (ex.: uma
+// violação de restrição única) não vaza o e-mail para o log.
+func TestLogInternalRedactsAnEmailInTheErrorMessage(t *testing.T) {
+	var buf bytes.Buffer
+	h := &Handler{Log: slog.New(slog.NewJSONHandler(&buf, nil))}
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+	h.writeError(c, fmt.Errorf("ERROR: duplicate key value violates unique constraint \"users_email_key\" (SQLSTATE 23505): Key (email)=(maria@exemplo.com) already exists."))
+
+	out := buf.String()
+	if strings.Contains(out, "maria@exemplo.com") {
+		t.Errorf("o log não pode conter o e-mail: %s", out)
+	}
+	if !strings.Contains(out, "[e-mail redigido]") {
+		t.Errorf("o log deveria marcar a redação: %s", out)
 	}
 }

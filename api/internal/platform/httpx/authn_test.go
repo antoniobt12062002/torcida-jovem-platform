@@ -3,6 +3,7 @@ package httpx
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
 type fakeValidator struct {
@@ -130,6 +132,19 @@ func TestAuthnAnswersSessionExpiredAndClearsTheCookie(t *testing.T) {
 	set := w.Header().Get("Set-Cookie")
 	if !strings.Contains(set, "tj_session=;") || !strings.Contains(set, "Max-Age=0") || !strings.Contains(set, "HttpOnly") || !strings.Contains(set, "Path=/") {
 		t.Errorf("Set-Cookie = %q, deveria limpar o cookie", set)
+	}
+}
+
+// Edge case: banco indisponível durante a requisição responde 503
+// service_unavailable, não 500 — e sem vazar o detalhe do driver.
+func TestAuthnAnswersServiceUnavailableWhenTheDatabaseIsDown(t *testing.T) {
+	r := authnEngine(authnConfig(&fakeValidator{err: fmt.Errorf("abrir sessão: %w", database.ErrUnavailable)}), nil)
+
+	w := serve(r, http.MethodGet, "/users", nil, withCookie("abc"))
+
+	p := decodeProblem(t, w)
+	if w.Code != http.StatusServiceUnavailable || p["code"] != "service_unavailable" || p["request_id"] != "req-abc-12345" {
+		t.Errorf("status = %d, corpo = %v", w.Code, p)
 	}
 }
 

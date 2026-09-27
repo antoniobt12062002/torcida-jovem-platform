@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -407,6 +408,46 @@ func TestLoginAttemptsStoreTheHMACOfTheEmailNotTheEmail(t *testing.T) {
 	want, _ := domain.HashEmail(hashKey, "ana@exemplo.com")
 	if !bytes.Equal(got, want) {
 		t.Errorf("email_hash = %x, esperado o HMAC %x", got, want)
+	}
+}
+
+// Edge case: dois logins simultâneos do mesmo usuário criam duas sessões
+// independentes, cada uma com seu próprio token, sem corromper nenhuma.
+func TestConcurrentLoginsForTheSameUserCreateIndependentSessions(t *testing.T) {
+	e := newLoginEnv(t)
+	const n = 8
+	results := make([]app.LoginResult, n)
+	errs := make([]error, n)
+
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Go(func() { results[i], errs[i] = e.login("ana@exemplo.com", goodPassword, "") })
+	}
+	wg.Wait()
+
+	tokens := map[string]bool{}
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("login %d: %v", i, err)
+		}
+		if results[i].Token == "" {
+			t.Fatalf("login %d: sem token", i)
+		}
+		if tokens[results[i].Token] {
+			t.Errorf("login %d: token repetido: %s", i, results[i].Token)
+		}
+		tokens[results[i].Token] = true
+	}
+	if len(tokens) != n {
+		t.Errorf("tokens distintos = %d, esperado %d", len(tokens), n)
+	}
+	if e.count(t, "sessions") != n {
+		t.Errorf("sessões no banco = %d, esperado %d", e.count(t, "sessions"), n)
+	}
+	for token := range tokens {
+		if _, err := e.sessions.FindByToken(context.Background(), token); err != nil {
+			t.Errorf("token %s: %v", token, err)
+		}
 	}
 }
 

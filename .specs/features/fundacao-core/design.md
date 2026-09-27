@@ -269,7 +269,7 @@ Contrato em `api/openapi/identity.yaml` (fonte de verdade); a validação do con
 
 ## Modelo de identidade
 
-Aprovado com ajustes em 2026-09-26 (aguarda nova aprovação para implementar).
+Aprovado com ajustes em 2026-09-26 e implementado (fases 1 a 12, mescladas em `develop`).
 
 ```mermaid
 erDiagram
@@ -480,9 +480,10 @@ CREATE INDEX password_change_attempts_idx ON password_change_attempts (user_id, 
 | `Principal` sem cache | Consulta por requisição | Mudança de papel vale de imediato; custo aceitável no volume atual |
 | Migrações fora da partida da API | Ferramenta `migrate` separada | Cumpre o ADR-002 (nada de `AutoMigrate`) e o papel sem DDL |
 
-> **Decisões de projeto a registrar em `.specs/STATE.md`** (AD-012 a AD-014 na tarefa de guardrails):
-> - AD-010 já registrado (contrato OpenAPI contract-first, ADR-008).
-> - AD-011 já registrado (modelo de identidade, ADR-009).
-> - AD-012: testes de integração atrás da tag `integration`, com PostgreSQL real via testcontainers.
-> - AD-013: autorização no caso de uso, rotas negadas por padrão, e papéis de banco separados (dono e aplicação).
-> - AD-014: erros em `application/problem+json`, paginação por cursor e identificador de requisição.
+> **Decisões de projeto registradas em `.specs/STATE.md`** (fase 12, T84):
+> - AD-010 (contrato OpenAPI contract-first, ADR-008) e AD-011 (modelo de identidade, ADR-009) já estavam registrados antes desta feature.
+> - AD-012: o contrato OpenAPI é a fonte única das rotas; a API não inicia se rota e contrato divergirem.
+> - AD-013: rotas negadas por padrão, com lista pública explícita e cadeias de middleware distintas para rotas públicas e autenticadas.
+> - AD-014: cada módulo é composto em um único ponto de entrada, com handlers finos, uma tabela única de erros de domínio para HTTP e fronteiras verificadas por teste (`api/internal/architecture_test.go`).
+>
+> Testes de integração atrás da tag `integration` com PostgreSQL via testcontainers, autorização no caso de uso, papéis de banco separados (dono e aplicação), erros em `application/problem+json`, paginação por cursor e identificador de requisição são convenções da fundação, sem AD numerado próprio — cobertas pelos ADRs 002, 004, 005 e 008 e por API-01/API-02 nesta spec.

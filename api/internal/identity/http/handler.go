@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 )
 
@@ -124,7 +126,7 @@ func (h *Handler) authContext(ctx context.Context, userID, csrf string) (AuthCon
 		MustChangePassword: user.MustChangePassword,
 	}
 	if ok {
-		out.AdminMembership = &AdminMembershipSummary{Reason: membership.Reason, GrantedAt: membership.GrantedAt}
+		out.AdminMembership = &AdminMembershipSummary{Reason: membership.Reason, GrantedAt: membership.GrantedAt.UTC()}
 	}
 	return out, nil
 }
@@ -175,6 +177,9 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 	case errors.Is(err, domain.ErrInvalidResetToken):
 		httpx.WriteProblem(c, http.StatusBadRequest, "invalid_reset_token", "O link de recuperação é inválido ou expirou.")
 	case mapped(c, err):
+	case database.Unavailable(err):
+		h.logInternal(c, err)
+		httpx.WriteProblem(c, http.StatusServiceUnavailable, "service_unavailable", "Serviço temporariamente indisponível. Tente novamente em instantes.")
 	case errors.Is(err, audit.ErrWrite):
 		h.logInternal(c, err)
 		httpx.WriteProblem(c, http.StatusInternalServerError, "audit_failed", "Não foi possível registrar a auditoria; nada foi alterado.")
@@ -210,9 +215,14 @@ func mapped(c *gin.Context, err error) bool {
 	return false
 }
 
+// emailInErrorMessage matches an e-mail-shaped substring in an error message
+// (a driver detail such as a unique-constraint violation can embed the value).
+var emailInErrorMessage = regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)
+
 func (h *Handler) logInternal(c *gin.Context, err error) {
 	if h.Log != nil {
-		h.Log.Error("erro interno", "request_id", httpx.RequestIDFrom(c.Request.Context()), "error", err.Error())
+		msg := emailInErrorMessage.ReplaceAllString(err.Error(), "[e-mail redigido]")
+		h.Log.Error("erro interno", "request_id", httpx.RequestIDFrom(c.Request.Context()), "error", msg)
 	}
 }
 

@@ -53,6 +53,11 @@ func TestRequestIDGeneratesWhenMissingOrInvalid(t *testing.T) {
 		"longo demais":      strings.Repeat("a", 65),
 		"caracter inválido": "abc def!!! 123",
 		"quebra de linha":   "abc-12345\r\nX-Evil: 1",
+		"sublinhado":        "abc_12345",
+		"ponto":             "abc.12345",
+		"barra":             "abc/12345",
+		"dois pontos":       "abc:12345",
+		"mais":              "abc+12345",
 	}
 	for name, id := range invalid {
 		headers := map[string]string{}
