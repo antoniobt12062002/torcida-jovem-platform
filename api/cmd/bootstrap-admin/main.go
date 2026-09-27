@@ -109,7 +109,18 @@ func bootstrapAdmin(ctx context.Context, dsn string, in app.BootstrapInput) (str
 	if err != nil {
 		return "", err
 	}
-	mod := identity.New(identity.Deps{DB: db, Recorder: audit.NewRecorder(db, logger), Hasher: hasher, Denylist: password.DefaultDenylist(), Log: logger})
+	matrix, err := app.BuildMatrix(app.FoundationContributions()...)
+	if err != nil {
+		return "", err
+	}
+	mod := identity.New(identity.Deps{
+		DB: db, Recorder: audit.NewRecorder(db, logger), Matrix: matrix, Hasher: hasher, Denylist: password.DefaultDenylist(), Log: logger,
+	})
+	// The first administrator needs the roles to exist: on a fresh database the API
+	// has not started yet, so the command synchronizes them itself (idempotent).
+	if _, err := mod.Roles.Sync(ctx, matrix); err != nil {
+		return "", err
+	}
 	u, err := mod.Bootstrap.Execute(ctx, in)
 	if err != nil {
 		return "", err

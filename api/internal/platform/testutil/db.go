@@ -92,6 +92,18 @@ func OwnerDBFor(t testing.TB, db *gorm.DB) *gorm.DB {
 	return owner
 }
 
+// AppDSN returns the connection string, as tj_app, of the private database behind
+// db (a pool from NewTestDB), for code that opens its own connection.
+func AppDSN(t testing.TB, db *gorm.DB) string {
+	t.Helper()
+	v, ok := databases.Load(db)
+	if !ok {
+		t.Fatal("AppDSN: o pool não veio de NewTestDB")
+	}
+	info := v.(databaseInfo)
+	return info.pg.AppDSN(info.name)
+}
+
 func createTemplate(pg *Postgres) error {
 	if err := execAdmin(pg, fmt.Sprintf("CREATE DATABASE %s OWNER tj_owner", templateDB)); err != nil {
 		return err

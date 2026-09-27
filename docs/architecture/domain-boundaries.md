@@ -49,7 +49,7 @@ Todo módulo depende de `platform` e de `identity` para autorização. A seta `f
 5. **`transparencia` só lê** projeções agregadas por categoria, sem dados pessoais nem documentos (FIN-001, seção 21).
 6. **Autorização por permissão, no caso de uso**, nunca só na rota ([ADR-005](../adr/005-autenticacao-e-rbac.md)).
 7. **Toda escrita financeira gera auditoria** ([ADR-004](../adr/004-auditoria-e-imutabilidade-financeira.md)).
-8. As regras 1, 2 e 4 devem ser verificadas automaticamente no CI (linter de dependências), a definir na spec de fundação.
+8. As fronteiras são verificadas automaticamente no CI por `api/internal/architecture_test.go`: nenhum módulo importa `domain`, `infra` ou `http` de outro, `platform` não importa módulo de negócio e, dentro de cada módulo, as dependências apontam para dentro (`domain` → `app` → `infra` e `http`). Os módulos são descobertos pelos diretórios de `internal/`. As regras 1 e 4 (escrita e ciclos entre módulos) seguem por revisão.
 
 ## Superfícies de acesso
 

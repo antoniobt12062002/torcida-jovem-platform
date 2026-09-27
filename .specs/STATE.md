@@ -90,14 +90,38 @@
 - **Date**: 2026-09-26
 - **Status**: active
 
+### AD-012
+- **Decision**: O contrato OpenAPI (`api/openapi/*.yaml`) é a fonte única das rotas. A partida da API falha se uma rota registrada não tem operação no contrato, ou se uma operação não tem rota; o CI falha se o código gerado ou os tipos do front divergem do contrato.
+- **Reason**: Evita rotas esquecidas fora do contrato (sem validação, sem documentação e sem tipos) e contrato que promete o que a API não faz.
+- **Trade-off**: Toda rota nova começa pelo contrato, e a geração de código entra no fluxo de trabalho.
+- **Scope**: `api/openapi/`, `api/internal/httpapi/router.go` e o job de contrato do CI. Ver `docs/architecture/architecture-overview.md`.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-013
+- **Decision**: Rotas são negadas por padrão: só a lista pública explícita (`/healthz`, login e as duas rotas de recuperação de acesso) dispensa sessão. A cadeia pública aplica origem, limite de corpo de 64 KiB e validação do contrato; a autenticada aplica limite de 1 MiB, origem, sessão, CSRF e validação do contrato, nessa ordem, para que quem não entrou não aprenda a estrutura da API.
+- **Reason**: Um endpoint esquecido sem proteção é o erro mais provável e mais caro; a ordem da cadeia decide o que cada tipo de chamador consegue observar.
+- **Trade-off**: Toda rota pública nova exige decisão explícita e teste; a autenticação vem antes da validação de estrutura.
+- **Scope**: `api/internal/httpapi/` e `api/internal/platform/httpx/`. Ver AD-005 e `docs/adr/005-autenticacao-e-rbac.md`.
+- **Date**: 2026-09-27
+- **Status**: active
+
+### AD-014
+- **Decision**: Cada módulo é composto em um único ponto de entrada (`identity.New`), que liga repositórios e casos de uso; os handlers HTTP são finos (leem o principal, chamam o caso de uso, devolvem a resposta) e os erros de domínio viram HTTP numa tabela única. As fronteiras entre módulos e entre camadas (`domain` → `app` → `infra` e `http`) são verificadas por `api/internal/architecture_test.go`, que descobre os módulos pelos diretórios de `internal/`.
+- **Reason**: Regra de negócio fica num só lugar, o mapeamento de erros não diverge entre rotas e um módulo novo herda as fronteiras sem configuração.
+- **Trade-off**: Handlers dependem do módulo composto; quem adiciona um módulo segue o mesmo esqueleto de pacotes (`domain`, `app`, `infra`, `http`).
+- **Scope**: Todos os módulos de negócio. Ver `docs/architecture/domain-boundaries.md`.
+- **Date**: 2026-09-27
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/fundacao-core/`
-- **Phase / Task**: Fases 1 a 10 mescladas (T1 a T73); fase 11 (handlers, router, bootstrap-admin, main e e2e, T74 a T82) implementada na branch `feature/fundacao-core-fase-11`, aguardando PR e merge
-- **Completed**: T1 a T82
+- **Phase / Task**: Fases 1 a 11 mescladas (T1 a T82); fase 12 (guardrails e documentação, T83 a T86) implementada na branch `feature/fundacao-core-fase-12`, aguardando PR e merge
+- **Completed**: T1 a T86 (fundacao-core)
 - **In-progress** (file:line): none
-- **Next step**: Mesclar o PR da fase 11 e apresentar a fase 12 (guardrails e documentação, T83 a T86) antes de codificar
+- **Next step**: Mesclar o PR da fase 12, rodar a validação final da `fundacao-core` (Verifier independente e `validation.md`), analisar o SEC-001 e apresentar a `fundacao-documentos`
 - **Blockers**: none
 - **Future decisions**: ErrOutOfRange → 422 `amount_out_of_range` no primeiro endpoint monetário; adicionar o componente `Id` ao `common.yaml` quando o primeiro contrato precisar; dupla aprovação para promoção administrativa; separar auditoria institucional e técnica (`audit:log:read` do Conselho Fiscal aprovado); convite por e-mail, primeiro acesso por link temporário e fluxo de onboarding; `GET /roles` (papéis, descrições e permissões) quando houver interface administrativa; troca de e-mail (`ChangeEmail`, com senha atual, auditoria e possível confirmação por e-mail); rate limit unificado de credenciais, por IP e dispositivo, e MFA na recuperação; impedir `EMAIL_PROVIDER=disabled` em produção; provedor concreto de e-mail (adaptador atrás de `platform/email`); armazenamento controlado de IP em eventos de segurança (LGPD); versionamento dos eventos de auditoria; encadeamento criptográfico dos registros
 - **Uncommitted files**: none
-- **Branch**: feature/fundacao-core-fase-11
+- **Branch**: feature/fundacao-core-fase-12
