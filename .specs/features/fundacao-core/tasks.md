@@ -2495,7 +2495,7 @@ T83 → T84 → T85 → T86
 **Where**: `api/internal/architecture_test.go`  
 **Depends on**: None  
 **Reuses**: `docs/architecture/domain-boundaries.md`  
-**Requirement**: TST-02 (ACs 1, 2, 3)
+**Requirement**: TST-02 (ACs 1, 2, 3, 4, 5)
 
 **Tools**:
 
@@ -2504,11 +2504,13 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Falha se um módulo importa `domain`, `infra` ou `http` de outro módulo
-- [ ] Falha se `platform` importa um módulo de negócio
-- [ ] Fixtures violando cada regra são detectadas (testes negativos)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Falha se um módulo importa `domain`, `infra` ou `http` de outro módulo
+- [x] Falha se `platform` importa um módulo de negócio
+- [x] Falha se `domain` importa o próprio `app`, `infra` ou `http` ou um pacote de terceiros, se `app` importa o próprio `infra` ou `http`, ou se `infra` e `http` se importam (dependências sempre para dentro)
+- [x] Os módulos são descobertos pelos diretórios de `internal/` (sem lista manual) e os arquivos `_test.go` são ignorados
+- [x] Fixtures violando cada regra são detectadas (testes negativos)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick

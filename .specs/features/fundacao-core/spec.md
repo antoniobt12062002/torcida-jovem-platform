@@ -497,6 +497,8 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 1. The test suite SHALL fail if a package under `api/internal/<module>/` imports the `domain`, `infra` or `http` package of a different business module.
 2. The test suite SHALL fail if a package under `api/internal/platform/` imports any business module package.
 3. WHEN the checker is given a fixture that violates each rule THEN it SHALL report a violation, proven by negative tests.
+4. The test suite SHALL fail if, inside a business module, the `domain` package imports the module's own `app`, `infra` or `http` package or a third-party (external adapter) package, if `app` imports its own `infra` or `http`, or if `infra` and `http` import each other, so that dependencies always point inward (domain, then app, then infra and http).
+5. The checker SHALL find the business modules from the directories under `api/internal/` (a module is a directory, other than `platform`, that has a `domain` package), without a list of modules kept by hand, so a future module is covered from its first commit; test files (`_test.go`) SHALL NOT count as imports.
 
 **Independent Test**: Adicionar um import proibido num fixture e ver o teste falhar.
 
@@ -610,7 +612,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |
 | MNY-03 | P2: Rateio e percentuais | In Tasks | Implementing |
 | TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Pending |
-| TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Pending |
+| TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Implementing |
 | TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
 | API-01 | P1: Contrato OpenAPI | In Tasks | Implementing |
 | API-02 | P1: Convenções da API | In Tasks | Implementing |
