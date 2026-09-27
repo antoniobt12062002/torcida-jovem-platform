@@ -2300,12 +2300,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
-- [ ] Respostas validadas contra o contrato
-- [ ] Nenhuma resposta contém hash de senha nem token
-- [ ] `POST /api/v1/users/{id}/password-reset` devolve 200 com a senha temporária uma única vez e `Cache-Control: no-store`, sem registrá-la em log nem auditoria; erros mapeados: 422 `reason_required`, 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Erros mapeados: 422 `reason_required`, 409 `already_admin`, `user_inactive`, `not_admin` e `last_admin`, 403 `privilege_escalation` e `self_change_forbidden`
+- [x] Respostas validadas contra o contrato
+- [x] Nenhuma resposta contém hash de senha nem token
+- [x] `POST /api/v1/users/{id}/password-reset` devolve 200 com a senha temporária uma única vez e `Cache-Control: no-store`, sem registrá-la em log nem auditoria; erros mapeados: 422 `reason_required`, 403 `privilege_escalation` e `self_change_forbidden`, 409 `user_inactive`
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
