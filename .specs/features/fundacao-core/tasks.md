@@ -2559,9 +2559,9 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Estrutura de pastas reflete o código real
-- [ ] Lint de markdown e links passam
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Estrutura de pastas reflete o código real
+- [x] Lint de markdown e links passam
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
