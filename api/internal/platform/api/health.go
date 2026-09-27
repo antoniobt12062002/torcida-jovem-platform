@@ -22,10 +22,3 @@ func (h HealthHandler) GetHealth(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, Health{Status: Ok})
 }
-
-// GetAuditLogs satisfies ServerInterface until the audit query handler exists
-// (phase 11). The router does not register this operation yet, so it is never
-// reachable; it answers 501 if something ever calls it.
-func (HealthHandler) GetAuditLogs(c *gin.Context, _ GetAuditLogsParams) {
-	c.Status(http.StatusNotImplemented)
-}

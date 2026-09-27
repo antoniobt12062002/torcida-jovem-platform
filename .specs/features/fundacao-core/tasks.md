@@ -2329,11 +2329,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Ordem decrescente e filtros combinados por E
-- [ ] `limit` acima de 100 devolve 422 `invalid_limit`
-- [ ] Sem `audit:log:read` devolve 403
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Ordem decrescente e filtros combinados por E
+- [x] `limit` acima de 100 devolve 422 `invalid_limit`
+- [x] Sem `audit:log:read` devolve 403
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

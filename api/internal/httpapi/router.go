@@ -6,9 +6,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	platformapi "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/api"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 )
+
+// platformServer is the platform ServerInterface: the health check and the audit
+// query. The audit query is not registered yet (see contractPendingRoutes).
+type platformServer struct {
+	platformapi.HealthHandler
+	audit.Handler
+}
 
 type PingFunc func(ctx context.Context) error
 
@@ -29,7 +37,7 @@ func NewRouter(ping PingFunc) *gin.Engine {
 	// Only /healthz is registered for now: the audit query is in the contract but
 	// its handler comes in phase 11 (see contractPendingRoutes in routes_test.go).
 	platform := platformapi.ServerInterfaceWrapper{
-		Handler:            platformapi.HealthHandler{Ping: ping},
+		Handler:            platformServer{HealthHandler: platformapi.HealthHandler{Ping: ping}},
 		HandlerMiddlewares: []platformapi.MiddlewareFunc{platformapi.MiddlewareFunc(validate)},
 		ErrorHandler: func(c *gin.Context, err error, status int) {
 			httpx.WriteProblem(c, status, "validation_failed", "Parâmetros inválidos.")
