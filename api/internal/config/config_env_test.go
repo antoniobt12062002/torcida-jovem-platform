@@ -11,6 +11,8 @@ var allVars = []string{
 	"COOKIE_SECURE", "COOKIE_DOMAIN", "SESSION_IDLE_MINUTES", "SESSION_ABSOLUTE_HOURS",
 	"AUTH_HASH_KEY", "ARGON2_MEMORY_KIB", "ARGON2_ITERATIONS", "ARGON2_PARALLELISM",
 	"PASSWORD_RESET_TTL_MINUTES", "EMAIL_PROVIDER", "EMAIL_FROM", "APP_BASE_URL",
+	"STORAGE_ENABLED", "S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY",
+	"S3_USE_PATH_STYLE", "DOCUMENT_URL_TTL_SECONDS",
 }
 
 // testHashKey satisfies the 32-byte minimum; setEnv uses it unless a test sets
@@ -53,6 +55,15 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if len(cfg.AllowedOrigins) != 0 {
 		t.Errorf("AllowedOrigins = %v, esperado vazio", cfg.AllowedOrigins)
+	}
+	if cfg.StorageEnabled {
+		t.Error("StorageEnabled deveria ser false por padrão: nada consome storage ainda")
+	}
+	if cfg.DocumentURLTTL != 300*time.Second {
+		t.Errorf("DocumentURLTTL = %v, esperado 300s", cfg.DocumentURLTTL)
+	}
+	if cfg.S3UsePathStyle {
+		t.Error("S3UsePathStyle deveria ser false por padrão")
 	}
 }
 
@@ -126,6 +137,27 @@ func TestLoadInvalidVariablesNameTheVariable(t *testing.T) {
 		{"teto negativo", map[string]string{"SESSION_ABSOLUTE_HOURS": "-1"}, "SESSION_ABSOLUTE_HOURS"},
 		{"origem sem esquema", map[string]string{"ALLOWED_ORIGINS": "app.tj.example"}, "ALLOWED_ORIGINS"},
 		{"origem com caminho", map[string]string{"ALLOWED_ORIGINS": "https://app.tj.example/painel"}, "ALLOWED_ORIGINS"},
+		{"storage enabled inválido", map[string]string{"STORAGE_ENABLED": "talvez"}, "STORAGE_ENABLED"},
+		{"storage habilitado sem nenhuma variável S3", map[string]string{"STORAGE_ENABLED": "true"}, "S3_ENDPOINT"},
+		{"storage habilitado sem região", map[string]string{
+			"STORAGE_ENABLED": "true", "S3_ENDPOINT": "http://localhost:9000", "S3_BUCKET": "tj-documentos",
+			"S3_ACCESS_KEY": "x", "S3_SECRET_KEY": "y",
+		}, "S3_REGION"},
+		{"storage habilitado sem bucket", map[string]string{
+			"STORAGE_ENABLED": "true", "S3_ENDPOINT": "http://localhost:9000", "S3_REGION": "us-east-1",
+			"S3_ACCESS_KEY": "x", "S3_SECRET_KEY": "y",
+		}, "S3_BUCKET"},
+		{"storage habilitado sem chave de acesso", map[string]string{
+			"STORAGE_ENABLED": "true", "S3_ENDPOINT": "http://localhost:9000", "S3_REGION": "us-east-1",
+			"S3_BUCKET": "tj-documentos", "S3_SECRET_KEY": "y",
+		}, "S3_ACCESS_KEY"},
+		{"storage habilitado sem chave secreta", map[string]string{
+			"STORAGE_ENABLED": "true", "S3_ENDPOINT": "http://localhost:9000", "S3_REGION": "us-east-1",
+			"S3_BUCKET": "tj-documentos", "S3_ACCESS_KEY": "x",
+		}, "S3_SECRET_KEY"},
+		{"path style inválido", map[string]string{"S3_USE_PATH_STYLE": "talvez"}, "S3_USE_PATH_STYLE"},
+		{"validade da URL zero", map[string]string{"DOCUMENT_URL_TTL_SECONDS": "0"}, "DOCUMENT_URL_TTL_SECONDS"},
+		{"validade da URL negativa", map[string]string{"DOCUMENT_URL_TTL_SECONDS": "-1"}, "DOCUMENT_URL_TTL_SECONDS"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -159,5 +191,61 @@ func TestLoadErrorsNeverContainSecrets(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "s3cr3t-password") {
 		t.Errorf("erro vazou o segredo: %v", err)
+	}
+}
+
+// DOC-03: com STORAGE_ENABLED=true e as cinco variáveis, o storage carrega, e
+// nenhum erro de outra variável inválida ecoa a chave secreta de volta.
+func TestLoadStorageEnabledReadsAllVariablesAndNeverLeaksTheSecretKey(t *testing.T) {
+	setEnv(t, map[string]string{
+		"DATABASE_URL": "postgres://x", "STORAGE_ENABLED": "true",
+		"S3_ENDPOINT": "http://localhost:9000", "S3_REGION": "us-east-1", "S3_BUCKET": "tj-documentos",
+		"S3_ACCESS_KEY": "AKIAEXEMPLO", "S3_SECRET_KEY": "segredo-s3-nao-pode-vazar",
+		"S3_USE_PATH_STYLE": "true", "DOCUMENT_URL_TTL_SECONDS": "120",
+		"PORT": "abc", // erro proposital de outra variável, para checar o vazamento
+	})
+
+	_, err := Load()
+
+	if err == nil || !strings.Contains(err.Error(), "PORT") {
+		t.Fatalf("esperava erro nomeando PORT, veio %v", err)
+	}
+	if strings.Contains(err.Error(), "segredo-s3-nao-pode-vazar") {
+		t.Errorf("erro vazou a chave secreta do S3: %v", err)
+	}
+
+	setEnv(t, map[string]string{
+		"DATABASE_URL": "postgres://x", "STORAGE_ENABLED": "true",
+		"S3_ENDPOINT": "http://localhost:9000", "S3_REGION": "us-east-1", "S3_BUCKET": "tj-documentos",
+		"S3_ACCESS_KEY": "AKIAEXEMPLO", "S3_SECRET_KEY": "segredo-s3-nao-pode-vazar",
+		"S3_USE_PATH_STYLE": "true", "DOCUMENT_URL_TTL_SECONDS": "120",
+	})
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if !cfg.StorageEnabled || cfg.S3Endpoint != "http://localhost:9000" || cfg.S3Region != "us-east-1" ||
+		cfg.S3Bucket != "tj-documentos" || cfg.S3AccessKey != "AKIAEXEMPLO" || cfg.S3SecretKey != "segredo-s3-nao-pode-vazar" {
+		t.Errorf("configuração de storage = %+v", cfg)
+	}
+	if !cfg.S3UsePathStyle {
+		t.Error("S3UsePathStyle deveria ser true")
+	}
+	if cfg.DocumentURLTTL != 120*time.Second {
+		t.Errorf("DocumentURLTTL = %v, esperado 120s", cfg.DocumentURLTTL)
+	}
+}
+
+// Com storage desabilitado, as variáveis S3 continuam opcionais.
+func TestLoadStorageDisabledDoesNotRequireS3Variables(t *testing.T) {
+	setEnv(t, map[string]string{"DATABASE_URL": "postgres://x"})
+
+	cfg, err := Load()
+
+	if err != nil {
+		t.Fatalf("erro inesperado: %v", err)
+	}
+	if cfg.S3Endpoint != "" || cfg.S3Region != "" || cfg.S3Bucket != "" || cfg.S3AccessKey != "" || cfg.S3SecretKey != "" {
+		t.Errorf("nenhum campo S3 deveria ser lido com storage desabilitado: %+v", cfg)
 	}
 }

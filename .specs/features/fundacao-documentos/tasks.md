@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-documentos/design.md`
-**Status**: Approved (2026-09-27); execução em lotes pequenos, por fase; `tests-first`, um commit atômico por tarefa
+**Status**: In Progress (execução em lotes pequenos, por fase); `tests-first`, um commit atômico por tarefa
 
 **Pré-requisito**: `fundacao-core` concluída (usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e as migrações da core).
 
@@ -91,10 +91,10 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Variáveis de endpoint, região, bucket, chaves e estilo de path lidas e validadas, sem imprimir segredos
-- [ ] Validade da URL menor ou igual a zero é erro de configuração
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Variáveis de endpoint, região, bucket, chaves e estilo de path lidas e validadas, sem imprimir segredos
+- [x] Validade da URL menor ou igual a zero é erro de configuração
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: unit  
 **Gate**: quick
