@@ -4,6 +4,7 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"sync"
 	"testing"
@@ -66,6 +67,28 @@ func TestDeactivateRevokesSessionsAndPendingRecoveryTokensAndAudits(t *testing.T
 	evs := e.events(t, "user.deactivate")
 	if len(evs) != 1 || evs[0].Outcome != "success" || evs[0].EntityID != target.ID || evs[0].ActorID == nil || *evs[0].ActorID != adminU.ID {
 		t.Errorf("eventos = %+v", evs)
+	}
+	assertActivationBeforeAfter(t, evs[0], true, false)
+}
+
+// assertActivationBeforeAfter checks the before/after of user.deactivate and
+// user.reactivate the spec defines (IDN-04.3, IDN-04.10): exactly {"active": bool}.
+func assertActivationBeforeAfter(t *testing.T, ev auditEvent, before, after bool) {
+	t.Helper()
+	decode := func(s *string) map[string]any {
+		t.Helper()
+		if s == nil {
+			t.Fatal("before/after ausente")
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(*s), &m); err != nil {
+			t.Fatalf("não é JSON: %v: %s", err, *s)
+		}
+		return m
+	}
+	b, a := decode(ev.Before), decode(ev.After)
+	if len(b) != 1 || b["active"] != before || len(a) != 1 || a["active"] != after {
+		t.Errorf("before = %v, after = %v, esperado {active: %v} e {active: %v}", b, a, before, after)
 	}
 }
 
@@ -233,8 +256,11 @@ func TestReactivateAuditsAndDoesNotRestoreAClosedMembership(t *testing.T) {
 	if got := e.rolesOf(t, target.ID); len(got) != 1 || got[0] != domain.RoleAssociado {
 		t.Errorf("papéis = %v", got)
 	}
-	if evs := e.events(t, "user.reactivate"); len(evs) != 1 || evs[0].Outcome != "success" {
+	evs := e.events(t, "user.reactivate")
+	if len(evs) != 1 || evs[0].Outcome != "success" {
 		t.Errorf("eventos = %+v", evs)
+	} else {
+		assertActivationBeforeAfter(t, evs[0], false, true)
 	}
 }
 
