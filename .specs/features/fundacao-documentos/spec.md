@@ -137,7 +137,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| DOC-01 | P2: Armazenamento de documentos | In Tasks | Pending |
+| DOC-01 | P2: Armazenamento de documentos | In Tasks | Implementing |
 | DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Pending |
 | DOC-03 | P2: Configuração do storage | In Tasks | Implementing |
 | DOC-04 | P2: Consulta de documentos por dono | In Tasks | Pending |

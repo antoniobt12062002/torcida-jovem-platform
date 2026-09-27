@@ -118,9 +118,9 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] Interface expõe Put, PresignGet e DeleteCreated, sem operação de sobrescrever ou apagar documentos
-- [ ] Erros tipados para não encontrado e falha de armazenamento
-- [ ] Gate check passes: `cd api && go vet ./... && go test ./...`
+- [x] Interface expõe Put, PresignGet e DeleteCreated, sem operação de sobrescrever ou apagar documentos
+- [x] Erros tipados para não encontrado e falha de armazenamento
+- [x] Gate check passes: `cd api && go vet ./... && go test ./...`
 
 **Tests**: none  
 **Gate**: quick
