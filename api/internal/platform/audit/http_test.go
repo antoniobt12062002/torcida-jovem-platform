@@ -341,7 +341,7 @@ func TestAuditQueryAnswersServiceUnavailableWhenTheDatabaseIsDown(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	sqlDB.Close() // simula o banco caindo no meio da requisição
+	_ = sqlDB.Close() // simula o banco caindo no meio da requisição
 
 	authorizer, err := authz.NewAuthorizer([]authz.Definition{{Permission: audit.ReadPermission}}, nil)
 	if err != nil {
