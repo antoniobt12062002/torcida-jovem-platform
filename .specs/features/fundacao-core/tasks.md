@@ -2357,11 +2357,11 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap-admin` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
-- [ ] Recusa se já existir qualquer vínculo administrativo ativo
-- [ ] Recusa senha ausente ou fora da política de administrador (10 caracteres)
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Cria usuário ativo com o papel ADMIN_SISTEMA (padrão) ou PRESIDENTE, com vínculo administrativo de motivo `bootstrap-admin` e sem quem concedeu, e grava `user.bootstrap` sem ator, com e-mail, papel e motivo e nunca a senha
+- [x] Recusa se já existir qualquer vínculo administrativo ativo
+- [x] Recusa senha ausente ou fora da política de administrador (10 caracteres)
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full

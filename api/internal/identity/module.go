@@ -61,6 +61,7 @@ type Module struct {
 	RequestReset   *app.RequestPasswordReset
 	ResetPassword  *app.ResetPasswordWithToken
 	AdminReset     *app.AdminResetPassword
+	Bootstrap      *app.BootstrapAdmin
 
 	SessionAbsolute time.Duration
 }
@@ -118,6 +119,9 @@ func New(d Deps) *Module {
 		ResetPassword: &app.ResetPasswordWithToken{
 			Recovery: recovery, Users: users, Roles: roles, Sessions: sessions, Passwords: d.Hasher, Denylist: d.Denylist,
 			Audit: d.Recorder, Tx: tx, Now: now,
+		},
+		Bootstrap: &app.BootstrapAdmin{
+			Users: users, Members: members, Audit: d.Recorder, Hasher: d.Hasher, Denylist: d.Denylist, Tx: tx, Now: now,
 		},
 		AdminReset: &app.AdminResetPassword{
 			Authz: d.Authorizer, Users: users, Perms: roles, Roles: roles, Sessions: sessions, Recovery: recovery,
