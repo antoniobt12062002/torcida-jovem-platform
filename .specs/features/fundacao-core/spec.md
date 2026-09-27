@@ -581,7 +581,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 - IF two logins for the same user happen concurrently THEN the system SHALL create two independent sessions.
 - IF the session cookie is present but malformed THEN the system SHALL respond 401 with code `unauthenticated` and SHALL NOT raise an internal error.
 - IF the database is unavailable during a request THEN the system SHALL respond 503 with code `service_unavailable`.
-- IF the roles of a user are replaced with an empty role set THEN the system SHALL respond 422 with code `validation_failed`.
+- IF the administrative roles of a user with an active administrative membership are replaced with an empty set THEN the system SHALL accept it, leave the membership dormant (Assumption "Papel-base ASSOCIADO" above) and keep the role ASSOCIADO, never respond `validation_failed` for this case; an empty administrative role set never means the user itself stops existing.
 - IF two administrators promote the same user concurrently THEN the system SHALL let exactly one succeed and respond 409 `already_admin` to the other.
 - WHEN a role is removed from a user THEN the system SHALL stop granting the permissions of that role from the next request.
 - WHEN `Allocate` receives a total of zero THEN the system SHALL return parts that are all zero.
