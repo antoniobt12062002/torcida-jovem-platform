@@ -34,6 +34,29 @@ func TestRolesAndPermissionsAreListedInAStableOrder(t *testing.T) {
 	}
 }
 
+// AUD-01.3 (mesma regra vale para o restante da API): created_at e granted_at
+// sempre saem em UTC, seja qual for o fuso do driver.
+func TestUserOutNormalizesTimestampsToUTC(t *testing.T) {
+	brt := time.FixedZone("BRT", -3*3600)
+	local := time.Date(2026, 9, 26, 9, 0, 0, 0, brt) // 12:00 UTC
+
+	u := userOut(domain.UserSummary{
+		ID: "0f8fad5b-d9cb-469f-a165-70867728950e", CreatedAt: local,
+		AdminMembership: &domain.MembershipSummary{Reason: "x", GrantedAt: local},
+	})
+
+	if u.CreatedAt.Location() != time.UTC || !u.CreatedAt.Equal(local) {
+		t.Errorf("created_at = %v", u.CreatedAt)
+	}
+	if u.AdminMembership.GrantedAt.Location() != time.UTC || !u.AdminMembership.GrantedAt.Equal(local) {
+		t.Errorf("granted_at = %v", u.AdminMembership.GrantedAt)
+	}
+	body, _ := json.Marshal(u)
+	if !strings.Contains(string(body), `"created_at":"2026-09-26T12:00:00Z"`) || !strings.Contains(string(body), `"granted_at":"2026-09-26T12:00:00Z"`) {
+		t.Errorf("JSON = %s", body)
+	}
+}
+
 // Retry-After nunca é zero: menos de um segundo restante vira 1.
 func TestRetryAfterIsAtLeastOneSecond(t *testing.T) {
 	for in, want := range map[time.Duration]string{0: "1", 400 * time.Millisecond: "1", -time.Second: "1", 90 * time.Second: "90", 15 * time.Minute: "900"} {

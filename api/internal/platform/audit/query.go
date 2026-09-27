@@ -185,8 +185,11 @@ func (q *Query) Search(ctx context.Context, actor authz.Principal, f Filter, lim
 }
 
 func (r row) record() (Record, error) {
+	// AUD-01.3: occurred_at is always UTC in the response, regardless of the
+	// server's local time zone — timestamptz decodes with the Go runtime's
+	// zone, not necessarily UTC.
 	rec := Record{
-		ID: r.ID, OccurredAt: r.OccurredAt, ActorType: r.ActorType, ActorUserID: r.ActorUserID, Action: r.Action,
+		ID: r.ID, OccurredAt: r.OccurredAt.UTC(), ActorType: r.ActorType, ActorUserID: r.ActorUserID, Action: r.Action,
 		EntityType: r.EntityType, EntityID: r.EntityID, Outcome: r.Outcome, Reason: r.Reason, RequestID: r.RequestID,
 	}
 	var err error

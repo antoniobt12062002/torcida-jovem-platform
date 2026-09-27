@@ -125,7 +125,7 @@ func (h *Handler) authContext(ctx context.Context, userID, csrf string) (AuthCon
 		MustChangePassword: user.MustChangePassword,
 	}
 	if ok {
-		out.AdminMembership = &AdminMembershipSummary{Reason: membership.Reason, GrantedAt: membership.GrantedAt}
+		out.AdminMembership = &AdminMembershipSummary{Reason: membership.Reason, GrantedAt: membership.GrantedAt.UTC()}
 	}
 	return out, nil
 }

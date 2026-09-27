@@ -15,14 +15,17 @@ func toDomainRoles(roles []Role) []domain.Role {
 	return out
 }
 
-// userOut is a listed user: never the password hash or any token.
+// userOut is a listed user: never the password hash or any token. Every
+// timestamp is normalized to UTC (AUD-01.3), independent of the server's
+// local time zone: PostgreSQL's timestamptz decodes with the Go runtime's
+// zone, not necessarily UTC.
 func userOut(s domain.UserSummary) User {
 	u := User{
 		Id: parseUUID(s.ID), Email: s.Email, Name: s.Name, Active: s.Active, MustChangePassword: s.MustChangePassword,
-		CreatedAt: s.CreatedAt, Roles: rolesOut(s.Roles),
+		CreatedAt: s.CreatedAt.UTC(), Roles: rolesOut(s.Roles),
 	}
 	if s.AdminMembership != nil {
-		u.AdminMembership = &AdminMembershipSummary{Reason: s.AdminMembership.Reason, GrantedAt: s.AdminMembership.GrantedAt}
+		u.AdminMembership = &AdminMembershipSummary{Reason: s.AdminMembership.Reason, GrantedAt: s.AdminMembership.GrantedAt.UTC()}
 	}
 	return u
 }

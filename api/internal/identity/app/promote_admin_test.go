@@ -4,6 +4,7 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"slices"
 	"strings"
@@ -63,9 +64,61 @@ func TestPromoteGrantsMembershipAndRolesForcesPasswordChangeRevokesSessionsAndAu
 		evs[0].ActorID == nil || *evs[0].ActorID != presidenteU.ID {
 		t.Fatalf("eventos = %+v", evs)
 	}
-	if evs[0].Before == nil || !strings.Contains(*evs[0].Before, "ASSOCIADO") || evs[0].After == nil || !strings.Contains(*evs[0].After, "TESOURARIA") {
-		t.Errorf("before/after = %v / %v", evs[0].Before, evs[0].After)
+	assertPromoteBeforeAfter(t, evs[0], []string{"ASSOCIADO"}, []string{"ASSOCIADO", "TESOURARIA"})
+}
+
+// assertPromoteBeforeAfter decodes before/after and checks the exact keys and
+// values IDN-06.1 requires: the previous and new role names, nothing more and
+// nothing less (a Contains check would miss a swapped or padded role list).
+func assertPromoteBeforeAfter(t *testing.T, ev auditEvent, beforeRoles, afterRoles []string) {
+	t.Helper()
+	if ev.Before == nil || ev.After == nil {
+		t.Fatalf("before/after = %v / %v", ev.Before, ev.After)
 	}
+	var before, after map[string]any
+	if err := json.Unmarshal([]byte(*ev.Before), &before); err != nil {
+		t.Fatalf("before não é JSON: %v: %s", err, *ev.Before)
+	}
+	if err := json.Unmarshal([]byte(*ev.After), &after); err != nil {
+		t.Fatalf("after não é JSON: %v: %s", err, *ev.After)
+	}
+	wantKeys := []string{"admin_membership", "roles"}
+	if !slices.Equal(sortedKeys(before), wantKeys) {
+		t.Errorf("before tem chaves %v, esperado exatamente %v", sortedKeys(before), wantKeys)
+	}
+	if !slices.Equal(sortedKeys(after), []string{"admin_membership", "must_change_password", "roles"}) {
+		t.Errorf("after tem chaves %v", sortedKeys(after))
+	}
+	if !slices.Equal(anySliceToStrings(before["roles"]), beforeRoles) {
+		t.Errorf("before.roles = %v, esperado %v", before["roles"], beforeRoles)
+	}
+	if !slices.Equal(anySliceToStrings(after["roles"]), afterRoles) {
+		t.Errorf("after.roles = %v, esperado %v", after["roles"], afterRoles)
+	}
+	if before["admin_membership"] != false {
+		t.Errorf("before.admin_membership = %v, esperado false", before["admin_membership"])
+	}
+	if after["admin_membership"] != true || after["must_change_password"] != true {
+		t.Errorf("after.admin_membership = %v, after.must_change_password = %v, esperado true e true", after["admin_membership"], after["must_change_password"])
+	}
+}
+
+func sortedKeys(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	slices.Sort(out)
+	return out
+}
+
+func anySliceToStrings(v any) []string {
+	list, _ := v.([]any)
+	out := make([]string, len(list))
+	for i, x := range list {
+		out[i], _ = x.(string)
+	}
+	return out
 }
 
 func TestPromoteChecksThePermissionFirst(t *testing.T) {
