@@ -2444,12 +2444,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Falha de configuração encerra o processo nomeando a variável
-- [ ] Sincronização de papéis roda na partida
-- [ ] Em desenvolvimento o e-mail usa `EMAIL_PROVIDER=log`, que não registra token, URL completa nem senha temporária
-- [ ] Migrações não rodam na partida
-- [ ] Build passa
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Falha de configuração encerra o processo nomeando a variável
+- [x] Sincronização de papéis roda na partida
+- [x] Em desenvolvimento o e-mail usa `EMAIL_PROVIDER=log`, que não registra token, URL completa nem senha temporária
+- [x] Migrações não rodam na partida
+- [x] Build passa
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build

@@ -57,6 +57,17 @@ func main() {
 		ResetTTL: cfg.PasswordResetTTL, BaseURL: cfg.AppBaseURL,
 	})
 
+	// The roles and permissions in the database follow the code at every start
+	// (idempotent, audited as rbac.sync when something changed). Migrations do
+	// not run here: they are applied by tj_owner, apart from the API.
+	syncCtx, cancelSync := context.WithTimeout(context.Background(), 30*time.Second)
+	synced, err := mod.Roles.Sync(syncCtx, matrix)
+	cancelSync()
+	if err != nil {
+		log.Fatalf("sincronização de papéis e permissões: %v", err)
+	}
+	logger.Info("papéis e permissões sincronizados", "changed", synced.Changed)
+
 	srv := &http.Server{
 		Addr: ":" + cfg.Port,
 		Handler: httpapi.NewRouter(httpapi.Deps{
