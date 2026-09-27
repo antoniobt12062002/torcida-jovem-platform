@@ -1,7 +1,7 @@
 # Fundação Documentos Design
 
 **Spec**: `.specs/features/fundacao-documentos/spec.md`
-**Status**: Approved (2026-09-26), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída.
+**Status**: Approved (2026-09-27), com os ajustes do mantenedor. Feature 2 de 2; depende de `fundacao-core` concluída e validada.
 
 Decisões ativas do projeto respeitadas: AD-001 a AD-009, em especial AD-008 (object storage S3, sem provedor definido). Nenhuma é substituída.
 
@@ -9,12 +9,12 @@ Decisões ativas do projeto respeitadas: AD-001 a AD-009, em especial AD-008 (ob
 
 ## Architecture Overview
 
-O serviço de documentos combina permissão, storage e banco. O arquivo vai ao bucket privado por streaming; os metadados e a auditoria entram numa única transação.
+O serviço de documentos combina permissão, storage e banco. `platform/documents` não declara nenhuma permissão própria: cada chamada recebe o `authz.Principal` do ator e a `authz.Permission` exigida, e só repassa para `authz.Require` — quem decide o nome e o dono da permissão é sempre o módulo chamador (ver Tech Decisions). O arquivo vai ao bucket privado por streaming; os metadados e a auditoria entram numa única transação.
 
 ```mermaid
 graph TD
-    UC[módulo chamador] --> SVC[documents.Service]
-    SVC --> AZ[authz.Require]
+    UC[módulo chamador<br/>decide a permissão e o owner_type/owner_id] --> SVC[documents.Service]
+    SVC --> AZ["authz.Require(actor, permissão recebida)"]
     SVC --> VAL[validação: extensão, tamanho, conteúdo]
     SVC --> ST[storage.Storage - protocolo S3]
     SVC --> TX[database.WithTx]
@@ -23,7 +23,7 @@ graph TD
     ST --> S3[(bucket privado)]
 ```
 
-Ordem em `Store`: permissão, validação de extensão, leitura em streaming com limite de 10 MiB e detecção do tipo pelo conteúdo, envio ao storage calculando o SHA-256, e então a transação com metadados e auditoria. Se a transação falha, apenas o objeto recém-criado é removido.
+Ordem em `Store`: permissão (a que o chamador passou), validação de extensão, leitura em streaming com limite de 10 MiB e detecção do tipo pelo conteúdo, envio ao storage calculando o SHA-256, e então a transação com metadados (`status = ACTIVE`) e auditoria. Se a transação falha, apenas o objeto recém-criado é removido. `AccessURL` e `ListByOwner` seguem a mesma regra: primeiro a permissão recebida, depois a operação; `ListByOwner` não audita (leitura de metadados, não de conteúdo) e não gera URL.
 
 ---
 
@@ -58,9 +58,12 @@ Ordem em `Store`: permissão, validação de extensão, leitura em streaming com
 
 ### platform/documents
 
-- **Purpose**: Guardar, versionar e dar acesso a documentos, com permissão e auditoria.
+- **Purpose**: Guardar, versionar, listar e dar acesso a documentos, aplicando a permissão que o chamador exigir, sem conhecer nenhuma permissão de negócio.
 - **Location**: `api/internal/platform/documents/`
-- **Interfaces**: `Service.Store(ctx, StoreInput) (Document, error)`; `Service.AccessURL(ctx, id uuid.UUID) (string, error)`.
+- **Interfaces**:
+  - `Service.Store(ctx, StoreInput) (Document, error)` — `StoreInput` carrega `Actor authz.Principal`, `RequiredPermission authz.Permission`, `OwnerType`, `OwnerID`, `Filename`, `Content io.Reader`, `UploadedBy`.
+  - `Service.AccessURL(ctx, AccessInput) (string, error)` — `AccessInput` carrega `Actor`, `RequiredPermission`, `ID uuid.UUID`.
+  - `Service.ListByOwner(ctx, ListInput) ([]Document, error)` — `ListInput` carrega `Actor`, `RequiredPermission`, `OwnerType`, `OwnerID`; valida só o formato de `OwnerType` (`[a-z0-9_]+\.[a-z0-9_]+`), sem catálogo fixo.
 - **Dependencies**: `storage`, `audit`, `authz`, `database`.
 
 ---
@@ -82,14 +85,15 @@ CREATE TABLE documents (
   storage_key       text NOT NULL UNIQUE,
   version           int NOT NULL CHECK (version >= 1),
   supersedes_id     uuid UNIQUE REFERENCES documents,
+  status            text NOT NULL DEFAULT 'ACTIVE',
   uploaded_by       uuid NOT NULL REFERENCES users,
   uploaded_at       timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
+CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id, uploaded_at DESC);
 -- GRANT INSERT, SELECT ON documents TO tj_app (sem UPDATE e DELETE)
 ```
 
-**Relationships**: `documents.supersedes_id` forma a cadeia de versões, e o `UNIQUE` impede bifurcação. O documento pertence a uma entidade de outro módulo por `owner_type` e `owner_id`, sem chave estrangeira, porque o dono é definido por cada módulo.
+**Relationships**: `documents.supersedes_id` forma a cadeia de versões, e o `UNIQUE` impede bifurcação. O documento pertence a uma entidade de outro módulo por `owner_type` e `owner_id`, sem chave estrangeira, porque o dono é definido por cada módulo. `status` nasce sempre `ACTIVE`; sem `UPDATE` concedido a `tj_app`, nenhuma transição é possível nesta feature — o campo existe para um estado futuro (ex.: quarentena) sem exigir migração de schema quando isso for decidido, mas nenhuma tarefa desta tabela implementa transição.
 
 ---
 
@@ -100,8 +104,9 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Extensão fora da lista | `document_extension_not_allowed`, antes de ler o conteúdo | Arquivo recusado |
 | Tipo divergente da extensão ou fora da lista | `document_type_mismatch` ou `document_type_not_allowed` | Arquivo recusado |
 | Arquivo acima de 10 MiB | `document_too_large`, antes de gravar metadados | Arquivo recusado |
-| Sem permissão | Erro de proibido, sem escrita e sem URL | Acesso negado |
+| Sem a permissão que o chamador exigiu | Erro de proibido, sem escrita, sem URL e sem linha listada | Acesso negado |
 | Documento inexistente | Erro de não encontrado, sem URL | Não encontrado |
+| `owner_type` fora do formato técnico | `document_owner_type_invalid`, antes de consultar o banco | Chamada recusada |
 | Falha no upload ao storage | Erro antes de gravar metadados | Nenhum documento registrado |
 | Falha ao gravar metadados após upload | Remove só o objeto recém-criado | Nenhum documento registrado, sem órfão |
 | Storage inalcançável | Devolve o erro do storage, sem gravar metadados | Tentar mais tarde |
@@ -128,3 +133,7 @@ CREATE INDEX documents_owner_idx ON documents (owner_type, owner_id);
 | Versionamento | Nova linha com `version + 1` e `supersedes_id` | Imutabilidade (ADR-004); o objeto antigo nunca muda |
 | Remoção de objeto | Só do objeto recém-criado quando o registro falha | Não viola a proibição de apagar documentos, pois o objeto nunca foi referenciado |
 | Chave do objeto | `documents/<uuid>` | Não expõe o nome original e evita colisão |
+| Permissão | Parâmetro de cada chamada (`RequiredPermission authz.Permission` no Input), nunca uma constante do pacote | `platform` não decide nome nem dono de permissão de negócio; o módulo consumidor decide |
+| "Versão atual" | Não existe no serviço; cada `id` é uma versão específica | Rastrear "o vigente" é estado de negócio do módulo dono, não de infraestrutura |
+| Status | Coluna `status`, só `ACTIVE` nesta feature, sem `UPDATE` concedido | Prepara espaço para estados futuros sem exigir nova migração, sem construir workflow agora |
+| Formato de `owner_type` | Regex técnica (`[a-z0-9_]+\.[a-z0-9_]+`), sem lista fixa de módulos | `platform/documents` não pode conhecer os módulos que ainda não existem |

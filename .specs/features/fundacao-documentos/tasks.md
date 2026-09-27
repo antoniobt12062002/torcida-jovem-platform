@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-documentos/design.md`
-**Status**: Approved (2026-09-27); execução em lotes pequenos, por fase
+**Status**: Approved (2026-09-27); execução em lotes pequenos, por fase; `tests-first`, um commit atômico por tarefa
 
 **Pré-requisito**: `fundacao-core` concluída (usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e as migrações da core).
 
@@ -67,7 +67,7 @@ T1 → T2 → T3 → T4
 ### Phase 2: Documentos
 
 ```
-T5 → T6
+T5 → T6 → T7
 ```
 
 ---
@@ -194,7 +194,7 @@ T5 → T6
 **Where**: `api/migrations/000005_documents.up.sql`  
 **Depends on**: None  
 **Reuses**: Migração 000002 como padrão  
-**Requirement**: DOC-01 (ACs 1, 5, 6)
+**Requirement**: DOC-01 (ACs 1, 5, 6, 12)
 
 **Tools**:
 
@@ -204,9 +204,11 @@ T5 → T6
 **Done when**:
 
 - [ ] `supersedes_id` único impede bifurcação
+- [ ] Coluna `status` existe, não nula, padrão `ACTIVE`
+- [ ] Índice `(owner_type, owner_id, uploaded_at DESC)` para a listagem por dono (T7)
 - [ ] Com `tj_app`, UPDATE e DELETE falham
 - [ ] Migração `down` desfaz sem erro
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 3 testes; nenhuma exclusão silenciosa)
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
@@ -216,13 +218,13 @@ T5 → T6
 
 ---
 
-### T6: Criar o serviço de documentos: guardar, versionar e gerar URL de acesso, com permissão e auditoria
+### T6: Criar o serviço de documentos: guardar, versionar e gerar URL de acesso, com permissão parametrizada e auditoria
 
-**What**: Criar o serviço de documentos: guardar, versionar e gerar URL de acesso, com permissão e auditoria.  
+**What**: Criar o serviço de documentos: guardar, versionar e gerar URL de acesso; a permissão exigida em cada chamada vem do chamador, nunca fixada no pacote.  
 **Where**: `api/internal/platform/documents/service.go`  
 **Depends on**: T5  
 **Reuses**: `storage`, `audit`, `authz`, `WithTx`  
-**Requirement**: DOC-01 (ACs 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11); DOC-02 (ACs 1, 2, 3)
+**Requirement**: DOC-01 (ACs 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12); DOC-02 (ACs 1, 2, 3, 6)
 
 **Tools**:
 
@@ -231,20 +233,52 @@ T5 → T6
 
 **Done when**:
 
+- [ ] `StoreInput` e `AccessInput` carregam `Actor authz.Principal` e `RequiredPermission authz.Permission`; o serviço não declara nem importa nenhuma permissão própria
 - [ ] Extensão fora de `.pdf`, `.jpg`, `.jpeg`, `.png` e `.webp` é recusada antes de ler o conteúdo
 - [ ] Tipo detectado pelo conteúdo deve coincidir com a extensão
 - [ ] Limite de 10 MiB e tipos por conteúdo aplicados antes de gravar metadados
-- [ ] Versão nova referencia a anterior e não altera o objeto antigo
+- [ ] Versão nova referencia a anterior e não altera o objeto antigo; `status` gravado como `ACTIVE`
 - [ ] Falha ao gravar metadados remove só o objeto recém-criado
 - [ ] `document.create` e `document.access` auditados na transação
-- [ ] Sem permissão não escreve nem gera URL
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 14 testes; nenhuma exclusão silenciosa)
+- [ ] Sem a permissão recebida não escreve nem gera URL
+- [ ] `AccessURL` recebe sempre um id exato (uma versão específica); nenhuma lógica de "versão mais recente" dentro do serviço
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 15 testes; nenhuma exclusão silenciosa)
 - [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
 
 **Commit**: `feat(documents): adiciona servico de documentos versionados`
+
+---
+
+### T7: Criar a consulta de documentos por dono (`ListByOwner`), com validação técnica do formato de `owner_type`
+
+**What**: Criar a consulta de documentos por dono, sem gerar URL nem auditoria, validando só o formato técnico de `owner_type` (sem catálogo fixo de valores).  
+**Where**: `api/internal/platform/documents/list.go`  
+**Depends on**: T6  
+**Reuses**: `authz`, `database`, o mesmo `Service` de T6  
+**Requirement**: DOC-04 (ACs 1, 2, 3, 4)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `ListInput` carrega `Actor`, `RequiredPermission`, `OwnerType`, `OwnerID`
+- [ ] Resultado ordenado do mais novo para o mais antigo, usando o índice de T5
+- [ ] `owner_type` vazio, maior que 100 caracteres ou fora do formato `[a-z0-9_]+\.[a-z0-9_]+` é `document_owner_type_invalid`, sem consultar o banco; nenhuma lista fixa de valores aceitos
+- [ ] Sem a permissão recebida não devolve nenhuma linha
+- [ ] Não gera URL nem grava evento de auditoria
+- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 6 testes; nenhuma exclusão silenciosa)
+- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+
+**Tests**: integration  
+**Gate**: full
+
+**Commit**: `feat(documents): adiciona consulta de documentos por dono`
 
 ---
 
@@ -258,6 +292,7 @@ T5 → T6
 | T4 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T5 | 1 arquivo principal, com seu teste | ✅ Granular |
 | T6 | 1 arquivo principal, com seu teste | ✅ Granular |
+| T7 | 1 arquivo principal, com seu teste | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -271,6 +306,7 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T4 | T3 | T3 | ✅ Match |
 | T5 | - | - | ✅ Match |
 | T6 | T5 | T5 | ✅ Match |
+| T7 | T6 | T6 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -282,6 +318,7 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | T4: st_s3 | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T5: d_mig | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 | T6: d_svc | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
+| T7: d_list | Caso de uso, repositório, SQL, handler ou storage | integration | integration | ✅ OK |
 
 ## Requirement Coverage
 
@@ -290,5 +327,6 @@ Dentro de cada fase, cada tarefa depende apenas da anterior (execução sequenci
 | DOC-01 | T2, T4, T5, T6 |
 | DOC-02 | T3, T4, T6 |
 | DOC-03 | T1 |
+| DOC-04 | T7 |
 
-**Coverage:** 3 total, 3 mapped to tasks, 0 unmapped
+**Coverage:** 4 total, 4 mapped to tasks, 0 unmapped

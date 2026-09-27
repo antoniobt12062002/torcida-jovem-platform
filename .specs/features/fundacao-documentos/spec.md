@@ -1,6 +1,6 @@
 # Fundação Documentos Specification
 
-Status: Aprovada com ajustes em 2026-09-26. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core`. Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
+Status: Aprovada com ajustes em 2026-09-27. Feature 2 de 2 da fundação, executada **depois** de `fundacao-core` (concluída e validada). Narrativa em português; os critérios de aceite (ACs) seguem o padrão EARS em inglês, exigido pelo validador `validate_spec.py`.
 
 ## Problem Statement
 
@@ -11,7 +11,9 @@ O financeiro precisa anexar comprovantes (nota fiscal, recibo, comprovante PIX, 
 - [ ] Documentos guardados em object storage compatível com S3, imutáveis e versionados.
 - [ ] Upload com validação de tamanho (10 MiB), extensão e tipo real do conteúdo (PDF, JPG, PNG e WebP).
 - [ ] Acesso por URL assinada de curta duração, com permissão verificada e acesso auditado.
+- [ ] Consulta de metadados por dono (`owner_type`, `owner_id`), sem gerar URL.
 - [ ] Nenhum provedor específico: só o protocolo S3, com emulador local para desenvolvimento e testes.
+- [ ] `platform/documents` não possui nenhuma permissão de negócio própria: quem chama informa qual permissão vale para cada operação.
 
 ## Out of Scope
 
@@ -21,7 +23,8 @@ O financeiro precisa anexar comprovantes (nota fiscal, recibo, comprovante PIX, 
 | Escolha do provedor de object storage | ADR-006 deixa para depois; usa só o protocolo S3 |
 | Varredura de malware em uploads | Em aberto no ADR-006; entra em feature própria |
 | Identidade, permissões, auditoria e migrações-base | Entregues por `fundacao-core` |
-| Retenção e purga de documentos | Depende de definição jurídica; ADR-004 proíbe exclusão definitiva |
+| Retenção e purga de documentos | Decisão arquitetural desta camada: não existe operação de exclusão (definitiva ou lógica) em `platform/documents`, coerente com ADR-004. Política de retenção, se e quando existir, pertence a cada módulo consumidor (ex.: o financeiro decide quando um documento deixa de ser relevante, nunca apaga o que já foi gravado) |
+| Workflow de estado do documento | O campo `status` nasce só com o valor `ACTIVE`; nenhuma transição de estado é implementada nesta feature (sem UPDATE concedido à `tj_app` na tabela) |
 | Telas de upload e download | A UI é feita nas features dos módulos |
 
 ---
@@ -33,9 +36,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 |---|---|---|---|
 | Documentos aceitos | Até 10 MiB; PDF, JPG, PNG e WebP; extensões fora dessa lista são bloqueadas; o tipo é detectado pelo conteúdo e deve coincidir com a extensão | Definido pelo mantenedor; cobre FIN-001 seção 15 | y |
-| Fluxo de upload e download | Upload passa pela API (streaming para o S3); download por URL assinada com validade de 300 segundos | Permite validar tipo, tamanho e permissão antes de gravar | n |
+| Fluxo de upload e download | Upload passa pela API (streaming para o S3); download por URL assinada com validade de 300 segundos | Permite validar tipo, tamanho e permissão antes de gravar | y |
 | Emulador de S3 local | Um emulador compatível com S3 será escolhido na tarefa correspondente, apenas para desenvolvimento e testes | Não define provedor de produção (ADR-006); a escolha exige checar licença e manutenção atuais | n |
-| Permissões de documentos | PRESIDENTE e TESOURARIA: `document:file:create` e `document:file:read`; CONSELHO_FISCAL: só read; ADMIN_SISTEMA (perfil técnico), DIRETORIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma | Alinhado a FIN-001 seção 15 e às permissões do Conselho Fiscal aprovadas; revisada na spec do financeiro | n |
+| Autorização parametrizada | `platform/documents` não declara nem embute nenhuma permissão de negócio. Cada operação (`Store`, `AccessURL`, `ListByOwner`) recebe do chamador o `authz.Principal` e a `authz.Permission` exigida, e só aplica `authz.Require`; o nome e o dono da permissão (ex.: `financeiro:documento:create`, quando o financeiro tiver spec própria) são decisão do módulo consumidor, nunca de `platform` | Aprovado pelo mantenedor: nenhuma regra de negócio de documentos entra em `platform` | y |
+| Formato de `owner_type` | Validação só técnica (não vazio, tamanho razoável, caracteres de identificador com um separador — ex.: `financeiro.lancamento`); nenhum catálogo fixo de valores aceitos, para não acoplar `platform/documents` aos módulos que ainda não existem | Aprovado pelo mantenedor | y |
+| Versão atual de um documento | `platform/documents` não rastreia "qual é a versão mais recente" de um documento; cada versão é sua própria linha e seu próprio `id`. O módulo consumidor guarda qual `id` é o vigente e o atualiza ao gravar uma nova versão | Aprovado pelo mantenedor: isso é estado de negócio, não infraestrutura | y |
+| Status técnico do documento | Campo `status`, com `ACTIVE` como único valor emitido nesta feature; existe para permitir estados futuros (ex.: quarentena, rejeitado) sem migração de schema, mas nenhum workflow de transição é implementado agora | Aprovado pelo mantenedor | y |
 | Dependências da `fundacao-core` | Usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e o sistema de migrações da core | Evita duplicar infraestrutura | y |
 | SDK de S3 e emulador | Escolhidos e fixados nas tarefas T3 e T4, após checar a documentação vigente | Aprovado: nenhuma versão é fixada sem checar a documentação vigente | y |
 
@@ -52,7 +58,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 **Why P2**: O financeiro precisa, mas a fundação já se prova sem ele.
 
 **Acceptance Criteria**:
-1. WHEN a document is stored THEN the system SHALL write the object to the private bucket under the key `documents/<uuid>` and insert a metadata row with id, owner type, owner id, original filename, content type, size, SHA-256, storage key, version, superseded id, uploader and upload time.
+1. WHEN a document is stored THEN the system SHALL write the object to the private bucket under the key `documents/<uuid>` and insert a metadata row with id, owner type, owner id, original filename, content type, size, SHA-256, storage key, version, superseded id, status, uploader and upload time.
 2. WHEN a document is stored THEN the system SHALL compute the SHA-256 over the streamed bytes and store it in hexadecimal.
 3. IF the size exceeds 10 MiB THEN the system SHALL reject the document with the error `document_too_large` before writing any metadata.
 4. IF the content type detected from the bytes is not application/pdf, image/jpeg, image/png or image/webp THEN the system SHALL reject the document with the error `document_type_not_allowed`.
@@ -60,9 +66,10 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 6. The system SHALL NOT provide any operation that overwrites or deletes a stored document object or its metadata row.
 7. IF inserting the metadata fails after the object was uploaded THEN the system SHALL delete only the object that was just created and return the error.
 8. WHEN a document is stored THEN the system SHALL record an audit entry with action `document.create` in the same transaction as the metadata.
-9. IF the actor lacks `document:file:create` THEN the system SHALL return a forbidden error and SHALL NOT write to storage.
+9. IF the caller-supplied permission is not held by the actor THEN the system SHALL return a forbidden error and SHALL NOT write to storage, without the service knowing or deciding what that permission is named.
 10. IF the extension of the original filename is not `.pdf`, `.jpg`, `.jpeg`, `.png` or `.webp`, ignoring letter case, THEN the system SHALL reject the document with the error `document_extension_not_allowed` before reading its content.
 11. IF the extension does not match the content type detected from the bytes THEN the system SHALL reject the document with the error `document_type_mismatch`.
+12. WHEN a document is stored THEN the system SHALL set its `status` to `ACTIVE`, with no operation in this feature that changes it afterward.
 
 **Independent Test**: Guardar um PDF, guardar uma nova versão e ver a cadeia de versões com o objeto antigo intacto.
 
@@ -75,15 +82,30 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 **Why P2**: Completa o ciclo dos documentos com controle de acesso (ADR-006).
 
 **Acceptance Criteria**:
-1. WHEN an actor with `document:file:read` requests access to a document THEN the system SHALL return a presigned GET URL valid for 300 seconds and record an audit entry with action `document.access` naming the document and the actor.
-2. IF the actor lacks `document:file:read` THEN the system SHALL return a forbidden error and SHALL NOT generate a URL.
+1. WHEN an actor holding the caller-supplied required permission requests access to a document by its exact id THEN the system SHALL return a presigned GET URL valid for 300 seconds and record an audit entry with action `document.access` naming the document and the actor.
+2. IF the actor lacks the caller-supplied required permission THEN the system SHALL return a forbidden error and SHALL NOT generate a URL.
 3. IF the document id does not exist THEN the system SHALL return a not-found error and SHALL NOT generate a URL.
 4. IF a presigned URL is used after its expiry THEN the storage SHALL reject the request, verified in an integration test with a one-second validity.
 5. IF an object is requested from the bucket without a valid signature THEN the storage SHALL reject the request, verified in an integration test.
+6. The system SHALL NOT resolve "the current version" of a document on the caller's behalf: access is always requested by the exact id of one specific version, and tracking which version is current is the calling module's responsibility.
 
 **Independent Test**: Gerar a URL, baixar o arquivo, esperar expirar e ver a recusa.
 
 ---
+
+### P2: Consulta de documentos por dono
+
+**User Story**: Como módulo consumidor, quero listar os documentos de um dono (ex.: um lançamento financeiro), para montar minha própria tela sem duplicar metadados.
+
+**Why P2**: Sem consulta, nenhum módulo consegue saber quais documentos já existem para o que ele possui.
+
+**Acceptance Criteria**:
+1. WHEN an actor holding the caller-supplied required permission calls the listing with an owner type and an owner id THEN the system SHALL return every document version whose owner type and owner id match, ordered from newest to oldest, without generating any signed URL.
+2. IF the actor lacks the caller-supplied required permission THEN the system SHALL return a forbidden error and SHALL NOT return any row.
+3. IF the owner type is empty, exceeds 100 characters, or does not match the technical format `[a-z0-9_]+\.[a-z0-9_]+` THEN the system SHALL reject the call with the error `document_owner_type_invalid`, with no fixed catalog of accepted values.
+4. The system SHALL NOT record an audit entry for a listing call: only `document.access` (DOC-02) audits disclosure of a document's content.
+
+**Independent Test**: Guardar duas versões de um documento e uma de outro dono; listar pelo primeiro dono e ver só as duas versões, mais novas primeiro.
 
 ---
 
@@ -107,7 +129,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 - IF the same file is stored twice as separate documents THEN the system SHALL create two distinct documents with distinct keys.
 - WHEN the presigned URL validity is configured to zero or negative THEN the system SHALL return a configuration error at startup.
 - IF the storage is unreachable during a store operation THEN the system SHALL return the storage error and SHALL NOT write metadata.
-- WHEN a document has several versions THEN requesting access without a version SHALL return the URL of the latest version.
+- IF two different callers pass two different required permissions for the same kind of operation THEN the system SHALL check exactly the permission it was given for that call, never a permission it remembers from a previous call.
 
 ---
 
@@ -118,8 +140,9 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 | DOC-01 | P2: Armazenamento de documentos | In Tasks | Pending |
 | DOC-02 | P2: Acesso a documentos por URL assinada | In Tasks | Pending |
 | DOC-03 | P2: Configuração do storage | In Tasks | Pending |
+| DOC-04 | P2: Consulta de documentos por dono | In Tasks | Pending |
 
-**Coverage:** 3 total, 3 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
+**Coverage:** 4 total, 4 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 
 ---
 
@@ -127,4 +150,6 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" agua
 
 - [ ] Um documento é guardado, versionado, acessado por URL assinada e o acesso aparece na auditoria.
 - [ ] Extensão fora da lista, tipo divergente da extensão e arquivo acima de 10 MiB são recusados antes de gravar metadados.
+- [ ] `platform/documents` compila e roda sem depender de nenhuma permissão nomeada dentro do próprio pacote.
+- [ ] Listar por dono devolve as versões certas, mais novas primeiro, sem gerar URL nem auditoria.
 - [ ] `go test -tags=integration ./...` passa no CI com o emulador S3.
