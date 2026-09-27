@@ -56,6 +56,24 @@ Achados adicionais:
 | `vite-tsconfig-paths` | 6.1.1 | `web/package.json` | Guia do Next.js e npm | 2026-09-26 | Faz o alias `@/` funcionar nos testes |
 | `@types/node` | ^22.20.4 | `web/package.json` | Peer do vitest | 2026-09-26 | Alinhado ao Node 22 do `.nvmrc` (antes ^20) |
 
+## Verificação de vulnerabilidades no CI (SEC-001)
+
+O job `api` roda `go tool govulncheck ./...` (dependência de ferramenta do `go.mod`, mesmo mecanismo do `oapi-codegen`) e o job `web` roda `pnpm audit --audit-level high`. Ambos entram no CI como etapa bloqueante: uma falha nesses passos derruba o job e, por consequência, o `ci-gate`.
+
+**Política de severidade:**
+
+- **Go (`govulncheck`):** falha em qualquer achado alcançável pelo código (o modo padrão já filtra só o que é de fato chamado, não toda dependência com CVE aberto). Uma vulnerabilidade num pacote importado mas nunca invocado aparece no relatório sem falhar o job.
+- **Web (`pnpm audit`):** o limiar é `high` — só vulnerabilidade **crítica** ou **alta** falha o job. Achados **moderados** ou **baixos** ficam registrados na saída do CI (não bloqueiam); a decisão de agir sobre eles depende de uma política de triagem ainda não definida.
+
+**Escopo:** cobre as dependências dos dois módulos (`api` e `web`). CodeQL fica fora desta rodada (decisão registrada em `.specs/STATE.md`): exige configuração de queries, tratamento de falsos positivos e o custo do SARIF/security dashboard; reavaliar quando os módulos de domínio (financeiro, associados, loja) justificarem o investimento.
+
+**Toolchain do Go:** o `govulncheck` também aponta vulnerabilidades da própria standard library, então o `go` do `go.mod` (`api/go.mod`) precisa acompanhar os patches de segurança da série 1.26 — não só a versão maior. Ao subir a versão do Go, rode `go tool govulncheck ./...` localmente antes de commitar.
+
+| Ferramenta | Versão | Onde | Fonte consultada | Data | Observações |
+|---|---|---|---|---|---|
+| `golang.org/x/vuln/cmd/govulncheck` | v1.8.0 | `api/go.mod` (`tool`) | [pkg.go.dev](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) | 2026-09-27 | Rodado com `go tool`, sem instalação à parte |
+| `pnpm audit` | a do `pnpm` já fixado (`web/package.json`) | `.github/workflows/ci.yml` | `pnpm audit --help` | 2026-09-27 | `--audit-level high`; sem ferramenta nova |
+
 ## Pendentes de escolha (sempre com consulta à documentação vigente)
 
 - Gerador de servidor OpenAPI para Gin, gerador de tipos TypeScript e linter de OpenAPI (tarefa T24 da `fundacao-core`).

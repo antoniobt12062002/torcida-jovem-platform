@@ -122,6 +122,8 @@ jobs:
       - name: Testes de integração (PostgreSQL via testcontainers)
         run: go test -tags=integration ./...
       - run: go build ./...
+      - name: Vulnerabilidades conhecidas (govulncheck)
+        run: go tool govulncheck ./...
 
   web:
     needs: changes
@@ -147,6 +149,8 @@ jobs:
       - name: Testes do front (Vitest)
         run: pnpm test
       - run: pnpm build
+      - name: Vulnerabilidades conhecidas nas dependências (crítica/alta falham o job)
+        run: pnpm audit --audit-level high
 
   contract:
     needs: changes
