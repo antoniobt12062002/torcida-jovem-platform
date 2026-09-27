@@ -2534,8 +2534,8 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Três decisões novas (AD-012 a AD-014), sem tocar na seção Handoff além de atualizá-la
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
+- [x] Três decisões novas (AD-012 a AD-014), sem tocar na seção Handoff além de atualizá-la
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./... && go build ./... && cd ../web && pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`
 
 **Tests**: none  
 **Gate**: build
