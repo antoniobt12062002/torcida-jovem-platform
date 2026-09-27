@@ -26,8 +26,15 @@ func NewRouter(ping PingFunc) *gin.Engine {
 	if err != nil {
 		panic(fmt.Sprintf("validador do contrato platform: %v", err))
 	}
-	platformapi.RegisterHandlersWithOptions(r, platformapi.HealthHandler{Ping: ping}, platformapi.GinServerOptions{
-		Middlewares: []platformapi.MiddlewareFunc{platformapi.MiddlewareFunc(validate)},
-	})
+	// Only /healthz is registered for now: the audit query is in the contract but
+	// its handler comes in phase 11 (see contractPendingRoutes in routes_test.go).
+	platform := platformapi.ServerInterfaceWrapper{
+		Handler:            platformapi.HealthHandler{Ping: ping},
+		HandlerMiddlewares: []platformapi.MiddlewareFunc{platformapi.MiddlewareFunc(validate)},
+		ErrorHandler: func(c *gin.Context, err error, status int) {
+			httpx.WriteProblem(c, status, "validation_failed", "Parâmetros inválidos.")
+		},
+	}
+	r.GET("/healthz", platform.GetHealth)
 	return r
 }

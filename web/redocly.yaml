@@ -8,6 +8,10 @@ apis:
     root: ../api/openapi/platform.yaml
     x-openapi-ts:
       output: ./lib/api/platform.d.ts
+  identity@v1:
+    root: ../api/openapi/identity.yaml
+    x-openapi-ts:
+      output: ./lib/api/identity.d.ts
 
 extends:
   - recommended

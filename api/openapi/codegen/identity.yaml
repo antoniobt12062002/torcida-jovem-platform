@@ -1,4 +1,4 @@
-package: platformapi
+package: identityhttp
 generate:
   gin-server: true
   strict-server: true

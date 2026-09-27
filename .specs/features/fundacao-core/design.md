@@ -27,9 +27,11 @@ Uma requisição atravessa uma cadeia de middlewares e chega ao caso de uso, que
 graph TD
     C[Cliente] --> RID[requestid]
     RID --> REC[recover + accesslog + bodylimit]
-    REC --> ORG[origin + csrf]
+    REC --> ORG[origin]
     ORG --> AUTHN[authn: cookie -> sessão -> Principal]
-    AUTHN --> H[handler gerado pelo OpenAPI]
+    AUTHN --> CSRF[csrf]
+    CSRF --> VAL[validação do contrato]
+    VAL --> H[handler gerado pelo OpenAPI]
     H --> UC[caso de uso]
     UC --> AZ[authz.Require]
     UC --> TX[database.WithTx]
@@ -58,7 +60,7 @@ sequenceDiagram
 Regras de desenho:
 
 - O middleware `authn` só autentica e coloca o `Principal` no contexto. **A permissão é verificada no caso de uso** (`authz.Require`), nunca só na rota (regra 6 de `domain-boundaries.md`).
-- Rotas são negadas por padrão: só a lista pública (`/healthz`, `POST /api/v1/auth/login`) dispensa sessão, e um teste percorre o router para garantir isso.
+- Rotas são negadas por padrão: só a lista pública (`/healthz`, `POST /api/v1/auth/login`, `POST /api/v1/auth/password-reset/request` e `POST /api/v1/auth/password-reset/confirm`) dispensa sessão, e um teste percorre o router para garantir isso.
 - A sessão é validada a cada requisição. A atualização de `last_seen_at` ocorre no máximo uma vez por minuto para limitar escritas.
 - O `Principal` (papéis e permissões efetivas) é lido do banco a cada requisição, sem cache, para que mudança de papel valha na requisição seguinte.
 
@@ -229,6 +231,27 @@ web/lib/api/<modulo>.d.ts               tipos TypeScript gerados por módulo
 - Ator (`actor_type` e `actor_user_id`), alvo (`entity_type` e `entity_id`), momento, `request_id`, antes e depois, resultado (`outcome`) e contexto da ação ficam no mesmo registro; nada é alterável nem apagável (trigger e concessões, AUD-02).
 - Segredos nunca entram: as chaves sensíveis são redigidas em `before`, `after` e `context`; o e-mail de uma tentativa de login entra só como hash.
 - **Evoluções futuras, fora desta fase**: armazenamento controlado de IP em eventos de segurança (LGPD), separação entre auditoria institucional e técnica, versionamento dos eventos e encadeamento criptográfico entre registros.
+
+---
+
+## Camada HTTP de identidade (fase 10)
+
+Contrato em `api/openapi/identity.yaml` (fonte de verdade); a validação do contrato só cuida da estrutura HTTP, e as regras ficam nos casos de uso.
+
+**Rotas** (`/api/v1`): públicas `POST /auth/login`, `POST /auth/password-reset/request` (202 com corpo fixo) e `POST /auth/password-reset/confirm`; com sessão `POST /auth/logout`, `GET /auth/me`, `POST /auth/password`, `GET /users`, `POST /users`, `POST /users/{id}/deactivate`, `POST /users/{id}/reactivate`, `PUT /users/{id}/roles`, `POST /users/{id}/admin-membership`, `POST /users/{id}/admin-membership/revoke` (motivo no corpo; não é exclusão, o histórico é preservado) e `POST /users/{id}/password-reset` (200 com a senha temporária, `Cache-Control: no-store`). Não há `GET /roles` na fundação: nasce quando houver interface administrativa, devolvendo papéis, descrições e permissões.
+
+**Corpo do login e do `me`** (`AuthContext`): usuário (id, e-mail, nome), papéis, permissões efetivas, token CSRF, `must_change_password` e `admin_membership` (`null` ou `{reason, granted_at}`). O login devolve o mesmo corpo do `me`, para o front não fazer uma chamada extra.
+
+**Cadeia por tipo de rota:**
+
+- Públicas: `RequestID`, origem, limite de corpo, validação do contrato, handler. Sem `Authn` e sem CSRF.
+- Autenticadas: `RequestID`, recuperação de panic, log de acesso, limite de corpo, origem, `Authn`, CSRF, validação do contrato, handler. A autenticação vem antes da validação para não revelar a estrutura esperada da API a quem não está autenticado.
+
+**Origem:** `Origin` fora de `ALLOWED_ORIGINS` em método que altera estado devolve 403 `origin_not_allowed` (inclusive nas rotas públicas); a ausência de `Origin` não bloqueia, mas `Sec-Fetch-Site: cross-site` sem `Origin` em requisição autenticada que altera estado bloqueia.
+
+**Paridade contrato x router:** enquanto a fase 11 não registra os handlers, a lista temporária explícita `contractPendingRoutes` (`contract_pending_routes`) permite operações de contrato sem rota; a fase 11 a deixa vazia, e um teste falha se ela guardar uma operação que já tem rota.
+
+**Mapeamento de erros de domínio para HTTP** (centralizado nos handlers, fase 11): 401 `unauthenticated`, `session_expired`, `invalid_credentials`; 403 `forbidden`, `csrf_invalid`, `origin_not_allowed`, `password_change_required`, `invalid_current_password`, `privilege_escalation`, `self_change_forbidden`; 404 `not_found`; 409 `email_taken`, `last_admin`, `already_admin`, `not_admin`, `user_inactive`, `admin_membership_required`; 422 `validation_failed`, `password_too_short`, `password_too_long`, `password_compromised`, `password_unchanged`, `reason_required`, `admin_role_required`, `invalid_limit`; 400 `invalid_json`, `invalid_reset_token`; 429 `login_blocked` e `password_change_blocked` com `Retry-After`; 500 `audit_failed`, `internal_error`; 503 `service_unavailable`.
 
 ---
 

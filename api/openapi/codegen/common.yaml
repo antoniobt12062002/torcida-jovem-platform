@@ -1,0 +1,10 @@
+package: apicommon
+generate:
+  gin-server: true
+  strict-server: true
+  models: true
+  embedded-spec: true
+output: api.gen.go
+output-options:
+  # common.yaml não tem rotas: sem isto, os componentes seriam podados por não estarem em uso.
+  skip-prune: true

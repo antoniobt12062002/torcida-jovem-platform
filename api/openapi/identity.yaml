@@ -1,0 +1,640 @@
+openapi: 3.0.3
+info:
+  title: TJ Platform - módulo identity
+  version: 1.0.0
+  description: |
+    Contrato de comunicação da identidade: autenticação, sessão, usuários,
+    acesso administrativo e recuperação de senha. Descreve caminhos, esquemas e
+    segurança; não contém regras de negócio, que ficam nos casos de uso.
+
+    Só o login e as duas rotas de recuperação de acesso são públicas
+    (`security: []`). As demais exigem o cookie de sessão, e as que alteram
+    estado exigem também o cabeçalho `X-CSRF-Token`.
+servers:
+  - url: /
+tags:
+  - name: auth
+    description: Login, sessão, troca e recuperação de senha.
+  - name: users
+    description: Usuários, papéis e acesso administrativo.
+security:
+  - sessionCookie: []
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Entra com e-mail e senha e abre uma sessão.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sessão aberta. O cookie tj_session é emitido, e o corpo é o mesmo de GET /auth/me.
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão tj_session (HttpOnly, Secure, SameSite=Lax, Path=/).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthContext'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          description: Credenciais inválidas (code invalid_credentials), sempre com a mesma resposta.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '429':
+          $ref: 'common.yaml#/components/responses/TooManyRequests'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Encerra a sessão atual e limpa o cookie.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Sessão encerrada.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Quem está autenticado, com papéis, permissões efetivas e o token CSRF.
+      responses:
+        '200':
+          description: Contexto da sessão atual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthContext'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/auth/password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Troca a própria senha.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '204':
+          description: Senha trocada; as outras sessões foram encerradas.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '429':
+          $ref: 'common.yaml#/components/responses/TooManyRequests'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/auth/password-reset/request:
+    post:
+      operationId: requestPasswordReset
+      tags: [auth]
+      summary: Pede a recuperação de acesso por e-mail.
+      description: A resposta é sempre a mesma, exista ou não uma conta vinculada ao e-mail.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '202':
+          description: Pedido recebido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+              example:
+                message: Se existir uma conta vinculada ao e-mail informado, enviaremos instruções.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/auth/password-reset/confirm:
+    post:
+      operationId: confirmPasswordReset
+      tags: [auth]
+      summary: Define a nova senha com o token de recuperação.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+      responses:
+        '204':
+          description: Senha redefinida; todas as sessões do usuário foram encerradas.
+        '400':
+          description: JSON inválido (invalid_json) ou token de recuperação desconhecido, expirado ou usado (invalid_reset_token).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: Lista usuários, do mais novo para o mais antigo, com cursor.
+      parameters:
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Role'
+        - $ref: 'common.yaml#/components/parameters/Limit'
+        - $ref: 'common.yaml#/components/parameters/CursorParam'
+      responses:
+        '200':
+          description: Uma página de usuários.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Cria um usuário só com o papel ASSOCIADO e troca de senha obrigatória.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Usuário criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/deactivate:
+    post:
+      operationId: deactivateUser
+      tags: [users]
+      summary: Desativa o usuário, encerrando suas sessões.
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Usuário desativado.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/reactivate:
+    post:
+      operationId: reactivateUser
+      tags: [users]
+      summary: Reativa o usuário, sem restaurar papéis administrativos nem vínculo.
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Usuário reativado.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/roles:
+    put:
+      operationId: setUserRoles
+      tags: [users]
+      summary: Substitui os papéis administrativos de quem já tem vínculo administrativo ativo.
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRolesRequest'
+      responses:
+        '204':
+          description: Papéis atualizados.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/admin-membership:
+    post:
+      operationId: grantAdminMembership
+      tags: [users]
+      summary: Promove o usuário a administrativo (vínculo com motivo mais papéis).
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantAdminRequest'
+      responses:
+        '204':
+          description: Usuário promovido; as sessões dele foram encerradas e a troca de senha passou a ser obrigatória.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/admin-membership/revoke:
+    post:
+      operationId: revokeAdminMembership
+      tags: [users]
+      summary: Retira o acesso administrativo, com motivo; o histórico do vínculo é preservado.
+      description: 'Não é uma exclusão: o vínculo é encerrado e permanece no histórico.'
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeAdminRequest'
+      responses:
+        '204':
+          description: Acesso retirado; só o papel ASSOCIADO permanece e as sessões foram encerradas.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+  /api/v1/users/{id}/password-reset:
+    post:
+      operationId: resetUserPassword
+      tags: [users]
+      summary: 'Redefinição administrativa: gera uma senha temporária, mostrada uma única vez.'
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetUserPasswordRequest'
+      responses:
+        '200':
+          description: Senha temporária gerada; a resposta não pode ser guardada em cache.
+          headers:
+            Cache-Control:
+              description: Sempre no-store.
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporaryPassword'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          $ref: 'common.yaml#/components/responses/Conflict'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: 'common.yaml#/components/securitySchemes/sessionCookie'
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Role:
+      type: string
+      description: Papel do sistema. Papéis são agrupadores; a autorização decide por permissões.
+      enum:
+        - ASSOCIADO
+        - PRESIDENTE
+        - DIRETORIA
+        - TESOURARIA
+        - ESTOQUE_LOJA
+        - EVENTOS
+        - CONSELHO_FISCAL
+        - ADMIN_SISTEMA
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        new_password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+    PasswordResetConfirm:
+      type: object
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 512
+        new_password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    Accepted:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    CreateUserRequest:
+      type: object
+      required: [email, name, password]
+      properties:
+        email:
+          type: string
+          maxLength: 254
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    SetRolesRequest:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          description: Papéis administrativos. ASSOCIADO é sempre mantido; uma lista vazia deixa o vínculo dormente.
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/Role'
+    GrantAdminRequest:
+      type: object
+      required: [roles, reason]
+      properties:
+        roles:
+          type: array
+          description: Ao menos um papel administrativo.
+          minItems: 1
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/Role'
+        reason:
+          type: string
+          description: Por que a pessoa passa a ter acesso administrativo (mínimo 10 caracteres, verificado no caso de uso).
+          maxLength: 500
+    RevokeAdminRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Por que o acesso administrativo é retirado.
+          maxLength: 500
+    ResetUserPasswordRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Motivo da redefinição (mínimo 10 caracteres, verificado no caso de uso).
+          maxLength: 500
+    TemporaryPassword:
+      type: object
+      required: [temporary_password]
+      properties:
+        temporary_password:
+          type: string
+          description: Senha temporária, exibida uma única vez. Nunca é registrada em log nem na auditoria.
+    UserRef:
+      type: object
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+    AdminMembershipSummary:
+      type: object
+      nullable: true
+      description: Vínculo administrativo ativo, ou null. Não traz o concedente nem o histórico.
+      required: [reason, granted_at]
+      properties:
+        reason:
+          type: string
+        granted_at:
+          type: string
+          format: date-time
+    AuthContext:
+      type: object
+      description: Contexto da sessão, igual no login e em GET /auth/me.
+      required: [user, roles, permissions, csrf_token, must_change_password, admin_membership]
+      properties:
+        user:
+          $ref: '#/components/schemas/UserRef'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        permissions:
+          type: array
+          description: Permissões efetivas (módulo:recurso:ação).
+          items:
+            type: string
+        csrf_token:
+          type: string
+        must_change_password:
+          type: boolean
+        admin_membership:
+          $ref: '#/components/schemas/AdminMembershipSummary'
+    User:
+      type: object
+      required: [id, email, name, active, must_change_password, created_at, roles, admin_membership]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+        must_change_password:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        admin_membership:
+          $ref: '#/components/schemas/AdminMembershipSummary'
+    UserPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor da próxima página, ou null na última.

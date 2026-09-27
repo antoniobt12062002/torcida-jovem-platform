@@ -117,6 +117,30 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Recurso não encontrado (code not_found).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Conflito com o estado atual (por exemplo email_taken ou last_admin).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    TooManyRequests:
+      description: Tentativas em excesso; o cabeçalho Retry-After diz em quantos segundos tentar de novo.
+      headers:
+        Retry-After:
+          description: Segundos até a próxima tentativa.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     PayloadTooLarge:
       description: Corpo acima do limite.
       content:

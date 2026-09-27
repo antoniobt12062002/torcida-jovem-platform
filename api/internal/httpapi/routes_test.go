@@ -71,11 +71,25 @@ func parity(routes, operations []string) (routesWithoutContract, operationsWitho
 	return routesWithoutContract, operationsWithoutRoute
 }
 
-// API-01.6: toda rota registrada no Gin existe em algum contrato de módulo.
+// contractPendingRoutes (contract_pending_routes) lists contract operations
+// whose handlers do not exist yet. It is temporary: phase 10 creates the identity
+// contract before the handlers of phase 11, which must empty this list.
+var contractPendingRoutes = []string{
+	"GET /api/v1/audit-logs", "GET /api/v1/auth/me", "GET /api/v1/users",
+	"POST /api/v1/auth/login", "POST /api/v1/auth/logout", "POST /api/v1/auth/password",
+	"POST /api/v1/auth/password-reset/confirm", "POST /api/v1/auth/password-reset/request",
+	"POST /api/v1/users", "POST /api/v1/users/{id}/admin-membership", "POST /api/v1/users/{id}/admin-membership/revoke",
+	"POST /api/v1/users/{id}/deactivate", "POST /api/v1/users/{id}/password-reset", "POST /api/v1/users/{id}/reactivate",
+	"PUT /api/v1/users/{id}/roles",
+}
+
+// API-01.6: toda rota registrada no Gin existe em algum contrato de módulo, e
+// toda operação de contrato tem rota, salvo as pendentes explicitamente listadas.
 func TestEveryRegisteredRouteHasAContractOperation(t *testing.T) {
 	router := NewRouter(func(context.Context) error { return nil })
 
 	withoutContract, withoutRoute := parity(routeKeys(router.Routes()), contractKeys(t))
+	withoutRoute = slices.DeleteFunc(withoutRoute, func(k string) bool { return slices.Contains(contractPendingRoutes, k) })
 
 	if len(withoutContract) > 0 {
 		t.Errorf("rotas registradas sem operação em nenhum contrato: %v", withoutContract)
@@ -118,5 +132,24 @@ func TestRouteKeysConvertGinParametersToOpenAPIStyle(t *testing.T) {
 	got := routeKeys(r.Routes())
 	if !slices.Equal(got, []string{"DELETE /api/v1/users/{id}/sessions/{session_id}"}) {
 		t.Errorf("routeKeys = %v", got)
+	}
+}
+
+// A lista de pendências só pode guardar operações reais que ainda não têm rota:
+// registrar o handler obriga a tirar a operação da lista.
+func TestPendingRoutesAreRealContractOperationsWithoutARoute(t *testing.T) {
+	router := NewRouter(func(context.Context) error { return nil })
+	contract, registered := contractKeys(t), routeKeys(router.Routes())
+
+	for _, pending := range contractPendingRoutes {
+		if !slices.Contains(contract, pending) {
+			t.Errorf("%s está pendente, mas não existe em nenhum contrato", pending)
+		}
+		if slices.Contains(registered, pending) {
+			t.Errorf("%s já tem rota: remova-a de contractPendingRoutes", pending)
+		}
+	}
+	if !slices.IsSorted(contractPendingRoutes) {
+		t.Error("mantenha a lista ordenada")
 	}
 }
