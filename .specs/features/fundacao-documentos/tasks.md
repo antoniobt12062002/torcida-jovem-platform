@@ -204,13 +204,13 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `supersedes_id` único impede bifurcação
-- [ ] Coluna `status` existe, não nula, padrão `ACTIVE`
-- [ ] Índice `(owner_type, owner_id, uploaded_at DESC)` para a listagem por dono (T7)
-- [ ] Com `tj_app`, UPDATE e DELETE falham
-- [ ] Migração `down` desfaz sem erro
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] `supersedes_id` único impede bifurcação
+- [x] Coluna `status` existe, não nula, padrão `ACTIVE`
+- [x] Índice `(owner_type, owner_id, uploaded_at DESC)` para a listagem por dono (T7)
+- [x] Com `tj_app`, UPDATE e DELETE falham
+- [x] Migração `down` desfaz sem erro
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 4 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
