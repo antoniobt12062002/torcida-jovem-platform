@@ -69,7 +69,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 | Origem das permissões | Modular: cada módulo declara as suas permissões e concessões por papel em uma contribuição própria; `identity` agrega e valida a matriz final. Não existe matriz central única; até a spec do financeiro existir, a fundação declara em nome dele as três permissões institucionais do Conselho Fiscal | Aprovado pelo mantenedor; evita acoplar todos os módulos a uma matriz gigante | y |
 | Auditoria de negações | `authz.denied` é gravado (como evento de segurança) para toda negação, exceto de permissões declaradas como leitura comum (`CommonRead`, permitido só em ação `read`); administração, segurança, RBAC, financeiro e dados institucionais sempre são auditados. Leituras comuns ficam só no log de acesso | Aprovado pelo mantenedor; evita volume excessivo de auditoria sem perder as negações relevantes | y |
 | Papéis iniciais | ASSOCIADO, PRESIDENTE, DIRETORIA, TESOURARIA, ESTOQUE_LOJA, EVENTOS, CONSELHO_FISCAL e ADMIN_SISTEMA | Lista proposta pelo mantenedor; substitui ADMIN, DIRETOR e FINANCEIRO | y |
-| Matriz inicial de permissões | Provisória e mínima. PRESIDENTE: todas as permissões do catálogo. ADMIN_SISTEMA: `identity:user:read`, `identity:user:create`, `identity:user:update`, `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` e `audit:log:read`, sem permissões institucionais (nesta matriz provisória). DIRETORIA: só `identity:user:read`. CONSELHO_FISCAL: `audit:log:read` e as institucionais. TESOURARIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma da fundação (as de documentos entram em `fundacao-documentos`). Cada spec de módulo amplia a matriz do seu módulo. A matriz é dado: a autorização decide sempre pelas permissões efetivas, nunca pelo nome do papel | Provisória. `audit:log:read` do Conselho Fiscal aprovado pelo mantenedor, mantendo a possibilidade futura de separar auditoria institucional e técnica | y |
+| Matriz inicial de permissões | Provisória e mínima. PRESIDENTE: todas as permissões do catálogo. ADMIN_SISTEMA: `identity:user:read`, `identity:user:create`, `identity:user:update`, `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke`, `identity:user:reset_password` (IDN-08) e `audit:log:read`, sem permissões institucionais (nesta matriz provisória). DIRETORIA: só `identity:user:read`. CONSELHO_FISCAL: `audit:log:read` e as institucionais. TESOURARIA, ESTOQUE_LOJA, EVENTOS e ASSOCIADO: nenhuma da fundação (as de documentos entram em `fundacao-documentos`). Cada spec de módulo amplia a matriz do seu módulo. A matriz é dado: a autorização decide sempre pelas permissões efetivas, nunca pelo nome do papel | Provisória. `audit:log:read` do Conselho Fiscal aprovado pelo mantenedor, mantendo a possibilidade futura de separar auditoria institucional e técnica | y |
 | Conselho Fiscal | Nunca recebe `create`, `update`, `delete` nem `cancel`. Não é só leitura: recebe as permissões institucionais `financeiro:prestacao_contas:read` (prestação de contas), `financeiro:prestacao_contas:approve` (aprovação) e `financeiro:parecer:opine` (parecer). O catálogo da fundação as declara; os endpoints nascem na spec do financeiro | Decisão do mantenedor (ADR-005, FIN-001 seção 24), ampliada em 2026-09-26 | y |
 | Usuário × Associado | Entidades separadas. O vínculo é `associados.associados.user_id` (o módulo dono do domínio guarda a referência); `identity.users` não tem coluna de associado. O associado pode existir sem usuário, e o usuário administrativo pode não ser associado | Aprovado pelo mantenedor: mantém o vínculo no módulo dono e evita `identity` depender de `associados` | y |
 | Vínculo administrativo × papel | `AdminMembership` responde "por que a pessoa tem acesso administrativo" (motivo, quem concedeu, quando, encerramento); papel responde "o que ela pode fazer". São separados: encerrar um não some com o histórico do outro. Regra: papel diferente de ASSOCIADO exige vínculo ativo; um vínculo ativo por usuário; o histórico nunca é apagado | Aprovado pelo mantenedor | y |
@@ -113,7 +113,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 **Why P1**: Sem um usuário inicial, nada mais pode ser usado.
 
 **Acceptance Criteria**:
-1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with that role and an active administrative membership with the fixed reason `bootstrap-admin` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
+1. WHEN the operator runs `bootstrap-admin` with `--email`, `--name`, an optional `--role` (ADMIN_SISTEMA by default, or PRESIDENTE) and the password supplied through the environment variable `BOOTSTRAP_ADMIN_PASSWORD` THEN the system SHALL create an active user with `must_change_password` set to true, that role, and an active administrative membership with the fixed reason `bootstrap-admin` and no grantor, and record an audit entry with action `user.bootstrap`, with no actor, containing the email, the role and the membership reason and never the password.
 2. IF an active administrative membership already exists THEN the system SHALL exit with a non-zero status without creating any user.
 3. IF the password is absent or violates the administrator password policy (at least 10 characters) THEN the system SHALL exit with a non-zero status without creating any user.
 4. The system SHALL NOT accept the password as a command-line argument.
@@ -136,7 +136,7 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 5. WHILE a session has been idle for more than 60 minutes or is older than 8 hours the system SHALL treat it as expired and respond 401 with code `session_expired`.
 6. WHEN a user calls `POST /api/v1/auth/logout` THEN the system SHALL revoke the session and clear the cookie.
 7. WHEN a login succeeds THEN the system SHALL issue a new session token even if a session cookie was sent with the request.
-8. IF a fifth consecutive login failure for the same email occurs within 15 minutes THEN the system SHALL respond 429 with a `Retry-After` header to every login attempt for that email during the following 15 minutes.
+8. IF a fifth consecutive login failure for the same email occurs within 15 minutes THEN the system SHALL respond 429 with code `login_blocked` and a `Retry-After` header to every login attempt for that email during the following 15 minutes.
 9. WHEN a session is valid THEN `GET /api/v1/auth/me` SHALL respond 200 with the user id, email, name, role names, effective permissions, the administrative membership summary (`null`, or an object with only `reason` and `granted_at`, never the grantor or the history), the CSRF token and the flag `must_change_password`. The system SHALL NOT include hashes, internal tokens or other sensitive data in these responses.
 10. The system SHALL NOT lock an account permanently as a result of failed logins.
 
@@ -252,12 +252,12 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 **Acceptance Criteria**:
 1. WHEN an actor with `identity:user:reset_password` calls `POST /api/v1/users/{id}/password-reset` with a reason THEN the system SHALL, in one transaction, generate a random temporary password, replace the password hash, set `must_change_password` to true, revoke every session and pending recovery token of the target user and record an audit entry with action `user.password_reset` containing the reason, and SHALL respond 200 with the temporary password exactly once, with `Cache-Control: no-store`.
-6. IF the reason is missing or has fewer than 10 characters after trimming THEN the system SHALL respond 422 with code `reason_required` and change nothing.
-7. The system SHALL NOT store, log or audit the temporary password, the old password or any hash, and SHALL NOT send them by e-mail.
 2. IF the actor lacks a permission held by the target user THEN the system SHALL respond 403 with code `privilege_escalation` and change nothing.
 3. IF the actor targets their own account THEN the system SHALL respond 403 with code `self_change_forbidden`.
 4. IF the target user is inactive THEN the system SHALL respond 409 with code `user_inactive`.
 5. WHEN the request is denied by AC 2 or 3 THEN the system SHALL record an audit entry with action `user.password_reset`, outcome `denied`, as a security event.
+6. IF the reason is missing or has fewer than 10 characters after trimming THEN the system SHALL respond 422 with code `reason_required` and change nothing.
+7. The system SHALL NOT store, log or audit the temporary password, the old password or any hash, and SHALL NOT send them by e-mail.
 
 **Independent Test**: Como administrador, redefinir a senha de um usuário com motivo, receber a senha temporária uma vez, ver as sessões dele caírem e a troca obrigatória no próximo login; tentar com um alvo mais poderoso e ver 403.
 
@@ -592,31 +592,31 @@ Todas as ambiguidades estão resolvidas ou registradas aqui. "Confirmed? n" sign
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| IDN-01 | P1: Primeiro administrador | In Tasks | Implementing |
-| IDN-02 | P1: Login, sessão e logout | In Tasks | Implementing |
-| IDN-03 | P1: Proteção contra CSRF e origem | In Tasks | Implementing |
-| IDN-04 | P1: Gestão de usuários | In Tasks | Implementing |
-| IDN-05 | P1: Política de senha | In Tasks | Implementing |
-| IDN-06 | P1: Vínculo administrativo e promoção | In Tasks | Implementing |
-| IDN-07 | P1: Recuperação de acesso por e-mail | In Tasks | Implementing |
-| IDN-08 | P1: Redefinição administrativa de senha | In Tasks | Implementing |
-| EML-01 | P1: Capacidade de e-mail | In Tasks | Implementing |
-| RBAC-01 | P1: Modelo de permissões e papéis | In Tasks | Implementing |
-| RBAC-02 | P1: Autorização negada por padrão | In Tasks | Implementing |
-| RBAC-03 | P1: Concessão sem escalada de privilégio | In Tasks | Implementing |
-| AUD-01 | P1: Registro de auditoria atômico | In Tasks | Implementing |
-| AUD-02 | P1: Auditoria imutável | In Tasks | Implementing |
-| AUD-03 | P2: Consulta de auditoria | In Tasks | Implementing |
-| AUD-04 | P1: Eventos de segurança | In Tasks | Implementing |
-| MNY-01 | P1: Tipo monetário em centavos | In Tasks | Implementing |
-| MNY-02 | P1: Serialização e formatação de dinheiro | In Tasks | Implementing |
-| MNY-03 | P2: Rateio e percentuais | In Tasks | Implementing |
-| TST-01 | P1: Infraestrutura de testes de integração (Go) | In Tasks | Implementing |
-| TST-02 | P2: Verificação de fronteiras entre módulos | In Tasks | Implementing |
-| TST-03 | P2: Infraestrutura de testes do front | In Tasks | Pending |
-| API-01 | P1: Contrato OpenAPI | In Tasks | Implementing |
-| API-02 | P1: Convenções da API | In Tasks | Implementing |
-| PLT-01 | P2: Configuração, logs e migrações | In Tasks | Implementing |
+| IDN-01 | P1: Primeiro administrador | Done | Implemented |
+| IDN-02 | P1: Login, sessão e logout | Done | Implemented |
+| IDN-03 | P1: Proteção contra CSRF e origem | Done | Implemented |
+| IDN-04 | P1: Gestão de usuários | Done | Implemented |
+| IDN-05 | P1: Política de senha | Done | Implemented |
+| IDN-06 | P1: Vínculo administrativo e promoção | Done | Implemented |
+| IDN-07 | P1: Recuperação de acesso por e-mail | Done | Implemented |
+| IDN-08 | P1: Redefinição administrativa de senha | Done | Implemented |
+| EML-01 | P1: Capacidade de e-mail | Done | Implemented |
+| RBAC-01 | P1: Modelo de permissões e papéis | Done | Implemented |
+| RBAC-02 | P1: Autorização negada por padrão | Done | Implemented |
+| RBAC-03 | P1: Concessão sem escalada de privilégio | Done | Implemented |
+| AUD-01 | P1: Registro de auditoria atômico | Done | Implemented |
+| AUD-02 | P1: Auditoria imutável | Done | Implemented |
+| AUD-03 | P2: Consulta de auditoria | Done | Implemented |
+| AUD-04 | P1: Eventos de segurança | Done | Implemented |
+| MNY-01 | P1: Tipo monetário em centavos | Done | Implemented |
+| MNY-02 | P1: Serialização e formatação de dinheiro | Done | Implemented |
+| MNY-03 | P2: Rateio e percentuais | Done | Implemented |
+| TST-01 | P1: Infraestrutura de testes de integração (Go) | Done | Implemented |
+| TST-02 | P2: Verificação de fronteiras entre módulos | Done | Implemented |
+| TST-03 | P2: Infraestrutura de testes do front | Done | Implemented |
+| API-01 | P1: Contrato OpenAPI | Done | Implemented |
+| API-02 | P1: Convenções da API | Done | Implemented |
+| PLT-01 | P2: Configuração, logs e migrações | Done | Implemented |
 
 **Coverage:** 25 total, 25 mapped to tasks, 0 unmapped (mapeamento detalhado em `tasks.md`, seção Requirement Coverage).
 

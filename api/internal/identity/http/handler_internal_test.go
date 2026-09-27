@@ -1,10 +1,12 @@
 package identityhttp
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -129,5 +131,25 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 				t.Errorf("o corpo não pode vazar detalhe interno: %s", w.Body.String())
 			}
 		}
+	}
+}
+
+// Segurança: um erro interno que veio do driver e menciona um e-mail (ex.: uma
+// violação de restrição única) não vaza o e-mail para o log.
+func TestLogInternalRedactsAnEmailInTheErrorMessage(t *testing.T) {
+	var buf bytes.Buffer
+	h := &Handler{Log: slog.New(slog.NewJSONHandler(&buf, nil))}
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+	h.writeError(c, fmt.Errorf("ERROR: duplicate key value violates unique constraint \"users_email_key\" (SQLSTATE 23505): Key (email)=(maria@exemplo.com) already exists."))
+
+	out := buf.String()
+	if strings.Contains(out, "maria@exemplo.com") {
+		t.Errorf("o log não pode conter o e-mail: %s", out)
+	}
+	if !strings.Contains(out, "[e-mail redigido]") {
+		t.Errorf("o log deveria marcar a redação: %s", out)
 	}
 }

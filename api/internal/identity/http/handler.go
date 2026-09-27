@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -214,9 +215,14 @@ func mapped(c *gin.Context, err error) bool {
 	return false
 }
 
+// emailInErrorMessage matches an e-mail-shaped substring in an error message
+// (a driver detail such as a unique-constraint violation can embed the value).
+var emailInErrorMessage = regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)
+
 func (h *Handler) logInternal(c *gin.Context, err error) {
 	if h.Log != nil {
-		h.Log.Error("erro interno", "request_id", httpx.RequestIDFrom(c.Request.Context()), "error", err.Error())
+		msg := emailInErrorMessage.ReplaceAllString(err.Error(), "[e-mail redigido]")
+		h.Log.Error("erro interno", "request_id", httpx.RequestIDFrom(c.Request.Context()), "error", msg)
 	}
 }
 

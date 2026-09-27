@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-core/design.md`
-**Status**: In Progress (execução em lotes pequenos, por fase)
+**Status**: Implemented (T1 a T86 concluídas e mescladas em `develop`; validação final da feature em andamento em `feature/fundacao-core-validacao`)
 
 Regras deste plano:
 
@@ -1747,7 +1747,7 @@ T83 → T84 → T85 → T86
 ### T58: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail e das tentativas de troca de senha por usuário
 
 **What**: Criar o repositório de recuperação: criação de token com invalidação dos pendentes, consumo de uso único e contagem de solicitações por e-mail e das tentativas de troca de senha por usuário.  
-**Where**: `api/internal/identity/infra/reset_token_repository.go`  
+**Where**: `api/internal/identity/infra/recovery_repository.go`  
 **Depends on**: T57  
 **Reuses**: `password_reset_tokens` e `password_reset_requests`  
 **Requirement**: IDN-07 (ACs 2, 4, 5, 6); IDN-04 (ACs 12)
