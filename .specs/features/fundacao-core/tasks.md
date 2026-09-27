@@ -2473,12 +2473,12 @@ T83 → T84 → T85 → T86
 
 **Done when**:
 
-- [ ] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, recuperar o acesso por e-mail (solicitação, token, redefinição e sessões antigas revogadas), disparar a redefinição administrativa, atribuir papel, retirar o acesso, desativar, consultar auditoria
-- [ ] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
-- [ ] Eventos de segurança consultáveis: `auth.login`, `auth.login_failed`, `auth.login_blocked`, `auth.logout`, `admin.promote`, `admin.revoke`, `user.roles_set` e `role.change_denied`
-- [ ] Todas as respostas validadas contra o contrato
-- [ ] Cada AC listado em Requirement tem ao menos um teste (mínimo de 22 testes; nenhuma exclusão silenciosa)
-- [ ] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
+- [x] Fluxo: bootstrap, login, criar usuário, promover a TESOURARIA com motivo, trocar a senha obrigatória, recuperar o acesso por e-mail (solicitação, token, redefinição e sessões antigas revogadas), disparar a redefinição administrativa, atribuir papel, retirar o acesso, desativar, consultar auditoria
+- [x] Casos negativos: sem CSRF, origem inválida, sem permissão, sem sessão, escalada de privilégio, autoalteração e último administrador
+- [x] Eventos de segurança consultáveis: `auth.login`, `auth.login_failed`, `auth.login_blocked`, `auth.logout`, `admin.promote`, `admin.revoke`, `user.roles_set` e `role.change_denied`
+- [x] Todas as respostas validadas contra o contrato
+- [x] Cada AC listado em Requirement tem ao menos um teste (mínimo de 22 testes; nenhuma exclusão silenciosa)
+- [x] Gate check passes: `cd api && go vet ./... && go test -tags=integration ./...`
 
 **Tests**: integration  
 **Gate**: full
