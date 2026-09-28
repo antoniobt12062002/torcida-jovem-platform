@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/fundacao-documentos/design.md`
-**Status**: In Progress (execução em lotes pequenos, por fase); `tests-first`, um commit atômico por tarefa
+**Status**: Implemented (T1 a T7 concluídas e mescladas em `develop` via PR #38; validação final da feature em andamento)
 
 **Pré-requisito**: `fundacao-core` concluída (usa `WithTx`, `audit.Recorder`, `authz.Require`, `testutil` e as migrações da core).
 

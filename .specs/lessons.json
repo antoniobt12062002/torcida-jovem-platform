@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 2,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::for a service that writes to an external store before a db transaction add a test that injects a failing store double and asserts zero rows were written at the service level not just that the adapter itself returns an error",
+      "text": "For a service that writes to an external store before a DB transaction, add a test that injects a failing store double and asserts zero rows were written at the service level, not just that the adapter itself returns an error.",
+      "signal": "ac_gap",
+      "scope": "platform/documents",
+      "status": "candidate",
+      "features": [
+        "fundacao-documentos"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md Edge Cases (\"storage unreachable during a store operation\"); api/internal/platform/documents/service.go:220-224 (platform/documents)"
+      ],
+      "created": "2026-09-27T18:13:59Z",
+      "last_seen": "2026-09-27T18:13:59Z"
+    }
+  ]
+}
