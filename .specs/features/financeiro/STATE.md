@@ -109,6 +109,10 @@ Nenhuma dependência circular real: a seta tracejada `02⇢01` é leitura, não 
 **Decisão**: um lançamento `RECEITA` só pode usar uma conta `RECEITA`; um lançamento `DESPESA` só pode usar uma conta `DESPESA`. É regra de negócio do lançamento (não um detalhe técnico incidental), validada em aplicação antes de gravar, com o erro `conta_tipo_incompativel` quando violada.
 **Escopo**: `02-lancamentos` (LAN-01 AC3).
 
+### FIN-D-016 — Comprovantes independentes, sem versionamento
+**Decisão**: no V1, cada comprovante anexado a um lançamento representa uma evidência própria e independente. Não há cadeia de versões entre comprovantes; `Supersedes` (mecanismo de versionamento já existente em `platform/documents`) nunca é usado por `financeiro` nesta feature. A listagem trata cada comprovante como um registro independente (`Version 1` sempre, do ponto de vista de `platform/documents`). Se um comprovante for anexado por engano, o correto é anexado como um novo documento independente — não substitui nem encadeia o anterior. Substituição/versionamento de comprovante, se necessário no futuro, será uma evolução específica, com nova decisão e novos requisitos.
+**Escopo**: `04-comprovantes` (CMP-01 AC5, CMP-03).
+
 ---
 
 ## Matriz de permissões do V1 (consolidada — ver detalhe e rationale em `05-permissoes`)
@@ -152,7 +156,7 @@ A ordem de **especificação** (`01→02→03→04→05`, já revisada e aprovad
 
 ## Decisões futuras (V2, fora do V1 — não implementar sem nova aprovação)
 
-Parcelamento e pagamento parcial (FIN-D-002); centro de resultado e rateio; fornecedores; orçamento; prestação de contas anual (ativaria FIN-D-014); alertas (ex. despesas sem comprovante); exportações (PDF/Excel/CSV); integração com `estoque` (fluxo compra→despesa+entrada em estoque); gateway de pagamento; portal da transparência; conciliação bancária (FIN-D-004); regime de competência, caso o caixa se mostre insuficiente; `substituido_por_id` ou operação atômica de cancelamento+substituição, caso a janela de saldo do FIN-D-006 se mostrar um problema real na prática; código contábil formal (FIN-D-009), caso necessário depois.
+Parcelamento e pagamento parcial (FIN-D-002); centro de resultado e rateio; fornecedores; orçamento; prestação de contas anual (ativaria FIN-D-014); alertas (ex. despesas sem comprovante); exportações (PDF/Excel/CSV); integração com `estoque` (fluxo compra→despesa+entrada em estoque); gateway de pagamento; portal da transparência; conciliação bancária (FIN-D-004); regime de competência, caso o caixa se mostre insuficiente; `substituido_por_id` ou operação atômica de cancelamento+substituição, caso a janela de saldo do FIN-D-006 se mostrar um problema real na prática; código contábil formal (FIN-D-009), caso necessário depois; versionamento/substituição de comprovante via `Supersedes` (FIN-D-016), caso "corrigir um comprovante já anexado" se mostre uma necessidade real, não só "anexar mais um".
 
 ## Handoff
 

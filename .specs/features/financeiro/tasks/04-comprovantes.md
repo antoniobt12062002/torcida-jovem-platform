@@ -41,7 +41,7 @@ T1 → T3
 **Where**: `api/internal/financeiro/comprovantes/service.go`
 **Depends on**: None
 **Reuses**: `platform/documents.Service`, `platform/authz`
-**Requirement**: CMP-01 (AC1-AC4)
+**Requirement**: CMP-01 (AC1-AC5)
 
 **Tools**: MCP: NONE · Skill: NONE
 
@@ -49,6 +49,7 @@ T1 → T3
 - [ ] Chama `Store` com `owner_type="financeiro.lancamento"`, `owner_id`, `RequiredPermission="financeiro:comprovante:create"`
 - [ ] Lançamento inexistente: `lancamento_nao_encontrado`, antes de chamar `Store`
 - [ ] Aceita anexar em lançamento `CANCELADA` sem restrição
+- [ ] Nunca passa `Supersedes` para `Store` — dois anexos ao mesmo lançamento são dois documentos independentes, cada um `Version 1`
 - [ ] Gate check passes
 
 **Tests**: integration

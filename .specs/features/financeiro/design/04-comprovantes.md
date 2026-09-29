@@ -38,3 +38,4 @@ graph TD
 |---|---|---|
 | Validação de existência do lançamento | Feita aqui, antes de chamar `documents.Service.Store` | `platform/documents` não sabe nada sobre lançamentos — a checagem é responsabilidade do chamador |
 | Nenhuma tabela nova | Confirmado | Toda a persistência já existe em `platform/documents` |
+| `Supersedes` | Nunca passado — `AnexarComprovante` sempre chama `Store` com `Supersedes: nil` | `FIN-D-016`: comprovantes são independentes no V1, sem encadeamento de versões |

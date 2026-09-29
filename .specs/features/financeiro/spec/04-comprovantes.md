@@ -20,6 +20,7 @@ Status: Aprovada em 2026-09-29. Sub-spec 4 de 5 da feature `financeiro`. Decisõ
 | Alterar `status` do lançamento por causa de um comprovante existir | `FIN-D-005` — "com comprovante" é condição derivada, não estado |
 | Excluir comprovante | `platform/documents` não expõe essa operação por desenho (`AD-006`/`AD-015`) — não há nada a especificar aqui |
 | Obrigatoriedade de comprovante em qualquer fluxo | Nunca obrigatório no V1 (sem alertas, `financeiro/STATE.md`, seção "Decisões futuras") |
+| Versionamento/substituição de comprovante (encadeamento via `Supersedes`) | `FIN-D-016` — decidido: comprovantes são independentes e não encadeados no V1; substituição/versionamento fica para uma evolução futura específica, com nova decisão e novos requisitos |
 
 ## Assumptions & Open Questions
 
@@ -29,7 +30,7 @@ Status: Aprovada em 2026-09-29. Sub-spec 4 de 5 da feature `financeiro`. Decisõ
 | `owner_id` | `id` do `LancamentoFinanceiro` (dono: `02-lancamentos`) | Direto | y |
 | Obrigatoriedade | Nunca obrigatório — pode ser anexado a qualquer momento, mesmo depois do lançamento cancelado | `FIN-001` §25 (alertas de "despesa sem comprovante") pressupõe que existir sem um é possível; alertas ficam fora do V1 | y |
 | Efeito no cancelamento | Nenhum — comprovantes já anexados permanecem, `platform/documents` não tem operação de exclusão | Consequência direta do desenho de `platform/documents`, não uma nova decisão | y |
-| `Supersedes` (correção de um comprovante já anexado) | Nunca usado — cada anexo é um documento independente, sem ligação com anexos anteriores do mesmo lançamento | `platform/documents` suporta encadear versões via `Supersedes`, mas nenhuma decisão fechada de `financeiro` pede correção de comprovante como um fluxo distinto de "anexar mais um documento"; assumido como não-encadeado até haver decisão em contrário | y |
+| `Supersedes` (correção de um comprovante já anexado) | Nunca usado — cada anexo é um documento independente, sem ligação com anexos anteriores do mesmo lançamento | `FIN-D-016`, decisão do mantenedor: comprovantes são evidências independentes no V1; se um comprovante errado for anexado, o correto é anexado como um novo documento independente, não uma nova versão do anterior | y |
 
 Open questions: none.
 
@@ -44,6 +45,7 @@ Open questions: none.
 2. IF the referenced lançamento does not exist THEN the system SHALL reject the attachment with the error `lancamento_nao_encontrado` before calling `documents.Service.Store`.
 3. IF the actor lacks `financeiro:comprovante:create` THEN `documents.Service.Store` SHALL return a forbidden error and SHALL NOT upload anything (behavior already guaranteed by `platform/documents`, DOC-01 AC9).
 4. The system SHALL NOT require a comprovante to exist for any lançamento operation defined in `01`, `02` or `03`.
+5. The system SHALL NOT pass `Supersedes` when calling `documents.Service.Store` — every comprovante attached to a lançamento is an independent document (`FIN-D-016`), never a new version of a previously attached one.
 
 **Independent Test**: anexar um comprovante a um lançamento `CRIADA` e a um `CANCELADA` — os dois aceitam, sem nenhuma outra regra de negócio interferindo.
 
