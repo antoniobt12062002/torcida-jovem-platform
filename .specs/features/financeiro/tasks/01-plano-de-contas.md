@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/01-plano-de-contas.md`
 **Design**: `.specs/features/financeiro/design/01-plano-de-contas.md`
-**Status**: In Progress (T1 concluída; `tests-first`, um commit atômico por tarefa).
+**Status**: In Progress (T1 e T2 concluídas; `tests-first`, um commit atômico por tarefa).
 
 **Pré-requisito**: nenhum código de `financeiro` existe ainda — este é o primeiro conjunto de tarefas do módulo.
 
@@ -73,11 +73,11 @@ Sequencial — cada tarefa depende só da anterior.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Cria conta raiz e subconta (mesma `tipo` do pai, validado em aplicação)
-- [ ] Sem a permissão `financeiro:conta:create`/`financeiro:conta:read`, recusa sem escrever
-- [ ] Toda criação audita
-- [ ] Listagem devolve hierarquia e `ativo`
-- [ ] Gate check passes
+- [x] Cria conta raiz e subconta (mesma `tipo` do pai, validado em aplicação)
+- [x] Sem a permissão `financeiro:conta:create`/`financeiro:conta:read`, recusa sem escrever
+- [x] Toda criação audita
+- [x] Listagem devolve hierarquia e `ativo`
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

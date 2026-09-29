@@ -10,7 +10,7 @@ Convenção de numeração local: **FIN-D-NNN** para decisões que valem só par
 
 | # | Spec | Requisitos | Status |
 |---|---|---|---|
-| 01 | `spec/01-plano-de-contas.md` | PC-01 a PC-04 | In Design |
+| 01 | `spec/01-plano-de-contas.md` | PC-01 a PC-04 | In Progress (T1, T2 concluídas) |
 | 02 | `spec/02-lancamentos.md` | LAN-01 a LAN-04 | In Design |
 | 03 | `spec/03-workflow-e-saldo.md` | WKF-01 a WKF-03 | In Design |
 | 04 | `spec/04-comprovantes.md` | CMP-01 a CMP-03 | In Design |
@@ -190,6 +190,8 @@ Parcelamento e pagamento parcial (FIN-D-002); centro de resultado e rateio; forn
 
 ## Handoff
 
-- **Fase**: documentação das 5 sub-specs (spec/design/tasks) em criação nesta sessão, branch `feature/financeiro-especificacao`.
-- **Próximo passo**: revisão humana da estrutura documental completa; código não iniciado.
+- **Fase**: implementação de `01-plano-de-contas` (PR 1: `T1`-`T3`), branch `feature/financeiro-especificacao`.
+- **Progresso**: `T1` (migração `contas_contabeis`) e `T2` (`CriarConta`+`ListarContas`, domain/app/infra criados) concluídas — tests-first, mutação e gates completos por tarefa, um commit atômico cada.
+- **Próximo passo**: `T3` (`DesativarConta`), mediante nova autorização explícita.
 - **Bloqueios**: nenhum — todas as decisões de negócio necessárias para especificar o V1 estão fechadas acima.
+- **Nota técnica registrada em T2**: `platform/audit.Register` exige o formato de duas partes `dominio.verbo` (ex. `user.create`, `document.create`); a ação de auditoria de `01` usa `conta.create` (não `financeiro.conta.create`). É consequência técnica direta de uma regra já existente no código, não uma decisão nova — mas os nomes de três partes citados nos docs de `02`/`03` (`financeiro.lancamento.receive`, `financeiro.lancamento.pay`, `financeiro.lancamento.create`) vão precisar do mesmo ajuste (para `lancamento.receive`, `lancamento.pay`, `lancamento.create`) quando essas sub-specs forem implementadas.
