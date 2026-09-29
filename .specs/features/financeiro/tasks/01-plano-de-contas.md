@@ -14,7 +14,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Pré-requisito**: nenhum código de `financeiro` existe ainda — este é o primeiro conjunto de tarefas do módulo.
 
-**Nota de ordem cruzada entre sub-specs** (não é uma tarefa desta spec, registrar aqui para não se perder): `T4` (renomear conta) só pode ser testada de ponta a ponta depois que a migração de `02-lancamentos` (tabela `lancamentos`) existir no banco de testes, porque a checagem de uso consulta essa tabela. Isso não muda a ordem de **especificação** (`01` continua especificada e revisada antes de `02`), só a ordem real de **execução de código**: `T4` desta spec deve ser codificada depois que a migração de `02-lancamentos` (a primeira tarefa dela) já existir. Ver `financeiro/STATE.md`, seção "Ordem real de execução entre sub-specs".
+**Nota de ordem cruzada entre sub-specs** (não é uma tarefa desta spec, registrar aqui para não se perder): `T4` (renomear conta) só pode ser testada de ponta a ponta depois que a migração de `02-lancamentos` (tabela `lancamentos`) existir no banco de testes, porque a checagem de uso consulta essa tabela. Isso não muda a ordem de **especificação** (`01` continua especificada e revisada antes de `02`), só a ordem real de **execução de código**: `T4` desta spec deve ser codificada depois que a migração de `02-lancamentos` (a primeira tarefa dela) já existir. **Isso também significa que `01` é implementada em duas PRs**: uma com `T1`-`T3` (sem dependência, PR 1), outra só com `T4` (PR 3, depois de `02` mesclada) — exceção documentada de "uma sub-spec, uma PR", não uma mistura de sub-specs. Ver `financeiro/STATE.md`, seção "Ordem real de execução entre sub-specs".
 
 ## Test Coverage Matrix
 

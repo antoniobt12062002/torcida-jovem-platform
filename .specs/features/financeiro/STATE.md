@@ -139,17 +139,32 @@ Nenhuma dependência circular real: a seta tracejada `02⇢01` é leitura, não 
 
 ## Ordem real de execução entre sub-specs
 
-A ordem de **especificação** (`01→02→03→04→05`, já revisada e aprovada) não é idêntica à ordem real de **implementação de código**, porque algumas tarefas têm pré-requisitos de schema entre sub-specs que a numeração local de cada `tasks/0N-*.md` não expressa (o validador de tasks só entende dependências dentro do mesmo arquivo). Ordem real recomendada, consolidada aqui para não se perder:
+A ordem de **especificação** (`01→02→03→04→05`, já revisada e aprovada) não é idêntica à ordem real de **implementação de código nem à de PRs**, porque algumas tarefas têm pré-requisitos de schema entre sub-specs que a numeração local de cada `tasks/0N-*.md` não expressa (o validador de tasks só entende dependências dentro do mesmo arquivo). Consolidado aqui, agora em dois níveis: a ordem de tarefas e o agrupamento em PRs.
+
+### Ordem de tarefas (dependência real)
 
 1. `01/T1` (migração `contas_contabeis`)
 2. `02/T1` (migração `lancamentos` — depende de `01/T1` pela FK)
 3. `01/T2`, `01/T3` (criar, listar, desativar conta)
 4. `02/T6` (implementação concreta de `LancamentoExistenceChecker`, depende de `02/T1`)
 5. `01/T4` (renomear conta — só testável de ponta a ponta com `02/T1` e `02/T6` já existindo)
-6. `02/T2`, `02/T3`, `02/T5` (criar, editar, listar lançamento)
-7. `03/T1`, `03/T2` (receber, pagar — dependem de `02/T2`)
-8. `02/T4` (devolução — teste usa fixture SQL direta para a pré-condição `RECEBIDA`, não depende de código de `03`, mas faz mais sentido depois de `03/T1` existir de verdade)
-9. `03/T3`, `03/T4` (cancelar, saldo)
+6. `02/T2`, `02/T3`, `02/T4`, `02/T5` (criar, editar, devolução, listar lançamento — `T4`/devolução usa fixture SQL direta para a pré-condição `RECEBIDA` em teste, **sem dependência real de código de `03`**, apesar de fazer sentido temático depois de `03/T1` existir)
+7. `03/T1`-`T4` (receber, pagar, cancelar, saldo — dependem só de `02/T1`+`T2`)
+8. `04/T1`-`T3` (comprovantes — dependem só de `02/T1`+`T2` e de `platform/documents`, já mesclada; **sem dependência de `03`**)
+9. `05/T1`-`T3` (institucionais, catálogo operacional, substituição do placeholder — **sem dependência de código real de `01`-`04`**: cada sub-spec referencia os nomes de permissão como literais diretos, mesmo padrão já usado em `identity` — `create_user.go` usa `"identity:user:create"` direto, não importa `roles_matrix.go`; os 13 nomes já estão fixados em `financeiro/STATE.md` desde a especificação. `05` é sequenciada por último por conveniência de verificação — nesse ponto os 13 nomes já foram exercitados de verdade pelos testes de `01`-`04` — não por bloqueio técnico)
+
+### Agrupamento em PRs (uma sub-spec por PR, salvo exceção documentada)
+
+| # | PR | Tarefas | Depende de |
+|---|---|---|---|
+| 1 | `01` (parte 1) | T1-T3 | nenhuma |
+| 2 | `02` (completa) | T1-T6 | PR 1 mesclada |
+| 3 | `01` (parte 2) | T4 | PR 2 mesclada |
+| 4 | `03` (completa) | T1-T4 | PR 2 mesclada |
+| 5 | `04` (completa) | T1-T3 | PR 2 mesclada |
+| 6 | `05` (completa) | T1-T3 | nenhuma tecnicamente — sequenciada por último por conveniência |
+
+**Exceção documentada** (a única mistura entre sub-specs em nível de PR, e é uma divisão, não uma mistura): `01` fica em duas PRs porque `T4` só pode ser codificada e testada de ponta a ponta depois que `02/T1` (schema) e `02/T6` (implementação concreta da porta) existirem — não há como evitar isso sem violar a fronteira de ownership (`01` nunca escreve em `02`, `02` nunca escreve em `01`, `FIN-D-008`) ou sem misturar `T4` dentro da PR de `02` (o que misturaria duas sub-specs numa PR, a regra que realmente importa preservar). PR 3, PR 4 e PR 5 não dependem umas das outras — só de PR 2 — e podem ser feitas em qualquer ordem relativa entre si; a ordem 3→4→5 é só a mais conveniente (a menor primeiro), não uma dependência real.
 10. `04/T1`, `04/T2`, `04/T3` (comprovantes — dependem de `02/T2`)
 11. `05/T1` (permissões institucionais — pode ser feita a qualquer momento, inclusive em paralelo com o restante)
 12. `05/T2`, `05/T3` (catálogo operacional completo e substituição do placeholder — por último, depois que `01`-`04` já fixaram seus nomes de permissão)
