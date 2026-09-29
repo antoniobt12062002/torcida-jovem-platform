@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/01-plano-de-contas.md`
 **Design**: `.specs/features/financeiro/design/01-plano-de-contas.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1 concluída; `tests-first`, um commit atômico por tarefa).
 
 **Pré-requisito**: nenhum código de `financeiro` existe ainda — este é o primeiro conjunto de tarefas do módulo.
 
@@ -50,11 +50,11 @@ Sequencial — cada tarefa depende só da anterior.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Tabela com `id`, `tipo` (CHECK RECEITA|DESPESA), `nome`, `parent_id` (auto-referência), `ativo` (default true)
-- [ ] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
-- [ ] Migração falha com mensagem clara se `tj_app` não existir
-- [ ] `down` desfaz sem erro
-- [ ] Gate check passes
+- [x] Tabela com `id`, `tipo` (CHECK RECEITA|DESPESA), `nome`, `parent_id` (auto-referência), `ativo` (default true)
+- [x] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
+- [x] Migração falha com mensagem clara se `tj_app` não existir
+- [x] `down` desfaz sem erro
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
