@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/01-plano-de-contas.md`
 **Design**: `.specs/features/financeiro/design/01-plano-de-contas.md`
-**Status**: In Progress (T1 e T2 concluídas; `tests-first`, um commit atômico por tarefa).
+**Status**: In Progress (T1, T2 e T3 concluídas; `tests-first`, um commit atômico por tarefa).
 
 **Pré-requisito**: nenhum código de `financeiro` existe ainda — este é o primeiro conjunto de tarefas do módulo.
 
@@ -96,12 +96,12 @@ Sequencial — cada tarefa depende só da anterior.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `ativo = false`, nunca `DELETE`
-- [ ] Idempotente (desativar já-inativa não é erro)
-- [ ] Sem `financeiro:conta:deactivate`, recusa sem escrever
-- [ ] Audita
-- [ ] Nenhuma operação de exclusão existe no pacote
-- [ ] Gate check passes
+- [x] `ativo = false`, nunca `DELETE`
+- [x] Idempotente (desativar já-inativa não é erro)
+- [x] Sem `financeiro:conta:deactivate`, recusa sem escrever
+- [x] Audita
+- [x] Nenhuma operação de exclusão existe no pacote
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

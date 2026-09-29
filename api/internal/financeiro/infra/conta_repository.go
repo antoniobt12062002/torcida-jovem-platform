@@ -86,6 +86,22 @@ func (r *ContaRepository) Listar(ctx context.Context) ([]domain.Conta, error) {
 	return contas, nil
 }
 
+// Desativar sets ativo = false and returns domain.ErrContaNaoEncontrada when
+// id does not exist. Deactivating an already-inactive conta matches the same
+// WHERE id clause and succeeds again (idempotent, PC-03 Edge Cases).
+func (r *ContaRepository) Desativar(ctx context.Context, id string) error {
+	var got string
+	err := conn(ctx, r.db).Raw(`UPDATE contas_contabeis SET ativo = false WHERE id = ?::uuid RETURNING id::text`, id).
+		Row().Scan(&got)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrContaNaoEncontrada
+		}
+		return fmt.Errorf("financeiro: desativar conta: %w", err)
+	}
+	return nil
+}
+
 func nullableUUID(id *string) any {
 	if id == nil {
 		return nil
