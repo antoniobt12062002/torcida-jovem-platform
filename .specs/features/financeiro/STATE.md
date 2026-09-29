@@ -45,6 +45,21 @@ Nenhuma dependência circular real: a seta tracejada `02⇢01` é leitura, não 
 
 `01` e `02` são sub-specs do mesmo módulo Go (`api/internal/financeiro/`), não módulos de negócio separados — a disciplina acima é sobre ownership de dado (quem escreve em quê), não uma fronteira equivalente à de `architecture_test.go` entre `financeiro` e `estoque`.
 
+### Estrutura de pacotes (decisão do mantenedor, 2026-09-29)
+
+As 5 sub-specs são unidades **documentais e de execução** (spec, design, tasks, testes, PR) — nunca pacotes Go independentes. `financeiro` segue o esqueleto já documentado em `docs/architecture/architecture-overview.md`, o mesmo de `identity`:
+
+```
+api/internal/financeiro/
+├── module.go     # financeiro.New(...) e financeiro.Contribution() (05), quando existirem
+├── domain/       # entidades e erros — um arquivo por conceito (conta.go, lancamento.go), não por sub-spec
+├── app/          # um arquivo por caso de uso (criar_conta.go, criar_lancamento.go, receber_lancamento.go, anexar_comprovante.go, ...), mesma granularidade de identity/app; usecase.go compartilhado (Authorizer/Auditor/TxFunc)
+├── infra/        # um arquivo por repositório/porta concreta (conta_repository.go, lancamento_repository.go, lancamento_existence_checker.go, ...)
+└── http/         # vazio até existir uma tarefa de rota HTTP — nenhuma das 5 sub-specs do V1 inclui isso ainda
+```
+
+Isso corrige um caminho equivocado que estava nos `tasks/0N-*.md` originais (pacotes flat por sub-spec, ex. `financeiro/planocontas/`, `financeiro/lancamentos/`) — passou por 4 rodadas de revisão sem eu sinalizar a tensão com `architecture-overview.md`, encontrado só ao começar a `T2` de `01`. `T1` (migração) não precisou de nenhuma reorganização: só tocou `api/migrations/` e o teste de migração em `platform/database` (mesmo padrão já usado por `documents`/`identity`/`password_reset`), nunca um pacote `financeiro/`. Todos os campos `Where` de `tasks/01-05` já foram corrigidos para os caminhos reais acima.
+
 ---
 
 ## Decisões fechadas (FIN-D-NNN)

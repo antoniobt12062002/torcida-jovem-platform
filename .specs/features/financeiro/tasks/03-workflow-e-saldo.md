@@ -41,7 +41,7 @@ T3 → T4
 ### T1: `Receber`
 
 **What**: Transição `CRIADA→RECEBIDA` para lançamento `RECEITA`.
-**Where**: `api/internal/financeiro/workflow/service.go`
+**Where**: `api/internal/financeiro/app/receber_lancamento.go`
 **Depends on**: None
 **Reuses**: `platform/authz`, `platform/audit`, `platform/database.WithTx`
 **Requirement**: WKF-01 (AC1, AC2, AC5, AC6 — parte de receita)
@@ -64,7 +64,7 @@ T3 → T4
 ### T2: `Pagar`
 
 **What**: Transição `CRIADA→PAGA` para lançamento `DESPESA`.
-**Where**: `api/internal/financeiro/workflow/service.go`
+**Where**: `api/internal/financeiro/app/pagar_lancamento.go`
 **Depends on**: None
 **Reuses**: idem T1
 **Requirement**: WKF-01 (AC3, AC4, AC5, AC6 — parte de despesa)
@@ -87,7 +87,7 @@ T3 → T4
 ### T3: `Cancelar`
 
 **What**: Cancelamento de qualquer estado não-terminal, motivo obrigatório, inclusive de lançamento já liquidado.
-**Where**: `api/internal/financeiro/workflow/service.go`
+**Where**: `api/internal/financeiro/app/cancelar_lancamento.go`
 **Depends on**: T1, T2
 **Reuses**: idem T1
 **Requirement**: WKF-02 (AC1-AC6)
@@ -112,7 +112,7 @@ T3 → T4
 ### T4: `ConsultarSaldo`
 
 **What**: Saldo em regime de caixa (`RECEBIDA` soma, `PAGA` subtrai, `CRIADA`/`CANCELADA` nunca contam).
-**Where**: `api/internal/financeiro/workflow/service.go`
+**Where**: `api/internal/financeiro/app/consultar_saldo.go`
 **Depends on**: T1, T2, T3
 **Reuses**: `platform/money`
 **Requirement**: WKF-03 (AC1-AC3)

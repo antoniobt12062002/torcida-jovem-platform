@@ -67,7 +67,7 @@ T1 → T6
 ### T2: `CriarLancamento`
 
 **What**: Criação de receita/despesa, com validação de conta (existe, ativa, mesma `tipo`) e cálculo de `valor_liquido_cents`.
-**Where**: `api/internal/financeiro/lancamentos/service.go`
+**Where**: `api/internal/financeiro/app/criar_lancamento.go`
 **Depends on**: T1
 **Reuses**: `platform/authz`, `platform/audit`, `platform/money`, `platform/database.WithTx`
 **Requirement**: LAN-01 (AC1-AC5)
@@ -90,7 +90,7 @@ T1 → T6
 ### T3: `EditarLancamento`
 
 **What**: Edição restrita a `status = CRIADA`.
-**Where**: `api/internal/financeiro/lancamentos/service.go`
+**Where**: `api/internal/financeiro/app/editar_lancamento.go`
 **Depends on**: T2
 **Reuses**: idem T2
 **Requirement**: LAN-02 (AC1-AC4)
@@ -113,7 +113,7 @@ T1 → T6
 ### T4: `CriarDevolucao`
 
 **What**: Criação de despesa com `devolucao_de_id`, validando o lançamento referenciado.
-**Where**: `api/internal/financeiro/lancamentos/service.go`
+**Where**: `api/internal/financeiro/app/criar_devolucao.go`
 **Depends on**: T2
 **Reuses**: idem T2
 **Requirement**: LAN-03 (AC1-AC4)
@@ -136,7 +136,7 @@ T1 → T6
 ### T5: `ListarLancamentos`
 
 **What**: Consulta/listagem com todos os campos.
-**Where**: `api/internal/financeiro/lancamentos/service.go`
+**Where**: `api/internal/financeiro/app/listar_lancamentos.go`
 **Depends on**: T2
 **Reuses**: idem T2
 **Requirement**: LAN-04 (AC1, AC2)
@@ -157,7 +157,7 @@ T1 → T6
 ### T6: Implementação de `LancamentoExistenceChecker`
 
 **What**: Implementação concreta da porta definida por `01-plano-de-contas` (`FIN-D-008`), consultando esta tabela; fiação em `financeiro.New`.
-**Where**: `api/internal/financeiro/lancamentos/existence_checker.go`
+**Where**: `api/internal/financeiro/infra/lancamento_existence_checker.go`
 **Depends on**: T1
 **Reuses**: nenhuma dependência de código de `01` — implementa uma interface que `01` define
 **Requirement**: PC-02 (AC3, de `01-plano-de-contas`, consumida aqui)

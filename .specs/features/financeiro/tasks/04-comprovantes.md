@@ -38,7 +38,7 @@ T1 → T3
 ### T1: `AnexarComprovante`
 
 **What**: Anexa um documento a um lançamento via `documents.Service.Store`.
-**Where**: `api/internal/financeiro/comprovantes/service.go`
+**Where**: `api/internal/financeiro/app/anexar_comprovante.go`
 **Depends on**: None
 **Reuses**: `platform/documents.Service`, `platform/authz`
 **Requirement**: CMP-01 (AC1-AC5)
@@ -61,7 +61,7 @@ T1 → T3
 ### T2: `ConsultarComprovante`
 
 **What**: Gera URL assinada via `documents.Service.AccessURL`.
-**Where**: `api/internal/financeiro/comprovantes/service.go`
+**Where**: `api/internal/financeiro/app/consultar_comprovante.go`
 **Depends on**: T1
 **Reuses**: idem T1
 **Requirement**: CMP-02 (AC1, AC2)
@@ -82,7 +82,7 @@ T1 → T3
 ### T3: `ListarComprovantes`
 
 **What**: Lista comprovantes de um lançamento via `documents.Service.ListByOwner`, sem gerar URL nem auditar, sem alterar `status`.
-**Where**: `api/internal/financeiro/comprovantes/service.go`
+**Where**: `api/internal/financeiro/app/listar_comprovantes.go`
 **Depends on**: T1
 **Reuses**: idem T1
 **Requirement**: CMP-03 (AC1-AC3)

@@ -24,13 +24,11 @@ graph TD
 
 ## Components
 
-### `financeiro` (camada `comprovantes`)
+Mesmo módulo Go `financeiro` (`domain/app/infra/http` compartilhados; nenhuma sub-spec vira pacote próprio). Sem entidade nem repositório próprios — composição pura sobre `platform/documents` e uma leitura em `lancamentos` (dono: `02`). Contribui:
 
-- **Interfaces**:
-  - `AnexarComprovante(ctx, AnexarInput) (documents.Document, error)` — valida que o lançamento existe, então chama `documents.Service.Store`.
-  - `ConsultarComprovante(ctx, ConsultarInput) (string, error)` — chama `documents.Service.AccessURL`, devolve a URL.
-  - `ListarComprovantes(ctx, ListarInput) ([]documents.Document, error)` — chama `documents.Service.ListByOwner`.
-- **Dependencies**: `platform/documents`, e uma leitura simples em `lancamentos` (dono: `02`) só para confirmar que o `id` existe antes de chamar `Store` — mesmo padrão de leitura pontual já usado em `01`/`02` (`FIN-D-008`), nunca escrita.
+- **`app/anexar_comprovante.go`**: `AnexarComprovante(ctx, AnexarInput) (documents.Document, error)` — valida que o lançamento existe (leitura simples via `infra/lancamento_repository.go`, de `02`), então chama `documents.Service.Store`.
+- **`app/consultar_comprovante.go`**: `ConsultarComprovante(ctx, ConsultarInput) (string, error)` — chama `documents.Service.AccessURL`, devolve a URL.
+- **`app/listar_comprovantes.go`**: `ListarComprovantes(ctx, ListarInput) ([]documents.Document, error)` — chama `documents.Service.ListByOwner`.
 
 ## Tech Decisions (only non-obvious ones)
 

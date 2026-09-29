@@ -5,12 +5,12 @@
 
 ## Architecture Overview
 
-`01-plano-de-contas` é a única dona de `ContaContabil`. O único ponto de acoplamento com `02-lancamentos` é a checagem de uso na renomeação (`FIN-D-008`), resolvida por uma porta de leitura definida aqui, nunca por escrita cruzada.
+`01-plano-de-contas` é a única dona da tabela `contas_contabeis`/entidade `Conta`. O único ponto de acoplamento com `02-lancamentos` é a checagem de uso na renomeação (`FIN-D-008`), resolvida por uma porta de leitura, nunca por escrita cruzada. Ambas as sub-specs vivem no mesmo módulo Go `financeiro` (`domain/app/infra/http` compartilhados, não pacotes por sub-spec — ver Components).
 
 ```mermaid
 graph TD
-    UC[caso de uso: renomear conta] --> Port["LancamentoExistenceChecker<br/>(porta definida em 01/app)"]
-    Port -.implementada por.-> Infra["01/infra: consulta read-only<br/>a lancamentos.conta_id"]
+    UC[caso de uso: renomear conta<br/>financeiro/app] --> Port["LancamentoExistenceChecker<br/>(porta definida em financeiro/app)"]
+    Port -.implementada por.-> Infra["financeiro/infra: consulta read-only<br/>a lancamentos.conta_id"]
     UC --> AZ[authz.Require]
     UC --> TX[database.WithTx]
     TX --> DB[(contas)]
@@ -27,15 +27,16 @@ graph TD
 
 ## Components
 
-### `financeiro` (pacote raiz do módulo, camada `plano_de_contas`)
+`financeiro` segue o esqueleto já documentado em `docs/architecture/architecture-overview.md` (mesmo padrão de `identity`): um único módulo Go, com `domain/app/infra/http` compartilhados por todas as 5 sub-specs — nenhuma sub-spec vira um pacote Go próprio. A independência das 5 sub-specs é documental/de execução (spec, design, tasks, testes, PR), não uma árvore de pacotes paralela. Plano de contas contribui:
 
-- **Purpose**: CRUD restrito de contas contábeis.
-- **Interfaces**:
-  - `CriarConta(ctx, CriarContaInput) (Conta, error)`
-  - `RenomearConta(ctx, RenomearContaInput) (Conta, error)` — chama `LancamentoExistenceChecker.TemLancamento(ctx, contaID)` antes de permitir.
-  - `DesativarConta(ctx, DesativarContaInput) error`
-  - `ListarContas(ctx, ListarContasInput) ([]Conta, error)`
-- **Porta definida aqui**: `type LancamentoExistenceChecker interface { TemLancamento(ctx context.Context, contaID uuid.UUID) (bool, error) }` — implementada em `infra` com uma consulta `SELECT EXISTS(SELECT 1 FROM lancamentos WHERE conta_id = ?)`. Vive fisicamente no mesmo módulo Go (`api/internal/financeiro/`), então não há import de um módulo de negócio para outro — só uma leitura entre duas entidades do mesmo domínio, composta em `financeiro.New`.
+- **`domain/conta.go`**: entidade `Conta` (tipo, nome, `parent_id`, `ativo`) e os erros de domínio (`ErrContaJaUtilizada`, `ErrContaInativa`, `ErrContaTipoIncompativel`).
+- **`app/criar_conta.go`**: caso de uso `CriarConta(ctx, CriarContaInput) (Conta, error)`.
+- **`app/listar_contas.go`**: caso de uso `ListarContas(ctx, ListarContasInput) ([]Conta, error)`.
+- **`app/desativar_conta.go`**: caso de uso `DesativarConta(ctx, DesativarContaInput) error`.
+- **`app/renomear_conta.go`** (T4, não implementado ainda): caso de uso `RenomearConta(ctx, RenomearContaInput) (Conta, error)` — chama `LancamentoExistenceChecker.TemLancamento(ctx, contaID)` antes de permitir.
+- **`app/usecase.go`** (compartilhado por toda `financeiro`, criado pela primeira sub-spec que precisar dele): portas comuns — `Authorizer`, `Auditor`, `TxFunc` — mesmo padrão de `identity/app/usecase.go`.
+- **`infra/conta_repository.go`**: `ContaRepository`, implementando as portas que `app` define para persistir/consultar `Conta`.
+- **Porta definida por esta sub-spec**: `type LancamentoExistenceChecker interface { TemLancamento(ctx context.Context, contaID uuid.UUID) (bool, error) }`, declarada em `app/renomear_conta.go` (T4). A implementação concreta fica em `infra` (`02-lancamentos`, T6) — mesmo pacote Go `financeiro/infra`, então não há import entre módulos de negócio, só duas implementações dentro do mesmo `infra`.
 
 ## Data Models
 

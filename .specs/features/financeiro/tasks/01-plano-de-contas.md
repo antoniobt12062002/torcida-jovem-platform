@@ -64,8 +64,8 @@ Sequencial — cada tarefa depende só da anterior.
 
 ### T2: `CriarConta` e `ListarContas`
 
-**What**: Casos de uso de criação e listagem, com permissão parametrizada pelo catálogo de `05-permissoes`.
-**Where**: `api/internal/financeiro/planocontas/service.go`
+**What**: Casos de uso de criação e listagem, com permissão parametrizada pelo catálogo de `05-permissoes`. Cria também `domain/conta.go`, `infra/conta_repository.go` e o `app/usecase.go` compartilhado (portas `Authorizer`/`Auditor`/`TxFunc`, mesmo padrão de `identity/app/usecase.go`) — primeira tarefa do módulo a precisar deles.
+**Where**: `api/internal/financeiro/app/criar_conta.go`
 **Depends on**: T1
 **Reuses**: `platform/authz`, `platform/audit`, `platform/database.WithTx`
 **Requirement**: PC-01 (AC1-AC4), PC-04 (AC1, AC2)
@@ -88,7 +88,7 @@ Sequencial — cada tarefa depende só da anterior.
 ### T3: `DesativarConta`
 
 **What**: Desativação sem exclusão; impede escolher conta inativa em novo lançamento (checagem que `02` vai consumir).
-**Where**: `api/internal/financeiro/planocontas/service.go`
+**Where**: `api/internal/financeiro/app/desativar_conta.go`
 **Depends on**: T2
 **Reuses**: idem T2
 **Requirement**: PC-03 (AC1-AC4)
@@ -111,10 +111,10 @@ Sequencial — cada tarefa depende só da anterior.
 
 ### T4: `RenomearConta` e a porta `LancamentoExistenceChecker`
 
-**What**: Renomeação restrita ao não-uso (`FIN-D-008`); define a porta de leitura e sua implementação concreta contra `lancamentos`.
-**Where**: `api/internal/financeiro/planocontas/service.go`
+**What**: Renomeação restrita ao não-uso (`FIN-D-008`); define a porta `LancamentoExistenceChecker`. A implementação concreta da porta (consulta a `lancamentos`) é de `02-lancamentos/T6`, no mesmo `financeiro/infra`.
+**Where**: `api/internal/financeiro/app/renomear_conta.go`
 **Depends on**: T3
-**Reuses**: idem T2; consulta read-only à tabela de `02-lancamentos` (ver nota de ordem cruzada no topo deste arquivo)
+**Reuses**: idem T2; a porta é implementada por `02-lancamentos/T6`, em `financeiro/infra` (mesmo pacote — sem import entre módulos de negócio)
 **Requirement**: PC-02 (AC1-AC4)
 
 **Tools**: MCP: NONE · Skill: `security-best-practices` (consulta cruzada entre entidades, checar que é read-only)

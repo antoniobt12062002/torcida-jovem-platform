@@ -17,6 +17,18 @@ graph TD
 
 Ordem em "criar": permissão recebida → validação de conta (existe, ativa, mesmo tipo) → se devolução, validação do lançamento referenciado → transação com o registro e a auditoria. Edição segue a mesma ordem, com a checagem adicional de `status = CRIADA` antes de qualquer validação de campo.
 
+## Components
+
+Mesmo módulo Go `financeiro` de `01` (`domain/app/infra/http` compartilhados — ver `docs/architecture/architecture-overview.md` e o Components de `01-plano-de-contas`; nenhuma sub-spec vira pacote próprio). `02-lancamentos` contribui:
+
+- **`domain/lancamento.go`**: entidade `Lancamento` e os erros de domínio (`ErrContaInvalida`, `ErrContaTipoIncompativel`, `ErrLancamentoImutavel`, `ErrDevolucaoInvalida`).
+- **`app/criar_lancamento.go`**: caso de uso `CriarLancamento`.
+- **`app/editar_lancamento.go`**: caso de uso `EditarLancamento`.
+- **`app/criar_devolucao.go`**: caso de uso `CriarDevolucao`.
+- **`app/listar_lancamentos.go`**: caso de uso `ListarLancamentos`.
+- **`infra/lancamento_repository.go`**: `LancamentoRepository`.
+- **`infra/lancamento_existence_checker.go`** (T6): implementação concreta de `LancamentoExistenceChecker` (porta definida em `01-plano-de-contas/app/renomear_conta.go`) — mesmo pacote `financeiro/infra`, sem import entre módulos de negócio.
+
 ## Code Reuse Analysis
 
 | Component | Location | How to Use |

@@ -30,14 +30,12 @@ Ordem em cada caso de uso: permissão recebida → checar `status` atual permite
 
 ## Components
 
-### `financeiro` (camada `workflow`)
+Mesmo módulo Go `financeiro` de `01`/`02` (`domain/app/infra/http` compartilhados; nenhuma sub-spec vira pacote próprio). `03-workflow-e-saldo` não tem entidade nem repositório próprios — opera sobre `Lancamento`/`infra/lancamento_repository.go`, ambos de `02-lancamentos`. Contribui:
 
-- **Interfaces**:
-  - `Receber(ctx, ReceberInput) (LancamentoFinanceiro, error)`
-  - `Pagar(ctx, PagarInput) (LancamentoFinanceiro, error)`
-  - `Cancelar(ctx, CancelarInput) (LancamentoFinanceiro, error)` — `CancelarInput` inclui `Motivo string`, validado não-vazio antes de qualquer escrita.
-  - `ConsultarSaldo(ctx, ConsultarSaldoInput) (SaldoCents money.Cents, error)`
-- **Dependencies**: opera sobre a mesma tabela `lancamentos` de `02-lancamentos` — sem entidade própria.
+- **`app/receber_lancamento.go`**: caso de uso `Receber(ctx, ReceberInput) (Lancamento, error)`.
+- **`app/pagar_lancamento.go`**: caso de uso `Pagar(ctx, PagarInput) (Lancamento, error)`.
+- **`app/cancelar_lancamento.go`**: caso de uso `Cancelar(ctx, CancelarInput) (Lancamento, error)` — `CancelarInput` inclui `Motivo string`, validado não-vazio antes de qualquer escrita.
+- **`app/consultar_saldo.go`**: caso de uso `ConsultarSaldo(ctx, ConsultarSaldoInput) (SaldoCents money.Cents, error)`.
 
 ## Tech Decisions (only non-obvious ones)
 

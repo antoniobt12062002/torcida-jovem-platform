@@ -38,7 +38,7 @@ T1 → T2 → T3
 ### T1: Esqueleto da `Contribution` e preservação institucional
 
 **What**: Função `financeiro.Contribution()` com as 3 permissões institucionais preservadas exatamente como no placeholder atual.
-**Where**: `api/internal/financeiro/financeiro.go`
+**Where**: `api/internal/financeiro/module.go`
 **Depends on**: None
 **Reuses**: `identity/app.Contribution`, `identity/domain.RoleConselhoFiscal`
 **Requirement**: PERM-02 (AC1-AC3)
@@ -60,7 +60,7 @@ T1 → T2 → T3
 ### T2: Completar com as 13 permissões operacionais e a distribuição por papel
 
 **What**: Adicionar as permissões de `01`-`04` (conforme suas specs) e a matriz de concessão de `TESOURARIA`/`DIRETORIA`/`CONSELHO_FISCAL`.
-**Where**: `api/internal/financeiro/financeiro.go`
+**Where**: `api/internal/financeiro/module.go`
 **Depends on**: T1
 **Reuses**: idem T1
 **Requirement**: PERM-01 (AC1-AC4), PERM-03 (AC1-AC4)
