@@ -57,9 +57,11 @@ func TestConselhoFiscalHasTheInstitutionalPermissionsAndNeverCreateUpdateDeleteC
 	}
 }
 
-// RBAC-01.9
+// RBAC-01.9. A lista cobre tanto as ações originais quanto as que módulos de
+// negócio (ex. financeiro) introduzem para transição de estado e desativação
+// — o Conselho Fiscal fiscaliza, nunca opera nenhuma delas.
 func TestBuildMatrixRefusesAForbiddenActionForConselhoFiscal(t *testing.T) {
-	for _, action := range []string{"create", "update", "delete", "cancel"} {
+	for _, action := range []string{"create", "update", "delete", "cancel", "deactivate", "receive", "pay"} {
 		perm := authz.Permission("financeiro:lancamento:" + action)
 		_, err := BuildMatrix(Contribution{
 			Module:      "financeiro",
