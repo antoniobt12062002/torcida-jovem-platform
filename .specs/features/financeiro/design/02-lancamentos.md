@@ -38,7 +38,7 @@ CREATE TABLE lancamentos (
   taxa_cents         bigint NOT NULL DEFAULT 0 CHECK (taxa_cents >= 0),
   valor_liquido_cents bigint NOT NULL,
   forma_pagamento    text NOT NULL CHECK (forma_pagamento IN ('PIX', 'CARTAO', 'DINHEIRO', 'TRANSFERENCIA', 'OUTROS')),
-  status             text NOT NULL DEFAULT 'CRIADA', -- valores e transições: ver 03-workflow-e-saldo
+  status             text NOT NULL DEFAULT 'CRIADA' CHECK (status IN ('CRIADA', 'RECEBIDA', 'PAGA', 'CANCELADA')), -- regras de transição: ver 03-workflow-e-saldo
   devolucao_de_id    uuid REFERENCES lancamentos,
   motivo_cancelamento text,
   cancelado_por      uuid REFERENCES users,
@@ -52,7 +52,7 @@ CREATE INDEX lancamentos_devolucao_idx ON lancamentos (devolucao_de_id) WHERE de
 -- GRANT INSERT, SELECT, UPDATE ON lancamentos TO tj_app (sem DELETE)
 ```
 
-`status`, `motivo_cancelamento`, `cancelado_por`, `cancelado_em` são colunas desta tabela (dona: `02`), mas a **regra** de quando `status` pode mudar e de como o cancelamento é registrado é de `03-workflow-e-saldo` — ver a tabela de ownership em `financeiro/STATE.md`. Esta spec só garante que a coluna existe e nasce `CRIADA`.
+`status`, `motivo_cancelamento`, `cancelado_por`, `cancelado_em` são colunas desta tabela (dona: `02`), mas a **regra** de quando `status` pode mudar e de como o cancelamento é registrado é de `03-workflow-e-saldo` — ver a tabela de ownership em `financeiro/STATE.md`. Esta spec só garante que a coluna existe, nasce `CRIADA` e é restrita aos 4 valores válidos por `CHECK` (o mesmo padrão já usado na coluna `tipo`); a correlação entre `tipo` e quais desses valores são alcançáveis (`RECEBIDA` só para `RECEITA`, `PAGA` só para `DESPESA`) é validada em aplicação por `03`, não em `CHECK` cruzado — evita uma constraint composta só para um caso sem histórico de causar problema no projeto.
 
 **Relationships**: `conta_id` → `contas_contabeis` (dono: `01`, sem escrita reversa). `devolucao_de_id` → auto-referência nesta mesma tabela, unidirecional (`FIN-D-003`): só a despesa carrega o valor, a receita original nunca é escrita por causa disso — nenhuma coluna nesta tabela representa "sou referenciada por uma devolução".
 

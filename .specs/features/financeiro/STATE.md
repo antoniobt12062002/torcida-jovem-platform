@@ -105,6 +105,10 @@ Nenhuma dependência circular real: a seta tracejada `02⇢01` é leitura, não 
 **Decisão**: `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine` já existem em `identity/app/roles_matrix.go` (`FoundationContributions`), concedidas a `CONSELHO_FISCAL` desde a fundação. Quando `financeiro` publicar sua própria `Contribution`, ela precisa **preservá-las exatamente como estão** (mesmo nome, mesmo papel), substituindo o placeholder — sem criar nenhum caso de uso ou endpoint que as utilize nesta rodada. Pertencem a uma futura sub-spec de prestação de contas (V2).
 **Escopo**: `05-permissoes`.
 
+### FIN-D-015 — Consistência entre tipo do lançamento e tipo da conta
+**Decisão**: um lançamento `RECEITA` só pode usar uma conta `RECEITA`; um lançamento `DESPESA` só pode usar uma conta `DESPESA`. É regra de negócio do lançamento (não um detalhe técnico incidental), validada em aplicação antes de gravar, com o erro `conta_tipo_incompativel` quando violada.
+**Escopo**: `02-lancamentos` (LAN-01 AC3).
+
 ---
 
 ## Matriz de permissões do V1 (consolidada — ver detalhe e rationale em `05-permissoes`)
@@ -125,7 +129,7 @@ Nenhuma dependência circular real: a seta tracejada `02⇢01` é leitura, não 
 | `financeiro:comprovante:create` | ✓ | | | automático |
 | `financeiro:comprovante:read` | ✓ | ✓ | ✓ | automático |
 
-`CONSELHO_FISCAL` nunca recebe `create`/`update`/`deactivate`/`receive`/`pay`/`cancel` — já impedido em código (`roles_matrix.go`, `forbiddenToConselhoFiscal`). `ASSOCIADO`, `ESTOQUE_LOJA`, `EVENTOS`, `ADMIN_SISTEMA`: nenhuma permissão de `financeiro` no V1. As 3 permissões institucionais (FIN-D-014) não aparecem nesta tabela — nenhum papel ganha caso de uso novo por causa delas nesta rodada.
+`CONSELHO_FISCAL` nunca recebe `create`/`update`/`deactivate`/`receive`/`pay`/`cancel`. **Atenção, achado da revisão de consistência**: só `create`/`update`/`cancel` são impedidos em código, por `roles_matrix.go`'s `forbiddenToConselhoFiscal = []string{"create", "update", "delete", "cancel"}` — `deactivate`, `receive` e `pay` **não estão** nessa lista hoje. Para essas três, a garantia de que `CONSELHO_FISCAL` nunca as recebe depende inteiramente de `financeiro`'s própria `Contribution` simplesmente não as conceder — nada em `BuildMatrix` bloqueiria um erro futuro que concedesse `financeiro:lancamento:receive` ao Conselho Fiscal, por exemplo. Ver detalhe em `05-permissoes`. `ASSOCIADO`, `ESTOQUE_LOJA`, `EVENTOS`, `ADMIN_SISTEMA`: nenhuma permissão de `financeiro` no V1. As 3 permissões institucionais (FIN-D-014) não aparecem nesta tabela — nenhum papel ganha caso de uso novo por causa delas nesta rodada.
 
 ---
 

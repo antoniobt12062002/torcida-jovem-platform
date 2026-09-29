@@ -51,7 +51,7 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`
+- [ ] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`, restrito por `CHECK` aos 4 valores válidos
 - [ ] `devolucao_de_id` auto-referência, nullable
 - [ ] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
 - [ ] Migração falha com mensagem clara se `tj_app` ou `contas_contabeis` não existirem

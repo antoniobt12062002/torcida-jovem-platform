@@ -9,6 +9,7 @@ Status: Aprovada em 2026-09-29. Sub-spec 2 de 5 da feature `financeiro`. Decisõ
 ## Goals
 
 - Criar lançamentos (receita ou despesa), com valor bruto, taxa, valor líquido e forma de pagamento.
+- Garantir a consistência entre o tipo do lançamento e o tipo da conta usada: um lançamento `RECEITA` só pode usar conta `RECEITA`; um lançamento `DESPESA` só pode usar conta `DESPESA` — regra de negócio do lançamento, não um detalhe técnico (`FIN-D-015`).
 - Permitir editar um lançamento só enquanto ele ainda não foi liquidado (`FIN-D-007`).
 - Registrar devolução de dinheiro já recebido como uma nova despesa vinculada à receita original (`FIN-D-003`).
 - Consultar/listar lançamentos.
@@ -28,7 +29,7 @@ Status: Aprovada em 2026-09-29. Sub-spec 2 de 5 da feature `financeiro`. Decisõ
 | Question | Chosen default | Rationale | Confirmed |
 |---|---|---|---|
 | Campos do lançamento | tipo, conta_id, valor_bruto_cents, taxa_cents (default 0), valor_liquido_cents (calculado e armazenado), forma_pagamento, status, devolucao_de_id (nullable) | `FIN-001` §7-8, `financeiro/STATE.md` modelo de dados | y |
-| `tipo` do lançamento deve bater com `tipo` da conta | Sim — uma receita só pode apontar para uma conta RECEITA, uma despesa só para DESPESA | Consistência lógica direta de `01-plano-de-contas`; não é uma nova decisão de negócio, é consequência do próprio modelo de conta tipada | y |
+| `tipo` do lançamento deve bater com `tipo` da conta | Sim — uma receita só pode apontar para uma conta RECEITA, uma despesa só para DESPESA | Regra de consistência do lançamento, aprovada explicitamente pelo mantenedor (`FIN-D-015`) | y |
 | Edição permitida | Só enquanto `status = CRIADA` | `FIN-D-007` | y |
 | Devolução | Nova despesa com `devolucao_de_id`; exige que o lançamento referenciado seja RECEITA e esteja RECEBIDA; receita original nunca é escrita | `FIN-D-003` | y |
 | Permissão de devolução | Mesma `financeiro:lancamento:create` — não é uma operação nova, é um lançamento com um campo extra | Consequência direta de FIN-D-003 tratar devolução como "uma nova despesa", não como operação distinta | y |
@@ -45,7 +46,7 @@ Open questions: none.
 **Acceptance Criteria**:
 1. WHEN a Tesouraria creates a lançamento with tipo, conta_id, valor_bruto_cents, taxa_cents (default 0) and forma_pagamento THEN the system SHALL persist it with `status = CRIADA` and `valor_liquido_cents = valor_bruto_cents - taxa_cents`, computed once at creation.
 2. IF conta_id refers to an inactive or nonexistent account THEN the system SHALL reject the lançamento with the error `conta_invalida` and SHALL NOT create it.
-3. IF the lançamento's tipo does not match the referenced conta's tipo THEN the system SHALL reject it with the error `conta_tipo_incompativel`.
+3. The system SHALL enforce that a `RECEITA` lançamento only uses a `RECEITA` conta, and a `DESPESA` lançamento only uses a `DESPESA` conta; IF the lançamento's tipo does not match the referenced conta's tipo THEN it SHALL reject the lançamento with the error `conta_tipo_incompativel` and SHALL NOT create it.
 4. IF the actor lacks `financeiro:lancamento:create` THEN the system SHALL return a forbidden error and SHALL NOT create the lançamento.
 5. WHEN a lançamento is created THEN the system SHALL record an audit entry with tipo, conta_id, valor_bruto_cents and forma_pagamento.
 

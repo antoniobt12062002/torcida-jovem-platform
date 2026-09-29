@@ -41,7 +41,7 @@ Open questions: none.
 **Acceptance Criteria**:
 1. WHEN `financeiro` contributes a permission THEN its name SHALL match the format `financeiro:recurso:ação`.
 2. The system SHALL NOT declare any `financeiro` permission as `CommonRead`.
-3. The system SHALL NOT grant `CONSELHO_FISCAL` any `financeiro` permission whose action is `create`, `update`, `deactivate`, `receive`, `pay` or `cancel`.
+3. The system SHALL NOT grant `CONSELHO_FISCAL` any `financeiro` permission whose action is `create`, `update`, `deactivate`, `receive`, `pay` or `cancel`. For `create`, `update` and `cancel`, `BuildMatrix` already refuses such a grant (`forbiddenToConselhoFiscal`); for `deactivate`, `receive` and `pay`, that list does not cover them today, so this AC is guaranteed only by `financeiro`'s own `Contribution` never granting them — a fact this sub-spec's own test must prove directly, not assume from `BuildMatrix`.
 4. WHEN `financeiro`'s `Contribution` is aggregated by `BuildMatrix` THEN `PRESIDENTE` SHALL receive every `financeiro` permission automatically, as an explicit grant created by the synchronization.
 
 **Independent Test**: montar a `Contribution` de `financeiro` com as 13 permissões do V1, agregar com `BuildMatrix` junto das demais, e ver a matriz resultante sem erro.
@@ -76,7 +76,8 @@ Open questions: none.
 ## Edge Cases
 
 - Tentar declarar uma permissão fora do prefixo `financeiro:`: recusado por `BuildMatrix` (`belongsTo`), já garantido pelo mecanismo existente, não uma regra nova desta spec.
-- Tentar conceder `CONSELHO_FISCAL` uma ação proibida: recusado por `BuildMatrix` (`forbiddenToConselhoFiscal`), já garantido pelo mecanismo existente.
+- Tentar conceder `CONSELHO_FISCAL` `create`, `update` ou `cancel`: recusado por `BuildMatrix` (`forbiddenToConselhoFiscal`), já garantido pelo mecanismo existente.
+- Tentar conceder `CONSELHO_FISCAL` `deactivate`, `receive` ou `pay`: **não recusado por `BuildMatrix`** (essas três ações não estão em `forbiddenToConselhoFiscal` hoje) — só o teste desta sub-spec, verificando o conteúdo real de `Contribution()`, garante que isso nunca acontece.
 
 ## Requirement Traceability
 

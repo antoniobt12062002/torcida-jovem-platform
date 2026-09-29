@@ -98,6 +98,7 @@ Sequencial — cada tarefa depende só da anterior.
 **Done when**:
 - [ ] `ativo = false`, nunca `DELETE`
 - [ ] Idempotente (desativar já-inativa não é erro)
+- [ ] Sem `financeiro:conta:deactivate`, recusa sem escrever
 - [ ] Audita
 - [ ] Nenhuma operação de exclusão existe no pacote
 - [ ] Gate check passes
@@ -123,6 +124,7 @@ Sequencial — cada tarefa depende só da anterior.
 - [ ] Conta já usada (mesmo com o único lançamento `CANCELADA`): recusa com `conta_ja_utilizada`
 - [ ] A checagem nunca escreve em `lancamentos`; `02` nunca escreve em `contas_contabeis`
 - [ ] Renomeação audita nome anterior e novo
+- [ ] Sem `financeiro:conta:update`, recusa mesmo para uma conta nunca usada
 - [ ] Cada AC listado em Requirement tem ao menos um teste
 - [ ] Gate check passes
 

@@ -89,7 +89,7 @@ T1 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Lista todas as versões, mais nova primeiro
+- [ ] Lista todos os comprovantes do lançamento, mais novo primeiro
 - [ ] Não gera URL, não audita
 - [ ] Não altera `status` do lançamento (prova negativa: `status` inalterado antes/depois)
 - [ ] Gate check passes

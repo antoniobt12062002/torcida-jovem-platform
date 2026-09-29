@@ -29,6 +29,7 @@ Status: Aprovada em 2026-09-29. Sub-spec 4 de 5 da feature `financeiro`. Decisõ
 | `owner_id` | `id` do `LancamentoFinanceiro` (dono: `02-lancamentos`) | Direto | y |
 | Obrigatoriedade | Nunca obrigatório — pode ser anexado a qualquer momento, mesmo depois do lançamento cancelado | `FIN-001` §25 (alertas de "despesa sem comprovante") pressupõe que existir sem um é possível; alertas ficam fora do V1 | y |
 | Efeito no cancelamento | Nenhum — comprovantes já anexados permanecem, `platform/documents` não tem operação de exclusão | Consequência direta do desenho de `platform/documents`, não uma nova decisão | y |
+| `Supersedes` (correção de um comprovante já anexado) | Nunca usado — cada anexo é um documento independente, sem ligação com anexos anteriores do mesmo lançamento | `platform/documents` suporta encadear versões via `Supersedes`, mas nenhuma decisão fechada de `financeiro` pede correção de comprovante como um fluxo distinto de "anexar mais um documento"; assumido como não-encadeado até haver decisão em contrário | y |
 
 Open questions: none.
 
@@ -65,11 +66,11 @@ Open questions: none.
 **User Story**: Como Tesouraria, Presidente, Diretoria ou Conselho Fiscal, quero listar os comprovantes de um lançamento, para saber quais documentos já foram anexados.
 
 **Acceptance Criteria**:
-1. WHEN an actor holding `financeiro:comprovante:read` lists comprovantes of a lançamento THEN the system SHALL call `documents.Service.ListByOwner` with `OwnerType="financeiro.lancamento"` and the lançamento's id, returning every version, newest first.
+1. WHEN an actor holding `financeiro:comprovante:read` lists comprovantes of a lançamento THEN the system SHALL call `documents.Service.ListByOwner` with `OwnerType="financeiro.lancamento"` and the lançamento's id, returning every document attached to it, newest first — each independently `Version 1`, since `CMP-01` never chains attachments via `Supersedes`.
 2. The system SHALL NOT generate any signed URL as part of this listing (same behavior as `platform/documents`' `ListByOwner`, DOC-04 AC1).
 3. The system SHALL NOT record any audit entry for this listing (same behavior as `platform/documents`' `ListByOwner`, DOC-04 AC4) — nor SHALL it write anything to the lançamento's `status`.
 
-**Independent Test**: anexar duas versões de um comprovante ao mesmo lançamento; listar e ver as duas, mais nova primeiro, sem nenhuma URL nem entrada de auditoria de listagem.
+**Independent Test**: anexar dois comprovantes distintos ao mesmo lançamento; listar e ver os dois, mais novo primeiro, sem nenhuma URL nem entrada de auditoria de listagem.
 
 ## Edge Cases
 

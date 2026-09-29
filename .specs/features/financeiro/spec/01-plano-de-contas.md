@@ -45,7 +45,7 @@ Open questions: none.
 **Acceptance Criteria**:
 1. WHEN a Tesouraria cria uma conta com tipo (RECEITA ou DESPESA) e nome THEN the system SHALL persist it with `ativo = true` and no parent, or with the given `parent_id` when provided.
 2. IF a `parent_id` is given THEN the system SHALL require the parent account to exist and to have the same `tipo` as the new account.
-3. IF the actor lacks the permission required for this operation THEN the system SHALL return a forbidden error and SHALL NOT create the account.
+3. IF the actor lacks `financeiro:conta:create` THEN the system SHALL return a forbidden error and SHALL NOT create the account.
 4. WHEN a conta é criada THEN the system SHALL record an audit entry naming its id, tipo and nome.
 
 **Independent Test**: criar uma conta raiz "Produtos" (RECEITA) e uma subconta "Camisetas" apontando para ela; ver a hierarquia refletida na consulta.
@@ -63,6 +63,7 @@ Open questions: none.
 2. IF a conta has been referenced by at least one `LancamentoFinanceiro`, regardless of that lançamento's status THEN the system SHALL reject a rename attempt with the error `conta_ja_utilizada`, mesmo se o único lançamento estiver `CANCELADA`.
 3. WHEN the system checks whether a conta was ever used THEN it SHALL do so through a read-only port owned by this sub-spec, never by writing to `ContaContabil` from `02-lancamentos` nor by writing to `LancamentoFinanceiro` from this sub-spec.
 4. WHEN a rename succeeds THEN the system SHALL record an audit entry with the previous and new `nome`.
+5. IF the actor lacks `financeiro:conta:update` THEN the system SHALL return a forbidden error and SHALL NOT rename the conta, regardless of whether it was ever used.
 
 **Independent Test**: criar uma conta, renomeá-la com sucesso; criar um lançamento apontando para ela; tentar renomear de novo e ver `conta_ja_utilizada`.
 
@@ -79,6 +80,7 @@ Open questions: none.
 2. IF a conta is inactive THEN the system SHALL NOT allow it to be chosen as `conta_id` for a new `LancamentoFinanceiro`.
 3. WHEN a conta is deactivated THEN the system SHALL record an audit entry.
 4. The system SHALL NOT provide any operation that deletes a `ContaContabil` row.
+5. IF the actor lacks `financeiro:conta:deactivate` THEN the system SHALL return a forbidden error and SHALL NOT deactivate the conta.
 
 **Independent Test**: desativar uma conta usada; confirmar que lançamentos antigos continuam mostrando-a normalmente e que ela não aparece na lista de contas disponíveis para um novo lançamento.
 
@@ -89,8 +91,8 @@ Open questions: none.
 **User Story**: Como qualquer papel com a permissão de leitura, quero consultar o plano de contas, para escolher a conta certa ao lançar ou para entender a estrutura vigente.
 
 **Acceptance Criteria**:
-1. WHEN an actor holding the required permission lists accounts THEN the system SHALL return them with their hierarchy (`parent_id`) and `ativo` status.
-2. IF the actor lacks the required permission THEN the system SHALL return a forbidden error and SHALL NOT return any row.
+1. WHEN an actor holding `financeiro:conta:read` lists accounts THEN the system SHALL return them with their hierarchy (`parent_id`) and `ativo` status.
+2. IF the actor lacks `financeiro:conta:read` THEN the system SHALL return a forbidden error and SHALL NOT return any row.
 
 **Independent Test**: listar contas e ver ativas e inativas, com a árvore corretamente representada.
 
