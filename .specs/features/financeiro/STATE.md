@@ -105,7 +105,7 @@ Isso corrige um caminho equivocado que estava nos `tasks/0N-*.md` originais (pac
 **Escopo**: `02-lancamentos`, `05-permissoes`.
 
 ### FIN-D-011 — Permissões de liquidação: receive e pay separadas
-**Decisão**: `financeiro:lancamento:receive` e `financeiro:lancamento:pay` são permissões distintas, sem uma genérica `settle`. Refletido também no catálogo de auditoria: ações `financeiro.lancamento.receive` e `financeiro.lancamento.pay` distintas.
+**Decisão**: `financeiro:lancamento:receive` e `financeiro:lancamento:pay` são permissões distintas, sem uma genérica `settle`. Refletido também no catálogo de auditoria: ações `lancamento.receive` e `lancamento.pay` distintas (formato `dominio.verbo` exigido por `platform/audit.Register`; nomes corrigidos de `financeiro.lancamento.receive`/`.pay`, que tinham três segmentos — achado técnico da T2, ver Handoff).
 **Escopo**: `03-workflow-e-saldo`, `05-permissoes`.
 
 ### FIN-D-012 — Diretoria e comprovantes
@@ -190,8 +190,7 @@ Parcelamento e pagamento parcial (FIN-D-002); centro de resultado e rateio; forn
 
 ## Handoff
 
-- **Fase**: implementação de `01-plano-de-contas` (PR 1: `T1`-`T3`), branch `feature/financeiro-especificacao`.
-- **Progresso**: `T1` (migração `contas_contabeis`), `T2` (`CriarConta`+`ListarContas`, domain/app/infra criados) e `T3` (`DesativarConta`) concluídas — tests-first, mutação e gates completos por tarefa, um commit atômico cada.
-- **Próximo passo**: `T4` (`RenomearConta` + porta `LancamentoExistenceChecker`), mediante nova autorização explícita. Nota: `T4` só pode ser testada de ponta a ponta depois que `02-lancamentos` tiver a tabela `lancamentos` (ver "Nota de ordem cruzada" em `tasks/01-plano-de-contas.md`) — provável PR separada.
+- **Fase**: `01-plano-de-contas` PR 1 (`T1`-`T3`) concluída; iniciando `02-lancamentos` PR 2 (`T1`-`T6`), branch `feature/financeiro-especificacao`.
+- **Progresso `01`**: `T1` (migração `contas_contabeis`), `T2` (`CriarConta`+`ListarContas`) e `T3` (`DesativarConta`) concluídas — tests-first, mutação e gates completos por tarefa, um commit atômico cada. `T4` (`RenomearConta`) fica para depois que `02/T1` (tabela `lancamentos`) existir.
 - **Bloqueios**: nenhum — todas as decisões de negócio necessárias para especificar o V1 estão fechadas acima.
-- **Nota técnica registrada em T2**: `platform/audit.Register` exige o formato de duas partes `dominio.verbo` (ex. `user.create`, `document.create`); a ação de auditoria de `01` usa `conta.create` (não `financeiro.conta.create`). É consequência técnica direta de uma regra já existente no código, não uma decisão nova — mas os nomes de três partes citados nos docs de `02`/`03` (`financeiro.lancamento.receive`, `financeiro.lancamento.pay`, `financeiro.lancamento.create`) vão precisar do mesmo ajuste (para `lancamento.receive`, `lancamento.pay`, `lancamento.create`) quando essas sub-specs forem implementadas.
+- **Nota técnica (achado da T2 de `01`, resolvido)**: `platform/audit.Register` exige o formato de duas partes `dominio.verbo` (ex. `user.create`, `document.create`). Os nomes de três partes que apareciam em `design/02-lancamentos.md`, `spec/03-workflow-e-saldo.md`, `design/03-workflow-e-saldo.md`, `tasks/03-workflow-e-saldo.md` e nesta FIN-D-011 foram corrigidos para o formato aceito. Catálogo final de ações de `lancamento`: `lancamento.create` (LAN-01 AC5; reaproveitada por `CriarDevolucao`, LAN-03 — devolução não é operação de negócio distinta, FIN-D-003; `devolucao_de_id` vai no payload `After`), `lancamento.update` (LAN-02 AC4), `lancamento.receive`/`lancamento.pay`/`lancamento.cancel` (`03-workflow-e-saldo`, fora do escopo desta PR). `owner_type="financeiro.lancamento"` usado por `platform/documents` (FIN-D-005, `04-comprovantes`) é um namespace diferente (formato próprio de `documents`, não de `audit.Action`) e não precisou de ajuste.

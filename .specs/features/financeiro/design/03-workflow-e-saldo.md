@@ -24,7 +24,7 @@ Ordem em cada caso de uso: permissão recebida → checar `status` atual permite
 | Component | Location | How to Use |
 |---|---|---|
 | Permissões | `platform/authz` | `financeiro:lancamento:receive`/`pay`/`cancel`, `financeiro:saldo:read` |
-| Auditoria | `platform/audit` | Ações distintas `financeiro.lancamento.receive`/`.pay`; `.cancel` com `Reason` obrigatório, já reforçado por `platform/audit`'s `requiresReason()` no sufixo `.cancel` |
+| Auditoria | `platform/audit` | Ações distintas `lancamento.receive`/`lancamento.pay`/`lancamento.cancel` (formato `dominio.verbo` exigido por `platform/audit.Register`); `lancamento.cancel` com `Reason` obrigatório, já reforçado por `platform/audit`'s `requiresReason()` no sufixo `.cancel` |
 | Transação | `platform/database` | `WithTx` |
 | Dinheiro | `platform/money` | soma de `Cents` para o saldo |
 
@@ -43,4 +43,4 @@ Mesmo módulo Go `financeiro` de `01`/`02` (`domain/app/infra/http` compartilhad
 |---|---|---|
 | Saldo | `SELECT COALESCE(SUM(...) FILTER (WHERE status='RECEBIDA'), 0) - COALESCE(SUM(...) FILTER (WHERE status='PAGA'), 0)` numa única query | Simples, correto por definição em regime de caixa (`FIN-D-001`); sem necessidade de materializar um saldo em cache no V1, dado o volume esperado |
 | Cancelamento de liquidado | Sem vínculo obrigatório a um lançamento substituto | Decisão fechada na revisão arquitetural (`FIN-D-006`) — a janela de saldo é aceita, não mitigada nesta versão |
-| Ações de auditoria por tipo de liquidação | `financeiro.lancamento.receive` e `financeiro.lancamento.pay` distintas | `FIN-D-011`, mesmo padrão já usado em `identity` (`user.reactivate`, `admin.promote`, nunca um genérico `status_change`) |
+| Ações de auditoria por tipo de liquidação | `lancamento.receive` e `lancamento.pay` distintas | `FIN-D-011`, mesmo padrão já usado em `identity` (`user.reactivate`, `admin.promote`, nunca um genérico `status_change`) |
