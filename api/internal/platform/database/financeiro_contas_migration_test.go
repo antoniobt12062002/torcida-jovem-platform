@@ -100,6 +100,10 @@ func TestContasContabeisDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 		t.Fatalf("inserir: %v", err)
 	}
 
+	// 000007 depende de contas_contabeis (FK conta_id): é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000007_financeiro_lancamentos.down.sql")); err != nil {
+		t.Fatalf("down 000007: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000006_financeiro_contas.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}
@@ -114,6 +118,10 @@ func TestContasContabeisDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 
 func TestContasContabeisMigrationFailsClearlyWithoutTheApplicationRole(t *testing.T) {
 	_, owner := newAuditDBs(t)
+	// 000007 depende de contas_contabeis (FK conta_id): é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000007_financeiro_lancamentos.down.sql")); err != nil {
+		t.Fatalf("down 000007: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000006_financeiro_contas.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}

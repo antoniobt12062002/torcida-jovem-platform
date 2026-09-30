@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/02-lancamentos.md`
 **Design**: `.specs/features/financeiro/design/02-lancamentos.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1 concluída); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: a migração `T1` desta spec precisa existir antes de `01-plano-de-contas/T4` (renomear conta) poder ser testada de ponta a ponta — ver `financeiro/STATE.md`, "Ordem real de execução entre sub-specs". Dentro desta spec, nenhuma tarefa depende de `01` além da FK `conta_id` (a migração de `01` precisa existir antes de `T1` aqui).
 
@@ -51,12 +51,12 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`, restrito por `CHECK` aos 4 valores válidos
-- [ ] `devolucao_de_id` auto-referência, nullable
-- [ ] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
-- [ ] Migração falha com mensagem clara se `tj_app` ou `contas_contabeis` não existirem
-- [ ] `down` desfaz sem erro
-- [ ] Gate check passes
+- [x] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`, restrito por `CHECK` aos 4 valores válidos
+- [x] `devolucao_de_id` auto-referência, nullable
+- [x] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
+- [x] Migração falha com mensagem clara se `tj_app` ou `contas_contabeis` não existirem
+- [x] `down` desfaz sem erro
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
