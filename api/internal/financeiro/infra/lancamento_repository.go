@@ -113,3 +113,18 @@ func (r *LancamentoRepository) Atualizar(ctx context.Context, l domain.Lancament
 	}
 	return lancamento, nil
 }
+
+// Listar returns every lançamento, oldest first, with every field including
+// status and devolucao_de_id (LAN-04 AC1) — nothing is filtered by default.
+func (r *LancamentoRepository) Listar(ctx context.Context) ([]domain.Lancamento, error) {
+	var rows []lancamentoRow
+	err := conn(ctx, r.db).Raw(`SELECT ` + lancamentoColumns + ` FROM lancamentos ORDER BY criado_em`).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("financeiro: listar lançamentos: %w", err)
+	}
+	lancamentos := make([]domain.Lancamento, 0, len(rows))
+	for _, row := range rows {
+		lancamentos = append(lancamentos, row.lancamento())
+	}
+	return lancamentos, nil
+}
