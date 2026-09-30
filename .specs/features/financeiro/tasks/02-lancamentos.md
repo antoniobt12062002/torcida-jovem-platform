@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/02-lancamentos.md`
 **Design**: `.specs/features/financeiro/design/02-lancamentos.md`
-**Status**: In Progress (T1-T5 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: Concluída (T1-T6); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: a migração `T1` desta spec precisa existir antes de `01-plano-de-contas/T4` (renomear conta) poder ser testada de ponta a ponta — ver `financeiro/STATE.md`, "Ordem real de execução entre sub-specs". Dentro desta spec, nenhuma tarefa depende de `01` além da FK `conta_id` (a migração de `01` precisa existir antes de `T1` aqui).
 
@@ -156,10 +156,10 @@ T1 → T6
 
 ### T6: Implementação de `LancamentoExistenceChecker`
 
-**What**: Implementação concreta da porta definida por `01-plano-de-contas` (`FIN-D-008`), consultando esta tabela; fiação em `financeiro.New`.
+**What**: Implementação concreta da porta que `01-plano-de-contas` vai definir (`FIN-D-008`), consultando esta tabela. Nenhuma interface Go existe ainda para essa porta: `01-plano-de-contas/T4` (`RenomearConta`, ainda não implementada) é quem vai declará-la, do lado do consumidor — este tipo concreto a satisfaz estruturalmente quando isso acontecer, mesmo padrão AD-015 já usado no resto do módulo.
 **Where**: `api/internal/financeiro/infra/lancamento_existence_checker.go`
 **Depends on**: T1
-**Reuses**: nenhuma dependência de código de `01` — implementa uma interface que `01` define
+**Reuses**: nenhuma dependência de código de `01` — implementa uma interface que `01` vai definir
 **Requirement**: PC-02 (AC3, de `01-plano-de-contas`, consumida aqui)
 
 **Tools**: MCP: NONE · Skill: `security-best-practices` (confirmar que é read-only)
@@ -167,8 +167,9 @@ T1 → T6
 **Done when**:
 - [ ] `TemLancamento(ctx, contaID)` retorna verdadeiro se existe ao menos uma linha para a conta, inclusive se `CANCELADA`
 - [ ] Nunca escreve em `contas_contabeis`
-- [ ] Wired em `financeiro.New`, usado por `01-plano-de-contas/T4`
 - [ ] Gate check passes
+
+**Pendência registrada (decisão do mantenedor)**: nenhum `financeiro/module.go` (composition root, equivalente a `identity/module.go`) existe ainda — não foi entrega de nenhuma tarefa aprovada de `01` ou `02`. O wiring real de `LancamentoExistenceChecker` (e de todo caso de uso de `01`/`02` até aqui) fica para o primeiro ponto de composição aprovado (provavelmente junto de `01-plano-de-contas/T4` ou da camada HTTP) — não é responsabilidade desta tarefa.
 
 **Tests**: integration
 **Gate**: full
