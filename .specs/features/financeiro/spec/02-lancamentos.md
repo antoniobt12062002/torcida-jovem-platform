@@ -102,7 +102,7 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| LAN-01 | Criação de lançamento | In Tasks | Implementing (T1: migração) |
+| LAN-01 | Criação de lançamento | In Tasks | Done (T2) |
 | LAN-02 | Edição restrita a CRIADA | In Tasks | Not Started |
 | LAN-03 | Devolução | In Tasks | Not Started |
 | LAN-04 | Consulta e listagem | In Tasks | Not Started |

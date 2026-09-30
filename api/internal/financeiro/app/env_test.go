@@ -31,16 +31,17 @@ func (simpleAuthz) Require(_ context.Context, p authz.Principal, perm authz.Perm
 }
 
 type env struct {
-	db     *gorm.DB
-	rec    *audit.Recorder
-	contas *infra.ContaRepository
+	db          *gorm.DB
+	rec         *audit.Recorder
+	contas      *infra.ContaRepository
+	lancamentos *infra.LancamentoRepository
 }
 
 func newEnv(t *testing.T) env {
 	t.Helper()
 	db := testutil.NewTestDB(t)
 	rec := audit.NewRecorder(db, logx.New("error", io.Discard))
-	return env{db: db, rec: rec, contas: infra.NewContaRepository(db)}
+	return env{db: db, rec: rec, contas: infra.NewContaRepository(db), lancamentos: infra.NewLancamentoRepository(db)}
 }
 
 func (e env) tx(ctx context.Context, fn func(context.Context) error) error {
@@ -59,4 +60,24 @@ func principal(uid string, perms ...authz.Permission) authz.Principal {
 // has no foreign key to users, so no real user row is needed.
 func actor(perms ...authz.Permission) authz.Principal {
 	return principal(uuid.New().String(), perms...)
+}
+
+// newUser inserts a real users row and returns its id: lancamentos.criado_por
+// (and cancelado_por, in 03-workflow-e-saldo) is a real foreign key, unlike
+// contas_contabeis, so tests that create a lançamento need an actor backed
+// by an existing user.
+func newUser(t *testing.T, e env) string {
+	t.Helper()
+	var id string
+	err := e.db.Raw(`INSERT INTO users (email, name, password_hash) VALUES (?, 'Fulano', 'hash') RETURNING id::text`,
+		uuid.New().String()+"@exemplo.com").Scan(&id).Error
+	if err != nil || id == "" {
+		t.Fatalf("criar usuário: id=%q err=%v", id, err)
+	}
+	return id
+}
+
+// userActor is like actor, but backed by a real users row (see newUser).
+func (e env) userActor(t *testing.T, perms ...authz.Permission) authz.Principal {
+	return principal(newUser(t, e), perms...)
 }
