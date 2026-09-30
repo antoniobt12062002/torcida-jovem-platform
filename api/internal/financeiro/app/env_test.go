@@ -97,3 +97,14 @@ func (e env) criarContaDeTeste(t *testing.T, tipo domain.TipoConta, nome string)
 	}
 	return conta
 }
+
+// marcarRecebida is a test fixture: it sets a lançamento's status directly
+// via SQL, standing in for 03-workflow-e-saldo's receber use case, which
+// does not exist yet (see the cross-spec note in tasks/02-lancamentos.md for
+// T4 — this is scenario setup, not a code dependency between 02 and 03).
+func (e env) marcarRecebida(t *testing.T, lancamentoID string) {
+	t.Helper()
+	if err := e.db.Exec("UPDATE lancamentos SET status = 'RECEBIDA' WHERE id = ?::uuid", lancamentoID).Error; err != nil {
+		t.Fatalf("fixture: marcar RECEBIDA: %v", err)
+	}
+}

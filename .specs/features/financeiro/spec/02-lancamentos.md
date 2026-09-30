@@ -105,7 +105,7 @@ Open questions: none.
 |---|---|---|---|
 | LAN-01 | Criação de lançamento | In Tasks | Done (T2) |
 | LAN-02 | Edição restrita a CRIADA | In Tasks | Done (T3) |
-| LAN-03 | Devolução | In Tasks | Not Started |
+| LAN-03 | Devolução | In Tasks | Done (T4) |
 | LAN-04 | Consulta e listagem | In Tasks | Not Started |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.

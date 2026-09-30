@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/02-lancamentos.md`
 **Design**: `.specs/features/financeiro/design/02-lancamentos.md`
-**Status**: In Progress (T1, T2, T3 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1-T4 concluídas); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: a migração `T1` desta spec precisa existir antes de `01-plano-de-contas/T4` (renomear conta) poder ser testada de ponta a ponta — ver `financeiro/STATE.md`, "Ordem real de execução entre sub-specs". Dentro desta spec, nenhuma tarefa depende de `01` além da FK `conta_id` (a migração de `01` precisa existir antes de `T1` aqui).
 
@@ -121,11 +121,11 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Exige referenciado `RECEITA` e `RECEBIDA` (`devolucao_invalida` caso contrário)
-- [ ] Receita original nunca é escrita
-- [ ] Usa a mesma permissão de `T2` (`financeiro:lancamento:create`)
-- [ ] Cada AC listado em Requirement tem ao menos um teste
-- [ ] Gate check passes
+- [x] Exige referenciado `RECEITA` e `RECEBIDA` (`devolucao_invalida` caso contrário)
+- [x] Receita original nunca é escrita
+- [x] Usa a mesma permissão de `T2` (`financeiro:lancamento:create`)
+- [x] Cada AC listado em Requirement tem ao menos um teste
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
