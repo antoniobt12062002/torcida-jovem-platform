@@ -63,6 +63,7 @@ Open questions: none.
 2. IF a lançamento's status is not `CRIADA` THEN the system SHALL reject any edit attempt with the error `lancamento_imutavel`.
 3. IF the actor lacks `financeiro:lancamento:update` THEN the system SHALL return a forbidden error and SHALL NOT edit it.
 4. WHEN an edit succeeds THEN the system SHALL record an audit entry with the previous and new values of every changed field.
+5. The system SHALL reapply LAN-01 AC2/AC3's conta validation (exists, ativo, same tipo as the lançamento) to the edited conta_id, rejecting with `conta_invalida` or `conta_tipo_incompativel` accordingly — the invariant holds for the lançamento's whole lifecycle, not only at creation.
 
 **Independent Test**: editar o valor de um lançamento `CRIADA`; tentar editar um `RECEBIDA` e ver `lancamento_imutavel`.
 
@@ -103,7 +104,7 @@ Open questions: none.
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
 | LAN-01 | Criação de lançamento | In Tasks | Done (T2) |
-| LAN-02 | Edição restrita a CRIADA | In Tasks | Not Started |
+| LAN-02 | Edição restrita a CRIADA | In Tasks | Done (T3) |
 | LAN-03 | Devolução | In Tasks | Not Started |
 | LAN-04 | Consulta e listagem | In Tasks | Not Started |
 

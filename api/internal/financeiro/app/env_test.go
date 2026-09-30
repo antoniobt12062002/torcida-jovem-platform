@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/app"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/infra"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
@@ -80,4 +82,18 @@ func newUser(t *testing.T, e env) string {
 // userActor is like actor, but backed by a real users row (see newUser).
 func (e env) userActor(t *testing.T, perms ...authz.Permission) authz.Principal {
 	return principal(newUser(t, e), perms...)
+}
+
+// criarContaDeTeste is a fixture shared by every lançamento test that needs
+// a conta to point to: it always uses the operational financeiro:conta:create
+// permission, never a scenario under test.
+func (e env) criarContaDeTeste(t *testing.T, tipo domain.TipoConta, nome string) domain.Conta {
+	t.Helper()
+	conta, err := e.criarConta().Execute(context.Background(), app.CriarContaInput{
+		Actor: actor(app.PermContaCreate), Tipo: tipo, Nome: nome,
+	})
+	if err != nil {
+		t.Fatalf("criar conta de teste: %v", err)
+	}
+	return conta
 }

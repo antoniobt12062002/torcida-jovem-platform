@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/02-lancamentos.md`
 **Design**: `.specs/features/financeiro/design/02-lancamentos.md`
-**Status**: In Progress (T1, T2 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1, T2, T3 concluídas); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: a migração `T1` desta spec precisa existir antes de `01-plano-de-contas/T4` (renomear conta) poder ser testada de ponta a ponta — ver `financeiro/STATE.md`, "Ordem real de execução entre sub-specs". Dentro desta spec, nenhuma tarefa depende de `01` além da FK `conta_id` (a migração de `01` precisa existir antes de `T1` aqui).
 
@@ -98,11 +98,11 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Edita campos permitidos só em `CRIADA`, recalcula `valor_liquido_cents`
-- [ ] Fora de `CRIADA`: recusa com `lancamento_imutavel`
-- [ ] Sem `financeiro:lancamento:update`, recusa
-- [ ] Audita antes/depois de cada campo alterado
-- [ ] Gate check passes
+- [x] Edita campos permitidos só em `CRIADA`, recalcula `valor_liquido_cents`
+- [x] Fora de `CRIADA`: recusa com `lancamento_imutavel`
+- [x] Sem `financeiro:lancamento:update`, recusa
+- [x] Audita antes/depois de cada campo alterado
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

@@ -3,6 +3,7 @@ package infra
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -74,6 +75,41 @@ func (r *LancamentoRepository) Criar(ctx context.Context, l domain.Lancamento) (
 	lancamento, err := scanLancamento(row)
 	if err != nil {
 		return domain.Lancamento{}, fmt.Errorf("financeiro: criar lançamento: %w", err)
+	}
+	return lancamento, nil
+}
+
+// Buscar returns domain.ErrLancamentoNaoEncontrado when id does not exist.
+func (r *LancamentoRepository) Buscar(ctx context.Context, id string) (domain.Lancamento, error) {
+	row := conn(ctx, r.db).Raw(`SELECT `+lancamentoColumns+` FROM lancamentos WHERE id = ?::uuid`, id).Row()
+	lancamento, err := scanLancamento(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Lancamento{}, domain.ErrLancamentoNaoEncontrado
+		}
+		return domain.Lancamento{}, fmt.Errorf("financeiro: buscar lançamento: %w", err)
+	}
+	return lancamento, nil
+}
+
+// Atualizar persists conta_id, valor_bruto_cents, taxa_cents,
+// valor_liquido_cents and forma_pagamento (LAN-02 AC1). Whether the
+// lançamento is still CRIADA is checked by the application (FIN-D-007), not
+// here — same convention as the other cross-row business rules in this
+// module. Its caller (EditarLancamento) always calls Buscar first in the
+// same use case, and lancamentos are never deleted (no DELETE grant), so id
+// not matching any row is not a reachable outcome here — unlike Buscar,
+// there is no ErrLancamentoNaoEncontrado translation to test.
+func (r *LancamentoRepository) Atualizar(ctx context.Context, l domain.Lancamento) (domain.Lancamento, error) {
+	row := conn(ctx, r.db).Raw(`UPDATE lancamentos SET
+		conta_id = ?, valor_bruto_cents = ?, taxa_cents = ?, valor_liquido_cents = ?, forma_pagamento = ?, atualizado_em = now()
+		WHERE id = ?::uuid
+		RETURNING `+lancamentoColumns,
+		l.ContaID, l.ValorBrutoCents, l.TaxaCents, l.ValorLiquidoCents, string(l.FormaPagamento), l.ID,
+	).Row()
+	lancamento, err := scanLancamento(row)
+	if err != nil {
+		return domain.Lancamento{}, fmt.Errorf("financeiro: atualizar lançamento: %w", err)
 	}
 	return lancamento, nil
 }
