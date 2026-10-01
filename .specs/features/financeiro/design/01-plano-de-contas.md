@@ -33,10 +33,10 @@ graph TD
 - **`app/criar_conta.go`**: caso de uso `CriarConta(ctx, CriarContaInput) (Conta, error)`.
 - **`app/listar_contas.go`**: caso de uso `ListarContas(ctx, ListarContasInput) ([]Conta, error)`.
 - **`app/desativar_conta.go`**: caso de uso `DesativarConta(ctx, DesativarContaInput) error`.
-- **`app/renomear_conta.go`** (T4, não implementado ainda): caso de uso `RenomearConta(ctx, RenomearContaInput) (Conta, error)` — chama `LancamentoExistenceChecker.TemLancamento(ctx, contaID)` antes de permitir.
+- **`app/renomear_conta.go`** (T4): caso de uso `RenomearConta.Execute(ctx, RenomearContaInput) (Conta, error)` — chama `LancamentoExistenceChecker.TemLancamento(ctx, contaID)` antes de permitir.
 - **`app/usecase.go`** (compartilhado por toda `financeiro`, criado pela primeira sub-spec que precisar dele): portas comuns — `Authorizer`, `Auditor`, `TxFunc` — mesmo padrão de `identity/app/usecase.go`.
 - **`infra/conta_repository.go`**: `ContaRepository`, implementando as portas que `app` define para persistir/consultar `Conta`.
-- **Porta definida por esta sub-spec**: `type LancamentoExistenceChecker interface { TemLancamento(ctx context.Context, contaID uuid.UUID) (bool, error) }`, declarada em `app/renomear_conta.go` (T4). A implementação concreta fica em `infra` (`02-lancamentos`, T6) — mesmo pacote Go `financeiro/infra`, então não há import entre módulos de negócio, só duas implementações dentro do mesmo `infra`.
+- **Porta definida por esta sub-spec**: `type LancamentoExistenceChecker interface { TemLancamento(ctx context.Context, contaID string) (bool, error) }`, declarada em `app/renomear_conta.go` (T4) — `contaID` é `string`, não `uuid.UUID` (correção: todo id de `financeiro` é `string`, mesma convenção de `identity`; a menção anterior a `uuid.UUID` estava desatualizada em relação ao tipo já usado por `domain.Conta.ID` desde a T2). A implementação concreta fica em `infra` (`02-lancamentos`, T6) — mesmo pacote Go `financeiro/infra`, então não há import entre módulos de negócio, só duas implementações dentro do mesmo `infra`.
 
 ## Data Models
 

@@ -34,4 +34,8 @@ var (
 	// ErrContaTipoIncompativel: a subconta must have the same Tipo as its
 	// parent (PC-01 AC2).
 	ErrContaTipoIncompativel = errors.New("conta filha deve ter o mesmo tipo do pai")
+	// ErrContaJaUtilizada is returned when renaming a conta already
+	// referenced by at least one lançamento, regardless of its status
+	// (PC-02 AC2, FIN-D-008).
+	ErrContaJaUtilizada = errors.New("conta já utilizada em um lançamento")
 )

@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/01-plano-de-contas.md`
 **Design**: `.specs/features/financeiro/design/01-plano-de-contas.md`
-**Status**: In Progress (T1, T2 e T3 concluídas; `tests-first`, um commit atômico por tarefa).
+**Status**: Concluída (T1-T4); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito**: nenhum código de `financeiro` existe ainda — este é o primeiro conjunto de tarefas do módulo.
 
@@ -120,13 +120,13 @@ Sequencial — cada tarefa depende só da anterior.
 **Tools**: MCP: NONE · Skill: `security-best-practices` (consulta cruzada entre entidades, checar que é read-only)
 
 **Done when**:
-- [ ] Conta nunca usada: renomeia com sucesso
-- [ ] Conta já usada (mesmo com o único lançamento `CANCELADA`): recusa com `conta_ja_utilizada`
-- [ ] A checagem nunca escreve em `lancamentos`; `02` nunca escreve em `contas_contabeis`
-- [ ] Renomeação audita nome anterior e novo
-- [ ] Sem `financeiro:conta:update`, recusa mesmo para uma conta nunca usada
-- [ ] Cada AC listado em Requirement tem ao menos um teste
-- [ ] Gate check passes
+- [x] Conta nunca usada: renomeia com sucesso
+- [x] Conta já usada (mesmo com o único lançamento `CANCELADA`): recusa com `conta_ja_utilizada`
+- [x] A checagem nunca escreve em `lancamentos`; `02` nunca escreve em `contas_contabeis`
+- [x] Renomeação audita nome anterior e novo
+- [x] Sem `financeiro:conta:update`, recusa mesmo para uma conta nunca usada
+- [x] Cada AC listado em Requirement tem ao menos um teste
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

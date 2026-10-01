@@ -107,7 +107,7 @@ Open questions: none.
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
 | PC-01 | Criação de conta | In Tasks | Done (T2) |
-| PC-02 | Renomeação restrita | In Design | Not Started |
+| PC-02 | Renomeação restrita | In Tasks | Done (T4) |
 | PC-03 | Desativação | In Tasks | Done (T3) |
 | PC-04 | Consulta e listagem | In Tasks | Done (T2) |
 

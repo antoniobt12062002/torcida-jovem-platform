@@ -33,17 +33,21 @@ func (simpleAuthz) Require(_ context.Context, p authz.Principal, perm authz.Perm
 }
 
 type env struct {
-	db          *gorm.DB
-	rec         *audit.Recorder
-	contas      *infra.ContaRepository
-	lancamentos *infra.LancamentoRepository
+	db               *gorm.DB
+	rec              *audit.Recorder
+	contas           *infra.ContaRepository
+	lancamentos      *infra.LancamentoRepository
+	existenceChecker *infra.LancamentoExistenceChecker
 }
 
 func newEnv(t *testing.T) env {
 	t.Helper()
 	db := testutil.NewTestDB(t)
 	rec := audit.NewRecorder(db, logx.New("error", io.Discard))
-	return env{db: db, rec: rec, contas: infra.NewContaRepository(db), lancamentos: infra.NewLancamentoRepository(db)}
+	return env{
+		db: db, rec: rec, contas: infra.NewContaRepository(db), lancamentos: infra.NewLancamentoRepository(db),
+		existenceChecker: infra.NewLancamentoExistenceChecker(db),
+	}
 }
 
 func (e env) tx(ctx context.Context, fn func(context.Context) error) error {
