@@ -74,4 +74,7 @@ var (
 	// ErrDevolucaoInvalida is returned when a devolução's referenced
 	// lançamento is not a RECEITA RECEBIDA (LAN-03 AC2).
 	ErrDevolucaoInvalida = errors.New("devolução inválida")
+	// ErrLancamentoNaoPodeSerRecebido is returned when receiving a
+	// lançamento that is not a CRIADA RECEITA (WKF-01 AC2, Edge Cases).
+	ErrLancamentoNaoPodeSerRecebido = errors.New("lançamento não pode ser recebido")
 )
