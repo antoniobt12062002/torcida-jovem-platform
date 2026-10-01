@@ -90,9 +90,9 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| WKF-01 | Liquidação | In Design | Not Started |
-| WKF-02 | Cancelamento | In Design | Not Started |
-| WKF-03 | Saldo | In Design | Not Started |
+| WKF-01 | Liquidação | In Tasks | Implementing (T1: receber) |
+| WKF-02 | Cancelamento | In Tasks | Not Started |
+| WKF-03 | Saldo | In Tasks | Not Started |
 
 **Coverage:** 3 total, 3 mapped to tasks, 0 unmapped.
 

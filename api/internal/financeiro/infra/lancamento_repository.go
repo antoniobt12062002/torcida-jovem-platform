@@ -128,3 +128,18 @@ func (r *LancamentoRepository) Listar(ctx context.Context) ([]domain.Lancamento,
 	}
 	return lancamentos, nil
 }
+
+// Receber sets status = RECEBIDA. Whether the lançamento is a CRIADA RECEITA
+// (WKF-01) is checked by the application, not here. Its caller
+// (ReceberLancamento) always calls Buscar first in the same use case, and
+// lancamentos are never deleted (no DELETE grant), so id not matching any
+// row is not a reachable outcome here.
+func (r *LancamentoRepository) Receber(ctx context.Context, id string) (domain.Lancamento, error) {
+	row := conn(ctx, r.db).Raw(`UPDATE lancamentos SET status = 'RECEBIDA', atualizado_em = now()
+		WHERE id = ?::uuid RETURNING `+lancamentoColumns, id).Row()
+	lancamento, err := scanLancamento(row)
+	if err != nil {
+		return domain.Lancamento{}, fmt.Errorf("financeiro: receber lançamento: %w", err)
+	}
+	return lancamento, nil
+}
