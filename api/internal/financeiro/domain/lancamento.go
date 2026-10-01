@@ -77,4 +77,7 @@ var (
 	// ErrLancamentoNaoPodeSerRecebido is returned when receiving a
 	// lançamento that is not a CRIADA RECEITA (WKF-01 AC2, Edge Cases).
 	ErrLancamentoNaoPodeSerRecebido = errors.New("lançamento não pode ser recebido")
+	// ErrLancamentoNaoPodeSerPago is returned when paying a lançamento that
+	// is not a CRIADA DESPESA (WKF-01 AC4, Edge Cases).
+	ErrLancamentoNaoPodeSerPago = errors.New("lançamento não pode ser pago")
 )

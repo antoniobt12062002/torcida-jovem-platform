@@ -90,7 +90,7 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| WKF-01 | Liquidação | In Tasks | Implementing (T1: receber) |
+| WKF-01 | Liquidação | In Tasks | Done (T1, T2) |
 | WKF-02 | Cancelamento | In Tasks | Not Started |
 | WKF-03 | Saldo | In Tasks | Not Started |
 
