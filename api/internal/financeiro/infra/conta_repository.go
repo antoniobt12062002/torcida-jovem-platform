@@ -102,6 +102,22 @@ func (r *ContaRepository) Desativar(ctx context.Context, id string) error {
 	return nil
 }
 
+// Renomear updates nome. Whether the conta was ever used by a lançamento
+// (FIN-D-008) is checked by the application, not here. Its caller
+// (RenomearConta) always calls Buscar first in the same use case, and
+// contas_contabeis rows are never deleted (no DELETE grant), so id not
+// matching any row is not a reachable outcome here — unlike Buscar, there is
+// no ErrContaNaoEncontrada translation to test.
+func (r *ContaRepository) Renomear(ctx context.Context, id, nome string) (domain.Conta, error) {
+	var row contaRow
+	err := conn(ctx, r.db).Raw(`UPDATE contas_contabeis SET nome = ? WHERE id = ?::uuid RETURNING `+contaColumns, nome, id).
+		Row().Scan(&row.ID, &row.Tipo, &row.Nome, &row.ParentID, &row.Ativo, &row.CreatedAt)
+	if err != nil {
+		return domain.Conta{}, fmt.Errorf("financeiro: renomear conta: %w", err)
+	}
+	return row.conta(), nil
+}
+
 func nullableUUID(id *string) any {
 	if id == nil {
 		return nil
