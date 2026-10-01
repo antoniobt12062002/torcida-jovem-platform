@@ -34,7 +34,7 @@ Mesmo módulo Go `financeiro` de `01` (`domain/app/infra/http` compartilhados �
 | Component | Location | How to Use |
 |---|---|---|
 | Permissões | `platform/authz` | `financeiro:lancamento:create`/`update`/`read`, definidas em `05-permissoes` |
-| Auditoria | `platform/audit` | `financeiro.lancamento.create`/`update`, com before/after na edição |
+| Auditoria | `platform/audit` | `lancamento.create`/`lancamento.update` (formato `dominio.verbo` exigido por `platform/audit.Register` — ver nota técnica em `financeiro/STATE.md`), com before/after na edição. `CriarDevolucao` registra o mesmo `lancamento.create` (não é uma operação de negócio distinta, FIN-D-003), com `devolucao_de_id` no payload (`After`) para diferenciar |
 | Dinheiro | `platform/money` | `Cents`, `Sub` para `valor_liquido_cents = valor_bruto_cents.Sub(taxa_cents)` |
 | Transação | `platform/database` | `WithTx` |
 

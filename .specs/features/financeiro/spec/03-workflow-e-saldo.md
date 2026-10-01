@@ -47,7 +47,7 @@ Open questions: none.
 3. WHEN a Tesouraria marks a DESPESA lançamento whose status is `CRIADA` as paid THEN the system SHALL set its status to `PAGA`.
 4. IF a DESPESA lançamento's status is not `CRIADA` THEN the system SHALL reject the paying attempt with the error `lancamento_nao_pode_ser_pago`.
 5. IF the actor lacks `financeiro:lancamento:receive` (for a receita) or `financeiro:lancamento:pay` (for a despesa) THEN the system SHALL return a forbidden error and SHALL NOT change the status.
-6. WHEN a liquidação succeeds THEN the system SHALL record an audit entry with a distinct action per type (`financeiro.lancamento.receive` or `financeiro.lancamento.pay`).
+6. WHEN a liquidação succeeds THEN the system SHALL record an audit entry with a distinct action per type (`lancamento.receive` or `lancamento.pay`).
 
 **Independent Test**: marcar uma receita `CRIADA` como recebida; tentar marcar de novo e ver `lancamento_nao_pode_ser_recebido`.
 

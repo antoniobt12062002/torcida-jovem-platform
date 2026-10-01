@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/02-lancamentos.md`
 **Design**: `.specs/features/financeiro/design/02-lancamentos.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: Concluída (T1-T6); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: a migração `T1` desta spec precisa existir antes de `01-plano-de-contas/T4` (renomear conta) poder ser testada de ponta a ponta — ver `financeiro/STATE.md`, "Ordem real de execução entre sub-specs". Dentro desta spec, nenhuma tarefa depende de `01` além da FK `conta_id` (a migração de `01` precisa existir antes de `T1` aqui).
 
@@ -51,12 +51,12 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`, restrito por `CHECK` aos 4 valores válidos
-- [ ] `devolucao_de_id` auto-referência, nullable
-- [ ] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
-- [ ] Migração falha com mensagem clara se `tj_app` ou `contas_contabeis` não existirem
-- [ ] `down` desfaz sem erro
-- [ ] Gate check passes
+- [x] Colunas conforme o modelo de dados do design; `status` nasce `CRIADA`, restrito por `CHECK` aos 4 valores válidos
+- [x] `devolucao_de_id` auto-referência, nullable
+- [x] `tj_app` recebe `INSERT`, `SELECT`, `UPDATE` — nunca `DELETE`
+- [x] Migração falha com mensagem clara se `tj_app` ou `contas_contabeis` não existirem
+- [x] `down` desfaz sem erro
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -75,11 +75,11 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Cria com `status = CRIADA`, `valor_liquido_cents` correto
-- [ ] Recusa conta inativa/inexistente (`conta_invalida`) e tipo incompatível (`conta_tipo_incompativel`)
-- [ ] Sem `financeiro:lancamento:create`, recusa sem escrever
-- [ ] Audita
-- [ ] Gate check passes
+- [x] Cria com `status = CRIADA`, `valor_liquido_cents` correto
+- [x] Recusa conta inativa/inexistente (`conta_invalida`) e tipo incompatível (`conta_tipo_incompativel`)
+- [x] Sem `financeiro:lancamento:create`, recusa sem escrever
+- [x] Audita
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -98,11 +98,11 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Edita campos permitidos só em `CRIADA`, recalcula `valor_liquido_cents`
-- [ ] Fora de `CRIADA`: recusa com `lancamento_imutavel`
-- [ ] Sem `financeiro:lancamento:update`, recusa
-- [ ] Audita antes/depois de cada campo alterado
-- [ ] Gate check passes
+- [x] Edita campos permitidos só em `CRIADA`, recalcula `valor_liquido_cents`
+- [x] Fora de `CRIADA`: recusa com `lancamento_imutavel`
+- [x] Sem `financeiro:lancamento:update`, recusa
+- [x] Audita antes/depois de cada campo alterado
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -121,11 +121,11 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Exige referenciado `RECEITA` e `RECEBIDA` (`devolucao_invalida` caso contrário)
-- [ ] Receita original nunca é escrita
-- [ ] Usa a mesma permissão de `T2` (`financeiro:lancamento:create`)
-- [ ] Cada AC listado em Requirement tem ao menos um teste
-- [ ] Gate check passes
+- [x] Exige referenciado `RECEITA` e `RECEBIDA` (`devolucao_invalida` caso contrário)
+- [x] Receita original nunca é escrita
+- [x] Usa a mesma permissão de `T2` (`financeiro:lancamento:create`)
+- [x] Cada AC listado em Requirement tem ao menos um teste
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -144,9 +144,9 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Lista com todos os campos, incluindo cancelados
-- [ ] Sem `financeiro:lancamento:read`, nenhuma linha
-- [ ] Gate check passes
+- [x] Lista com todos os campos, incluindo cancelados
+- [x] Sem `financeiro:lancamento:read`, nenhuma linha
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -156,10 +156,10 @@ T1 → T6
 
 ### T6: Implementação de `LancamentoExistenceChecker`
 
-**What**: Implementação concreta da porta definida por `01-plano-de-contas` (`FIN-D-008`), consultando esta tabela; fiação em `financeiro.New`.
+**What**: Implementação concreta da porta que `01-plano-de-contas` vai definir (`FIN-D-008`), consultando esta tabela. Nenhuma interface Go existe ainda para essa porta: `01-plano-de-contas/T4` (`RenomearConta`, ainda não implementada) é quem vai declará-la, do lado do consumidor — este tipo concreto a satisfaz estruturalmente quando isso acontecer, mesmo padrão AD-015 já usado no resto do módulo.
 **Where**: `api/internal/financeiro/infra/lancamento_existence_checker.go`
 **Depends on**: T1
-**Reuses**: nenhuma dependência de código de `01` — implementa uma interface que `01` define
+**Reuses**: nenhuma dependência de código de `01` — implementa uma interface que `01` vai definir
 **Requirement**: PC-02 (AC3, de `01-plano-de-contas`, consumida aqui)
 
 **Tools**: MCP: NONE · Skill: `security-best-practices` (confirmar que é read-only)
@@ -167,8 +167,9 @@ T1 → T6
 **Done when**:
 - [ ] `TemLancamento(ctx, contaID)` retorna verdadeiro se existe ao menos uma linha para a conta, inclusive se `CANCELADA`
 - [ ] Nunca escreve em `contas_contabeis`
-- [ ] Wired em `financeiro.New`, usado por `01-plano-de-contas/T4`
 - [ ] Gate check passes
+
+**Pendência registrada (decisão do mantenedor)**: nenhum `financeiro/module.go` (composition root, equivalente a `identity/module.go`) existe ainda — não foi entrega de nenhuma tarefa aprovada de `01` ou `02`. O wiring real de `LancamentoExistenceChecker` (e de todo caso de uso de `01`/`02` até aqui) fica para o primeiro ponto de composição aprovado (provavelmente junto de `01-plano-de-contas/T4` ou da camada HTTP) — não é responsabilidade desta tarefa.
 
 **Tests**: integration
 **Gate**: full

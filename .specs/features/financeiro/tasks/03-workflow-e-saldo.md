@@ -52,7 +52,7 @@ T3 → T4
 - [ ] `CRIADA→RECEBIDA` só para `RECEITA`
 - [ ] Fora de `CRIADA`: `lancamento_nao_pode_ser_recebido`
 - [ ] Sem `financeiro:lancamento:receive`, recusa
-- [ ] Audita `financeiro.lancamento.receive`
+- [ ] Audita `lancamento.receive`
 - [ ] Gate check passes
 
 **Tests**: integration
@@ -75,7 +75,7 @@ T3 → T4
 - [ ] `CRIADA→PAGA` só para `DESPESA`
 - [ ] Fora de `CRIADA`: `lancamento_nao_pode_ser_pago`
 - [ ] Sem `financeiro:lancamento:pay`, recusa
-- [ ] Audita `financeiro.lancamento.pay`
+- [ ] Audita `lancamento.pay`
 - [ ] Gate check passes
 
 **Tests**: integration
