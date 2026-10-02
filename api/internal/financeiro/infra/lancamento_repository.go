@@ -156,3 +156,18 @@ func (r *LancamentoRepository) Pagar(ctx context.Context, id string) (domain.Lan
 	}
 	return lancamento, nil
 }
+
+// Cancelar sets status = CANCELADA and records motivo_cancelamento,
+// cancelado_por and cancelado_em. Whether the lançamento is already
+// CANCELADA (WKF-02) is checked by the application, not here — same
+// convention as Receber/Pagar.
+func (r *LancamentoRepository) Cancelar(ctx context.Context, id, motivo, canceladoPor string) (domain.Lancamento, error) {
+	row := conn(ctx, r.db).Raw(`UPDATE lancamentos SET
+		status = 'CANCELADA', motivo_cancelamento = ?, cancelado_por = ?::uuid, cancelado_em = now(), atualizado_em = now()
+		WHERE id = ?::uuid RETURNING `+lancamentoColumns, motivo, canceladoPor, id).Row()
+	lancamento, err := scanLancamento(row)
+	if err != nil {
+		return domain.Lancamento{}, fmt.Errorf("financeiro: cancelar lançamento: %w", err)
+	}
+	return lancamento, nil
+}

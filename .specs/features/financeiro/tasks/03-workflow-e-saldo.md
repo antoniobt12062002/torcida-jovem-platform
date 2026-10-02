@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/03-workflow-e-saldo.md`
 **Design**: `.specs/features/financeiro/design/03-workflow-e-saldo.md`
-**Status**: In Progress (T1 e T2 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1-T3 concluídas); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: todas as tarefas aqui operam sobre a tabela `lancamentos` — a migração `02-lancamentos/T1` precisa existir primeiro. Nenhuma tarefa desta spec cria ou altera schema.
 
@@ -95,13 +95,13 @@ T3 → T4
 **Tools**: MCP: NONE · Skill: `security-best-practices` (motivo obrigatório, garantir que não vira devolução acidentalmente)
 
 **Done when**:
-- [ ] Cancela de `CRIADA`, `RECEBIDA` ou `PAGA`, nunca de `CANCELADA` de novo
-- [ ] Motivo vazio é recusado
-- [ ] Nunca escreve em outro lançamento (não é devolução)
-- [ ] Sem `financeiro:lancamento:cancel`, recusa
-- [ ] Audita com o motivo
-- [ ] Cada AC listado em Requirement tem ao menos um teste
-- [ ] Gate check passes
+- [x] Cancela de `CRIADA`, `RECEBIDA` ou `PAGA`, nunca de `CANCELADA` de novo
+- [x] Motivo vazio é recusado
+- [x] Nunca escreve em outro lançamento (não é devolução)
+- [x] Sem `financeiro:lancamento:cancel`, recusa
+- [x] Audita com o motivo
+- [x] Cada AC listado em Requirement tem ao menos um teste
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

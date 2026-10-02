@@ -80,4 +80,10 @@ var (
 	// ErrLancamentoNaoPodeSerPago is returned when paying a lançamento that
 	// is not a CRIADA DESPESA (WKF-01 AC4, Edge Cases).
 	ErrLancamentoNaoPodeSerPago = errors.New("lançamento não pode ser pago")
+	// ErrLancamentoJaCancelado is returned when cancelling a lançamento
+	// that is already CANCELADA (WKF-02 AC3).
+	ErrLancamentoJaCancelado = errors.New("lançamento já cancelado")
+	// ErrMotivoObrigatorio is returned when cancelling with an empty motivo
+	// (WKF-02 AC2).
+	ErrMotivoObrigatorio = errors.New("motivo é obrigatório")
 )
