@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/05-permissoes.md`
 **Design**: `.specs/features/financeiro/design/05-permissoes.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: Em andamento (T1 concluída); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`).
 
 **Nota de ordem cruzada**: `T2` (completar com as 13 permissões operacionais) só pode ser finalizada depois que `01-plano-de-contas`, `02-lancamentos`, `03-workflow-e-saldo` e `04-comprovantes` já tiverem suas operações especificadas (não necessariamente implementadas em código — os nomes de permissão já estão fechados nas 4 specs). `T1` (esqueleto + preservação institucional) não tem essa dependência e pode ser feita a qualquer momento.
 
@@ -46,10 +46,10 @@ T1 → T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Declara `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine`, concedidas a `CONSELHO_FISCAL`, idênticas ao placeholder de `roles_matrix.go:129-141`
-- [ ] Comparação da matriz antes/depois (placeholder vs. `Contribution` real) mostra essas 3 permissões idênticas para `CONSELHO_FISCAL`
-- [ ] Nenhum caso de uso ou endpoint as verifica ainda
-- [ ] Gate check passes
+- [x] Declara `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine`, concedidas a `CONSELHO_FISCAL`, idênticas ao placeholder de `roles_matrix.go:132-144`
+- [x] Comparação da matriz antes/depois (placeholder vs. `Contribution` real) mostra essas 3 permissões idênticas para `CONSELHO_FISCAL`
+- [x] Nenhum caso de uso ou endpoint as verifica ainda
+- [x] Gate check passes
 
 **Tests**: unit
 **Gate**: full
