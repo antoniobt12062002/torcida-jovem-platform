@@ -19,18 +19,19 @@ O conteúdo desta `Contribution` é preenchido incrementalmente: cada uma de `01
 | Component | Location | How to Use |
 |---|---|---|
 | Agregação da matriz | `identity/app/roles_matrix.go` (`BuildMatrix`, `Contribution`) | `financeiro` publica uma `Contribution` no mesmo formato já usado por `identity` e `audit` |
-| Placeholder a substituir | `identity/app/roles_matrix.go:129-141` (`FoundationContributions`) | Removido quando `financeiro.Contribution()` existir; `cmd/api/main.go` e `cmd/bootstrap-admin/main.go` passam a incluir `financeiro.Contribution()` no lugar |
+| Placeholder a substituir | `identity/app/roles_matrix.go:132-144` (`FoundationContributions`) | Removido quando `financeiro.Contribution()` existir; `cmd/api/main.go` e `cmd/bootstrap-admin/main.go` passam a incluir `financeiro.Contribution()` no lugar |
 
 ## Components
 
 ### `financeiro` (pacote raiz do módulo)
 
 - **Interface**: `func Contribution() app.Contribution` — devolve `Module: "financeiro"`, a lista de `authz.Definition` e o mapa `Grants` por papel.
-- **Dependencies**: `identity/app` (só o tipo `Contribution`, já público), `identity/domain` (só os nomes de papel, já públicos) — nenhuma dependência de `identity/domain`/`infra`/`http` além disso.
+- **Dependencies**: `identity/app` apenas — o tipo `Contribution` e o tipo/constantes de papel re-exportados (`app.Role`, `app.RoleConselhoFiscal` etc., `FIN-D-018`). **Nunca** `identity/domain` diretamente: `architecture_test.go` proíbe um módulo de importar o `domain` de outro (só `app` e o pacote raiz são permitidos) — achado durante a análise de `05-permissoes`, corrigido por `FIN-D-018` antes de `T1` ser implementada.
 
 ## Tech Decisions (only non-obvious ones)
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Onde a `Contribution` é montada | Uma função no pacote raiz de `financeiro`, mesmo padrão de `identity.New`/`FoundationContributions` | Consistência com o mecanismo já existente |
+| Onde a `Contribution` é montada | Uma função no pacote raiz de `financeiro` (`FIN-D-017`) | `app/` contém casos de uso e portas, não a contribuição do módulo para o RBAC — `identity.New`/`FoundationContributions` não é o mesmo padrão (pacotes diferentes: `identity` vs. `identity/app`) |
+| Como `financeiro` obtém o vocabulário de papéis | `identity/app` reexporta `Role` (alias de `identity/domain.Role`) e as 8 constantes (`FIN-D-018`) | `financeiro` não pode importar `identity/domain` (fronteira de módulo); `identity/app` já é a superfície pública usada para `Contribution` |
 | Quando o placeholder é removido | Como parte da última tarefa desta spec, depois que `01`-`04` já contribuíram suas permissões | Evita remover o placeholder antes de ter o substituto completo — ver `financeiro/STATE.md`, ordem real de execução |

@@ -37,10 +37,10 @@ T1 → T2 → T3
 
 ### T1: Esqueleto da `Contribution` e preservação institucional
 
-**What**: Função `financeiro.Contribution()` com as 3 permissões institucionais preservadas exatamente como no placeholder atual.
-**Where**: `api/internal/financeiro/module.go`
+**What**: Função `financeiro.Contribution()` com as 3 permissões institucionais preservadas exatamente como no placeholder atual. Inclui, como pré-requisito estrutural, reexportar `Role` e as 8 constantes de papel via `identity/app` (`FIN-D-018`) — `financeiro` não pode importar `identity/domain` diretamente (`architecture_test.go`).
+**Where**: `api/internal/financeiro/module.go` (novo); `api/internal/identity/app/roles.go` (novo, re-export estrutural)
 **Depends on**: None
-**Reuses**: `identity/app.Contribution`, `identity/domain.RoleConselhoFiscal`
+**Reuses**: `identity/app.Contribution`, `identity/app.Role`/`RoleConselhoFiscal` (re-export de `identity/domain`, `FIN-D-018`)
 **Requirement**: PERM-02 (AC1-AC3)
 
 **Tools**: MCP: NONE · Skill: NONE
@@ -107,5 +107,6 @@ T1 → T2 → T3
 
 | Task | Scope | Status |
 |---|---|---|
-| T1, T2 | 1 arquivo | ✅ Granular |
+| T1 | 2 arquivos (`identity/app/roles.go` + `financeiro/module.go`), 2 commits atômicos (estrutural + funcional, mesmo padrão de `04/T1`) — granularidade aceitável: o re-export é pré-requisito estrutural único para a `Contribution`, não uma tarefa independente (`FIN-D-018`) | ✅ Aceitável |
+| T2 | 1 arquivo | ✅ Granular |
 | T3 | 1 arquivo principal (`roles_matrix.go`) + 2 pontos de fiação (`main.go`, `bootstrap-admin/main.go`) — granularidade aceitável: é uma única mudança lógica (trocar o placeholder pela Contribution real), não um agrupamento artificial de tarefas distintas | ✅ Aceitável |
