@@ -128,6 +128,10 @@ Isso corrige um caminho equivocado que estava nos `tasks/0N-*.md` originais (pac
 **Decisão**: no V1, cada comprovante anexado a um lançamento representa uma evidência própria e independente. Não há cadeia de versões entre comprovantes; `Supersedes` (mecanismo de versionamento já existente em `platform/documents`) nunca é usado por `financeiro` nesta feature. A listagem trata cada comprovante como um registro independente (`Version 1` sempre, do ponto de vista de `platform/documents`). Se um comprovante for anexado por engano, o correto é anexado como um novo documento independente — não substitui nem encadeia o anterior. Substituição/versionamento de comprovante, se necessário no futuro, será uma evolução específica, com nova decisão e novos requisitos.
 **Escopo**: `04-comprovantes` (CMP-01 AC5, CMP-03).
 
+### FIN-D-017 — Onde `financeiro.Contribution()` mora
+**Decisão**: `financeiro.Contribution()` (a contribuição do módulo para o RBAC agregado, `05-permissoes`) fica no pacote raiz do módulo, em `api/internal/financeiro/module.go` — o mesmo arquivo destinado também a `financeiro.New(...)` quando essa composição existir. Não fica em `financeiro/app` (ex. um `roles_matrix.go` local): `app/` contém casos de uso e portas, não a contribuição do módulo para o mecanismo de RBAC. `identity/app/roles_matrix.go` continua sendo o **consumidor/agregador** (`BuildMatrix`), nunca o dono da contribuição de `financeiro` — o placeholder que ele carrega hoje (`FoundationContributions`) é removido quando `05/T3` publicar `financeiro.Contribution()` de verdade. Achado durante a análise de `05-permissoes`: `design/05-permissoes.md` comparava `financeiro.Contribution()` a "`identity.New`/`FoundationContributions`" como se fossem o mesmo padrão — não são (`identity.New` fica no pacote raiz `identity`, `FoundationContributions` fica em `identity/app`); `design/05-permissoes.md` precisa ser corrigido antes de `05/T2`/`T3` para registrar isso explicitamente.
+**Escopo**: `05-permissoes` (T2, T3).
+
 ---
 
 ## Matriz de permissões do V1 (consolidada — ver detalhe e rationale em `05-permissoes`)
@@ -166,7 +170,8 @@ A ordem de **especificação** (`01→02→03→04→05`, já revisada e aprovad
 6. `02/T2`, `02/T3`, `02/T4`, `02/T5` (criar, editar, devolução, listar lançamento — `T4`/devolução usa fixture SQL direta para a pré-condição `RECEBIDA` em teste, **sem dependência real de código de `03`**, apesar de fazer sentido temático depois de `03/T1` existir)
 7. `03/T1`-`T4` (receber, pagar, cancelar, saldo — dependem só de `02/T1`+`T2`)
 8. `04/T1`-`T3` (comprovantes — dependem só de `02/T1`+`T2` e de `platform/documents`, já mesclada; **sem dependência de `03`**)
-9. `05/T1`-`T3` (institucionais, catálogo operacional, substituição do placeholder — **sem dependência de código real de `01`-`04`**: cada sub-spec referencia os nomes de permissão como literais diretos, mesmo padrão já usado em `identity` — `create_user.go` usa `"identity:user:create"` direto, não importa `roles_matrix.go`; os 13 nomes já estão fixados em `financeiro/STATE.md` desde a especificação. `05` é sequenciada por último por conveniência de verificação — nesse ponto os 13 nomes já foram exercitados de verdade pelos testes de `01`-`04` — não por bloqueio técnico)
+9. `05/T1` (permissões institucionais — pode ser feita a qualquer momento, inclusive em paralelo com o restante; **sem dependência de código real de `01`-`04`**)
+10. `05/T2`, `05/T3` (catálogo operacional completo e substituição do placeholder — por último, depois que `01`-`04` já fixaram seus nomes de permissão: cada sub-spec referencia os nomes de permissão como literais diretos, mesmo padrão já usado em `identity` — `create_user.go` usa `"identity:user:create"` direto, não importa `roles_matrix.go`; os 13 nomes já estão fixados em `financeiro/STATE.md` desde a especificação. `05/T2`-`T3` são sequenciadas por último por conveniência de verificação — nesse ponto os 13 nomes já foram exercitados de verdade pelos testes de `01`-`04` — não por bloqueio técnico)
 
 ### Agrupamento em PRs (uma sub-spec por PR, salvo exceção documentada)
 
@@ -180,9 +185,6 @@ A ordem de **especificação** (`01→02→03→04→05`, já revisada e aprovad
 | 6 | `05` (completa) | T1-T3 | nenhuma tecnicamente — sequenciada por último por conveniência |
 
 **Exceção documentada** (a única mistura entre sub-specs em nível de PR, e é uma divisão, não uma mistura): `01` fica em duas PRs porque `T4` só pode ser codificada e testada de ponta a ponta depois que `02/T1` (schema) e `02/T6` (implementação concreta da porta) existirem — não há como evitar isso sem violar a fronteira de ownership (`01` nunca escreve em `02`, `02` nunca escreve em `01`, `FIN-D-008`) ou sem misturar `T4` dentro da PR de `02` (o que misturaria duas sub-specs numa PR, a regra que realmente importa preservar). PR 3, PR 4 e PR 5 não dependem umas das outras — só de PR 2 — e podem ser feitas em qualquer ordem relativa entre si; a ordem 3→4→5 é só a mais conveniente (a menor primeiro), não uma dependência real.
-10. `04/T1`, `04/T2`, `04/T3` (comprovantes — dependem de `02/T2`)
-11. `05/T1` (permissões institucionais — pode ser feita a qualquer momento, inclusive em paralelo com o restante)
-12. `05/T2`, `05/T3` (catálogo operacional completo e substituição do placeholder — por último, depois que `01`-`04` já fixaram seus nomes de permissão)
 
 ## Decisões futuras (V2, fora do V1 — não implementar sem nova aprovação)
 
