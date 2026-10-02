@@ -171,3 +171,19 @@ func (r *LancamentoRepository) Cancelar(ctx context.Context, id, motivo, cancela
 	}
 	return lancamento, nil
 }
+
+// Saldo is the sum of valor_liquido_cents of every RECEBIDA lançamento minus
+// the sum of every PAGA one (WKF-03 AC1), by current status — a lançamento
+// cancelled after being liquidated no longer counts (FIN-D-006). CRIADA and
+// CANCELADA never count. An empty set returns zero.
+func (r *LancamentoRepository) Saldo(ctx context.Context) (int64, error) {
+	var saldo int64
+	err := conn(ctx, r.db).Raw(`SELECT
+		COALESCE(SUM(valor_liquido_cents) FILTER (WHERE status = 'RECEBIDA'), 0) -
+		COALESCE(SUM(valor_liquido_cents) FILTER (WHERE status = 'PAGA'), 0)
+		FROM lancamentos`).Row().Scan(&saldo)
+	if err != nil {
+		return 0, fmt.Errorf("financeiro: consultar saldo: %w", err)
+	}
+	return saldo, nil
+}

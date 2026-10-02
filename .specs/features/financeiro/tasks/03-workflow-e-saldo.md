@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/03-workflow-e-saldo.md`
 **Design**: `.specs/features/financeiro/design/03-workflow-e-saldo.md`
-**Status**: In Progress (T1-T3 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: Concluída (T1-T4); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: todas as tarefas aqui operam sobre a tabela `lancamentos` — a migração `02-lancamentos/T1` precisa existir primeiro. Nenhuma tarefa desta spec cria ou altera schema.
 
@@ -120,10 +120,10 @@ T3 → T4
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Soma `RECEBIDA` menos soma `PAGA`, em centavos
-- [ ] `CRIADA` e `CANCELADA` nunca contam — inclusive um lançamento cancelado depois de `RECEBIDA`/`PAGA` (prova a janela de saldo documentada no edge case da spec)
-- [ ] Sem `financeiro:saldo:read`, recusa
-- [ ] Gate check passes
+- [x] Soma `RECEBIDA` menos soma `PAGA`, em centavos
+- [x] `CRIADA` e `CANCELADA` nunca contam — inclusive um lançamento cancelado depois de `RECEBIDA`/`PAGA` (prova a janela de saldo documentada no edge case da spec)
+- [x] Sem `financeiro:saldo:read`, recusa
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
