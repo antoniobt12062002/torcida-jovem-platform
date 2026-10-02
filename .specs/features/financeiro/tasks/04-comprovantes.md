@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/04-comprovantes.md`
 **Design**: `.specs/features/financeiro/design/04-comprovantes.md`
-**Status**: In Progress (T1, T2 concluídas); `tests-first`, um commit atômico por tarefa.
+**Status**: Concluída (T1-T3); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: `T1` precisa da migração de `02-lancamentos` (para validar existência do `lancamento_id`) e de `platform/documents` (já concluído e validado, `fundacao-documentos`).
 
@@ -90,10 +90,10 @@ T1 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Lista todos os comprovantes do lançamento, mais novo primeiro
-- [ ] Não gera URL, não audita
-- [ ] Não altera `status` do lançamento (prova negativa: `status` inalterado antes/depois)
-- [ ] Gate check passes
+- [x] Lista todos os comprovantes do lançamento, mais novo primeiro
+- [x] Não gera URL, não audita
+- [x] Não altera `status` do lançamento (prova negativa: `status` inalterado antes/depois)
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
