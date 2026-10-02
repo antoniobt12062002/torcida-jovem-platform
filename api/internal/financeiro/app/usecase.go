@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
@@ -27,3 +28,5 @@ type (
 )
 
 var errNotConfigured = errors.New("financeiro: caso de uso mal configurado")
+
+func motivoBlank(motivo string) bool { return strings.TrimSpace(motivo) == "" }
