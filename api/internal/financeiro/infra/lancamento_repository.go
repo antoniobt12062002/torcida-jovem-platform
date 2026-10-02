@@ -143,3 +143,16 @@ func (r *LancamentoRepository) Receber(ctx context.Context, id string) (domain.L
 	}
 	return lancamento, nil
 }
+
+// Pagar sets status = PAGA. Whether the lançamento is a CRIADA DESPESA
+// (WKF-01) is checked by the application, not here — same convention as
+// Receber.
+func (r *LancamentoRepository) Pagar(ctx context.Context, id string) (domain.Lancamento, error) {
+	row := conn(ctx, r.db).Raw(`UPDATE lancamentos SET status = 'PAGA', atualizado_em = now()
+		WHERE id = ?::uuid RETURNING `+lancamentoColumns, id).Row()
+	lancamento, err := scanLancamento(row)
+	if err != nil {
+		return domain.Lancamento{}, fmt.Errorf("financeiro: pagar lançamento: %w", err)
+	}
+	return lancamento, nil
+}
