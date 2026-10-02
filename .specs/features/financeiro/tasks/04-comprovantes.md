@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/04-comprovantes.md`
 **Design**: `.specs/features/financeiro/design/04-comprovantes.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: In Progress (T1 concluída); `tests-first`, um commit atômico por tarefa.
 
 **Pré-requisito cruzado**: `T1` precisa da migração de `02-lancamentos` (para validar existência do `lancamento_id`) e de `platform/documents` (já concluído e validado, `fundacao-documentos`).
 
@@ -46,11 +46,11 @@ T1 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Chama `Store` com `owner_type="financeiro.lancamento"`, `owner_id`, `RequiredPermission="financeiro:comprovante:create"`
-- [ ] Lançamento inexistente: `lancamento_nao_encontrado`, antes de chamar `Store`
-- [ ] Aceita anexar em lançamento `CANCELADA` sem restrição
-- [ ] Nunca passa `Supersedes` para `Store` — dois anexos ao mesmo lançamento são dois documentos independentes, cada um `Version 1`
-- [ ] Gate check passes
+- [x] Chama `Store` com `owner_type="financeiro.lancamento"`, `owner_id`, `RequiredPermission="financeiro:comprovante:create"`
+- [x] Lançamento inexistente: `lancamento_nao_encontrado`, antes de chamar `Store`
+- [x] Aceita anexar em lançamento `CANCELADA` sem restrição
+- [x] Nunca passa `Supersedes` para `Store` — dois anexos ao mesmo lançamento são dois documentos independentes, cada um `Version 1`
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
