@@ -11,6 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	identityhttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/http"
 	platformapi "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/api"
@@ -29,8 +30,12 @@ type PingFunc func(ctx context.Context) error
 
 // Deps are what the router composes.
 type Deps struct {
-	Ping           PingFunc
-	Identity       *identity.Module
+	Ping     PingFunc
+	Identity *identity.Module
+	// Financeiro is composed by cmd/api/main.go (06-api-http) but not yet
+	// registered here — that wiring (financeirohttp.Register, the upload
+	// chain, FIN-D-024) is 06-api-http/T8's own task.
+	Financeiro     *financeiro.Module
 	AuditQuery     *audit.Query
 	Log            *slog.Logger
 	AllowedOrigins []string

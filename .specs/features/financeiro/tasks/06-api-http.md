@@ -54,7 +54,7 @@ T7 → T8
 ### T1: Composition root (`financeiro.New`)
 
 **What**: `financeiro.New(Deps) *Module`, mesmo template de `identity.New`/`identity.Module`. Instancia `platform/storage.NewS3` e `platform/documents.Service` em `cmd/api/main.go` pela primeira vez (já existem desde `fundacao-documentos`, nunca antes chamados) e os injeta como `financeiro.Deps.Documents`.
-**Where**: `api/internal/financeiro/module.go` (estende, não recria), `api/cmd/api/main.go`.
+**Where**: `api/internal/financeiro/module.go` (estende, não recria), `api/cmd/api/main.go` (extraído para uma função `boot` testável, mesmo padrão `run`/`deps` de `cmd/bootstrap-admin`), `api/internal/httpapi/router.go` (consequência técnica direta, não planejada originalmente: `Deps` ganha o campo `Financeiro *financeiro.Module`, inerte — `fin` precisa de algum destino para compilar; nenhuma rota é registrada, nenhum comportamento do roteador muda — ver `FIN-D-025`).
 **Depends on**: None (consome só o que `01`-`05` já publicaram).
 **Reuses**: `storage.NewS3`, `documents.Service`, `identity.New` como modelo.
 **Requirement**: nenhum AC de `spec/06-api-http.md` diretamente — é infraestrutura para todos eles.
@@ -62,12 +62,12 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `financeiro.Module` expõe os 2 repositórios e os 15 casos de uso como campos públicos, todos não-nil depois de `New`
-- [ ] `cmd/api/main.go` falha ao iniciar se `STORAGE_ENABLED` não for `true` quando `financeiro` é composto (`FIN-D-023`)
-- [ ] Nenhuma rota HTTP, nenhum contrato, nenhum handler ainda — só o composition root em Go
-- [ ] Gate check passes
+- [x] `financeiro.Module` expõe os 2 repositórios e os 15 casos de uso como campos públicos, todos não-nil depois de `New`
+- [x] `cmd/api/main.go` falha ao iniciar se `STORAGE_ENABLED` não for `true` quando `financeiro` é composto (`FIN-D-023`)
+- [x] Nenhuma rota HTTP, nenhum contrato, nenhum handler ainda — só o composition root em Go
+- [x] Gate check passes
 
-**Tests**: unit (completude do wiring) + integration (primeira suíte de `cmd/api`, confirma que a API sobe com `financeiro` composto e `STORAGE_ENABLED=true`, e que falha claramente sem isso)
+**Tests**: unit (completude do wiring, 2 testes) + integration (primeira suíte de `cmd/api` — `boot_test.go` —, confirma que a API sobe com `financeiro` composto e `STORAGE_ENABLED=true`, e que falha claramente sem isso)
 **Gate**: full
 **Commit**: `feat(financeiro): composition root financeiro.New`
 

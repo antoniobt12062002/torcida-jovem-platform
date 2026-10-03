@@ -15,7 +15,7 @@ Convenção de numeração local: **FIN-D-NNN** para decisões que valem só par
 | 03 | `spec/03-workflow-e-saldo.md` | WKF-01 a WKF-03 | Concluída (T1-T4) |
 | 04 | `spec/04-comprovantes.md` | CMP-01 a CMP-03 | Concluída (T1-T3) |
 | 05 | `spec/05-permissoes.md` | PERM-01 a PERM-03 | Concluída (T1-T3) |
-| 06 | `spec/06-api-http.md` | API-01 a API-06 | Especificada e desenhada (Specify+Design+Tasks); implementação não iniciada |
+| 06 | `spec/06-api-http.md` | API-01 a API-06 | Em andamento (T1/T8) |
 
 ## Dependências
 
@@ -169,6 +169,10 @@ Nenhuma alteração de comportamento de produção nesta tarefa além da já pre
 ### FIN-D-024 — Chain de upload dedicada para o único endpoint de multipart de `financeiro` — **Aprovada: 11 MiB**
 **Decisão**: `platform/httpx.BodyLimit(limit)` já é parametrizável; a chain `authenticated` global usa `1 MiB` (`AD-013`/API-02.7), insuficiente para os `10 MiB` já decididos em `platform/documents` (`DOC-01 AC3`). **10 MiB continua sendo o limite efetivo do arquivo** (`platform/documents.maxSize`, inalterado); `11 MiB` é só o limite do corpo HTTP/multipart na chain dedicada de `financeiro` (margem de overhead do protocolo, nunca o limite do conteúdo em si).
 **Escopo**: `06-api-http` (`T7`).
+
+### FIN-D-025 — `httpapi.Deps` ganha o campo `Financeiro` em `T1`, inerte até `T8`
+**Achado/correção mecânica**: `T1` precisa de algum destino em Go para `fin := financeiro.New(...)`, mas `financeirohttp.Register` (que de fato usaria `financeiro.Module`) só existe a partir de `T3`/`T8` — sem isso, `fin` seria uma variável declarada e nunca usada (erro de compilação). Resolução: `httpapi.Deps` ganha o campo `Financeiro *financeiro.Module` já em `T1`, populado por `cmd/api/main.go`, mas **inerte** — `httpapi.NewRouter` não o lê, nenhuma rota é registrada, nenhum comportamento do roteador muda (campo de struct não utilizado não é erro de compilação em Go, diferente de variável local). `T8` é quem de fato usa esse campo. Não é uma regra de negócio nem uma decisão arquitetural — é a forma mínima de manter `T1` compilável sem antecipar o trabalho de `T8`.
+**Escopo**: `06-api-http` (`T1`, consumido por `T8`).
 
 ---
 

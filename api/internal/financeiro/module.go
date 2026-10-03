@@ -2,10 +2,103 @@
 package financeiro
 
 import (
+	"context"
+
+	"gorm.io/gorm"
+
 	finapp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/app"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/infra"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/documents"
 )
+
+// Deps are the platform pieces the module is built on (06-api-http/T1, same
+// template as identity.Deps). Documents is already composed by cmd/api/main.go
+// (storage.NewS3 + documents.Service) and injected here — financeiro never
+// builds its own storage or S3 client (FIN-D-023).
+type Deps struct {
+	DB         *gorm.DB
+	Recorder   *audit.Recorder
+	Authorizer *authz.Authorizer
+	Documents  *documents.Service
+}
+
+// Module is the composed financeiro module: the 2 repositories and the 15
+// use cases of 01-04, ready for financeiro/http (06-api-http) to consume.
+type Module struct {
+	Contas      *infra.ContaRepository
+	Lancamentos *infra.LancamentoRepository
+
+	CriarConta     *finapp.CriarConta
+	ListarContas   *finapp.ListarContas
+	DesativarConta *finapp.DesativarConta
+	RenomearConta  *finapp.RenomearConta
+
+	CriarLancamento   *finapp.CriarLancamento
+	EditarLancamento  *finapp.EditarLancamento
+	CriarDevolucao    *finapp.CriarDevolucao
+	ListarLancamentos *finapp.ListarLancamentos
+
+	ReceberLancamento  *finapp.ReceberLancamento
+	PagarLancamento    *finapp.PagarLancamento
+	CancelarLancamento *finapp.CancelarLancamento
+	ConsultarSaldo     *finapp.ConsultarSaldo
+
+	AnexarComprovante    *finapp.AnexarComprovante
+	ConsultarComprovante *finapp.ConsultarComprovante
+	ListarComprovantes   *finapp.ListarComprovantes
+}
+
+// New wires the module. It does no I/O.
+func New(d Deps) *Module {
+	tx := func(ctx context.Context, fn func(context.Context) error) error { return database.WithTx(ctx, d.DB, fn) }
+
+	contas := infra.NewContaRepository(d.DB)
+	lancamentos := infra.NewLancamentoRepository(d.DB)
+	existence := infra.NewLancamentoExistenceChecker(d.DB)
+
+	return &Module{
+		Contas: contas, Lancamentos: lancamentos,
+
+		CriarConta:   &finapp.CriarConta{Authz: d.Authorizer, Contas: contas, Audit: d.Recorder, Tx: tx},
+		ListarContas: &finapp.ListarContas{Authz: d.Authorizer, Contas: contas},
+		DesativarConta: &finapp.DesativarConta{
+			Authz: d.Authorizer, Contas: contas, Audit: d.Recorder, Tx: tx,
+		},
+		RenomearConta: &finapp.RenomearConta{
+			Authz: d.Authorizer, Contas: contas, Lancamentos: existence, Audit: d.Recorder, Tx: tx,
+		},
+
+		CriarLancamento: &finapp.CriarLancamento{
+			Authz: d.Authorizer, Contas: contas, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		EditarLancamento: &finapp.EditarLancamento{
+			Authz: d.Authorizer, Contas: contas, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		CriarDevolucao: &finapp.CriarDevolucao{
+			Authz: d.Authorizer, Contas: contas, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		ListarLancamentos: &finapp.ListarLancamentos{Authz: d.Authorizer, Lancamentos: lancamentos},
+
+		ReceberLancamento: &finapp.ReceberLancamento{
+			Authz: d.Authorizer, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		PagarLancamento: &finapp.PagarLancamento{
+			Authz: d.Authorizer, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		CancelarLancamento: &finapp.CancelarLancamento{
+			Authz: d.Authorizer, Lancamentos: lancamentos, Audit: d.Recorder, Tx: tx,
+		},
+		ConsultarSaldo: &finapp.ConsultarSaldo{Authz: d.Authorizer, Lancamentos: lancamentos},
+
+		AnexarComprovante:    &finapp.AnexarComprovante{Lancamentos: lancamentos, Documents: d.Documents},
+		ConsultarComprovante: &finapp.ConsultarComprovante{Documents: d.Documents},
+		ListarComprovantes:   &finapp.ListarComprovantes{Documents: d.Documents},
+	}
+}
 
 // Contribution publishes financeiro's contribution to the aggregated RBAC
 // matrix (identity/app.BuildMatrix), the same mechanism already used by
