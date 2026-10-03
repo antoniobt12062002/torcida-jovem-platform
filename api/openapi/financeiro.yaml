@@ -1,0 +1,761 @@
+openapi: 3.0.3
+info:
+  title: TJ Platform - módulo financeiro
+  version: 1.0.0
+  description: |
+    Contrato de comunicação de financeiro: plano de contas, lançamentos,
+    workflow de liquidação/cancelamento, saldo e comprovantes. Descreve
+    caminhos, esquemas e segurança; não contém regras de negócio, que ficam
+    nos casos de uso de financeiro/app (01-05).
+
+    Toda rota exige sessão (cookie tj_session); as que alteram estado exigem
+    também o cabeçalho X-CSRF-Token. Nenhuma rota de financeiro é pública.
+
+    Paginação, filtro e ordenação de listagens ficam fora do escopo desta
+    versão (FIN-D-021): ListarContas e ListarLancamentos devolvem sempre a
+    lista inteira.
+servers:
+  - url: /
+tags:
+  - name: contas
+    description: Plano de contas.
+  - name: lancamentos
+    description: Lançamentos, workflow de liquidação e cancelamento.
+  - name: saldo
+    description: Consulta de saldo.
+  - name: comprovantes
+    description: Anexar, consultar e listar comprovantes de lançamento.
+security:
+  - sessionCookie: []
+paths:
+  /api/v1/financeiro/contas:
+    post:
+      operationId: createConta
+      tags: [contas]
+      summary: Cria uma conta contábil, raiz ou subconta.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContaRequest'
+      responses:
+        '201':
+          description: Conta criada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conta'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          description: parent_id referenciado não existe (code conta_nao_encontrada).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Tipo da subconta incompatível com o pai (code conta_tipo_incompativel) ou campos inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listContas
+      tags: [contas]
+      summary: Lista todas as contas contábeis (sem paginação, FIN-D-021).
+      responses:
+        '200':
+          description: Todas as contas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContaList'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/contas/{id}:
+    patch:
+      operationId: renameConta
+      tags: [contas]
+      summary: Renomeia uma conta, só enquanto nunca tiver sido usada em um lançamento.
+      parameters:
+        - $ref: '#/components/parameters/ContaId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameContaRequest'
+      responses:
+        '200':
+          description: Conta renomeada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conta'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Conta já utilizada em um lançamento (code conta_ja_utilizada).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/contas/{id}/deactivate:
+    post:
+      operationId: deactivateConta
+      tags: [contas]
+      summary: Desativa uma conta contábil (nunca excluída).
+      parameters:
+        - $ref: '#/components/parameters/ContaId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Conta desativada.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos:
+    post:
+      operationId: createLancamento
+      tags: [lancamentos]
+      summary: Cria um lançamento (receita ou despesa).
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLancamentoRequest'
+      responses:
+        '201':
+          description: Lançamento criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lancamento'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Conta inválida, tipo incompatível ou valor fora da faixa segura (conta_invalida, lancamento_tipo_incompativel, amount_out_of_range).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listLancamentos
+      tags: [lancamentos]
+      summary: Lista todos os lançamentos, incluindo CANCELADA (sem paginação, FIN-D-021).
+      responses:
+        '200':
+          description: Todos os lançamentos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LancamentoList'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/devolucoes:
+    post:
+      operationId: createDevolucao
+      tags: [lancamentos]
+      summary: Cria uma despesa de devolução, referenciando a receita recebida que devolve (FIN-D-003).
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDevolucaoRequest'
+      responses:
+        '201':
+          description: Devolução criada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lancamento'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Conta inválida, devolução inválida (lançamento referenciado não é RECEITA RECEBIDA) ou valor fora da faixa (conta_invalida, devolucao_invalida, amount_out_of_range).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/{id}:
+    put:
+      operationId: updateLancamento
+      tags: [lancamentos]
+      summary: Substitui os campos editáveis do lançamento, só enquanto CRIADA.
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLancamentoRequest'
+      responses:
+        '200':
+          description: Lançamento editado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lancamento'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Lançamento fora de CRIADA, não pode mais ser editado (code lancamento_imutavel).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Conta inválida, tipo incompatível ou valor fora da faixa (conta_invalida, lancamento_tipo_incompativel, amount_out_of_range).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/{id}/receive:
+    post:
+      operationId: receiveLancamento
+      tags: [lancamentos]
+      summary: Transiciona uma receita CRIADA para RECEBIDA.
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Lançamento recebido.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Lançamento não pode ser recebido (code lancamento_nao_pode_ser_recebido).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/{id}/pay:
+    post:
+      operationId: payLancamento
+      tags: [lancamentos]
+      summary: Transiciona uma despesa CRIADA para PAGA.
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Lançamento pago.
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Lançamento não pode ser pago (code lancamento_nao_pode_ser_pago).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/{id}/cancel:
+    post:
+      operationId: cancelLancamento
+      tags: [lancamentos]
+      summary: Cancela um lançamento (CRIADA, RECEBIDA ou PAGA), com motivo obrigatório.
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelLancamentoRequest'
+      responses:
+        '204':
+          description: Lançamento cancelado.
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '409':
+          description: Lançamento já cancelado (code lancamento_ja_cancelado).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Motivo ausente ou vazio (code motivo_obrigatorio).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/saldo:
+    get:
+      operationId: getSaldo
+      tags: [saldo]
+      summary: Consulta o saldo atual (soma RECEBIDA menos soma PAGA por status atual).
+      responses:
+        '200':
+          description: Saldo atual, zero incluído.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saldo'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/lancamentos/{id}/comprovantes:
+    post:
+      operationId: createComprovante
+      tags: [comprovantes]
+      summary: Anexa um comprovante ao lançamento (multipart/form-data, delegado inteiramente a platform/documents).
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Comprovante anexado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comprovante'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          description: Lançamento não encontrado (code lancamento_nao_encontrado) — verificado antes de qualquer envio a platform/documents.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          description: Corpo acima do limite da chain de upload (payload_too_large) ou do arquivo em platform/documents (document_too_large).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '422':
+          description: Extensão ou tipo de arquivo não permitido (document_extension_not_allowed, document_type_not_allowed, document_type_mismatch).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listComprovantes
+      tags: [comprovantes]
+      summary: Lista os comprovantes do lançamento, mais novo primeiro (sem paginação, FIN-D-021).
+      parameters:
+        - $ref: '#/components/parameters/LancamentoId'
+      responses:
+        '200':
+          description: Todos os comprovantes do lançamento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprovanteList'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/financeiro/comprovantes/{documentId}/url:
+    get:
+      operationId: getComprovanteUrl
+      tags: [comprovantes]
+      summary: Gera uma URL assinada para baixar o comprovante (delegado inteiramente a platform/documents).
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: URL assinada, de validade limitada — nunca cacheada.
+          headers:
+            Cache-Control:
+              description: Sempre no-store.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprovanteUrl'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          description: Comprovante não encontrado (code document_not_found).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: 'common.yaml#/components/securitySchemes/sessionCookie'
+  parameters:
+    ContaId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    LancamentoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    TipoConta:
+      type: string
+      enum: [RECEITA, DESPESA]
+    FormaPagamento:
+      type: string
+      enum: [PIX, CARTAO, DINHEIRO, TRANSFERENCIA, OUTROS]
+    StatusLancamento:
+      type: string
+      enum: [CRIADA, RECEBIDA, PAGA, CANCELADA]
+    Conta:
+      type: object
+      required: [id, tipo, nome, parent_id, ativo, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          $ref: '#/components/schemas/TipoConta'
+        nome:
+          type: string
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        ativo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    ContaList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conta'
+    CreateContaRequest:
+      type: object
+      required: [tipo, nome]
+      properties:
+        tipo:
+          $ref: '#/components/schemas/TipoConta'
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 200
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+    RenameContaRequest:
+      type: object
+      required: [nome]
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 200
+    Lancamento:
+      type: object
+      required:
+        [
+          id, tipo, conta_id, valor_bruto_cents, taxa_cents, valor_liquido_cents, forma_pagamento, status,
+          devolucao_de_id, motivo_cancelamento, cancelado_por, cancelado_em, criado_por, criado_em, atualizado_em,
+        ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          $ref: '#/components/schemas/TipoConta'
+        conta_id:
+          type: string
+          format: uuid
+        valor_bruto_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        taxa_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        valor_liquido_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+        status:
+          $ref: '#/components/schemas/StatusLancamento'
+        devolucao_de_id:
+          type: string
+          format: uuid
+          nullable: true
+        motivo_cancelamento:
+          type: string
+          nullable: true
+        cancelado_por:
+          type: string
+          format: uuid
+          nullable: true
+        cancelado_em:
+          type: string
+          format: date-time
+          nullable: true
+        criado_por:
+          type: string
+          format: uuid
+        criado_em:
+          type: string
+          format: date-time
+        atualizado_em:
+          type: string
+          format: date-time
+    LancamentoList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lancamento'
+    CreateLancamentoRequest:
+      type: object
+      required: [tipo, conta_id, valor_bruto_cents, taxa_cents, forma_pagamento]
+      properties:
+        tipo:
+          $ref: '#/components/schemas/TipoConta'
+        conta_id:
+          type: string
+          format: uuid
+        valor_bruto_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        taxa_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+    UpdateLancamentoRequest:
+      type: object
+      required: [conta_id, valor_bruto_cents, taxa_cents, forma_pagamento]
+      properties:
+        conta_id:
+          type: string
+          format: uuid
+        valor_bruto_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        taxa_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+    CreateDevolucaoRequest:
+      type: object
+      required: [conta_id, valor_bruto_cents, taxa_cents, forma_pagamento, devolucao_de_id]
+      properties:
+        conta_id:
+          type: string
+          format: uuid
+        valor_bruto_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        taxa_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+        devolucao_de_id:
+          type: string
+          format: uuid
+    CancelLancamentoRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Motivo do cancelamento (não pode ser vazio, verificado no caso de uso — API-03 AC4, motivo_obrigatorio).
+          maxLength: 500
+    Saldo:
+      type: object
+      required: [saldo_cents]
+      properties:
+        saldo_cents:
+          $ref: 'common.yaml#/components/schemas/Cents'
+    Comprovante:
+      type: object
+      required: [id, original_filename, content_type, size_bytes, version, uploaded_by, uploaded_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        original_filename:
+          type: string
+        content_type:
+          type: string
+        size_bytes:
+          type: integer
+          format: int64
+        version:
+          type: integer
+        uploaded_by:
+          type: string
+          format: uuid
+        uploaded_at:
+          type: string
+          format: date-time
+    ComprovanteList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comprovante'
+    ComprovanteUrl:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri

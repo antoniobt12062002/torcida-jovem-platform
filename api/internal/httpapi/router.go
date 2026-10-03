@@ -11,6 +11,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
+	financeirohttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/http"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	identityhttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/http"
 	platformapi "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/api"
@@ -23,14 +25,25 @@ const (
 	// (API-02.7): public routes take small bodies and are the ones anyone can reach.
 	AuthenticatedBodyLimit = 1 << 20
 	PublicBodyLimit        = 64 << 10
+	// FinanceiroUploadBodyLimit is the body limit for financeiro's one
+	// multipart route (anexar comprovante): larger than
+	// AuthenticatedBodyLimit to accommodate platform/documents's own 10 MiB
+	// file limit plus multipart/protocol overhead (FIN-D-024, 06-api-http
+	// T7). 06-api-http/T8 builds the dedicated chain with this constant, the
+	// same way it builds `authenticated` below — the chain itself cannot
+	// exist here yet because financeirohttp.Register, the only place that
+	// would use it, requires *financeiro/http.Handler to satisfy the full
+	// StrictServerInterface, only true once T4-T7 are all done (FIN-D-026).
+	FinanceiroUploadBodyLimit = 11 << 20
 )
 
 type PingFunc func(ctx context.Context) error
 
 // Deps are what the router composes.
 type Deps struct {
-	Ping           PingFunc
-	Identity       *identity.Module
+	Ping     PingFunc
+	Identity *identity.Module
+	Financeiro     *financeiro.Module
 	AuditQuery     *audit.Query
 	Log            *slog.Logger
 	AllowedOrigins []string
@@ -57,8 +70,8 @@ type platformServer struct {
 // (deny by default), CSRF and contract validation, in that order, so a caller
 // who is not signed in learns nothing of the structure of the API.
 func NewRouter(d Deps) *gin.Engine {
-	if d.Ping == nil || d.Identity == nil || d.AuditQuery == nil || d.Log == nil {
-		panic("httpapi: NewRouter exige Ping, Identity, AuditQuery e Log")
+	if d.Ping == nil || d.Identity == nil || d.Financeiro == nil || d.AuditQuery == nil || d.Log == nil {
+		panic("httpapi: NewRouter exige Ping, Identity, Financeiro, AuditQuery e Log")
 	}
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -75,12 +88,17 @@ func NewRouter(d Deps) *gin.Engine {
 	if err != nil {
 		panic(fmt.Sprintf("contrato identity embutido inválido: %v", err))
 	}
-	validate, err := httpx.NewContractValidator(platformSpec, identitySpec)
+	financeiroSpec, err := financeirohttp.GetSpec()
+	if err != nil {
+		panic(fmt.Sprintf("contrato financeiro embutido inválido: %v", err))
+	}
+	validate, err := httpx.NewContractValidator(platformSpec, identitySpec, financeiroSpec)
 	if err != nil {
 		panic(fmt.Sprintf("validador do contrato: %v", err))
 	}
 
 	handler := identityhttp.New(d.Identity, d.Cookie, d.Log)
+	finHandler := financeirohttp.New(d.Financeiro, d.Log)
 	origin := httpx.Origin(httpx.OriginConfig{Allowed: d.AllowedOrigins, Cookie: d.Cookie})
 	authn := httpx.Authn(httpx.AuthnConfig{
 		Validator: handler.SessionValidator(), Cookie: d.Cookie,
@@ -89,6 +107,10 @@ func NewRouter(d Deps) *gin.Engine {
 	})
 	public := []gin.HandlerFunc{origin, httpx.BodyLimit(PublicBodyLimit), validate}
 	authenticated := []gin.HandlerFunc{httpx.BodyLimit(AuthenticatedBodyLimit), origin, authn, httpx.CSRF(), validate}
+	// authenticatedUpload is financeiro's one multipart route (anexar
+	// comprovante): same chain as authenticated, but with the larger body
+	// limit FIN-D-024/FIN-D-031 already settled on.
+	authenticatedUpload := []gin.HandlerFunc{httpx.BodyLimit(FinanceiroUploadBodyLimit), origin, authn, httpx.CSRF(), validate}
 
 	platform := platformapi.ServerInterfaceWrapper{
 		Handler: platformServer{
@@ -102,11 +124,29 @@ func NewRouter(d Deps) *gin.Engine {
 	r.GET("/healthz", validate, platform.GetHealth)
 	r.GET("/api/v1/audit-logs", append(append([]gin.HandlerFunc{}, authenticated...), platform.GetAuditLogs)...)
 	identityhttp.Register(r, handler, handler, identityhttp.Chains{Public: public, Authenticated: authenticated})
+	finWrapper := financeirohttp.Register(finHandler, finHandler)
+	auth := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticated...), op) }
+	upload := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticatedUpload...), op) }
+	r.GET("/api/v1/financeiro/contas", auth(finWrapper.ListContas)...)
+	r.POST("/api/v1/financeiro/contas", auth(finWrapper.CreateConta)...)
+	r.PATCH("/api/v1/financeiro/contas/:id", auth(finWrapper.RenameConta)...)
+	r.POST("/api/v1/financeiro/contas/:id/deactivate", auth(finWrapper.DeactivateConta)...)
+	r.GET("/api/v1/financeiro/lancamentos", auth(finWrapper.ListLancamentos)...)
+	r.POST("/api/v1/financeiro/lancamentos", auth(finWrapper.CreateLancamento)...)
+	r.POST("/api/v1/financeiro/lancamentos/devolucoes", auth(finWrapper.CreateDevolucao)...)
+	r.PUT("/api/v1/financeiro/lancamentos/:id", auth(finWrapper.UpdateLancamento)...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/receive", auth(finWrapper.ReceiveLancamento)...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/pay", auth(finWrapper.PayLancamento)...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/cancel", auth(finWrapper.CancelLancamento)...)
+	r.GET("/api/v1/financeiro/saldo", auth(finWrapper.GetSaldo)...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/comprovantes", upload(finWrapper.CreateComprovante)...)
+	r.GET("/api/v1/financeiro/lancamentos/:id/comprovantes", auth(finWrapper.ListComprovantes)...)
+	r.GET("/api/v1/financeiro/comprovantes/:documentId/url", auth(finWrapper.GetComprovanteUrl)...)
 	if d.extraRoutes != nil {
 		d.extraRoutes(r)
 	}
 
-	withoutContract, withoutRoute := parity(routeKeys(r.Routes()), append(operationKeys(platformSpec), operationKeys(identitySpec)...))
+	withoutContract, withoutRoute := parity(routeKeys(r.Routes()), append(append(operationKeys(platformSpec), operationKeys(identitySpec)...), operationKeys(financeiroSpec)...))
 	if len(withoutContract) > 0 || len(withoutRoute) > 0 {
 		panic(fmt.Sprintf("rotas e contratos divergem: rotas sem operação %v; operações sem rota %v", withoutContract, withoutRoute))
 	}

@@ -12,6 +12,10 @@ apis:
     root: ../api/openapi/identity.yaml
     x-openapi-ts:
       output: ./lib/api/identity.d.ts
+  financeiro@v1:
+    root: ../api/openapi/financeiro.yaml
+    x-openapi-ts:
+      output: ./lib/api/financeiro.d.ts
 
 extends:
   - recommended

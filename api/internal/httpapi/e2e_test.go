@@ -18,10 +18,12 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/documents"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/email/emailtest"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/logx"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/password"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/storage"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/testutil"
 )
 
@@ -71,8 +73,19 @@ func newE2E(t *testing.T) *e2e {
 	if _, err := e.mod.Roles.Sync(context.Background(), matrix); err != nil {
 		t.Fatal(err)
 	}
+	s3cfg := testutil.SharedS3(t)
+	s3, err := storage.NewS3(context.Background(), storage.Config{
+		Endpoint: s3cfg.Endpoint, Region: s3cfg.Region, Bucket: s3cfg.Bucket,
+		AccessKey: s3cfg.AccessKey, SecretKey: s3cfg.SecretKey, UsePathStyle: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	docs := &documents.Service{DB: db, Storage: s3, Authz: authorizer, Audit: rec, URLTTL: 5 * time.Minute}
+	fin := financeiro.New(financeiro.Deps{DB: db, Recorder: rec, Authorizer: authorizer, Documents: docs})
 	e.router = NewRouter(Deps{
-		Ping: func(context.Context) error { return nil }, Identity: e.mod, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: log,
+		Ping: func(context.Context) error { return nil }, Identity: e.mod, Financeiro: fin,
+		AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: log,
 		AllowedOrigins: []string{appOrigin}, Cookie: httpx.SessionCookie{Secure: true},
 	})
 	return e
