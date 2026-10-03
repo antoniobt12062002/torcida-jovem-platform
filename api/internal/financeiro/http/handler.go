@@ -1,6 +1,7 @@
 package financeirohttp
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -31,12 +32,48 @@ func New(m *financeiro.Module, log *slog.Logger) *Handler {
 	return &Handler{M: m, Log: log}
 }
 
+// ---- session (FIN-D-028: shared infra every resource handler needs, added
+// when T4 first needed it — identical in shape to identity/http/handler.go's
+// own ginContext/requestContext/sessionOf, duplicated here because they are
+// package-private there and the two HTTP layers do not share a module)
+
+// ginContext returns the *gin.Context the strict handler passes as context.
+func ginContext(ctx context.Context) *gin.Context {
+	c, _ := ctx.(*gin.Context)
+	return c
+}
+
+// requestContext is the context of the request: it carries the request id
+// and the audit actor, which the use cases read.
+func requestContext(ctx context.Context) context.Context {
+	if c := ginContext(ctx); c != nil && c.Request != nil {
+		return c.Request.Context()
+	}
+	return ctx
+}
+
+var errNoSession = errors.New("sem sessão no contexto")
+
+// sessionOf reads the session httpx.Authn put in the request context. Every
+// resource handler calls this first: financeiro never checks permissions
+// itself (that is the use case's job, via Authz.Require) — it only needs the
+// authenticated Principal to pass through as Actor.
+func sessionOf(ctx context.Context) (httpx.SessionInfo, error) {
+	info, ok := httpx.SessionFrom(requestContext(ctx))
+	if !ok {
+		return httpx.SessionInfo{}, errNoSession
+	}
+	return info, nil
+}
+
 // ---- errors (FIN-D-022)
 
 // writeError turns an error of the use cases into the problem response of
 // the API. This is the single place where domain errors become HTTP.
 func (h *Handler) writeError(c *gin.Context, err error) {
 	switch {
+	case errors.Is(err, errNoSession):
+		httpx.WriteProblem(c, http.StatusUnauthorized, "unauthenticated", "É preciso entrar para continuar.")
 	case mapped(c, err):
 	case database.Unavailable(err):
 		h.logInternal(c, err)

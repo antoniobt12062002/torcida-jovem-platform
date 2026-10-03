@@ -138,10 +138,10 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 4 ACs de `API-01` cobertos
-- [ ] Nenhuma verificação de permissão na camada HTTP — delegada ao caso de uso
-- [ ] `ListContas` devolve a lista completa, sem paginação (`FIN-D-021`)
-- [ ] Gate check passes
+- [x] Os 4 ACs de `API-01` cobertos
+- [x] Nenhuma verificação de permissão na camada HTTP — delegada ao caso de uso
+- [x] `ListContas` devolve a lista completa, sem paginação (`FIN-D-021`)
+- [x] Gate check passes
 
 **Tests**: integration (requisição HTTP real contra o caso de uso real, mesmo padrão de `identity/http`)
 **Gate**: full
