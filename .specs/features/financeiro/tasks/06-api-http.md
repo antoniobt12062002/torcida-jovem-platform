@@ -184,9 +184,9 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `GET /financeiro/saldo` devolve `{saldo_cents}` correto, inclusive zero
-- [ ] Nenhum parâmetro de filtro (nenhum existe no caso de uso)
-- [ ] Gate check passes
+- [x] `GET /financeiro/saldo` devolve `{saldo_cents}` correto, inclusive zero
+- [x] Nenhum parâmetro de filtro (nenhum existe no caso de uso)
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

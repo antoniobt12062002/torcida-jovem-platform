@@ -141,6 +141,7 @@ func (e *env) newEngine(log *slog.Logger) *gin.Engine {
 	})
 	e.registerContaRoutes(r, authenticated)
 	e.registerLancamentoRoutes(r, authenticated)
+	e.registerSaldoRoute(r, authenticated)
 	return r
 }
 
@@ -249,6 +250,16 @@ func (e *env) registerLancamentoRoutes(r gin.IRoutes, chain []gin.HandlerFunc) {
 		resp, err := h.CancelLancamento(c, CancelLancamentoRequestObject{Id: LancamentoId(id), Body: &body})
 		writeStrictResponse(c, err, h, resp, (CancelLancamentoResponseObject).VisitCancelLancamentoResponse)
 	})...)
+}
+
+// registerSaldoRoute mounts the single saldo operation (T6/API-04) by hand.
+func (e *env) registerSaldoRoute(r gin.IRoutes, chain []gin.HandlerFunc) {
+	h := e.h
+	route := append(append([]gin.HandlerFunc{}, chain...), func(c *gin.Context) {
+		resp, err := h.GetSaldo(c, GetSaldoRequestObject{})
+		writeStrictResponse(c, err, h, resp, (GetSaldoResponseObject).VisitGetSaldoResponse)
+	})
+	r.GET("/api/v1/financeiro/saldo", route...)
 }
 
 // bindJSON reports whether body parsed as JSON, writing invalid_json
