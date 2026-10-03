@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/05-permissoes.md`
 **Design**: `.specs/features/financeiro/design/05-permissoes.md`
-**Status**: Approved (2026-09-29); `tests-first`, um commit atômico por tarefa.
+**Status**: Em andamento (T1 concluída); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`).
 
 **Nota de ordem cruzada**: `T2` (completar com as 13 permissões operacionais) só pode ser finalizada depois que `01-plano-de-contas`, `02-lancamentos`, `03-workflow-e-saldo` e `04-comprovantes` já tiverem suas operações especificadas (não necessariamente implementadas em código — os nomes de permissão já estão fechados nas 4 specs). `T1` (esqueleto + preservação institucional) não tem essa dependência e pode ser feita a qualquer momento.
 
@@ -37,19 +37,19 @@ T1 → T2 → T3
 
 ### T1: Esqueleto da `Contribution` e preservação institucional
 
-**What**: Função `financeiro.Contribution()` com as 3 permissões institucionais preservadas exatamente como no placeholder atual.
-**Where**: `api/internal/financeiro/module.go`
+**What**: Função `financeiro.Contribution()` com as 3 permissões institucionais preservadas exatamente como no placeholder atual. Inclui, como pré-requisito estrutural, reexportar `Role` e as 8 constantes de papel via `identity/app` (`FIN-D-018`) — `financeiro` não pode importar `identity/domain` diretamente (`architecture_test.go`).
+**Where**: `api/internal/financeiro/module.go` (novo); `api/internal/identity/app/roles.go` (novo, re-export estrutural)
 **Depends on**: None
-**Reuses**: `identity/app.Contribution`, `identity/domain.RoleConselhoFiscal`
+**Reuses**: `identity/app.Contribution`, `identity/app.Role`/`RoleConselhoFiscal` (re-export de `identity/domain`, `FIN-D-018`)
 **Requirement**: PERM-02 (AC1-AC3)
 
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Declara `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine`, concedidas a `CONSELHO_FISCAL`, idênticas ao placeholder de `roles_matrix.go:129-141`
-- [ ] Comparação da matriz antes/depois (placeholder vs. `Contribution` real) mostra essas 3 permissões idênticas para `CONSELHO_FISCAL`
-- [ ] Nenhum caso de uso ou endpoint as verifica ainda
-- [ ] Gate check passes
+- [x] Declara `financeiro:prestacao_contas:read`, `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine`, concedidas a `CONSELHO_FISCAL`, idênticas ao placeholder de `roles_matrix.go:132-144`
+- [x] Comparação da matriz antes/depois (placeholder vs. `Contribution` real) mostra essas 3 permissões idênticas para `CONSELHO_FISCAL`
+- [x] Nenhum caso de uso ou endpoint as verifica ainda
+- [x] Gate check passes
 
 **Tests**: unit
 **Gate**: full
@@ -107,5 +107,6 @@ T1 → T2 → T3
 
 | Task | Scope | Status |
 |---|---|---|
-| T1, T2 | 1 arquivo | ✅ Granular |
+| T1 | 2 arquivos (`identity/app/roles.go` + `financeiro/module.go`), 2 commits atômicos (estrutural + funcional, mesmo padrão de `04/T1`) — granularidade aceitável: o re-export é pré-requisito estrutural único para a `Contribution`, não uma tarefa independente (`FIN-D-018`) | ✅ Aceitável |
+| T2 | 1 arquivo | ✅ Granular |
 | T3 | 1 arquivo principal (`roles_matrix.go`) + 2 pontos de fiação (`main.go`, `bootstrap-admin/main.go`) — granularidade aceitável: é uma única mudança lógica (trocar o placeholder pela Contribution real), não um agrupamento artificial de tarefas distintas | ✅ Aceitável |
