@@ -148,6 +148,7 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 ## Progresso de implementação
 
 - **`01-produtos`/`T1`**: migration `000008_estoque_produtos` (tabela `produtos_estoque`, `codigo UNIQUE NOT NULL`, `GRANT INSERT, SELECT` — nunca `UPDATE`/`DELETE`, `EST-D-007`). Teste de migração dedicado (`estoque_produtos_migration_test.go`, 5 testes: coluna armazenada, unicidade de código, grants corretos, down/up roundtrip, falha clara sem `tj_app`). Nenhuma alteração em outras migrations — `produtos_estoque` não é referenciada por nenhuma FK ainda. Gate completo (full, integration, lint, arquitetura) 100% verde, sem exceção.
+- **`01-produtos`/`T2`**: `estoque/domain/produto.go` — `Produto{ID, Codigo, Nome, UnidadeMedida, CriadoEm}`, `ErrProdutoNaoEncontrado`, `ErrCodigoDuplicado`. Sem `Ativo`/`AtualizadoEm` (`EST-D-007`). Primeiro arquivo de `api/internal/estoque/` — `TestProductionCodeRespectsTheModuleBoundaries` já cobre o módulo automaticamente, sem precisar de nenhuma lista a editar.
 
 ## Handoff
 

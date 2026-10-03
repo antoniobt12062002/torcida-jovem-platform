@@ -80,8 +80,8 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Struct e os 2 sentinels declarados, sem nenhum método de comportamento (entidade simples)
-- [ ] Gate check passes
+- [x] Struct e os 2 sentinels declarados, sem nenhum método de comportamento (entidade simples)
+- [x] Gate check passes
 
 **Tests**: none (entidade simples, build gate only — consistente com a Coverage Expectation da matriz)
 **Gate**: Full
