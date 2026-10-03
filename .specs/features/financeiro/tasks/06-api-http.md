@@ -114,10 +114,10 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 21 mapeamentos de erro de `FIN-D-022` estão implementados e testados individualmente
-- [ ] `conta_invalida` usa o status confirmado pelo mantenedor (`422`, salvo decisão em contrário — ver relatório de entrega)
-- [ ] Nenhum sentinel de `financeiro/domain` tem seu `.Error()` usado como `code` (todos vêm da tabela explícita); os de `platform/documents` continuam usando `.Error()` (já `snake_case`)
-- [ ] Gate check passes
+- [x] Os 21 mapeamentos de erro de `FIN-D-022` estão implementados e testados individualmente
+- [x] `conta_invalida` usa o status confirmado pelo mantenedor (`422`, salvo decisão em contrário — ver relatório de entrega)
+- [x] Nenhum sentinel de `financeiro/domain` tem seu `.Error()` usado como `code` (todos vêm da tabela explícita); os de `platform/documents` continuam usando `.Error()` (já `snake_case`)
+- [x] Gate check passes
 
 **Tests**: unit — um teste por mapeamento de erro (21), confirmando status e code exatos
 **Gate**: full
