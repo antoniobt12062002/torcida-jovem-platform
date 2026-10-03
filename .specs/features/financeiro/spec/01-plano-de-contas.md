@@ -106,10 +106,10 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| PC-01 | Criação de conta | In Tasks | Done (T2) |
-| PC-02 | Renomeação restrita | In Tasks | Done (T4) |
-| PC-03 | Desativação | In Tasks | Done (T3) |
-| PC-04 | Consulta e listagem | In Tasks | Done (T2) |
+| PC-01 | Criação de conta | Done | Done (T2) |
+| PC-02 | Renomeação restrita | Done | Done (T4) |
+| PC-03 | Desativação | Done | Done (T3) |
+| PC-04 | Consulta e listagem | Done | Done (T2) |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 

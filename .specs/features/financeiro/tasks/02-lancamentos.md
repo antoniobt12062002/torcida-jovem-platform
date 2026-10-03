@@ -165,9 +165,9 @@ T1 → T6
 **Tools**: MCP: NONE · Skill: `security-best-practices` (confirmar que é read-only)
 
 **Done when**:
-- [ ] `TemLancamento(ctx, contaID)` retorna verdadeiro se existe ao menos uma linha para a conta, inclusive se `CANCELADA`
-- [ ] Nunca escreve em `contas_contabeis`
-- [ ] Gate check passes
+- [x] `TemLancamento(ctx, contaID)` retorna verdadeiro se existe ao menos uma linha para a conta, inclusive se `CANCELADA`
+- [x] Nunca escreve em `contas_contabeis`
+- [x] Gate check passes
 
 **Pendência registrada (decisão do mantenedor)**: nenhum `financeiro/module.go` (composition root, equivalente a `identity/module.go`) existe ainda — não foi entrega de nenhuma tarefa aprovada de `01` ou `02`. O wiring real de `LancamentoExistenceChecker` (e de todo caso de uso de `01`/`02` até aqui) fica para o primeiro ponto de composição aprovado (provavelmente junto de `01-plano-de-contas/T4` ou da camada HTTP) — não é responsabilidade desta tarefa.
 
