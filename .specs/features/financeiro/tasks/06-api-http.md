@@ -205,12 +205,12 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `CreateComprovante` lê `multipart/form-data`, nunca valida extensão/tipo/tamanho por conta própria
-- [ ] `GetComprovanteUrl` responde com `Cache-Control: no-store`
-- [ ] `ListComprovantes` não gera URL, não audita (herdado de `ListarComprovantes`, nada novo na camada HTTP)
-- [ ] A chain de upload usa um limite de corpo maior que o padrão de 1 MiB, acomodando os 10 MiB de `platform/documents` (`FIN-D-024`, valor confirmado antes desta tarefa)
-- [ ] Todos os 5 erros de `platform/documents` (seção de erros de `FIN-D-022`) mapeados corretamente
-- [ ] Gate check passes
+- [x] `CreateComprovante` lê `multipart/form-data`, nunca valida extensão/tipo/tamanho por conta própria
+- [x] `GetComprovanteUrl` responde com `Cache-Control: no-store`
+- [x] `ListComprovantes` não gera URL, não audita (herdado de `ListarComprovantes`, nada novo na camada HTTP)
+- [x] A chain de upload usa um limite de corpo maior que o padrão de 1 MiB, acomodando os 10 MiB de `platform/documents` (`FIN-D-024`, valor confirmado antes desta tarefa)
+- [x] Todos os 5 erros de `platform/documents` (seção de erros de `FIN-D-022`) mapeados corretamente
+- [x] Gate check passes
 
 **Tests**: integration, incluindo um upload real (Postgres+Garage/S3, mesmo padrão de `fundacao-documentos`/`04-comprovantes`)
 **Gate**: full

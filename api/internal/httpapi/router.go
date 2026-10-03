@@ -24,6 +24,16 @@ const (
 	// (API-02.7): public routes take small bodies and are the ones anyone can reach.
 	AuthenticatedBodyLimit = 1 << 20
 	PublicBodyLimit        = 64 << 10
+	// FinanceiroUploadBodyLimit is the body limit for financeiro's one
+	// multipart route (anexar comprovante): larger than
+	// AuthenticatedBodyLimit to accommodate platform/documents's own 10 MiB
+	// file limit plus multipart/protocol overhead (FIN-D-024, 06-api-http
+	// T7). 06-api-http/T8 builds the dedicated chain with this constant, the
+	// same way it builds `authenticated` below — the chain itself cannot
+	// exist here yet because financeirohttp.Register, the only place that
+	// would use it, requires *financeiro/http.Handler to satisfy the full
+	// StrictServerInterface, only true once T4-T7 are all done (FIN-D-026).
+	FinanceiroUploadBodyLimit = 11 << 20
 )
 
 type PingFunc func(ctx context.Context) error

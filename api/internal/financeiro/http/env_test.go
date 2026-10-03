@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -142,6 +143,11 @@ func (e *env) newEngine(log *slog.Logger) *gin.Engine {
 	e.registerContaRoutes(r, authenticated)
 	e.registerLancamentoRoutes(r, authenticated)
 	e.registerSaldoRoute(r, authenticated)
+	// financeiroUpload mirrors httpapi.FinanceiroUploadBodyLimit (FIN-D-024,
+	// FIN-D-031): the one multipart route needs a body limit larger than
+	// the 1 MiB `authenticated` chain allows.
+	financeiroUpload := []gin.HandlerFunc{httpx.BodyLimit(11 << 20), origin, authn, httpx.CSRF(), validate}
+	e.registerComprovanteRoutes(r, authenticated, financeiroUpload)
 	return r
 }
 
@@ -262,6 +268,44 @@ func (e *env) registerSaldoRoute(r gin.IRoutes, chain []gin.HandlerFunc) {
 	r.GET("/api/v1/financeiro/saldo", route...)
 }
 
+// registerComprovanteRoutes mounts the 3 comprovante operations (T7/API-05)
+// by hand. CreateComprovante (multipart) is the one route behind
+// uploadChain; the other two are plain JSON/no-body and use chain.
+func (e *env) registerComprovanteRoutes(r gin.IRoutes, chain, uploadChain []gin.HandlerFunc) {
+	h := e.h
+	route := func(c []gin.HandlerFunc, fn gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, c...), fn) }
+
+	r.POST("/api/v1/financeiro/lancamentos/:id/comprovantes", route(uploadChain, func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		mr, err := c.Request.MultipartReader()
+		if err != nil {
+			httpx.WriteProblem(c, http.StatusBadRequest, "invalid_json", "O corpo da requisição não é multipart/form-data válido.")
+			return
+		}
+		resp, err := h.CreateComprovante(c, CreateComprovanteRequestObject{Id: LancamentoId(id), Body: mr})
+		writeStrictResponse(c, err, h, resp, (CreateComprovanteResponseObject).VisitCreateComprovanteResponse)
+	})...)
+	r.GET("/api/v1/financeiro/lancamentos/:id/comprovantes", route(chain, func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		resp, err := h.ListComprovantes(c, ListComprovantesRequestObject{Id: LancamentoId(id)})
+		writeStrictResponse(c, err, h, resp, (ListComprovantesResponseObject).VisitListComprovantesResponse)
+	})...)
+	r.GET("/api/v1/financeiro/comprovantes/:documentId/url", route(chain, func(c *gin.Context) {
+		id, ok := pathUUID(c, "documentId")
+		if !ok {
+			return
+		}
+		resp, err := h.GetComprovanteUrl(c, GetComprovanteUrlRequestObject{DocumentId: DocumentId(id)})
+		writeStrictResponse(c, err, h, resp, (GetComprovanteUrlResponseObject).VisitGetComprovanteUrlResponse)
+	})...)
+}
+
 // bindJSON reports whether body parsed as JSON, writing invalid_json
 // (the same answer Register's RequestErrorHandlerFunc gives) otherwise.
 func bindJSON(c *gin.Context, body any) bool {
@@ -335,6 +379,34 @@ func (e *env) do(method, path string, body any, opts ...opt) *httptest.ResponseR
 func (e *env) as(s session, method, path string, body any, more ...opt) *httptest.ResponseRecorder {
 	e.t.Helper()
 	return e.do(method, path, body, append(s.opts(), more...)...)
+}
+
+// uploadFile sends a real multipart/form-data request (field "file"),
+// through the real chain and contract validation, same as do/as.
+func (e *env) uploadFile(s session, path, filename, content string) *httptest.ResponseRecorder {
+	e.t.Helper()
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	part, err := mw.CreateFormFile("file", filename)
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	if _, err := part.Write([]byte(content)); err != nil {
+		e.t.Fatal(err)
+	}
+	if err := mw.Close(); err != nil {
+		e.t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, path, &buf)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Origin", appOrigin)
+	for _, o := range s.opts() {
+		o(req)
+	}
+	w := httptest.NewRecorder()
+	e.engine.ServeHTTP(w, req)
+	e.contract.ValidateResponse(e.t, req, w)
+	return w
 }
 
 func decode(t *testing.T, w *httptest.ResponseRecorder) map[string]any {
