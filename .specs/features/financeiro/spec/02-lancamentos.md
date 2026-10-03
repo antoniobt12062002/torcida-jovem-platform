@@ -103,10 +103,10 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| LAN-01 | Criação de lançamento | In Tasks | Done (T2) |
-| LAN-02 | Edição restrita a CRIADA | In Tasks | Done (T3) |
-| LAN-03 | Devolução | In Tasks | Done (T4) |
-| LAN-04 | Consulta e listagem | In Tasks | Done (T5) |
+| LAN-01 | Criação de lançamento | Done | Done (T2) |
+| LAN-02 | Edição restrita a CRIADA | Done | Done (T3) |
+| LAN-03 | Devolução | Done | Done (T4) |
+| LAN-04 | Consulta e listagem | Done | Done (T5) |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 

@@ -84,9 +84,9 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| CMP-01 | Anexar comprovante | In Tasks | Done (T1) |
-| CMP-02 | Consultar e baixar | In Tasks | Done (T2) |
-| CMP-03 | Listar comprovantes | In Tasks | Done (T3) |
+| CMP-01 | Anexar comprovante | Done | Done (T1) |
+| CMP-02 | Consultar e baixar | Done | Done (T2) |
+| CMP-03 | Listar comprovantes | Done | Done (T3) |
 
 **Coverage:** 3 total, 3 mapped to tasks, 0 unmapped.
 
