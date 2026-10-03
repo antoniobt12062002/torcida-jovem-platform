@@ -31,7 +31,11 @@ func resetIn(actor authz.Principal, target, reason string) app.AdminResetInput {
 func TestAdminResetSetsATemporaryPasswordForcesChangeRevokesEverythingAndAudits(t *testing.T) {
 	e := newUCEnv(t)
 	adminU, admin := e.actor(t, domain.RoleAdminSistema)
-	target := e.changer(t, domain.RoleTesouraria)
+	// RoleEventos, assim como RoleTesouraria antes de 05-permissoes publicar o
+	// catálogo real de financeiro, permanece sem nenhuma Contribution própria
+	// — continua sendo o papel certo para provar que ADMIN_SISTEMA pode agir
+	// sobre um alvo com um papel comum, sem cobertura de permissão alguma.
+	target := e.changer(t, domain.RoleEventos)
 	_ = e.users.SetMustChangePassword(context.Background(), target.ID, false)
 	e.sessionFor(t, target.ID)
 	e.sessionFor(t, target.ID)

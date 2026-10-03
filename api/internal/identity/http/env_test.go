@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
@@ -59,7 +60,7 @@ func newEnv(t *testing.T) *env {
 	logs := &bytes.Buffer{}
 	log := logx.New("info", logs)
 	rec := audit.NewRecorder(db, log)
-	matrix, err := app.BuildMatrix(app.FoundationContributions()...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
 	if err != nil {
 		t.Fatal(err)
 	}

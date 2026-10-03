@@ -37,6 +37,14 @@ func TestBootstrapAdminWorksOnAFreshDatabaseBeforeTheAPIEverStarted(t *testing.T
 			t.Errorf("%s: %d eventos, esperado 1", action, n)
 		}
 	}
+	// 05-permissoes/T3: financeiro.Contribution() precisa estar wired aqui
+	// (não só em cmd/api) para que um banco provisionado só por este comando
+	// já nasça com o catálogo completo de financeiro sincronizado.
+	var financeiroPerms int64
+	owner.Raw(`SELECT count(*) FROM permissions WHERE name LIKE 'financeiro:%'`).Scan(&financeiroPerms)
+	if financeiroPerms != 16 {
+		t.Errorf("permissões de financeiro sincronizadas = %d, esperado 16 (3 institucionais + 13 operacionais)", financeiroPerms)
+	}
 }
 
 // IDN-01.2: o segundo bootstrap é recusado e nada é criado.

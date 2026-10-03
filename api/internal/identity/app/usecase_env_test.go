@@ -14,6 +14,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/infra"
@@ -51,7 +52,7 @@ func newUCEnv(t *testing.T) *ucEnv {
 	db := testutil.NewTestDB(t)
 	logs := &bytes.Buffer{}
 	rec := audit.NewRecorder(db, logx.New("info", logs))
-	m, err := app.BuildMatrix(app.FoundationContributions()...)
+	m, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
 	if err != nil {
 		t.Fatal(err)
 	}

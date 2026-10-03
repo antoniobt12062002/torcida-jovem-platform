@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/05-permissoes.md`
 **Design**: `.specs/features/financeiro/design/05-permissoes.md`
-**Status**: Em andamento (T1 e T2 concluídas); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`; T2 reutiliza o re-export da T1, 1 commit).
+**Status**: Concluída (T1-T3); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`; T2 e T3, 1 commit cada).
 
 **Nota de ordem cruzada**: `T2` (completar com as 13 permissões operacionais) só pode ser finalizada depois que `01-plano-de-contas`, `02-lancamentos`, `03-workflow-e-saldo` e `04-comprovantes` já tiverem suas operações especificadas (não necessariamente implementadas em código — os nomes de permissão já estão fechados nas 4 specs). `T1` (esqueleto + preservação institucional) não tem essa dependência e pode ser feita a qualquer momento.
 
@@ -84,7 +84,7 @@ T1 → T2 → T3
 ### T3: Substituir o placeholder da fundação
 
 **What**: Remover `FoundationContributions()`'s bloco `financeiro` e usar `financeiro.Contribution()` em `cmd/api/main.go` e `cmd/bootstrap-admin/main.go`.
-**Where**: `api/internal/identity/app/roles_matrix.go`
+**Where**: `api/internal/identity/app/roles_matrix.go`, `cmd/api/main.go`, `cmd/bootstrap-admin/main.go`. Consequência técnica direta (achado durante a execução, `FIN-D-020`): mais 9 arquivos de teste precisaram de ajuste — `identity/app/roles_matrix_test.go` (2 testes cujo `want` incluía as 3 institucionais via `FoundationContributions()` isolada), `identity/infra/role_repository_test.go` (3 testes que usavam o placeholder como fixture "removível" + 1 teste de união de permissões + o helper `matrix(t)`), `httpapi/{e2e_test.go,router_integration_test.go}` e `identity/{app/session_service_test.go,app/usecase_env_test.go,http/env_test.go}` (ambiente de teste que precisa espelhar a composição real), `identity/app/{promote_admin_test.go,admin_reset_password_test.go}` (fixture `RoleTesouraria` → `RoleEventos`, já que `TESOURARIA` deixou de ser um papel sem conteúdo de RBAC), e `cmd/bootstrap-admin/bootstrap_integration_test.go` (nova asserção, lacuna de cobertura real encontrada por mutação).
 **Depends on**: T2
 **Reuses**: idem T1
 **Requirement**: PERM-02 (AC3)
@@ -92,10 +92,10 @@ T1 → T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Placeholder removido de `roles_matrix.go`
-- [ ] `main.go` e `bootstrap-admin/main.go` passam `financeiro.Contribution()` junto das demais
-- [ ] API sobe normalmente, matriz sincroniza sem erro
-- [ ] Gate check passes
+- [x] Placeholder removido de `roles_matrix.go`
+- [x] `main.go` e `bootstrap-admin/main.go` passam `financeiro.Contribution()` junto das demais
+- [x] API sobe normalmente, matriz sincroniza sem erro
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full
@@ -109,4 +109,4 @@ T1 → T2 → T3
 |---|---|---|
 | T1 | 2 arquivos (`identity/app/roles.go` + `financeiro/module.go`), 2 commits atômicos (estrutural + funcional, mesmo padrão de `04/T1`) — granularidade aceitável: o re-export é pré-requisito estrutural único para a `Contribution`, não uma tarefa independente (`FIN-D-018`) | ✅ Aceitável |
 | T2 | 1 arquivo | ✅ Granular |
-| T3 | 1 arquivo principal (`roles_matrix.go`) + 2 pontos de fiação (`main.go`, `bootstrap-admin/main.go`) — granularidade aceitável: é uma única mudança lógica (trocar o placeholder pela Contribution real), não um agrupamento artificial de tarefas distintas | ✅ Aceitável |
+| T3 | 1 arquivo principal (`roles_matrix.go`) + 2 pontos de fiação (`main.go`, `bootstrap-admin/main.go`) + 10 arquivos de teste ajustados como consequência técnica direta (`FIN-D-020`) — granularidade aceitável: é uma única mudança lógica (trocar o placeholder pela Contribution real), não um agrupamento artificial de tarefas distintas; os ajustes de teste não introduzem nenhuma regra nova, só restauram a fidelidade do ambiente de teste à composição real | ✅ Aceitável |

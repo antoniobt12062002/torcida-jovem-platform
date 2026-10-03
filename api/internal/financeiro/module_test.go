@@ -160,61 +160,62 @@ func TestPresidenteReceivesAllSixteenPermissionsAutomatically(t *testing.T) {
 	}
 }
 
-// PERM-02 AC1/AC3: as 3 permissões institucionais e seu grant a
-// CONSELHO_FISCAL continuam exatamente iguais ao placeholder da fundação —
-// comparação parcial (só o subconjunto institucional), nunca uma igualdade
-// integral entre Contribution() e FoundationContributions(): a partir da T2
-// as duas declaram deliberadamente conjuntos diferentes (16 vs. 3).
-func TestContributionPreservesTheThreeInstitutionalPermissionsExactlyLikeThePlaceholder(t *testing.T) {
-	var placeholder app.Contribution
-	found := false
+// 05-permissoes/T3: FoundationContributions() não declara mais nada de
+// financeiro (o placeholder foi removido de identity/app/roles_matrix.go) —
+// prova de que a substituição realmente aconteceu, não só que a fundação
+// continua válida isoladamente.
+func TestFoundationContributionsNoLongerDeclaresFinanceiro(t *testing.T) {
 	for _, c := range app.FoundationContributions() {
 		if c.Module == "financeiro" {
-			placeholder = c
-			found = true
+			t.Fatalf("FoundationContributions() ainda declara financeiro — o placeholder deveria ter sido removido pela T3: %+v", c)
 		}
-	}
-	if !found {
-		t.Fatal("FoundationContributions() não tem mais o placeholder de financeiro — T2 não deveria alterar isso")
-	}
-
-	real := Contribution()
-
-	realInstitutional := make([]authz.Definition, 0, 3)
-	for _, d := range real.Permissions {
-		if slices.Contains(institutional, d.Permission) {
-			realInstitutional = append(realInstitutional, d)
-		}
-	}
-	gotPerms := slices.Clone(realInstitutional)
-	slices.SortFunc(gotPerms, func(a, b authz.Definition) int { return int(a.Permission[0]) - int(b.Permission[0]) })
-	wantPerms := slices.Clone(placeholder.Permissions)
-	slices.SortFunc(wantPerms, func(a, b authz.Definition) int { return int(a.Permission[0]) - int(b.Permission[0]) })
-	if !slices.Equal(gotPerms, wantPerms) {
-		t.Errorf("subconjunto institucional de Permissions = %+v, placeholder tinha %+v", gotPerms, wantPerms)
-	}
-
-	realInstitutionalGrants := make([]authz.Permission, 0, 3)
-	for _, p := range real.Grants[app.RoleConselhoFiscal] {
-		if slices.Contains(institutional, p) {
-			realInstitutionalGrants = append(realInstitutionalGrants, p)
-		}
-	}
-	gotGrants := slices.Clone(realInstitutionalGrants)
-	slices.Sort(gotGrants)
-	wantGrants := slices.Clone(placeholder.Grants[app.RoleConselhoFiscal])
-	slices.Sort(wantGrants)
-	if !slices.Equal(gotGrants, wantGrants) {
-		t.Errorf("subconjunto institucional de Grants[CONSELHO_FISCAL] = %v, placeholder tinha %v", gotGrants, wantGrants)
 	}
 }
 
-// T2 não mexe em FoundationContributions(): a matriz da fundação continua
-// válida e com o placeholder, exatamente como antes desta tarefa — a
-// substituição é exclusiva da T3.
-func TestFoundationContributionsIsUnchangedByT2(t *testing.T) {
-	if _, err := app.BuildMatrix(app.FoundationContributions()...); err != nil {
-		t.Fatalf("a matriz da fundação deveria continuar válida: %v", err)
+// 05-permissoes/T3: a composição real de produção — FoundationContributions()
+// (identity, audit) mais financeiro.Contribution() — é aceita por BuildMatrix
+// sem erro de duplicata (prova de que o placeholder foi mesmo removido, não
+// só que Contribution() funciona isolada) e produz exatamente a matriz
+// completa esperada para os 4 papéis que financeiro afeta.
+func TestContributionCombinedWithFoundationContributionsBuildsTheFullProductionMatrix(t *testing.T) {
+	m, err := app.BuildMatrix(append(app.FoundationContributions(), Contribution())...)
+	if err != nil {
+		t.Fatalf("BuildMatrix recusou a composição de produção (financeiro ainda duplicado no placeholder?): %v", err)
+	}
+
+	wantTesouraria := slices.Clone(operationalNames)
+	slices.Sort(wantTesouraria)
+	gotTesouraria := slices.Clone(m.Grants[app.RoleTesouraria])
+	slices.Sort(gotTesouraria)
+	if !slices.Equal(gotTesouraria, wantTesouraria) {
+		t.Errorf("TESOURARIA (produção) = %v, esperado %v", gotTesouraria, wantTesouraria)
+	}
+
+	// DIRETORIA também recebe identity:user:read de FoundationContributions()
+	// (RBAC-01, não relacionado a financeiro) — a composição de produção soma
+	// os dois, por isso o esperado aqui não é só readOnlyNames.
+	wantDiretoria := append(slices.Clone(readOnlyNames), "identity:user:read")
+	slices.Sort(wantDiretoria)
+	gotDiretoria := slices.Clone(m.Grants[app.RoleDiretoria])
+	slices.Sort(gotDiretoria)
+	if !slices.Equal(gotDiretoria, wantDiretoria) {
+		t.Errorf("DIRETORIA (produção) = %v, esperado %v", gotDiretoria, wantDiretoria)
+	}
+
+	wantConselhoFiscal := append(slices.Clone(readOnlyNames), institutional...)
+	wantConselhoFiscal = append(wantConselhoFiscal, "audit:log:read")
+	slices.Sort(wantConselhoFiscal)
+	gotConselhoFiscal := slices.Clone(m.Grants[app.RoleConselhoFiscal])
+	slices.Sort(gotConselhoFiscal)
+	if !slices.Equal(gotConselhoFiscal, wantConselhoFiscal) {
+		t.Errorf("CONSELHO_FISCAL (produção) = %v, esperado %v", gotConselhoFiscal, wantConselhoFiscal)
+	}
+
+	all := append(slices.Clone(operationalNames), institutional...)
+	for _, p := range all {
+		if !m.Has(app.RolePresidente, p) {
+			t.Errorf("PRESIDENTE (produção) deveria ter %s", p)
+		}
 	}
 }
 
