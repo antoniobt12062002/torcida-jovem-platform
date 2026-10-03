@@ -82,9 +82,9 @@ Open questions: none.
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| PERM-01 | Catálogo e regras do módulo | In Tasks | Not Started (T2) |
+| PERM-01 | Catálogo e regras do módulo | In Tasks | Done (T2) |
 | PERM-02 | Preservação das permissões institucionais | In Tasks | Done (T1) |
-| PERM-03 | Distribuição por papel | In Tasks | Not Started (T2) |
+| PERM-03 | Distribuição por papel | In Tasks | Done (T2) |
 
 **Coverage:** 3 total, 3 mapped to tasks, 0 unmapped.
 

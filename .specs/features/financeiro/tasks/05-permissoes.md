@@ -10,7 +10,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Spec**: `.specs/features/financeiro/spec/05-permissoes.md`
 **Design**: `.specs/features/financeiro/design/05-permissoes.md`
-**Status**: Em andamento (T1 concluída); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`).
+**Status**: Em andamento (T1 e T2 concluídas); `tests-first`, um commit atômico por tarefa (T1 teve 2 commits — estrutural + funcional, `FIN-D-018`; T2 reutiliza o re-export da T1, 1 commit).
 
 **Nota de ordem cruzada**: `T2` (completar com as 13 permissões operacionais) só pode ser finalizada depois que `01-plano-de-contas`, `02-lancamentos`, `03-workflow-e-saldo` e `04-comprovantes` já tiverem suas operações especificadas (não necessariamente implementadas em código — os nomes de permissão já estão fechados nas 4 specs). `T1` (esqueleto + preservação institucional) não tem essa dependência e pode ser feita a qualquer momento.
 
@@ -68,12 +68,12 @@ T1 → T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Todas as 13 permissões declaradas com o formato correto, nenhuma `CommonRead`
-- [ ] `CONSELHO_FISCAL` nunca recebe `create`/`update`/`deactivate`/`receive`/`pay`/`cancel`
-- [ ] `TESOURARIA` recebe as 13; `DIRETORIA` e `CONSELHO_FISCAL` recebem só as 4 de leitura (`CONSELHO_FISCAL` também as 3 institucionais); `ASSOCIADO`/`ESTOQUE_LOJA`/`EVENTOS`/`ADMIN_SISTEMA` nenhuma
-- [ ] `BuildMatrix` aceita a `Contribution` sem erro, `PRESIDENTE` recebe tudo automaticamente
-- [ ] Cada AC listado em Requirement tem ao menos um teste
-- [ ] Gate check passes
+- [x] Todas as 13 permissões declaradas com o formato correto, nenhuma `CommonRead`
+- [x] `CONSELHO_FISCAL` nunca recebe `create`/`update`/`deactivate`/`receive`/`pay`/`cancel`
+- [x] `TESOURARIA` recebe as 13; `DIRETORIA` e `CONSELHO_FISCAL` recebem só as 4 de leitura (`CONSELHO_FISCAL` também as 3 institucionais); `ASSOCIADO`/`ESTOQUE_LOJA`/`EVENTOS`/`ADMIN_SISTEMA` nenhuma
+- [x] `BuildMatrix` aceita a `Contribution` sem erro, `PRESIDENTE` recebe tudo automaticamente
+- [x] Cada AC listado em Requirement tem ao menos um teste
+- [x] Gate check passes
 
 **Tests**: unit
 **Gate**: full
