@@ -297,6 +297,7 @@ export interface components {
             devolucao_de_id: string;
         };
         CancelLancamentoRequest: {
+            /** @description Motivo do cancelamento (não pode ser vazio, verificado no caso de uso — API-03 AC4, motivo_obrigatorio). */
             reason: string;
         };
         Saldo: {

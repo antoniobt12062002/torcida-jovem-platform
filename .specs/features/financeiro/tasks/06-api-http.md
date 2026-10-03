@@ -160,12 +160,12 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 10 ACs combinados de `API-02`+`API-03` cobertos
-- [ ] `UpdateLancamento` é `PUT`, substitui os 4 campos sempre (nunca parcial)
-- [ ] `CreateDevolucao` é endpoint próprio, nunca um campo opcional de `CreateLancamento`
-- [ ] `CancelLancamento` exige `reason` não vazio antes de qualquer chamada ao caso de uso (mesma ordem já garantida por `CancelarLancamento.Execute`)
-- [ ] `ListLancamentos` devolve a lista completa, sem paginação, incluindo `CANCELADA` (`FIN-D-021`)
-- [ ] Gate check passes
+- [x] Os 10 ACs combinados de `API-02`+`API-03` cobertos
+- [x] `UpdateLancamento` é `PUT`, substitui os 4 campos sempre (nunca parcial)
+- [x] `CreateDevolucao` é endpoint próprio, nunca um campo opcional de `CreateLancamento`
+- [x] `CancelLancamento` exige `reason` não vazio antes de qualquer chamada ao caso de uso (mesma ordem já garantida por `CancelarLancamento.Execute`)
+- [x] `ListLancamentos` devolve a lista completa, sem paginação, incluindo `CANCELADA` (`FIN-D-021`)
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: full

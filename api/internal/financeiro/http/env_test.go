@@ -140,6 +140,7 @@ func (e *env) newEngine(log *slog.Logger) *gin.Engine {
 		Authenticated: authenticated,
 	})
 	e.registerContaRoutes(r, authenticated)
+	e.registerLancamentoRoutes(r, authenticated)
 	return r
 }
 
@@ -182,6 +183,74 @@ func (e *env) registerContaRoutes(r gin.IRoutes, chain []gin.HandlerFunc) {
 	})...)
 }
 
+// registerLancamentoRoutes mounts the 7 lançamento+workflow operations
+// (T5/API-02, API-03) by hand.
+func (e *env) registerLancamentoRoutes(r gin.IRoutes, chain []gin.HandlerFunc) {
+	h := e.h
+	route := func(fn gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, chain...), fn) }
+
+	r.GET("/api/v1/financeiro/lancamentos", route(func(c *gin.Context) {
+		resp, err := h.ListLancamentos(c, ListLancamentosRequestObject{})
+		writeStrictResponse(c, err, h, resp, (ListLancamentosResponseObject).VisitListLancamentosResponse)
+	})...)
+	r.POST("/api/v1/financeiro/lancamentos", route(func(c *gin.Context) {
+		var body CreateLancamentoJSONRequestBody
+		if !bindJSON(c, &body) {
+			return
+		}
+		resp, err := h.CreateLancamento(c, CreateLancamentoRequestObject{Body: &body})
+		writeStrictResponse(c, err, h, resp, (CreateLancamentoResponseObject).VisitCreateLancamentoResponse)
+	})...)
+	r.POST("/api/v1/financeiro/lancamentos/devolucoes", route(func(c *gin.Context) {
+		var body CreateDevolucaoJSONRequestBody
+		if !bindJSON(c, &body) {
+			return
+		}
+		resp, err := h.CreateDevolucao(c, CreateDevolucaoRequestObject{Body: &body})
+		writeStrictResponse(c, err, h, resp, (CreateDevolucaoResponseObject).VisitCreateDevolucaoResponse)
+	})...)
+	r.PUT("/api/v1/financeiro/lancamentos/:id", route(func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		var body UpdateLancamentoJSONRequestBody
+		if !bindJSON(c, &body) {
+			return
+		}
+		resp, err := h.UpdateLancamento(c, UpdateLancamentoRequestObject{Id: LancamentoId(id), Body: &body})
+		writeStrictResponse(c, err, h, resp, (UpdateLancamentoResponseObject).VisitUpdateLancamentoResponse)
+	})...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/receive", route(func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		resp, err := h.ReceiveLancamento(c, ReceiveLancamentoRequestObject{Id: LancamentoId(id)})
+		writeStrictResponse(c, err, h, resp, (ReceiveLancamentoResponseObject).VisitReceiveLancamentoResponse)
+	})...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/pay", route(func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		resp, err := h.PayLancamento(c, PayLancamentoRequestObject{Id: LancamentoId(id)})
+		writeStrictResponse(c, err, h, resp, (PayLancamentoResponseObject).VisitPayLancamentoResponse)
+	})...)
+	r.POST("/api/v1/financeiro/lancamentos/:id/cancel", route(func(c *gin.Context) {
+		id, ok := pathUUID(c, "id")
+		if !ok {
+			return
+		}
+		var body CancelLancamentoJSONRequestBody
+		if !bindJSON(c, &body) {
+			return
+		}
+		resp, err := h.CancelLancamento(c, CancelLancamentoRequestObject{Id: LancamentoId(id), Body: &body})
+		writeStrictResponse(c, err, h, resp, (CancelLancamentoResponseObject).VisitCancelLancamentoResponse)
+	})...)
+}
+
 // bindJSON reports whether body parsed as JSON, writing invalid_json
 // (the same answer Register's RequestErrorHandlerFunc gives) otherwise.
 func bindJSON(c *gin.Context, body any) bool {
@@ -219,8 +288,10 @@ func writeStrictResponse[T any](c *gin.Context, err error, h *Handler, resp T, v
 
 type opt func(*http.Request)
 
-func cookieOpt(token string) opt { return func(r *http.Request) { r.AddCookie(&http.Cookie{Name: "tj_session", Value: token}) } }
-func csrfOpt(token string) opt   { return func(r *http.Request) { r.Header.Set("X-CSRF-Token", token) } }
+func cookieOpt(token string) opt {
+	return func(r *http.Request) { r.AddCookie(&http.Cookie{Name: "tj_session", Value: token}) }
+}
+func csrfOpt(token string) opt { return func(r *http.Request) { r.Header.Set("X-CSRF-Token", token) } }
 
 type session struct{ token, csrf string }
 

@@ -714,7 +714,7 @@ components:
       properties:
         reason:
           type: string
-          minLength: 1
+          description: Motivo do cancelamento (não pode ser vazio, verificado no caso de uso — API-03 AC4, motivo_obrigatorio).
           maxLength: 500
     Saldo:
       type: object
