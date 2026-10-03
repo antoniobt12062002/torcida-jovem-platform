@@ -173,7 +173,11 @@ func TestPromoteRefusesRolesWithPermissionsTheActorLacks(t *testing.T) {
 	if err := e.promote().Execute(e.ctx, promoteIn(presidente, target.ID, promoReason, domain.RoleConselhoFiscal)); err != nil {
 		t.Errorf("o PRESIDENTE cobre as permissões do CONSELHO_FISCAL: %v", err)
 	}
-	if err := e.promote().Execute(e.ctx, promoteIn(adminSistema, e.newTarget(t), promoReason, domain.RoleTesouraria)); err != nil {
+	// RoleEventos, assim como RoleTesouraria antes de 05-permissoes publicar o
+	// catálogo real de financeiro, permanece sem nenhuma Contribution própria
+	// — continua sendo o papel certo para provar que conceder um papel comum
+	// não exige cobertura de permissão alguma.
+	if err := e.promote().Execute(e.ctx, promoteIn(adminSistema, e.newTarget(t), promoReason, domain.RoleEventos)); err != nil {
 		t.Errorf("o ADMIN_SISTEMA pode conceder papéis sem permissões que ele não tenha: %v", err)
 	}
 }

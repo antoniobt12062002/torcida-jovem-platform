@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
@@ -31,7 +32,7 @@ func realRouter(t *testing.T) (http.Handler, *identity.Module) {
 	db := testutil.NewTestDB(t)
 	log := logx.New("error", &bytes.Buffer{})
 	rec := audit.NewRecorder(db, log)
-	matrix, err := app.BuildMatrix(app.FoundationContributions()...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
 	if err != nil {
 		t.Fatal(err)
 	}

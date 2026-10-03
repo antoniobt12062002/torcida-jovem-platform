@@ -39,13 +39,16 @@ func TestFoundationMatrixHasTheEightRoles(t *testing.T) {
 	}
 }
 
-// RBAC-01.5 e RBAC-01.6
-func TestConselhoFiscalHasTheInstitutionalPermissionsAndNeverCreateUpdateDeleteCancel(t *testing.T) {
+// RBAC-01.5 e RBAC-01.6. As 3 permissões institucionais de financeiro não
+// vêm mais de FoundationContributions() (05-permissoes/T3: o placeholder foi
+// substituído por financeiro.Contribution(), agregada só nos composition
+// roots) — a fundação, isolada, só concede audit:log:read ao Conselho
+// Fiscal. A preservação das 3 institucionais é provada em
+// financeiro/module_test.go, contra a Contribution() real.
+func TestConselhoFiscalHasOnlyAuditFromTheFoundationAndNeverCreateUpdateDeleteCancel(t *testing.T) {
 	m := foundation(t)
 
-	want := []authz.Permission{
-		"audit:log:read", "financeiro:parecer:opine", "financeiro:prestacao_contas:approve", "financeiro:prestacao_contas:read",
-	}
+	want := []authz.Permission{"audit:log:read"}
 	if got := perms(m, domain.RoleConselhoFiscal); !slices.Equal(got, want) {
 		t.Errorf("Conselho Fiscal = %v, esperado %v", got, want)
 	}
@@ -157,12 +160,14 @@ func TestAdminSistemaHasExactlyTheTechnicalPermissionsAndNoInstitutionalOne(t *t
 	}
 }
 
-// PRESIDENTE cobre o catálogo inteiro (identity, audit e financeiro), sem
-// wildcard: a abrangência vem de cada permissão declarada estar ligada a ele.
+// PRESIDENTE cobre o catálogo inteiro da fundação (identity e audit — desde
+// 05-permissoes/T3, financeiro já não é mais parte de FoundationContributions(),
+// ver TestConselhoFiscalHasOnlyAuditFromTheFoundationAndNeverCreateUpdateDeleteCancel),
+// sem wildcard: a abrangência vem de cada permissão declarada estar ligada a ele.
 func TestPresidenteCoversTheWholeCatalog(t *testing.T) {
 	m := foundation(t)
 	want := []authz.Permission{
-		"audit:log:read", "financeiro:parecer:opine", "financeiro:prestacao_contas:approve", "financeiro:prestacao_contas:read",
+		"audit:log:read",
 		"identity:admin:grant", "identity:admin:revoke", "identity:role:assign", "identity:user:create",
 		"identity:user:read", "identity:user:reset_password", "identity:user:update",
 	}

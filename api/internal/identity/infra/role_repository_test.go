@@ -14,6 +14,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/infra"
@@ -35,13 +36,42 @@ func newEnv(t *testing.T) env {
 	return env{app: db, owner: testutil.OwnerDBFor(t, db), repo: infra.NewRoleRepository(db, rec)}
 }
 
+// matrix mirrors the real production composition (cmd/api, cmd/bootstrap-admin:
+// FoundationContributions() + financeiro.Contribution()) so that role/permission
+// invariants tested here (e.g. CONSELHO_FISCAL's effective permissions) stay
+// accurate to what the system actually grants — 05-permissoes/T3 moved
+// financeiro out of FoundationContributions() alone.
 func matrix(t *testing.T, extra ...app.Contribution) domain.Matrix {
 	t.Helper()
-	m, err := app.BuildMatrix(append(app.FoundationContributions(), extra...)...)
+	contributions := append([]app.Contribution{}, app.FoundationContributions()...)
+	contributions = append(contributions, financeiro.Contribution())
+	contributions = append(contributions, extra...)
+	m, err := app.BuildMatrix(contributions...)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return m
+}
+
+// removableFixture is a synthetic contribution with exactly 3 permissions,
+// used to simulate "a module's permissions left the code" (a module no
+// longer declaring them, so Sync must deactivate/reactivate without ever
+// deleting). Before 05-permissoes/T3, these tests reused financeiro's
+// foundation placeholder for this; since T3 moved financeiro out of
+// FoundationContributions() entirely, they need their own disposable
+// fixture — unrelated to any real module.
+func removableFixture() app.Contribution {
+	return app.Contribution{
+		Module: "estoque",
+		Permissions: []authz.Definition{
+			{Permission: "estoque:item:create"},
+			{Permission: "estoque:item:update"},
+			{Permission: "estoque:item:read", CommonRead: true},
+		},
+		Grants: map[domain.Role][]authz.Permission{
+			domain.RoleEstoqueLoja: {"estoque:item:create", "estoque:item:update", "estoque:item:read"},
+		},
+	}
 }
 
 func count(t *testing.T, db *gorm.DB, table string) int64 {
@@ -149,20 +179,11 @@ func TestSecondSyncIsIdempotentAndWritesNoAudit(t *testing.T) {
 // RBAC-01.8: permissão que sai do código fica inativa, não é apagada.
 func TestRemovedPermissionBecomesInactiveAndIsNeverDeleted(t *testing.T) {
 	e := newEnv(t)
-	full := matrix(t)
+	full := matrix(t, removableFixture())
 	if _, err := e.repo.Sync(context.Background(), full); err != nil {
 		t.Fatal(err)
 	}
-	var contributions []app.Contribution
-	for _, c := range app.FoundationContributions() {
-		if c.Module != "financeiro" {
-			contributions = append(contributions, c)
-		}
-	}
-	reduced, err := app.BuildMatrix(contributions...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	reduced := matrix(t)
 
 	res, err := e.repo.Sync(context.Background(), reduced)
 
@@ -173,11 +194,11 @@ func TestRemovedPermissionBecomesInactiveAndIsNeverDeleted(t *testing.T) {
 		t.Errorf("nenhuma permissão pode ser apagada: %d de %d", got, len(full.Definitions))
 	}
 	var active bool
-	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'financeiro:parecer:opine'").Scan(&active).Error; err != nil || active {
+	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'estoque:item:create'").Scan(&active).Error; err != nil || active {
 		t.Errorf("a permissão removida deveria estar inativa: active = %v, err = %v", active, err)
 	}
 	var links int64
-	_ = e.owner.Raw(`SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id WHERE p.name LIKE 'financeiro:%'`).Scan(&links).Error
+	_ = e.owner.Raw(`SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id WHERE p.name LIKE 'estoque:%'`).Scan(&links).Error
 	if links != 0 {
 		t.Errorf("uma permissão inativa não mantém vínculos com papéis: %d", links)
 	}
@@ -190,14 +211,8 @@ func TestRemovedPermissionBecomesInactiveAndIsNeverDeleted(t *testing.T) {
 
 func TestPermissionReturnedToTheCodeIsReactivated(t *testing.T) {
 	e := newEnv(t)
-	full := matrix(t)
-	var withoutFin []app.Contribution
-	for _, c := range app.FoundationContributions() {
-		if c.Module != "financeiro" {
-			withoutFin = append(withoutFin, c)
-		}
-	}
-	reduced, _ := app.BuildMatrix(withoutFin...)
+	full := matrix(t, removableFixture())
+	reduced := matrix(t)
 	for _, m := range []domain.Matrix{full, reduced, full} {
 		if _, err := e.repo.Sync(context.Background(), m); err != nil {
 			t.Fatal(err)
@@ -205,7 +220,7 @@ func TestPermissionReturnedToTheCodeIsReactivated(t *testing.T) {
 	}
 
 	var active bool
-	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'financeiro:parecer:opine'").Scan(&active).Error; err != nil || !active {
+	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'estoque:item:create'").Scan(&active).Error; err != nil || !active {
 		t.Errorf("deveria ter sido reativada: active = %v, err = %v", active, err)
 	}
 	events := syncEvents(t, e)
@@ -266,6 +281,7 @@ func TestRemovedGrantIsListedAndDeleted(t *testing.T) {
 		}
 		contributions = append(contributions, c)
 	}
+	contributions = append(contributions, financeiro.Contribution())
 	m, _ := app.BuildMatrix(contributions...)
 
 	if _, err := e.repo.Sync(context.Background(), m); err != nil {
@@ -285,14 +301,8 @@ func TestRemovedGrantIsListedAndDeleted(t *testing.T) {
 // A auditoria permite reconstruir a história: o estado anterior de cada evento é o posterior do evento anterior.
 func TestEachSyncEventBeforeEqualsThePreviousEventAfter(t *testing.T) {
 	e := newEnv(t)
-	full := matrix(t)
-	var withoutFin []app.Contribution
-	for _, c := range app.FoundationContributions() {
-		if c.Module != "financeiro" {
-			withoutFin = append(withoutFin, c)
-		}
-	}
-	reduced, _ := app.BuildMatrix(withoutFin...)
+	full := matrix(t, removableFixture())
+	reduced := matrix(t)
 	for _, m := range []domain.Matrix{full, reduced, full} {
 		if _, err := e.repo.Sync(context.Background(), m); err != nil {
 			t.Fatal(err)
@@ -395,8 +405,10 @@ func TestEffectivePermissionsAreTheUnionOfTheActiveRolesPermissions(t *testing.T
 	got, err := e.repo.EffectivePermissions(context.Background(), id)
 
 	want := []authz.Permission{
-		"audit:log:read", "financeiro:parecer:opine", "financeiro:prestacao_contas:approve",
-		"financeiro:prestacao_contas:read", "identity:user:read",
+		"audit:log:read",
+		"financeiro:comprovante:read", "financeiro:conta:read", "financeiro:lancamento:read",
+		"financeiro:parecer:opine", "financeiro:prestacao_contas:approve", "financeiro:prestacao_contas:read",
+		"financeiro:saldo:read", "identity:user:read",
 	}
 	if err != nil || !slices.Equal(got, want) {
 		t.Errorf("permissões = %v, %v; esperado %v", got, err, want)

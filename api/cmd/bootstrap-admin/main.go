@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
@@ -109,7 +110,7 @@ func bootstrapAdmin(ctx context.Context, dsn string, in app.BootstrapInput) (str
 	if err != nil {
 		return "", err
 	}
-	matrix, err := app.BuildMatrix(app.FoundationContributions()...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
 	if err != nil {
 		return "", err
 	}

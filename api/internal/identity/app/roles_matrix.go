@@ -97,9 +97,11 @@ func belongsTo(p authz.Permission, module string) bool {
 	return strings.HasPrefix(string(p), module+":")
 }
 
-// FoundationContributions are the provisional contributions of the foundation:
-// identity, audit, and the institutional permissions reserved for the
-// financeiro module, declared here on its behalf until its spec exists.
+// FoundationContributions are the contributions of the foundation modules:
+// identity and audit. Every other module (e.g. financeiro) publishes its own
+// Contribution from its own root package; the composition root (cmd/api,
+// cmd/bootstrap-admin) aggregates all of them together into one BuildMatrix
+// call.
 func FoundationContributions() []Contribution {
 	return []Contribution{
 		{
@@ -127,19 +129,6 @@ func FoundationContributions() []Contribution {
 			Grants: map[domain.Role][]authz.Permission{
 				domain.RoleAdminSistema:   {"audit:log:read"},
 				domain.RoleConselhoFiscal: {"audit:log:read"},
-			},
-		},
-		{
-			Module: "financeiro",
-			Permissions: []authz.Definition{
-				{Permission: "financeiro:prestacao_contas:read", Description: "Ler a prestação de contas"},
-				{Permission: "financeiro:prestacao_contas:approve", Description: "Aprovar a prestação de contas"},
-				{Permission: "financeiro:parecer:opine", Description: "Emitir parecer"},
-			},
-			Grants: map[domain.Role][]authz.Permission{
-				domain.RoleConselhoFiscal: {
-					"financeiro:prestacao_contas:read", "financeiro:prestacao_contas:approve", "financeiro:parecer:opine",
-				},
 			},
 		},
 	}
