@@ -40,13 +40,13 @@ Status: Aprovada em 2026-10-03. Sub-spec 6 de `financeiro`. Decisões compartilh
 | `money.ErrOutOfRange` → `422 amount_out_of_range` | Mapeamento direto | Já registrado como decisão futura em `.specs/STATE.md` (raiz), "para o primeiro endpoint monetário" — este é o primeiro | y |
 | `authz.ErrForbidden` → `403 forbidden` | Reaproveita o mapeamento já usado por `identity/http` | Mesmo sentinel, mesmo código, em todo o projeto | y |
 | ETag/cache | Nenhum | Nenhum recurso de `financeiro` é imutável o suficiente para justificar cache — status de lançamento e saldo mudam a qualquer momento | y |
-| Paginação/ordenação de listagens de `financeiro` | **Decisão aberta** — ver `FIN-D-021` | `ListarContas`/`ListarLancamentos` não suportam isso hoje; estender os casos de uso está fora do escopo desta rodada | **n — aguardando confirmação** |
-| Mapeamento dos 11 sentinels de domínio de `financeiro` para código HTTP | **Decisão técnica proposta** — ver `FIN-D-022` | Diferente de `identity`, os sentinels de `financeiro` são frases em português, não códigos `snake_case` — não podem ser reaproveitados como `code` diretamente | **y, confirmar a tabela proposta** |
-| `ErrContaInvalida` → `404` ou `422` | Proposto `422 conta_invalida` | É uma referência de campo inválida (conta inexistente OU inativa), mesma forma de `ErrUnknownRole`/`ErrInvalidEmail` de `identity` (422), não "o recurso que você pediu não existe" (404) | **y, confirmar** |
-| Limite de corpo do upload de comprovante | Proposto 11 MiB (`documents.maxSize` de 10 MiB + margem de overhead multipart) na chain dedicada da rota de anexar | `httpx.BodyLimit(limit)` já é parametrizável; o valor exato da margem é a única escolha aberta | **y, confirmar o valor** |
+| Paginação/ordenação de listagens de `financeiro` | Fora do escopo — `FIN-D-021`, aprovada | `ListarContas`/`ListarLancamentos` não suportam isso hoje; decisão deliberada do V1, lacuna de escala conhecida para evolução futura | y |
+| Mapeamento dos 11 sentinels de domínio de `financeiro` para código HTTP | `FIN-D-022`, aprovada, semântica verificada | Diferente de `identity`, os sentinels de `financeiro` são frases em português, não códigos `snake_case` — tabela própria, cada erro reconfrontado com sua semântica real antes de `T3` | y |
+| `ErrContaInvalida`/`ErrDevolucaoInvalida` → `422` | Confirmado `422` (`FIN-D-022`) | Referência de campo do corpo (`conta_id`/`devolucao_de_id`), nunca o recurso primário da URL — mesma forma de `ErrUnknownRole`/`ErrInvalidEmail` de `identity` | y |
+| Limite de corpo do upload de comprovante | `11 MiB` (`FIN-D-024`, aprovada) | `10 MiB` continua o limite efetivo do arquivo em `platform/documents` (inalterado); `11 MiB` é só o limite do corpo HTTP/multipart na chain dedicada | y |
 | `platform/documents.Service` sem `STORAGE_ENABLED=true` | A API falha ao iniciar (`cmd/api/main.go`) se `financeiro` for composto sem armazenamento habilitado | `AD-012` exige que toda rota do contrato tenha operação registrada incondicionalmente — não é possível registrar a rota de comprovante "só quando há storage", então a validação deve ser na inicialização, não por requisição | y |
 
-Open questions: `FIN-D-021` (paginação) precisa de decisão do mantenedor antes da implementação. `FIN-D-022` (tabela de erros), o status de `ErrContaInvalida` e o valor exato do limite de upload são decisões técnicas propostas, pendentes de confirmação explícita antes da implementação — ver relatório de entrega.
+Open questions: none — `FIN-D-021` a `FIN-D-024` aprovadas pelo mantenedor em 2026-10-03.
 
 ## User Stories
 

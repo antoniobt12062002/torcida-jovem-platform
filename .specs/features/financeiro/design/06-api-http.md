@@ -82,7 +82,7 @@ A camada HTTP nunca verifica permissão por conta própria: cada handler chama o
 domain.ErrContaNaoEncontrada        → 404  conta_nao_encontrada
 domain.ErrContaTipoIncompativel     → 422  conta_tipo_incompativel
 domain.ErrContaJaUtilizada          → 409  conta_ja_utilizada
-domain.ErrContaInvalida             → 422  conta_invalida            (proposto — ver spec, decisão aberta)
+domain.ErrContaInvalida             → 422  conta_invalida            (FIN-D-022, confirmado: referência de campo, não recurso da URL)
 domain.ErrLancamentoTipoIncompativel→ 422  lancamento_tipo_incompativel
 domain.ErrLancamentoNaoEncontrado   → 404  lancamento_nao_encontrado
 domain.ErrLancamentoImutavel        → 409  lancamento_imutavel
@@ -117,7 +117,7 @@ default                             → 500  internal_error
 
 ### Limite de corpo (`FIN-D-024`)
 
-`platform/httpx.BodyLimit(limit)` já é parametrizável; a chain `authenticated` hoje aplica `AuthenticatedBodyLimit = 1 MiB` globalmente — insuficiente para o limite de 10 MiB de `platform/documents` (`DOC-01 AC3`). A rota de anexar comprovante precisa de uma chain própria (`authenticatedUpload`), com um limite maior, acomodando o overhead de `multipart/form-data` acima dos 10 MiB do arquivo em si. **Proposto: 11 MiB** (10 MiB + ~1 MiB de margem para cabeçalhos multipart e metadados do formulário) — valor a confirmar antes da implementação; qualquer margem razoável serve, o mecanismo (uma segunda chain, mesma função `BodyLimit`) é que é a parte fechada.
+`platform/httpx.BodyLimit(limit)` já é parametrizável; a chain `authenticated` hoje aplica `AuthenticatedBodyLimit = 1 MiB` globalmente — insuficiente para o limite de 10 MiB de `platform/documents` (`DOC-01 AC3`). A rota de anexar comprovante precisa de uma chain própria (`authenticatedUpload`), com um limite maior, acomodando o overhead de `multipart/form-data` acima dos 10 MiB do arquivo em si. **Aprovado: 11 MiB** (10 MiB + ~1 MiB de margem para cabeçalhos multipart e metadados do formulário, `FIN-D-024`) — `platform/documents.maxSize` permanece `10 MiB`, inalterado.
 
 ## Composition root (`financeiro.New`)
 
