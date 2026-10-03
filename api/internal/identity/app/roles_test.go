@@ -7,15 +7,19 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
 )
 
+// acceptsDomainRole only exists so the test below can pass a Role value where
+// a domain.Role parameter is expected: compiles only if the two are the exact
+// same type, since a distinct defined type would require an explicit
+// conversion at the call site.
+func acceptsDomainRole(r domain.Role) domain.Role { return r }
+
 // Role must be the exact same type as domain.Role (a type alias), never a second
 // definition: other modules build Contribution.Grants (map[domain.Role]...) with
 // this type, so any mismatch would fail to compile at the call site.
 func TestRoleIsAnAliasOfDomainRoleNotANewType(t *testing.T) {
-	// Compiles only if Role and domain.Role are identical: a distinct defined
-	// type would require an explicit conversion here.
-	var d domain.Role = RoleConselhoFiscal
+	d := acceptsDomainRole(RoleConselhoFiscal)
 	if d != domain.RoleConselhoFiscal {
-		t.Errorf("RoleConselhoFiscal atribuído a domain.Role = %q, esperado %q", d, domain.RoleConselhoFiscal)
+		t.Errorf("RoleConselhoFiscal passado a domain.Role = %q, esperado %q", d, domain.RoleConselhoFiscal)
 	}
 
 	if reflect.TypeOf(RoleConselhoFiscal) != reflect.TypeOf(domain.RoleConselhoFiscal) {
