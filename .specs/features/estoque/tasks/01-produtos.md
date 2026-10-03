@@ -100,10 +100,10 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Criar` traduz violação de `codigo` duplicado em `domain.ErrCodigoDuplicado`, nunca o erro de driver cru
-- [ ] `Buscar` devolve `domain.ErrProdutoNaoEncontrado` quando o id não existe
-- [ ] Teste de integração com duas criações concorrentes do mesmo `codigo`: só uma conclui, a outra recebe `ErrCodigoDuplicado`
-- [ ] Gate check passes
+- [x] `Criar` traduz violação de `codigo` duplicado em `domain.ErrCodigoDuplicado`, nunca o erro de driver cru
+- [x] `Buscar` devolve `domain.ErrProdutoNaoEncontrado` quando o id não existe
+- [x] Teste de integração com duas criações concorrentes do mesmo `codigo`: só uma conclui, a outra recebe `ErrCodigoDuplicado`
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
