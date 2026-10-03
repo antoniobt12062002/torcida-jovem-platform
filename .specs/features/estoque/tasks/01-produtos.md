@@ -58,10 +58,10 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `up` cria a tabela com `codigo UNIQUE NOT NULL`
-- [ ] `down` remove a tabela, sem deixar órfão nenhuma outra migration
-- [ ] Teste de migração confirma up+down em sequência (mesmo padrão de `platform/database`'s testes de migration)
-- [ ] Gate check passes
+- [x] `up` cria a tabela com `codigo UNIQUE NOT NULL`
+- [x] `down` remove a tabela, sem deixar órfão nenhuma outra migration
+- [x] Teste de migração confirma up+down em sequência (mesmo padrão de `platform/database`'s testes de migration)
+- [x] Gate check passes
 
 **Tests**: integration (teste de migração, Postgres real)
 **Gate**: Full

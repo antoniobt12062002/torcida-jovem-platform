@@ -10,7 +10,7 @@ Convenção de numeração local: **EST-D-NNN** para decisões que valem só par
 
 | # | Spec | Requisitos | Status |
 |---|---|---|---|
-| 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Especificada (Specify+Design+Tasks); não implementada |
+| 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Em andamento (T1/5) |
 | 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Especificada; não implementada |
 | 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Especificada; não implementada |
 | 04 | `spec/04-permissoes.md` | PERM-01 | Especificada; não implementada |
@@ -144,6 +144,10 @@ Nenhuma PR precisa misturar sub-specs — cada uma é uma unidade de execução 
 ## Decisões futuras (V2, fora do V1 — não implementar sem nova aprovação)
 
 Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro/STATE.md`: reserva, integração real com `financeiro`/`loja`, custo de aquisição, estoque mínimo/alertas, múltiplos locais, quantidade fracionária, variação estruturada, catálogo comercial.
+
+## Progresso de implementação
+
+- **`01-produtos`/`T1`**: migration `000008_estoque_produtos` (tabela `produtos_estoque`, `codigo UNIQUE NOT NULL`, `GRANT INSERT, SELECT` — nunca `UPDATE`/`DELETE`, `EST-D-007`). Teste de migração dedicado (`estoque_produtos_migration_test.go`, 5 testes: coluna armazenada, unicidade de código, grants corretos, down/up roundtrip, falha clara sem `tj_app`). Nenhuma alteração em outras migrations — `produtos_estoque` não é referenciada por nenhuma FK ainda. Gate completo (full, integration, lint, arquitetura) 100% verde, sem exceção.
 
 ## Handoff
 
