@@ -231,10 +231,10 @@ T7 → T8
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `httpapi.NewRouter` falha se rota e contrato de `financeiro` divergirem (mesma garantia de `AD-012`, agora também para `financeiro`)
-- [ ] Um teste e2e por recurso (contas, lançamentos, workflow, saldo, comprovantes) — fluxo HTTP completo, sem acesso direto ao banco/casos de uso
-- [ ] `pnpm lint:api`/`pnpm gen:api:check` seguem verdes com `financeiro.yaml` incluído
-- [ ] Gate check passes (full + contract)
+- [x] `httpapi.NewRouter` falha se rota e contrato de `financeiro` divergirem (mesma garantia de `AD-012`, agora também para `financeiro`)
+- [x] Um teste e2e por recurso (contas, lançamentos, workflow, saldo, comprovantes) — fluxo HTTP completo, sem acesso direto ao banco/casos de uso
+- [x] `pnpm lint:api`/`pnpm gen:api:check` seguem verdes com `financeiro.yaml` incluído
+- [x] Gate check passes (full + contract)
 
 **Tests**: integration (e2e, mesmo padrão de `httpapi/e2e_test.go`/`router_integration_test.go`)
 **Gate**: full + contract

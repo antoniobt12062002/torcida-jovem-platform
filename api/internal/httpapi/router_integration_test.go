@@ -46,8 +46,14 @@ func realRouter(t *testing.T) (http.Handler, *identity.Module) {
 	if _, err := mod.Roles.Sync(context.Background(), matrix); err != nil {
 		t.Fatal(err)
 	}
+	// Documents stays nil: none of this file's tests reach financeiro's one
+	// upload route, so platform/documents is not needed here (unlike
+	// e2e_test.go's newE2E, which validates every response against every
+	// contract, financeiro's included).
+	fin := financeiro.New(financeiro.Deps{DB: db, Recorder: rec, Authorizer: authorizer})
 	return NewRouter(Deps{
-		Ping: func(context.Context) error { return nil }, Identity: mod, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: log,
+		Ping: func(context.Context) error { return nil }, Identity: mod, Financeiro: fin,
+		AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: log,
 		AllowedOrigins: []string{appOrigin}, Cookie: httpx.SessionCookie{Secure: true},
 	}), mod
 }

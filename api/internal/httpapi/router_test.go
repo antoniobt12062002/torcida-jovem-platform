@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/httpx"
@@ -30,6 +31,7 @@ func testDeps(ping PingFunc) Deps {
 	return Deps{
 		Ping:           ping,
 		Identity:       identity.New(identity.Deps{}),
+		Financeiro:     financeiro.New(financeiro.Deps{}),
 		AuditQuery:     &audit.Query{},
 		Log:            logx.New("error", io.Discard),
 		AllowedOrigins: []string{appOrigin},
@@ -184,10 +186,11 @@ func TestUnknownRoutesAnswerProblemJSON404(t *testing.T) {
 
 func TestNewRouterRefusesToBeBuiltWithoutItsDependencies(t *testing.T) {
 	for name, mutate := range map[string]func(*Deps){
-		"sem ping":      func(d *Deps) { d.Ping = nil },
-		"sem identity":  func(d *Deps) { d.Identity = nil },
-		"sem auditoria": func(d *Deps) { d.AuditQuery = nil },
-		"sem log":       func(d *Deps) { d.Log = nil },
+		"sem ping":       func(d *Deps) { d.Ping = nil },
+		"sem identity":   func(d *Deps) { d.Identity = nil },
+		"sem financeiro": func(d *Deps) { d.Financeiro = nil },
+		"sem auditoria":  func(d *Deps) { d.AuditQuery = nil },
+		"sem log":        func(d *Deps) { d.Log = nil },
 	} {
 		d := testDeps(nil)
 		mutate(&d)
