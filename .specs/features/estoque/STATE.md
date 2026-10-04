@@ -12,7 +12,7 @@ Convenção de numeração local: **EST-D-NNN** para decisões que valem só par
 |---|---|---|---|
 | 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Concluída (T1-T5) |
 | 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Concluída (T1-T5) |
-| 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Especificada; não implementada |
+| 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Em andamento (T1/3) |
 | 04 | `spec/04-permissoes.md` | PERM-01 | Especificada; não implementada |
 | 05 | `spec/05-api-http.md` | API-01 a API-04 | Especificada; não implementada |
 
@@ -163,6 +163,8 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 - **`02-movimentacoes`/`T4`**: `estoque/app/registrar_movimentacao.go` — `RegistrarMovimentacao` cobre `ENTRADA`/`SAIDA`/`DEVOLUCAO` (um único caso de uso, mesma decisão de granularidade de `financeiro/app.CriarLancamento` para `RECEITA`/`DESPESA`, `EST-D-005`). `estoque/app/env_test.go` estendido com `movimentacoes`, `newUser`/`userActor` (`responsavel_id` é FK real para `users`, diferente de `produtos_estoque`) e `criarProdutoDeTeste`/`registrarMovimentacao`. 16 testes de integração (os 4+5+4 ACs combinados de `MOV-01`/`MOV-02`/`MOV-03`) + mutação em 3 pontos (sinal de `SAIDA` invertido, checagem de saldo removida, validação de referência de devolução removida) — a checagem de saldo pegou em tempo de compilação (`saldo` não usado), os outros dois em runtime; todos mortos.
 
 - **`02-movimentacoes`/`T5`**: `estoque/app/listar_movimentacoes.go` — consulta pura, sem paginação, lista qualquer tipo (incluindo `AJUSTE`, criado só em `03`). 2 testes de integração (os 2 ACs de `MOV-04`) + mutação (checagem de permissão removida) — morta. **`02-movimentacoes` concluída (T1-T5)** — gate completo (full, integration, lint, arquitetura) 100% verde, sem nenhuma exceção.
+
+- **`03-ajustes-e-saldo`/`T1`**: `estoque/app/ajustar_estoque.go` — `AjustarEstoque`, permissão própria (`estoque:movimentacao:adjust`, distinta de `create`), ordem permissão→quantidade≠0→motivo→busca→transação (mesmo molde de `financeiro/app.CancelarLancamento`), nunca checa saldo (porta `MovimentacaoCreatorOnly` sem `SaldoComLock` — garantia estrutural). `domain.ErrMotivoObrigatorio` adicionado a `movimentacao.go`. 5 testes de integração (os 5 ACs de AJS-01) + mutação em 2 pontos (motivo removido, permissão removida) — ambos mortos.
 
 ## Handoff
 

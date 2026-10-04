@@ -61,4 +61,6 @@ var (
 	// ErrQuantidadeInvalida is returned when quantidade is zero, or
 	// negative where a positive value is expected (ENTRADA/SAIDA/DEVOLUCAO).
 	ErrQuantidadeInvalida = errors.New("quantidade inválida")
+	// ErrMotivoObrigatorio is returned when an AJUSTE's motivo is blank.
+	ErrMotivoObrigatorio = errors.New("motivo é obrigatório")
 )

@@ -110,3 +110,7 @@ func (e env) registrarMovimentacao() *app.RegistrarMovimentacao {
 func (e env) listarMovimentacoes() *app.ListarMovimentacoes {
 	return &app.ListarMovimentacoes{Authz: simpleAuthz{}, Movimentacoes: e.movimentacoes}
 }
+
+func (e env) ajustarEstoque() *app.AjustarEstoque {
+	return &app.AjustarEstoque{Authz: simpleAuthz{}, Produtos: e.produtos, Movimentacoes: e.movimentacoes, Audit: e.rec, Tx: e.tx}
+}

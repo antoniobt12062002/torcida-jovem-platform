@@ -56,10 +56,10 @@ T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 5 ACs de AJS-01 cobertos (sucesso inclusive negativo, motivo vazio, quantidade zero, produto inexistente, sem permissão)
-- [ ] A porta usada (`MovimentacaoCreator`) não declara `SaldoComLock` — confirmado lendo a interface, garantia estrutural de que este caso de uso não pode checar saldo
-- [ ] Auditoria `movimentacao.adjust` com `Reason` preenchido
-- [ ] Gate check passes
+- [x] Os 5 ACs de AJS-01 cobertos (sucesso inclusive negativo, motivo vazio, quantidade zero, produto inexistente, sem permissão)
+- [x] A porta usada (`MovimentacaoCreatorOnly`) não declara `SaldoComLock` — confirmado lendo a interface, garantia estrutural de que este caso de uso não pode checar saldo
+- [x] Auditoria `movimentacao.adjust` com `Reason` preenchido
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
