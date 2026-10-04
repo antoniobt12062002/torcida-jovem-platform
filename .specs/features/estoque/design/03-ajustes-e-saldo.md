@@ -127,7 +127,6 @@ Nenhuma migration nova — `AjustarEstoque` escreve em `movimentacoes_estoque` (
 | `motivo` vazio/ausente | `domain.ErrMotivoObrigatorio`, antes de qualquer leitura/escrita | `05-api-http` mapeia para `422 motivo_obrigatorio` |
 | `quantidade == 0` | `domain.ErrQuantidadeInvalida` | `422 quantidade_invalida` |
 | `produto_id` inexistente | `domain.ErrProdutoNaoEncontrado` | `404 produto_nao_encontrado` |
-| soma de movimentações ultrapassaria o limite seguro de `int64` | `domain.ErrQuantidadeForaDoLimite` (novo sentinel, só nesta sub-spec) | `422` — mesma categoria de `platform/money.ErrOutOfRange`, nunca esperado na prática, mas guardado por precaução |
 
 ---
 

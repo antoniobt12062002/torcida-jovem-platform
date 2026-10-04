@@ -69,7 +69,6 @@
 ## Edge Cases
 
 - IF um SKU nunca recebeu nenhuma movimentação THEN o sistema SHALL responder saldo `0`, nunca um erro (mesma garantia de `ConsultarSaldo` em `financeiro`, que nunca falha por "livro-razão vazio").
-- IF um ajuste muito grande, somado ao histórico, ultrapassar o limite seguro de inteiro THEN o sistema SHALL recusar de forma clara — mesma classe de proteção que `platform/money.ErrOutOfRange` já aplica a valores monetários; a contrapartida para quantidade inteira é tratada no design.
 
 ---
 

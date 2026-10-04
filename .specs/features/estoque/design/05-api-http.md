@@ -75,7 +75,6 @@ domain.ErrDevolucaoInvalida          → 422  devolucao_invalida
 domain.ErrSaldoInsuficiente          → 409  saldo_insuficiente
 domain.ErrQuantidadeInvalida         → 422  quantidade_invalida
 domain.ErrMotivoObrigatorio          → 422  motivo_obrigatorio
-domain.ErrQuantidadeForaDoLimite     → 422  quantidade_fora_do_limite
 authz.ErrForbidden                   → 403  forbidden
 database.Unavailable(err)            → 503  service_unavailable
 audit.ErrWrite                       → 500  audit_failed
