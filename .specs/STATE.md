@@ -122,6 +122,15 @@
 - **Date**: 2026-09-27
 - **Status**: active
 
+### AD-016
+- **Decision**: O `pnpm audit` do CI ganha uma única exceção, por GHSA: `GHSA-vfj7-8cjw-p6xm` (`CVE-2026-93687`, `braces@3.0.3`), configurada em `web/pnpm-workspace.yaml` com `auditConfig.ignoreGhsas`. O gate global continua ativo: `pnpm audit --audit-level high` segue no CI sem mudança, e toda outra vulnerabilidade `high` ou `critical` continua bloqueando. Isso vale também para qualquer outra advisory de `braces`.
+- **Reason**: A vulnerabilidade é **pré-existente** no `develop` e **não foi introduzida pela PR #58** (`estoque`), que não altera `package.json` nem `pnpm-lock.yaml`. Ela chega só pela ferramenta de lint (`eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces`) e não tem versão corrigida. Atualizar não resolve: até `@next/eslint-plugin-next@16.3.8` a cadeia continua fixada em `fast-glob@3.3.1`. Sem a exceção, toda PR que toca `web/` falharia por um achado sem correção possível. O bypass administrativo do CI foi descartado pelo mantenedor.
+- **Trade-off**: A exceção é por id exato (o pnpm compara `github_advisory_id`), não por pacote nem por severidade. Se essa mesma GHSA for reclassificada depois, por exemplo para `critical`, ou tiver a faixa ampliada, continua ignorada até ser removida. O pnpm não tem expiração automática, então a mitigação é o critério de remoção explícito abaixo e a revisão manual. A saída do audit sempre mostra `(1 ignored)`.
+- **Removal**: Remover quando `braces` tiver versão corrigida ou quando `@next/eslint-plugin-next` deixar de trazer a cadeia vulnerável. Verificar com `pnpm audit --json` e `pnpm why braces`.
+- **Scope**: `web/pnpm-workspace.yaml`. Detalhes em `docs/development/tooling.md` (SEC-001).
+- **Date**: 2026-10-04
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/financeiro/` — coordenação própria em `financeiro/STATE.md`
