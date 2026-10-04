@@ -78,10 +78,10 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC1, AC2 parcial)
 
 **Done when**:
-- [ ] Só as quatro dependências de WEB-D-003 entram (`pnpm-lock.yaml` coerente, `--frozen-lockfile` passa)
-- [ ] `next.config.ts` aponta `/api/v1/:path*` para `${API_URL}/api/v1/:path*` e falha com mensagem clara sem `API_URL`
-- [ ] Harness MSW ligado no setup do Vitest, com teste de fumaça
-- [ ] Gates Web, Audit, Contract, Backend intacto e Ownership passam
+- [x] Só as quatro dependências de WEB-D-003 entram (`pnpm-lock.yaml` coerente, `--frozen-lockfile` passa)
+- [x] `next.config.ts` aponta `/api/v1/:path*` para `${API_URL}/api/v1/:path*` e falha com mensagem clara sem `API_URL`
+- [x] Harness MSW ligado no setup do Vitest, com teste de fumaça
+- [x] Gates Web, Audit, Contract, Backend intacto e Ownership passam
 
 **Tests**: unit (configuração do rewrite; harness)
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
