@@ -118,11 +118,11 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 4+5+4 ACs combinados de MOV-01/02/03 cobertos
-- [ ] `ENTRADA` nunca aciona o lock (só quando a quantidade assinada é negativa)
-- [ ] `DEVOLUCAO` de uma `SAIDA` nunca é bloqueada por saldo; `DEVOLUCAO` de uma `ENTRADA` segue a mesma regra de `SAIDA`
-- [ ] `DEVOLUCAO` referenciando `AJUSTE`, outra `DEVOLUCAO`, produto diferente, ou id inexistente, é recusada com `devolucao_invalida`
-- [ ] Gate check passes
+- [x] Os 4+5+4 ACs combinados de MOV-01/02/03 cobertos
+- [x] `ENTRADA` nunca aciona o lock (só quando a quantidade assinada é negativa)
+- [x] `DEVOLUCAO` de uma `SAIDA` nunca é bloqueada por saldo; `DEVOLUCAO` de uma `ENTRADA` segue a mesma regra de `SAIDA`
+- [x] `DEVOLUCAO` referenciando `AJUSTE`, outra `DEVOLUCAO`, produto diferente, ou id inexistente, é recusada com `devolucao_invalida`
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`; pelo menos um teste por tipo, confirmando o efeito real no saldo agregado)
 **Gate**: Full
