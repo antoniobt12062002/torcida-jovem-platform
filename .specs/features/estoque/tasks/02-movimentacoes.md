@@ -141,8 +141,8 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 2 ACs de MOV-04 cobertos, incluindo listar movimentações de todos os tipos (mesmo as que só `03-ajustes-e-saldo` criará — a listagem já deve devolver qualquer linha da tabela, sem filtrar por tipo)
-- [ ] Gate check passes
+- [x] Os 2 ACs de MOV-04 cobertos, incluindo listar movimentações de todos os tipos (mesmo as que só `03-ajustes-e-saldo` criará — a listagem já deve devolver qualquer linha da tabela, sem filtrar por tipo)
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full

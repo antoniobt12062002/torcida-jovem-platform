@@ -11,7 +11,7 @@ Convenção de numeração local: **EST-D-NNN** para decisões que valem só par
 | # | Spec | Requisitos | Status |
 |---|---|---|---|
 | 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Concluída (T1-T5) |
-| 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Em andamento (T1/5) |
+| 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Concluída (T1-T5) |
 | 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Especificada; não implementada |
 | 04 | `spec/04-permissoes.md` | PERM-01 | Especificada; não implementada |
 | 05 | `spec/05-api-http.md` | API-01 a API-04 | Especificada; não implementada |
@@ -161,6 +161,8 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 - **`02-movimentacoes`/`T3`**: `estoque/infra/movimentacao_repository.go` — `Buscar`/`Criar`/`ListarPorProduto`/`SaldoComLock` (`pg_advisory_xact_lock(hashtext(produto_id))` + `SUM`, na mesma transação do chamador). **Achado mecânico real**: o teste de outcome pedido literalmente pelo mantenedor (saldo=1, 2 goroutines disputando a última unidade) teve seu mutante (remoção completa do lock) **sobreviver** em 5 execuções consecutivas — a janela de corrida era estreita demais para colidir de forma confiável só por sorte de agendamento do SO. Fortalecido com `TestSaldoComLockSerializesConcurrentCallersOfTheSameProduto`, uma prova determinística e independente de timing de SO: uma segunda chamada ao lock do mesmo `produto_id` fica provadamente bloqueada (medida por tempo) enquanto a primeira mantém a transação aberta, e só desbloqueia depois do commit da primeira — esse teste matou o mutante de forma consistente. Um segundo mutante (trocar `hashtext(produto_id)` por uma chave fixa, tornando o lock global) sobreviveu a todos os testes anteriores — achado real de cobertura, não apenas de timing: nada provava que o lock era por SKU, não global (uma regressão de desempenho séria, serializaria toda escrita de estoque da plataforma). Fortalecido com `TestSaldoComLockDoesNotSerializeCallersOfDifferentProdutos`, que mata esse mutante. 12 testes de integração no total (incluindo os 2 testes de outcome e os 2 de mecanismo) — ambos os mutantes mortos depois das correções.
 
 - **`02-movimentacoes`/`T4`**: `estoque/app/registrar_movimentacao.go` — `RegistrarMovimentacao` cobre `ENTRADA`/`SAIDA`/`DEVOLUCAO` (um único caso de uso, mesma decisão de granularidade de `financeiro/app.CriarLancamento` para `RECEITA`/`DESPESA`, `EST-D-005`). `estoque/app/env_test.go` estendido com `movimentacoes`, `newUser`/`userActor` (`responsavel_id` é FK real para `users`, diferente de `produtos_estoque`) e `criarProdutoDeTeste`/`registrarMovimentacao`. 16 testes de integração (os 4+5+4 ACs combinados de `MOV-01`/`MOV-02`/`MOV-03`) + mutação em 3 pontos (sinal de `SAIDA` invertido, checagem de saldo removida, validação de referência de devolução removida) — a checagem de saldo pegou em tempo de compilação (`saldo` não usado), os outros dois em runtime; todos mortos.
+
+- **`02-movimentacoes`/`T5`**: `estoque/app/listar_movimentacoes.go` — consulta pura, sem paginação, lista qualquer tipo (incluindo `AJUSTE`, criado só em `03`). 2 testes de integração (os 2 ACs de `MOV-04`) + mutação (checagem de permissão removida) — morta. **`02-movimentacoes` concluída (T1-T5)** — gate completo (full, integration, lint, arquitetura) 100% verde, sem nenhuma exceção.
 
 ## Handoff
 

@@ -115,10 +115,10 @@
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| MOV-01 | P1: Registrar entrada | Design | Pending |
-| MOV-02 | P1: Registrar saída | Design | Pending |
-| MOV-03 | P1: Registrar devolução | Design | Pending |
-| MOV-04 | P1: Listar movimentações | Design | Pending |
+| MOV-01 | P1: Registrar entrada | Implementing | Verified |
+| MOV-02 | P1: Registrar saída | Implementing | Verified |
+| MOV-03 | P1: Registrar devolução | Implementing | Verified |
+| MOV-04 | P1: Listar movimentações | Implementing | Verified |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 
