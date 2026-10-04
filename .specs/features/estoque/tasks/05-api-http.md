@@ -111,10 +111,10 @@ T4 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 7 mapeamentos de erro implementados e testados individualmente
-- [ ] Nenhum sentinel de `estoque/domain` tem seu `.Error()` usado como `code`
-- [ ] `Register` compila com as 6 chamadas `r.POST`/`r.GET` já escritas, referenciando os métodos ainda inexistentes de `w.<Método>` do wrapper gerado — **isso é esperado e compila**, porque `w` vem de `NewStrictHandlerWithOptions(server, ...)` e `server` é só um parâmetro de interface; só a função que efetivamente chamar `Register` com um `*Handler` concreto (em `T5`) exige a interface completa
-- [ ] Gate check `Full` executado por completo; confirmado que a única falha é `TestEveryRegisteredRouteHasAContractOperationAndViceVersa`/`TestRoutesAndContractFilesAreTheSameList` (falha esperada de composição intermediária) — qualquer outra falha bloqueia esta tarefa
+- [x] Os 7 mapeamentos de erro implementados e testados individualmente
+- [x] Nenhum sentinel de `estoque/domain` tem seu `.Error()` usado como `code`
+- [x] `Register` compila com as 6 chamadas `r.POST`/`r.GET` já escritas, referenciando os métodos ainda inexistentes de `w.<Método>` do wrapper gerado — **isso é esperado e compila**, porque `w` vem de `NewStrictHandlerWithOptions(server, ...)` e `server` é só um parâmetro de interface; só a função que efetivamente chamar `Register` com um `*Handler` concreto (em `T5`) exige a interface completa
+- [x] Gate check `Full` executado por completo; confirmado que a única falha é `TestEveryRegisteredRouteHasAContractOperationAndViceVersa`/`TestRoutesAndContractFilesAreTheSameList` (falha esperada de composição intermediária) — qualquer outra falha bloqueia esta tarefa
 
 **Tests**: unit — um teste por mapeamento de erro (8)
 **Gate**: Full
