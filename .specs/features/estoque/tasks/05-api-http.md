@@ -87,12 +87,12 @@ T4 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] As 6 operações no contrato, cada uma com `operationId`, `security` (nunca `[]`), parâmetros, `requestBody`/`responses`
-- [ ] `movimentacao_de_id` é campo opcional no schema (nunca `oneOf`/discriminador) — conforme design
-- [ ] `pnpm lint:api` passa sem erro
-- [ ] `go generate ./...` produz `estoque/http/api.gen.go` com `StrictServerInterface` contendo os 6 métodos
-- [ ] `pnpm gen:api` produz `web/lib/api/estoque.d.ts`
-- [ ] Gate check `Full` executado por completo; confirmado que a única falha é `TestEveryRegisteredRouteHasAContractOperationAndViceVersa`/`TestRoutesAndContractFilesAreTheSameList` (falha esperada de composição intermediária, não um gate verde) — qualquer outra falha bloqueia esta tarefa
+- [x] As 6 operações no contrato, cada uma com `operationId`, `security` (nunca `[]`), parâmetros, `requestBody`/`responses`
+- [x] `movimentacao_de_id` é campo opcional no schema (nunca `oneOf`/discriminador) — conforme design
+- [x] `pnpm lint:api` passa sem erro
+- [x] `go generate ./...` produz `estoque/http/api.gen.go` com `StrictServerInterface` contendo os 6 métodos
+- [x] `pnpm gen:api` produz `web/lib/api/estoque.d.ts`
+- [x] Gate check `Full` executado por completo; confirmado que a única falha é `TestEveryRegisteredRouteHasAContractOperationAndViceVersa`/`TestRoutesAndContractFilesAreTheSameList` (falha esperada de composição intermediária, não um gate verde) — qualquer outra falha bloqueia esta tarefa
 
 **Tests**: `redocly lint`, `openapi-typescript --check`, `go generate` sem erro
 **Gate**: Full + Contract
