@@ -10,7 +10,7 @@ Convenção de numeração local: **EST-D-NNN** para decisões que valem só par
 
 | # | Spec | Requisitos | Status |
 |---|---|---|---|
-| 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Em andamento (T1/5) |
+| 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Concluída (T1-T5) |
 | 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Especificada; não implementada |
 | 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Especificada; não implementada |
 | 04 | `spec/04-permissoes.md` | PERM-01 | Especificada; não implementada |
@@ -152,6 +152,7 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 - **Achado mecânico (`01-produtos`/`T4`)**: a `Test Coverage Matrix` das 5 tasks rotulava os testes de `app` como "unit (com doubles)" — mas o padrão real já estabelecido em `financeiro/app` (`env_test.go`) usa Postgres real (`testutil.NewTestDB`) com `infra` real, só substituindo `Authz` por `simpleAuthz` (decide pela permissão do `Principal`, sem catálogo/RBAC completo) — nunca doubles sem I/O. Corrigido nos 5 arquivos de `tasks/` (rótulo "integration", nunca "unit") para refletir o que de fato é implementado; nenhuma mudança de comportamento, só precisão documental.
 - **`01-produtos`/`T3`**: `estoque/infra/produto_repository.go` — `Buscar`/`Criar`/`Listar`, mesmo estilo de `financeiro/infra.ContaRepository` (SQL direto via GORM). Tradução de `codigo` duplicado: nome real da constraint confirmado empiricamente contra o banco (`produtos_estoque_codigo_key`, nomeação implícita do Postgres para `UNIQUE` inline — nunca presumido), usando `errors.AsType[*pgconn.PgError]`, mesmo padrão de `identity/infra.UserRepository` para e-mail duplicado. 4 testes de integração, incluindo o obrigatório de concorrência (2 goroutines criando o mesmo `codigo`: exatamente 1 sucesso e 1 `ErrCodigoDuplicado`, nunca outro resultado) + 1 mutação (nome de constraint trocado) — morta.
 - **`01-produtos`/`T4`**: `estoque/app/criar_produto.go` — permissão, validação dos 3 campos (nenhum vazio, `domain.ErrCampoObrigatorio` — sentinel adicionado a `domain/produto.go`, não previsto explicitamente no design, achado mecânico ao implementar PRD-01 AC3), persistência+auditoria `produto.create` na mesma transação. `estoque/app/env_test.go` (novo, mesmo padrão de `financeiro/app/env_test.go`: `simpleAuthz`, `actor()` com UUID sintético — `produtos_estoque` não tem FK para `users`, mesma razão de `financeiro`'s `01-plano-de-contas`). 4 testes de integração (os 4 ACs de PRD-01) + mutação em 2 pontos (validação de campo vazio removida, checagem de permissão removida) — ambos mortos.
+- **`01-produtos`/`T5`**: `estoque/app/listar_produtos.go` — consulta pura, sem `Tx`/`Audit`, mesmo template de `financeiro/app.ListarContas`. Sem paginação (mesma decisão deliberada de `FIN-D-021`). 2 testes de integração (os 2 ACs de PRD-02) + mutação (checagem de permissão removida) — morta. **`01-produtos` concluída (T1-T5)** — gate completo (full, integration, lint, arquitetura) 100% verde, sem nenhuma exceção, confirmado nesta tarefa.
 
 ## Handoff
 

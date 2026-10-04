@@ -62,3 +62,7 @@ func actor(perms ...authz.Permission) authz.Principal {
 func (e env) criarProduto() *app.CriarProduto {
 	return &app.CriarProduto{Authz: simpleAuthz{}, Produtos: e.produtos, Audit: e.rec, Tx: e.tx}
 }
+
+func (e env) listarProdutos() *app.ListarProdutos {
+	return &app.ListarProdutos{Authz: simpleAuthz{}, Produtos: e.produtos}
+}

@@ -78,8 +78,8 @@
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PRD-01 | P1: Criar SKU | Design | Pending |
-| PRD-02 | P1: Listar SKUs | Design | Pending |
+| PRD-01 | P1: Criar SKU | Implementing | Verified |
+| PRD-02 | P1: Listar SKUs | Implementing | Verified |
 
 **Coverage:** 2 total, 2 mapped to tasks, 0 unmapped.
 

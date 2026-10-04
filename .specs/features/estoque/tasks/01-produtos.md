@@ -143,8 +143,8 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 2 ACs de PRD-02 cobertos (sucesso sem paginação, sem permissão)
-- [ ] Gate check passes
+- [x] Os 2 ACs de PRD-02 cobertos (sucesso sem paginação, sem permissão)
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
