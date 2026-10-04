@@ -261,3 +261,7 @@ As alterações estão corretas e coerentes com 01-03. Elas ainda não foram com
   ```
 - **Mutações:** só em `<scratchpad>/wt-mut2`, uma worktree destacada em `ab7eae9`. Cada arquivo mutado foi restaurado depois do teste, e a worktree terminou com porcelain vazio antes de ser removida com `git worktree remove --force` e `git worktree prune`. Nenhum `git stash` foi usado.
 - **Árvore real depois da rodada:** idêntica ao baseline. A única alteração é a atualização deste arquivo, que já estava como `??`.
+
+## Nota posterior (2026-10-04) — EST-D-013 resolvida pela Opção A
+
+Esta verificação descreve o estado em `ab7eae9`, quando `ErrCampoObrigatorio` respondia `422 campo_obrigatorio` (linha de PRD-01 AC3 e item 6b acima). O mantenedor não aprovou esse code novo: `EST-D-013` foi resolvida reutilizando o erro transversal `422 validation_failed`, sem alterar `EST-D-006`. Depois dessa mudança, `"` e valores só com espaços (incluindo U+00A0) nos 3 campos respondem o mesmo `422 validation_failed` (`api/internal/estoque/http/produtos_handler_test.go:36`), e a tabela `sentinels` tem exatamente os 7 codes de `EST-D-006` (`api/internal/estoque/http/handler_internal_test.go:46`). Mutações do autor sobre a mudança, todas mortas: remover o ramo de `writeError` (voltaria a 500), voltar a `campo_obrigatorio` e tirar `estoqueSpec` do validador de contrato. O veredito PASS se mantém; o item 6b fica resolvido.

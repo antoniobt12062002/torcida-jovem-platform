@@ -17,11 +17,12 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
-// A tabela única de erros (EST-D-006 + achado mecânico de ErrCampoObrigatorio,
-// API-04): cada um dos 8 mapeamentos de domínio/autorização vira o status e
-// o code exatos do contrato, embrulhado ou não, mais os 2 mapeamentos
-// transversais (service_unavailable, audit_failed) já cobertos pelo switch
-// de writeError.
+// A tabela única de erros (EST-D-006, API-04): cada um dos 7 mapeamentos de
+// domínio/autorização vira o status e o code exatos do contrato, embrulhado
+// ou não, mais os transversais já cobertos pelo switch de writeError:
+// service_unavailable, audit_failed e — EST-D-013 — validation_failed para
+// ErrCampoObrigatorio (campo só com espaços), o mesmo code que o contrato
+// devolve para string vazia.
 func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 	cases := []struct {
 		err    error
@@ -30,17 +31,20 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 	}{
 		{domain.ErrProdutoNaoEncontrado, http.StatusNotFound, "produto_nao_encontrado"},
 		{domain.ErrCodigoDuplicado, http.StatusConflict, "codigo_duplicado"},
-		{domain.ErrCampoObrigatorio, http.StatusUnprocessableEntity, "campo_obrigatorio"},
 		{domain.ErrDevolucaoInvalida, http.StatusUnprocessableEntity, "devolucao_invalida"},
 		{domain.ErrSaldoInsuficiente, http.StatusConflict, "saldo_insuficiente"},
 		{domain.ErrQuantidadeInvalida, http.StatusUnprocessableEntity, "quantidade_invalida"},
 		{domain.ErrMotivoObrigatorio, http.StatusUnprocessableEntity, "motivo_obrigatorio"},
 		{authz.ErrForbidden, http.StatusForbidden, "forbidden"},
+		{domain.ErrCampoObrigatorio, http.StatusUnprocessableEntity, "validation_failed"},
 		{database.ErrUnavailable, http.StatusServiceUnavailable, "service_unavailable"},
 		{fmt.Errorf("%w: disco cheio", audit.ErrWrite), http.StatusInternalServerError, "audit_failed"},
 	}
 	if len(cases) != 10 {
-		t.Fatalf("8 mapeamentos de domínio/autorização + 2 transversais, a tabela do teste tem %d", len(cases))
+		t.Fatalf("7 mapeamentos de EST-D-006 + 3 transversais, a tabela do teste tem %d", len(cases))
+	}
+	if len(sentinels) != 7 {
+		t.Fatalf("a tabela sentinels deve ter exatamente os 7 codes de EST-D-006, tem %d", len(sentinels))
 	}
 	h := &Handler{}
 	for _, tc := range cases {

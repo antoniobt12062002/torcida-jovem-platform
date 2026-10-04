@@ -31,19 +31,25 @@ func TestEstoqueE2EProdutosFlow(t *testing.T) {
 }
 
 // The real router validates estoque request bodies against estoque.yaml
-// before any use case runs: a body that violates the contract (minLength,
-// request-only enum) answers validation_failed, never the use case's own
-// code (campo_obrigatorio, quantidade_invalida) — which is what would come
-// back if estoque.yaml were missing from httpx.NewContractValidator, since
-// the validator lets through routes absent from every loaded contract.
+// before any use case runs — the validator lets through routes absent from
+// every loaded contract, so this is what proves estoque.yaml is loaded:
+//   - codigo "" violates minLength: the contract answers validation_failed
+//     WITH the errors[] field list; the use case (EST-D-013) would answer
+//     validation_failed with no field list.
+//   - tipo AJUSTE violates the request-only enum: the contract answers
+//     validation_failed; the use case would answer quantidade_invalida.
 func TestEstoqueE2ERequestsAreValidatedAgainstTheContract(t *testing.T) {
 	e := newE2E(t)
 	s := e.adminSession()
 	produtoID := body(t, e.do(s, http.MethodPost, "/api/v1/estoque/produtos", map[string]any{"codigo": "MEIA", "nome": "Meia", "unidade_medida": "UN"}))["id"].(string)
 
-	e.expect(e.do(s, http.MethodPost, "/api/v1/estoque/produtos", map[string]any{
+	empty := e.do(s, http.MethodPost, "/api/v1/estoque/produtos", map[string]any{
 		"codigo": "", "nome": "Sem código", "unidade_medida": "UN",
-	}), http.StatusUnprocessableEntity, "validation_failed")
+	})
+	e.expect(empty, http.StatusUnprocessableEntity, "validation_failed")
+	if fields, _ := body(t, empty)["errors"].([]any); len(fields) == 0 {
+		t.Errorf("codigo vazio deveria ser recusado pelo contrato, com errors[]: %s", empty.Body.String())
+	}
 	e.expect(e.do(s, http.MethodPost, "/api/v1/estoque/movimentacoes", map[string]any{
 		"tipo": "AJUSTE", "produto_id": produtoID, "quantidade": 1, "origem": "AJUSTE_MANUAL",
 	}), http.StatusUnprocessableEntity, "validation_failed")

@@ -79,6 +79,12 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, errNoSession):
 		httpx.WriteProblem(c, http.StatusUnauthorized, "unauthenticated", "É preciso entrar para continuar.")
+	case errors.Is(err, domain.ErrCampoObrigatorio):
+		// EST-D-013: a field holding only whitespace passes the contract's
+		// minLength but is blank to the use case. It answers exactly what the
+		// contract validator answers for an empty string — the cross-cutting
+		// validation_failed, never a new code outside EST-D-006.
+		httpx.WriteProblem(c, http.StatusUnprocessableEntity, "validation_failed", "Um ou mais campos são inválidos.")
 	case mapped(c, err):
 	case database.Unavailable(err):
 		h.logInternal(c, err)
@@ -92,14 +98,9 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 	}
 }
 
-// sentinels is the explicit status+code table of EST-D-006, extended with
-// domain.ErrCampoObrigatorio (achado mecânico de 05-api-http/T4: esse
-// sentinel só existe desde 01-produtos/T4, depois de EST-D-006 já fechada —
-// sem esta linha, um campo só com espaços em CreateProdutoRequest caía no
-// default de 500, nunca testado por nenhuma task anterior porque nenhuma
-// delas exercitava a camada HTTP). Como financeiro/domain's sentinels
-// (FIN-D-022), estoque/domain's são prosa em português, então seu .Error()
-// nunca pode ser o code da API.
+// sentinels is the explicit status+code table of EST-D-006 — exactly its 7
+// codes. Like financeiro/domain's sentinels (FIN-D-022), estoque/domain's are
+// Portuguese prose, so their .Error() can never be the API code.
 var sentinels = []struct {
 	err    error
 	status int
@@ -107,7 +108,6 @@ var sentinels = []struct {
 }{
 	{domain.ErrProdutoNaoEncontrado, http.StatusNotFound, "produto_nao_encontrado"},
 	{domain.ErrCodigoDuplicado, http.StatusConflict, "codigo_duplicado"},
-	{domain.ErrCampoObrigatorio, http.StatusUnprocessableEntity, "campo_obrigatorio"},
 	{domain.ErrDevolucaoInvalida, http.StatusUnprocessableEntity, "devolucao_invalida"},
 	// Conflito com o estado atual do estoque, não erro estrutural de payload
 	// (EST-D-006).

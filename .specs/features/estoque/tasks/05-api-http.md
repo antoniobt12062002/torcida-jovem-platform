@@ -26,7 +26,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 | --- | --- | --- | --- | --- |
 | Composition root (`estoque.New`) | unit | sem I/O, só confere que nenhum campo fica nil | `api/internal/estoque/module_new_test.go` | `go test ./...` |
 | Contrato OpenAPI | `redocly lint` + `go generate` | confirma validade sem precisar de handler nenhum | — | `pnpm lint:api`, `go generate ./...` |
-| `handler.go` (erro) | unit | 1:1 com a tabela de erro (8 mapeamentos) | `api/internal/estoque/http/handler_internal_test.go` | `go test ./...` |
+| `handler.go` (erro) | unit | 1:1 com a tabela de erro (7 mapeamentos) | `api/internal/estoque/http/handler_internal_test.go` | `go test ./...` |
 | Handlers (6 métodos) | integration | requisição HTTP real contra o caso de uso real, via `estoquehttp.Register` de verdade (harness local, ver nota acima) | `api/internal/estoque/http/*_test.go` | `go test -tags=integration ./...` |
 | Wiring final (`router.go`) | integration (e2e) | um teste por recurso (produtos, movimentações, ajustes+saldo), através do roteador real | `api/internal/httpapi/estoque_e2e_test.go` | `go test -tags=integration ./...` |
 
@@ -102,7 +102,7 @@ T4 → T5
 
 ### T3: Infraestrutura do handler (`estoque/http/handler.go`)
 
-**What**: `Handler{M *estoque.Module, Log *slog.Logger}`, `New(m, log)`, `writeError` (tabela completa de 8 mapeamentos), `sessionOf`/`ginContext`/`requestContext` (copiados, mesma razão de `FIN-D-028`), `Register(r gin.IRoutes, server StrictServerInterface, h *Handler, chains Chains)` **já com as 6 rotas montadas** (ver nota de design no topo deste arquivo — aqui `Register` pode ter o formato completo de `identityhttp.Register` desde já, porque nada o chama antes de `T5`).
+**What**: `Handler{M *estoque.Module, Log *slog.Logger}`, `New(m, log)`, `writeError` (tabela completa de 7 mapeamentos), `sessionOf`/`ginContext`/`requestContext` (copiados, mesma razão de `FIN-D-028`), `Register(r gin.IRoutes, server StrictServerInterface, h *Handler, chains Chains)` **já com as 6 rotas montadas** (ver nota de design no topo deste arquivo — aqui `Register` pode ter o formato completo de `identityhttp.Register` desde já, porque nada o chama antes de `T5`).
 **Where**: `api/internal/estoque/http/handler.go`
 **Depends on**: T2
 **Reuses**: `financeiro/http/handler.go` e `identity/http/handler.go` como modelo direto.
@@ -111,7 +111,7 @@ T4 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [x] Os 8 mapeamentos de erro implementados e testados individualmente
+- [x] Os 7 mapeamentos de erro implementados e testados individualmente
 - [x] Nenhum sentinel de `estoque/domain` tem seu `.Error()` usado como `code`
 - [x] `Register` compila com as 6 chamadas `r.POST`/`r.GET` já escritas, referenciando os métodos ainda inexistentes de `w.<Método>` do wrapper gerado — **isso é esperado e compila**, porque `w` vem de `NewStrictHandlerWithOptions(server, ...)` e `server` é só um parâmetro de interface; só a função que efetivamente chamar `Register` com um `*Handler` concreto (em `T5`) exige a interface completa
 - [x] Gate check `Full` executado por completo; confirmado que a única falha é `TestEveryRegisteredRouteHasAContractOperationAndViceVersa`/`TestRoutesAndContractFilesAreTheSameList` (falha esperada de composição intermediária) — qualquer outra falha bloqueia esta tarefa

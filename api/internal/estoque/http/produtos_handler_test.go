@@ -29,18 +29,26 @@ func TestCreateProdutoAnswers201WithTheCreatedProduto(t *testing.T) {
 	}
 }
 
-// PRD-01 AC3 (achado mecânico de T4): um campo só com espaços passa pelo
-// minLength:1 do contrato mas é recusado pelo caso de uso com
-// ErrCampoObrigatorio — responde 422 campo_obrigatorio, nunca 500 (a lacuna
-// que existiria sem a linha adicionada a handler.go's sentinels nesta task).
-func TestCreateProdutoWithAWhitespaceOnlyFieldAnswers422CampoObrigatorio(t *testing.T) {
+// PRD-01 AC3 + EST-D-013: campo vazio ("", recusado pelo minLength do
+// contrato) e campo só com espaços (passa pelo contrato, recusado pelo caso
+// de uso com ErrCampoObrigatorio) respondem o mesmo 422 validation_failed —
+// nunca 500, nunca um code fora de EST-D-006 — em cada um dos 3 campos.
+func TestCreateProdutoWithABlankFieldAnswersTheSame422ValidationFailed(t *testing.T) {
 	e := newEnv(t)
 	_, s := e.signedIn(domain.RoleEstoqueLoja)
 
-	w := e.as(s, http.MethodPost, "/api/v1/estoque/produtos", createProdutoBody("   ", "Nome Válido", "UN"))
-
-	if w.Code != http.StatusUnprocessableEntity || codeOf(t, w) != "campo_obrigatorio" {
-		t.Errorf("status = %d, code = %q", w.Code, codeOf(t, w))
+	for _, blank := range []string{"", "   ", "\t "} {
+		bodies := map[string]map[string]any{
+			"codigo":         createProdutoBody(blank, "Nome Válido", "UN"),
+			"nome":           createProdutoBody("COD-OK", blank, "UN"),
+			"unidade_medida": createProdutoBody("COD-OK", "Nome Válido", blank),
+		}
+		for field, body := range bodies {
+			w := e.as(s, http.MethodPost, "/api/v1/estoque/produtos", body)
+			if w.Code != http.StatusUnprocessableEntity || codeOf(t, w) != "validation_failed" {
+				t.Errorf("%s=%q: status = %d, code = %q, esperado 422 validation_failed", field, blank, w.Code, codeOf(t, w))
+			}
+		}
 	}
 }
 
