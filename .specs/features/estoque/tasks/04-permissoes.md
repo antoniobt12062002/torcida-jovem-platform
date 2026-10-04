@@ -52,9 +52,9 @@ T1 → T2
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `estoque.Contribution()` devolve exatamente a matriz aprovada — teste unitário confere `Grants` por papel
-- [ ] Nenhuma permissão usa string literal fora de `estoque/app`'s constantes `Perm*`
-- [ ] Gate check passes
+- [x] `estoque.Contribution()` devolve exatamente a matriz aprovada — teste unitário confere `Grants` por papel
+- [x] Nenhuma permissão usa string literal fora de `estoque/app`'s constantes `Perm*`
+- [x] Gate check passes
 
 **Tests**: unit
 **Gate**: Full
