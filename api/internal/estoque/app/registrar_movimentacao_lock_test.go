@@ -20,11 +20,11 @@ import (
 // call ran in — so a test can prove the lock and the insert share one.
 type txRecordingStore struct {
 	*infra.MovimentacaoRepository
-	mu          sync.Mutex
-	lockTx      *gorm.DB
-	lockInTx    bool
-	lockCalled  bool
-	criarTx     *gorm.DB
+	mu         sync.Mutex
+	lockTx     *gorm.DB
+	lockInTx   bool
+	lockCalled bool
+	criarTx    *gorm.DB
 }
 
 func (s *txRecordingStore) SaldoComLock(ctx context.Context, produtoID string) (int64, error) {
