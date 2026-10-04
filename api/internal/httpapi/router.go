@@ -11,6 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	financeirohttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/http"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
@@ -41,9 +42,10 @@ type PingFunc func(ctx context.Context) error
 
 // Deps are what the router composes.
 type Deps struct {
-	Ping     PingFunc
-	Identity *identity.Module
+	Ping           PingFunc
+	Identity       *identity.Module
 	Financeiro     *financeiro.Module
+	Estoque        *estoque.Module
 	AuditQuery     *audit.Query
 	Log            *slog.Logger
 	AllowedOrigins []string
@@ -125,8 +127,12 @@ func NewRouter(d Deps) *gin.Engine {
 	r.GET("/api/v1/audit-logs", append(append([]gin.HandlerFunc{}, authenticated...), platform.GetAuditLogs)...)
 	identityhttp.Register(r, handler, handler, identityhttp.Chains{Public: public, Authenticated: authenticated})
 	finWrapper := financeirohttp.Register(finHandler, finHandler)
-	auth := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticated...), op) }
-	upload := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticatedUpload...), op) }
+	auth := func(op gin.HandlerFunc) []gin.HandlerFunc {
+		return append(append([]gin.HandlerFunc{}, authenticated...), op)
+	}
+	upload := func(op gin.HandlerFunc) []gin.HandlerFunc {
+		return append(append([]gin.HandlerFunc{}, authenticatedUpload...), op)
+	}
 	r.GET("/api/v1/financeiro/contas", auth(finWrapper.ListContas)...)
 	r.POST("/api/v1/financeiro/contas", auth(finWrapper.CreateConta)...)
 	r.PATCH("/api/v1/financeiro/contas/:id", auth(finWrapper.RenameConta)...)

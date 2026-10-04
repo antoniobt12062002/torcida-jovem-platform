@@ -66,9 +66,9 @@ T4 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `estoque.Module` expõe os 2 repositórios e os 6 casos de uso, todos não-nil depois de `New`
-- [ ] Nenhuma rota HTTP, nenhum contrato, nenhum handler ainda
-- [ ] Gate check passes
+- [x] `estoque.Module` expõe os 2 repositórios e os 6 casos de uso, todos não-nil depois de `New`
+- [x] Nenhuma rota HTTP, nenhum contrato, nenhum handler ainda
+- [x] Gate check passes
 
 **Tests**: unit (completude do wiring)
 **Gate**: Full

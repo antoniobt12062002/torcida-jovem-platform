@@ -76,6 +76,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	}
 	docs := &documents.Service{DB: db, Storage: s3, Authz: authorizer, Audit: recorder, URLTTL: cfg.DocumentURLTTL}
 	fin := financeiro.New(financeiro.Deps{DB: db, Recorder: recorder, Authorizer: authorizer, Documents: docs})
+	est := estoque.New(estoque.Deps{DB: db, Recorder: recorder, Authorizer: authorizer})
 
 	mod := identity.New(identity.Deps{
 		DB: db, Recorder: recorder, Authorizer: authorizer, Matrix: matrix, Hasher: hasher, Denylist: password.DefaultDenylist(),
@@ -95,7 +96,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	logger.Info("papéis e permissões sincronizados", "changed", synced.Changed)
 
 	return httpapi.NewRouter(httpapi.Deps{
-		Ping: database.Ping(db), Identity: mod, Financeiro: fin, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: logger,
+		Ping: database.Ping(db), Identity: mod, Financeiro: fin, Estoque: est, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: logger,
 		AllowedOrigins: cfg.AllowedOrigins, Cookie: httpx.SessionCookie{Domain: cfg.CookieDomain, Secure: cfg.CookieSecure},
 	}), nil
 }
