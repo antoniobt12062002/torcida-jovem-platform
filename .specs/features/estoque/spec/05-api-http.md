@@ -98,10 +98,10 @@
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| API-01 | API-01: Produtos via HTTP | Design | Pending |
-| API-02 | API-02: Movimentações via HTTP | Design | Pending |
-| API-03 | API-03: Ajustes e saldo via HTTP | Design | Pending |
-| API-04 | API-04: Tratamento de erros uniforme | Design | Pending |
+| API-01 | API-01: Produtos via HTTP | Implementing | Verified |
+| API-02 | API-02: Movimentações via HTTP | Implementing | Verified |
+| API-03 | API-03: Ajustes e saldo via HTTP | Implementing | Verified |
+| API-04 | API-04: Tratamento de erros uniforme | Implementing | Verified |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 

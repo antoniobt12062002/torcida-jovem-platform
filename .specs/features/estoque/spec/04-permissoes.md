@@ -52,7 +52,7 @@
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PERM-01 | P1: Publicar a contribuição de RBAC | Design | Pending |
+| PERM-01 | P1: Publicar a contribuição de RBAC | Implementing | Verified |
 
 **Coverage:** 1 total, 1 mapped to tasks, 0 unmapped.
 
