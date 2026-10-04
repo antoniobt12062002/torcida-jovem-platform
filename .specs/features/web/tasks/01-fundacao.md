@@ -180,11 +180,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-03 (AC1-4, AC10), FND-04 (AC1, AC2, AC4)
 
 **Done when**:
-- [ ] Login com sucesso, `invalid_credentials`, `login_blocked` (com tempo de espera) e `must_change_password` cobertos
-- [ ] `/entrar` tem o link "Esqueci minha senha" para `routes.recuperarAcesso`
-- [ ] Rota autenticada sem sessão leva a `/entrar?next=…`, sem renderizar o conteúdo
-- [ ] Pessoa autenticada em `/entrar` vai para a página inicial
-- [ ] Gates passam
+- [x] Login com sucesso, `invalid_credentials`, `login_blocked` (com tempo de espera) e `must_change_password` cobertos
+- [x] `/entrar` tem o link "Esqueci minha senha" para `routes.recuperarAcesso`
+- [x] Rota autenticada sem sessão leva a `/entrar?next=…`, sem renderizar o conteúdo
+- [x] Pessoa autenticada em `/entrar` vai para a página inicial
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
