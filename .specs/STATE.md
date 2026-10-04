@@ -131,6 +131,14 @@
 - **Date**: 2026-10-04
 - **Status**: active
 
+### AD-017
+- **Decision**: O navegador acessa a API só pela origem do front. O Next.js faz rewrite de `/api/v1/*` para a API Go (`API_URL`). Sem CORS, sem cookie entre sites e sem mudança no cookie `tj_session`, no `SameSite=Lax`, no `Origin` nem no CSRF da API. A proteção de rotas no front não usa `proxy.ts`.
+- **Reason**: A API não emite CORS e só aceita escritas de `ALLOWED_ORIGINS`, e o cookie é `SameSite=Lax`, o que exige mesma origem. A ADR-005 tinha deixado o "uso de proxy pelo Next" em aberto. O `proxy.ts` do Next 16 trunca em silêncio corpos acima de 10 MB, e o upload de comprovantes aceita até 11 MiB.
+- **Trade-off**: O Next passa a estar no caminho de todas as chamadas à API. O encaminhamento de `Set-Cookie`, `Origin` e corpos grandes pelo rewrite é verificado contra a API real na fundação Web, e não presumido. Um proxy reverso externo continua possível depois, sem mudança no front.
+- **Scope**: `web/` (e `next.config.ts`). Ver [ADR-010](../docs/adr/010-acesso-do-navegador-a-api-por-rewrite-same-origin.md) e `.specs/features/web/`.
+- **Date**: 2026-10-04
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/financeiro/` — coordenação própria em `financeiro/STATE.md`
