@@ -73,10 +73,10 @@ T1 → T2
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution(), estoque.Contribution())...)` (ou equivalente) nos dois arquivos
-- [ ] Teste de integração confirma 6 novas permissões `estoque:%` no banco depois do sync (mesmo padrão do teste que `FIN-D-020` adicionou para `financeiro:%`, contando 16 — aqui o número esperado é 6)
-- [ ] Nenhum teste existente de `identity`/`httpapi` quebra por `PRESIDENTE`/`ADMIN_SISTEMA` ganharem/perderem cobertura inesperada — revisar os mesmos ambientes de teste que `FIN-D-020` listou (`identity/app`, `identity/http`, `httpapi`), já que a matriz de produção muda de novo
-- [ ] Gate check passes
+- [x] `app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution(), estoque.Contribution())...)` (ou equivalente) nos dois arquivos
+- [x] Teste de integração confirma 6 novas permissões `estoque:%` no banco depois do sync (mesmo padrão do teste que `FIN-D-020` adicionou para `financeiro:%`, contando 16 — aqui o número esperado é 6)
+- [x] Nenhum teste existente de `identity`/`httpapi` quebra por `PRESIDENTE`/`ADMIN_SISTEMA` ganharem/perderem cobertura inesperada — revisar os mesmos ambientes de teste que `FIN-D-020` listou (`identity/app`, `identity/http`, `httpapi`), já que a matriz de produção muda de novo
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: Full

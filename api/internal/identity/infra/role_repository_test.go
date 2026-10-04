@@ -14,6 +14,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/domain"
@@ -37,14 +38,15 @@ func newEnv(t *testing.T) env {
 }
 
 // matrix mirrors the real production composition (cmd/api, cmd/bootstrap-admin:
-// FoundationContributions() + financeiro.Contribution()) so that role/permission
-// invariants tested here (e.g. CONSELHO_FISCAL's effective permissions) stay
-// accurate to what the system actually grants — 05-permissoes/T3 moved
-// financeiro out of FoundationContributions() alone.
+// FoundationContributions() + financeiro.Contribution() + estoque.Contribution())
+// so that role/permission invariants tested here (e.g. CONSELHO_FISCAL's
+// effective permissions) stay accurate to what the system actually grants —
+// 05-permissoes/T3 moved financeiro out of FoundationContributions() alone,
+// and estoque/04-permissoes/T2 added estoque the same way.
 func matrix(t *testing.T, extra ...app.Contribution) domain.Matrix {
 	t.Helper()
 	contributions := append([]app.Contribution{}, app.FoundationContributions()...)
-	contributions = append(contributions, financeiro.Contribution())
+	contributions = append(contributions, financeiro.Contribution(), estoque.Contribution())
 	contributions = append(contributions, extra...)
 	m, err := app.BuildMatrix(contributions...)
 	if err != nil {
@@ -59,17 +61,20 @@ func matrix(t *testing.T, extra ...app.Contribution) domain.Matrix {
 // deleting). Before 05-permissoes/T3, these tests reused financeiro's
 // foundation placeholder for this; since T3 moved financeiro out of
 // FoundationContributions() entirely, they need their own disposable
-// fixture — unrelated to any real module.
+// fixture — unrelated to any real module. Module/permission names use
+// "fixture_removivel" rather than "estoque" (estoque/04-permissoes/T2: the
+// name became a real module, so reusing it here would be misleading, even
+// though the permission names never literally collide).
 func removableFixture() app.Contribution {
 	return app.Contribution{
-		Module: "estoque",
+		Module: "fixture_removivel",
 		Permissions: []authz.Definition{
-			{Permission: "estoque:item:create"},
-			{Permission: "estoque:item:update"},
-			{Permission: "estoque:item:read", CommonRead: true},
+			{Permission: "fixture_removivel:item:create"},
+			{Permission: "fixture_removivel:item:update"},
+			{Permission: "fixture_removivel:item:read", CommonRead: true},
 		},
 		Grants: map[domain.Role][]authz.Permission{
-			domain.RoleEstoqueLoja: {"estoque:item:create", "estoque:item:update", "estoque:item:read"},
+			domain.RoleEstoqueLoja: {"fixture_removivel:item:create", "fixture_removivel:item:update", "fixture_removivel:item:read"},
 		},
 	}
 }
@@ -194,11 +199,11 @@ func TestRemovedPermissionBecomesInactiveAndIsNeverDeleted(t *testing.T) {
 		t.Errorf("nenhuma permissão pode ser apagada: %d de %d", got, len(full.Definitions))
 	}
 	var active bool
-	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'estoque:item:create'").Scan(&active).Error; err != nil || active {
+	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'fixture_removivel:item:create'").Scan(&active).Error; err != nil || active {
 		t.Errorf("a permissão removida deveria estar inativa: active = %v, err = %v", active, err)
 	}
 	var links int64
-	_ = e.owner.Raw(`SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id WHERE p.name LIKE 'estoque:%'`).Scan(&links).Error
+	_ = e.owner.Raw(`SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id WHERE p.name LIKE 'fixture_removivel:%'`).Scan(&links).Error
 	if links != 0 {
 		t.Errorf("uma permissão inativa não mantém vínculos com papéis: %d", links)
 	}
@@ -220,7 +225,7 @@ func TestPermissionReturnedToTheCodeIsReactivated(t *testing.T) {
 	}
 
 	var active bool
-	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'estoque:item:create'").Scan(&active).Error; err != nil || !active {
+	if err := e.owner.Raw("SELECT is_active FROM permissions WHERE name = 'fixture_removivel:item:create'").Scan(&active).Error; err != nil || !active {
 		t.Errorf("deveria ter sido reativada: active = %v, err = %v", active, err)
 	}
 	events := syncEvents(t, e)
@@ -242,13 +247,13 @@ func TestNewContributionPermissionReachesPresidenteOnlyThroughTheSync(t *testing
 		t.Fatal(err)
 	}
 	extra := app.Contribution{
-		Module:      "estoque",
-		Permissions: []authz.Definition{{Permission: "estoque:item:create"}},
-		Grants:      map[domain.Role][]authz.Permission{domain.RoleEstoqueLoja: {"estoque:item:create"}},
+		Module:      "fixture_removivel",
+		Permissions: []authz.Definition{{Permission: "fixture_removivel:item:create"}},
+		Grants:      map[domain.Role][]authz.Permission{domain.RoleEstoqueLoja: {"fixture_removivel:item:create"}},
 	}
 	var n int64
 	q := `SELECT count(*) FROM role_permissions rp JOIN roles r ON r.id = rp.role_id JOIN permissions p ON p.id = rp.permission_id
-		WHERE r.name = 'PRESIDENTE' AND p.name = 'estoque:item:create'`
+		WHERE r.name = 'PRESIDENTE' AND p.name = 'fixture_removivel:item:create'`
 	_ = e.owner.Raw(q).Scan(&n).Error
 	if n != 0 {
 		t.Fatal("antes da sincronização o PRESIDENTE não pode ter a permissão nova")
@@ -281,7 +286,7 @@ func TestRemovedGrantIsListedAndDeleted(t *testing.T) {
 		}
 		contributions = append(contributions, c)
 	}
-	contributions = append(contributions, financeiro.Contribution())
+	contributions = append(contributions, financeiro.Contribution(), estoque.Contribution())
 	m, _ := app.BuildMatrix(contributions...)
 
 	if _, err := e.repo.Sync(context.Background(), m); err != nil {
@@ -406,6 +411,7 @@ func TestEffectivePermissionsAreTheUnionOfTheActiveRolesPermissions(t *testing.T
 
 	want := []authz.Permission{
 		"audit:log:read",
+		"estoque:movimentacao:read", "estoque:produto:read", "estoque:saldo:read",
 		"financeiro:comprovante:read", "financeiro:conta:read", "financeiro:lancamento:read",
 		"financeiro:parecer:opine", "financeiro:prestacao_contas:approve", "financeiro:prestacao_contas:read",
 		"financeiro:saldo:read", "identity:user:read",

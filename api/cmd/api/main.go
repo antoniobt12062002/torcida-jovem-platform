@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/config"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/httpapi"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
@@ -46,7 +47,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	}
 
 	recorder := audit.NewRecorder(db, logger)
-	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution(), estoque.Contribution())...)
 	if err != nil {
 		return nil, fmt.Errorf("matriz de papéis inválida: %w", err)
 	}
