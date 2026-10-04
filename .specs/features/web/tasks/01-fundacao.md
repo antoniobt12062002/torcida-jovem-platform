@@ -98,12 +98,12 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC2-4), FND-06
 
 **Done when**:
-- [ ] `X-CSRF-Token` presente em `POST`/`PUT`/`PATCH`/`DELETE` e ausente em `GET`
-- [ ] `401` em rota diferente de `POST /auth/login` chama `onUnauthenticated`; `403 password_change_required` e `403 csrf_invalid` chamam seus callbacks; `403 forbidden` não chama nenhum
-- [ ] `problem+json` vira `ApiError` com `status`, `code` e `errors[]`; `413`, `503`, rede e `code` desconhecido têm mensagens genéricas
-- [ ] `applyProblemToForm` põe erros nos campos e o resto em `root`
-- [ ] Chaves de consulta cobrem todos os recursos do design
-- [ ] Gates passam
+- [x] `X-CSRF-Token` presente em `POST`/`PUT`/`PATCH`/`DELETE` e ausente em `GET`
+- [x] `401` em rota diferente de `POST /auth/login` chama `onUnauthenticated`; `403 password_change_required` e `403 csrf_invalid` chamam seus callbacks; `403 forbidden` não chama nenhum
+- [x] `problem+json` vira `ApiError` com `status`, `code` e `errors[]`; `413`, `503`, rede e `code` desconhecido têm mensagens genéricas
+- [x] `applyProblemToForm` põe erros nos campos e o resto em `root`
+- [x] Chaves de consulta cobrem todos os recursos do design
+- [x] Gates passam
 
 **Tests**: unit com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
