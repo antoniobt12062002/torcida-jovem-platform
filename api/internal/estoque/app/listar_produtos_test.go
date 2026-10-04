@@ -8,19 +8,23 @@ import (
 	"testing"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque/app"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque/domain"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/authz"
 )
 
-// PRD-02 AC1: lista todos os SKUs, sem paginação.
+// PRD-02 AC1: lista todos os SKUs exatamente como criados, sem paginação.
 func TestListarProdutosReturnsEveryCreatedProdutoNoPagination(t *testing.T) {
 	e := newEnv(t)
 	actorCreate := actor(app.PermProdutoCreate)
+	criados := map[string]domain.Produto{}
 	for _, codigo := range []string{"A", "B", "C"} {
-		if _, err := e.criarProduto().Execute(context.Background(), app.CriarProdutoInput{
-			Actor: actorCreate, Codigo: codigo, Nome: "produto " + codigo, UnidadeMedida: "UN",
-		}); err != nil {
+		p, err := e.criarProduto().Execute(context.Background(), app.CriarProdutoInput{
+			Actor: actorCreate, Codigo: codigo, Nome: "produto " + codigo, UnidadeMedida: "UN-" + codigo,
+		})
+		if err != nil {
 			t.Fatalf("criar %s: %v", codigo, err)
 		}
+		criados[p.ID] = p
 	}
 
 	lista, err := e.listarProdutos().Execute(context.Background(), app.ListarProdutosInput{Actor: actor(app.PermProdutoRead)})
@@ -29,7 +33,17 @@ func TestListarProdutosReturnsEveryCreatedProdutoNoPagination(t *testing.T) {
 		t.Fatalf("listar: %v", err)
 	}
 	if len(lista) != 3 {
-		t.Errorf("lista = %+v, esperado 3 itens", lista)
+		t.Fatalf("lista = %+v, esperado 3 itens", lista)
+	}
+	for _, got := range lista {
+		want, ok := criados[got.ID]
+		if !ok {
+			t.Errorf("produto listado %s não foi criado neste teste", got.ID)
+			continue
+		}
+		if got.Codigo != want.Codigo || got.Nome != want.Nome || got.UnidadeMedida != want.UnidadeMedida || !got.CriadoEm.Equal(want.CriadoEm) {
+			t.Errorf("listado = %+v, criado = %+v", got, want)
+		}
 	}
 }
 

@@ -91,6 +91,35 @@ func TestCreateMovimentacaoDevolucaoWithoutReferenceAnswers422(t *testing.T) {
 	}
 }
 
+// API-02 AC5 / MOV-03 AC2 (via HTTP): referência inexistente, de outro SKU,
+// a um AJUSTE ou a outra DEVOLUCAO — todas respondem 422 devolucao_invalida.
+func TestCreateMovimentacaoDevolucaoWithAnInvalidReferenceAnswers422(t *testing.T) {
+	e := newEnv(t)
+	_, s := e.signedIn(domain.RoleEstoqueLoja)
+	produtoA := e.createProduto(s, "DEV-INV-A")
+	produtoB := e.createProduto(s, "DEV-INV-B")
+	entrada := decode(t, e.as(s, http.MethodPost, "/api/v1/estoque/movimentacoes", createMovimentacaoBody("ENTRADA", produtoA, 10, "INVENTARIO", nil)))["id"].(string)
+	ajuste := decode(t, e.as(s, http.MethodPost, "/api/v1/estoque/ajustes", map[string]any{"produto_id": produtoA, "quantidade": 1, "motivo": "contagem"}))["id"].(string)
+	devolucao := decode(t, e.as(s, http.MethodPost, "/api/v1/estoque/movimentacoes", createMovimentacaoBody("DEVOLUCAO", produtoA, 1, "COMPRA", &entrada)))["id"].(string)
+	inexistente := "00000000-0000-0000-0000-000000000000"
+
+	cases := map[string]struct {
+		produtoID string
+		ref       string
+	}{
+		"inexistente":     {produtoA, inexistente},
+		"outro_sku":       {produtoB, entrada},
+		"ajuste":          {produtoA, ajuste},
+		"outra_devolucao": {produtoA, devolucao},
+	}
+	for name, tc := range cases {
+		w := e.as(s, http.MethodPost, "/api/v1/estoque/movimentacoes", createMovimentacaoBody("DEVOLUCAO", tc.produtoID, 1, "COMPRA", &tc.ref))
+		if w.Code != http.StatusUnprocessableEntity || codeOf(t, w) != "devolucao_invalida" {
+			t.Errorf("%s: status = %d, code = %q", name, w.Code, codeOf(t, w))
+		}
+	}
+}
+
 // Quantidade zero responde 422 quantidade_invalida.
 func TestCreateMovimentacaoWithZeroQuantidadeAnswers422(t *testing.T) {
 	e := newEnv(t)

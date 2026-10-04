@@ -249,6 +249,22 @@ func TestRegistrarMovimentacaoDevolucaoWithAnInvalidReferenceIsRejected(t *testi
 	if !errors.Is(err, domain.ErrDevolucaoInvalida) {
 		t.Errorf("referenciar ajuste: err = %v, esperado ErrDevolucaoInvalida", err)
 	}
+
+	// Referenciar outra DEVOLUCAO (EST-D-009: nunca devolução de devolução).
+	devolucao, err := e.registrarMovimentacao().Execute(context.Background(), app.RegistrarMovimentacaoInput{
+		Actor: actorRM, Tipo: domain.Devolucao, ProdutoID: produtoA, Quantidade: 1, Origem: domain.OrigemCompra,
+		MovimentacaoDeID: &entradaA.ID,
+	})
+	if err != nil {
+		t.Fatalf("devolução válida de teste: %v", err)
+	}
+	_, err = e.registrarMovimentacao().Execute(context.Background(), app.RegistrarMovimentacaoInput{
+		Actor: actorRM, Tipo: domain.Devolucao, ProdutoID: produtoA, Quantidade: 1, Origem: domain.OrigemCompra,
+		MovimentacaoDeID: &devolucao.ID,
+	})
+	if !errors.Is(err, domain.ErrDevolucaoInvalida) {
+		t.Errorf("referenciar outra devolução: err = %v, esperado ErrDevolucaoInvalida", err)
+	}
 }
 
 // MOV-03 AC4: a movimentação original nunca é alterada por uma devolução.

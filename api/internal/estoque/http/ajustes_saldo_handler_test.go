@@ -108,9 +108,11 @@ func TestGetSaldoAnswers200WithTheCombinedBalance(t *testing.T) {
 	}
 }
 
-// AJS-02 AC3: um ator com só movimentacao:read (não saldo:read) é recusado
-// com 403 forbidden — permissão própria, mesma lógica de FIN-D-013.
-func TestGetSaldoWithOnlyMovimentacaoReadPermissionIsForbidden(t *testing.T) {
+// AJS-02 AC3 (via HTTP): sem estoque:saldo:read a resposta é 403 forbidden.
+// Nenhum papel do V1 tem movimentacao:read sem saldo:read (EST-D-004), então
+// o caso "só movimentacao:read" é provado no caso de uso
+// (app/consultar_saldo_test.go), com um Principal sintético.
+func TestGetSaldoWithoutThePermissionIsForbidden(t *testing.T) {
 	e := newEnv(t)
 	_, s := e.signedIn(domain.RoleEstoqueLoja)
 	produtoID := e.createProduto(s, "SALDO-2")

@@ -65,15 +65,22 @@ func TestCriarProdutoRejectsAnyBlankField(t *testing.T) {
 }
 
 // PRD-01 AC4: sem a permissão, a resposta é forbidden, sem revelar se o
-// codigo já existe.
+// codigo já existe — inclusive para um codigo que JÁ existe (a resposta não
+// pode ser codigo_duplicado, que denunciaria a existência).
 func TestCriarProdutoWithoutThePermissionIsForbidden(t *testing.T) {
 	e := newEnv(t)
+	if _, err := e.criarProduto().Execute(context.Background(), app.CriarProdutoInput{
+		Actor: actor(app.PermProdutoCreate), Codigo: "EXISTENTE", Nome: "x", UnidadeMedida: "UN",
+	}); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 
-	_, err := e.criarProduto().Execute(context.Background(), app.CriarProdutoInput{
-		Actor: actor(), Codigo: "X", Nome: "x", UnidadeMedida: "UN",
-	})
-
-	if !errors.Is(err, authz.ErrForbidden) {
-		t.Errorf("err = %v, esperado forbidden", err)
+	for _, codigo := range []string{"NOVO", "EXISTENTE"} {
+		_, err := e.criarProduto().Execute(context.Background(), app.CriarProdutoInput{
+			Actor: actor(), Codigo: codigo, Nome: "x", UnidadeMedida: "UN",
+		})
+		if !errors.Is(err, authz.ErrForbidden) {
+			t.Errorf("%s: err = %v, esperado forbidden (nunca codigo_duplicado)", codigo, err)
+		}
 	}
 }

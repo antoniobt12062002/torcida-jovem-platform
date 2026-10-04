@@ -44,7 +44,7 @@ func TestCreateProdutoWithAWhitespaceOnlyFieldAnswers422CampoObrigatorio(t *test
 	}
 }
 
-// PRD-01 AC3: código já usado por outro produto responde 409 codigo_duplicado.
+// PRD-01 AC2: código já usado por outro produto responde 409 codigo_duplicado.
 func TestCreateProdutoWithARepeatedCodigoAnswers409(t *testing.T) {
 	e := newEnv(t)
 	_, s := e.signedIn(domain.RoleEstoqueLoja)
