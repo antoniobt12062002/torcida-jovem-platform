@@ -19,7 +19,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | --- | --- | --- | --- | --- |
 | `infra` (extensão: `Saldo` sem lock) | integration | caminho de consulta + caso de SKU sem nenhuma movimentação (saldo zero) | `api/internal/estoque/infra/*_test.go` | `go test -tags=integration ./...` |
-| `app` | unit (com doubles) | 1:1 com os ACs de AJS-01/AJS-02 | `api/internal/estoque/app/*_test.go` | `go test ./...` |
+| `app` | integration (Postgres real via `testutil.NewTestDB` + `infra` real; `Authz` via `simpleAuthz`) | 1:1 com os ACs de AJS-01/AJS-02 | `api/internal/estoque/app/*_test.go` (`//go:build integration`) | `go test -tags=integration ./...` |
 
 ## Gate Check Commands
 
@@ -61,7 +61,7 @@ T2 → T3
 - [ ] Auditoria `movimentacao.adjust` com `Reason` preenchido
 - [ ] Gate check passes
 
-**Tests**: unit (doubles)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso ajustar estoque`
 
@@ -103,7 +103,7 @@ T2 → T3
 - [ ] `estoque:saldo:read` é permissão distinta de `estoque:movimentacao:read` — teste confirma que um ator com só a segunda é recusado
 - [ ] Gate check passes
 
-**Tests**: unit (doubles)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso consultar saldo`
 
@@ -143,6 +143,6 @@ T2 ──→ T3
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | --- | --- | --- | --- | --- |
-| T1: AjustarEstoque | `app` | unit | unit | ✅ OK |
+| T1: AjustarEstoque | `app` | integration | integration | ✅ OK |
 | T2: Extensão do repositório | `infra` | integration | integration | ✅ OK |
-| T3: ConsultarSaldo | `app` | unit | unit | ✅ OK |
+| T3: ConsultarSaldo | `app` | integration | integration | ✅ OK |

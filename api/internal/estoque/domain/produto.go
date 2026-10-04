@@ -23,4 +23,6 @@ var (
 	ErrProdutoNaoEncontrado = errors.New("produto não encontrado")
 	// ErrCodigoDuplicado is returned when codigo is already used by another produto.
 	ErrCodigoDuplicado = errors.New("código já utilizado")
+	// ErrCampoObrigatorio is returned when codigo, nome or unidade_medida is blank (PRD-01 AC3).
+	ErrCampoObrigatorio = errors.New("campo obrigatório")
 )

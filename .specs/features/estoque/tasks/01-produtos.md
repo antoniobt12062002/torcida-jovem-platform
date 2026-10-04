@@ -22,7 +22,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 | --- | --- | --- | --- | --- |
 | `domain` (entidade+sentinels) | none | build gate only | `api/internal/estoque/domain/*.go` | gate `Full` |
 | `infra` (repositório) | integration | caminhos de consulta principais + tradução de erro (`UNIQUE`→`ErrCodigoDuplicado`) | `api/internal/estoque/infra/*_test.go` (`//go:build integration`) | `go test -tags=integration ./...` |
-| `app` (caso de uso) | unit (com doubles) | 1:1 com os ACs de PRD-01/PRD-02, incluindo todo edge case listado | `api/internal/estoque/app/*_test.go` | `go test ./...` |
+| `app` (caso de uso) | integration (Postgres real via `testutil.NewTestDB` + `infra` real; `Authz` via `simpleAuthz`, nunca RBAC completo) | 1:1 com os ACs de PRD-01/PRD-02, incluindo todo edge case listado | `api/internal/estoque/app/*_test.go` (`//go:build integration`) | `go test -tags=integration ./...` |
 
 ## Gate Check Commands
 
@@ -122,11 +122,11 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 4 ACs de PRD-01 cobertos (sucesso, código duplicado, campo vazio, sem permissão)
-- [ ] Auditoria `produto.create` registrada na mesma transação da criação
-- [ ] Gate check passes
+- [x] Os 4 ACs de PRD-01 cobertos (sucesso, código duplicado, campo vazio, sem permissão)
+- [x] Auditoria `produto.create` registrada na mesma transação da criação
+- [x] Gate check passes
 
-**Tests**: unit (doubles para `Authz`/`Produtos`/`Audit`/`Tx`)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`, `Authz` via `simpleAuthz` — mesmo padrão de `financeiro/app`, nunca pure doubles sem I/O; achado mecânico, corrigido na Test Coverage Matrix)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso criar produto`
 
@@ -146,7 +146,7 @@ T3 → T5
 - [ ] Os 2 ACs de PRD-02 cobertos (sucesso sem paginação, sem permissão)
 - [ ] Gate check passes
 
-**Tests**: unit (doubles)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso listar produtos`
 
@@ -196,5 +196,5 @@ T3 → T5
 | T1: Migration | — | integration (teste de migração) | integration | ✅ OK |
 | T2: Entidade | `domain` | none | none | ✅ OK |
 | T3: Repositório | `infra` | integration | integration | ✅ OK |
-| T4: CriarProduto | `app` | unit | unit | ✅ OK |
-| T5: ListarProdutos | `app` | unit | unit | ✅ OK |
+| T4: CriarProduto | `app` | integration | integration | ✅ OK |
+| T5: ListarProdutos | `app` | integration | integration | ✅ OK |

@@ -20,7 +20,7 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 | --- | --- | --- | --- | --- |
 | `domain` | none | build gate only | `api/internal/estoque/domain/*.go` | gate `Full` |
 | `infra` (incl. `SaldoComLock`) | integration | caminhos de consulta + **teste de concorrência real** (2 goroutines, Postgres real, disputando o último saldo) | `api/internal/estoque/infra/*_test.go` | `go test -tags=integration ./...` |
-| `app` | unit (com doubles) | 1:1 com os ACs de MOV-01 a MOV-04, incluindo todo edge case | `api/internal/estoque/app/*_test.go` | `go test ./...` |
+| `app` | integration (Postgres real via `testutil.NewTestDB` + `infra` real; `Authz` via `simpleAuthz`) | 1:1 com os ACs de MOV-01 a MOV-04, incluindo todo edge case | `api/internal/estoque/app/*_test.go` (`//go:build integration`) | `go test -tags=integration ./...` |
 
 ## Gate Check Commands
 
@@ -124,7 +124,7 @@ T3 → T5
 - [ ] `DEVOLUCAO` referenciando `AJUSTE`, outra `DEVOLUCAO`, produto diferente, ou id inexistente, é recusada com `devolucao_invalida`
 - [ ] Gate check passes
 
-**Tests**: unit (doubles) + integração (pelo menos um teste real por tipo, usando `testutil.NewTestDB`, confirmando o efeito real no saldo agregado)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`; pelo menos um teste por tipo, confirmando o efeito real no saldo agregado)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso registrar movimentacao`
 
@@ -144,7 +144,7 @@ T3 → T5
 - [ ] Os 2 ACs de MOV-04 cobertos, incluindo listar movimentações de todos os tipos (mesmo as que só `03-ajustes-e-saldo` criará — a listagem já deve devolver qualquer linha da tabela, sem filtrar por tipo)
 - [ ] Gate check passes
 
-**Tests**: unit (doubles)
+**Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full
 **Commit**: `feat(estoque): caso de uso listar movimentacoes`
 
@@ -192,5 +192,5 @@ T3 → T5
 | T1: Migration | — | integration | integration | ✅ OK |
 | T2: Entidade | `domain` | none | none | ✅ OK |
 | T3: Repositório | `infra` | integration (+ concorrência) | integration | ✅ OK |
-| T4: RegistrarMovimentacao | `app` | unit | unit + integração | ✅ OK (excede o mínimo, não viola) |
-| T5: ListarMovimentacoes | `app` | unit | unit | ✅ OK |
+| T4: RegistrarMovimentacao | `app` | integration | integration | ✅ OK |
+| T5: ListarMovimentacoes | `app` | integration | integration | ✅ OK |
