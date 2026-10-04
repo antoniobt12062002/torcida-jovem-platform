@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/audit"
@@ -32,6 +33,7 @@ func testDeps(ping PingFunc) Deps {
 		Ping:           ping,
 		Identity:       identity.New(identity.Deps{}),
 		Financeiro:     financeiro.New(financeiro.Deps{}),
+		Estoque:        estoque.New(estoque.Deps{}),
 		AuditQuery:     &audit.Query{},
 		Log:            logx.New("error", io.Discard),
 		AllowedOrigins: []string{appOrigin},

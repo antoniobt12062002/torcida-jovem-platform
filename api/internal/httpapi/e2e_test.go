@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity/app"
@@ -56,7 +57,7 @@ func newE2E(t *testing.T) *e2e {
 	logs := &bytes.Buffer{}
 	log := logx.New("info", logs)
 	rec := audit.NewRecorder(db, log)
-	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution(), estoque.Contribution())...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,8 +84,9 @@ func newE2E(t *testing.T) *e2e {
 	}
 	docs := &documents.Service{DB: db, Storage: s3, Authz: authorizer, Audit: rec, URLTTL: 5 * time.Minute}
 	fin := financeiro.New(financeiro.Deps{DB: db, Recorder: rec, Authorizer: authorizer, Documents: docs})
+	est := estoque.New(estoque.Deps{DB: db, Recorder: rec, Authorizer: authorizer})
 	e.router = NewRouter(Deps{
-		Ping: func(context.Context) error { return nil }, Identity: e.mod, Financeiro: fin,
+		Ping: func(context.Context) error { return nil }, Identity: e.mod, Financeiro: fin, Estoque: est,
 		AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: log,
 		AllowedOrigins: []string{appOrigin}, Cookie: httpx.SessionCookie{Secure: true},
 	})

@@ -45,6 +45,14 @@ func TestBootstrapAdminWorksOnAFreshDatabaseBeforeTheAPIEverStarted(t *testing.T
 	if financeiroPerms != 16 {
 		t.Errorf("permissões de financeiro sincronizadas = %d, esperado 16 (3 institucionais + 13 operacionais)", financeiroPerms)
 	}
+	// estoque/04-permissoes/T2: mesma razão — estoque.Contribution() precisa
+	// estar wired aqui para que o catálogo de estoque já exista num banco
+	// provisionado só por este comando.
+	var estoquePerms int64
+	owner.Raw(`SELECT count(*) FROM permissions WHERE name LIKE 'estoque:%'`).Scan(&estoquePerms)
+	if estoquePerms != 6 {
+		t.Errorf("permissões de estoque sincronizadas = %d, esperado 6", estoquePerms)
+	}
 }
 
 // IDN-01.2: o segundo bootstrap é recusado e nada é criado.

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/config"
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/httpapi"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
@@ -46,7 +47,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	}
 
 	recorder := audit.NewRecorder(db, logger)
-	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution())...)
+	matrix, err := app.BuildMatrix(append(app.FoundationContributions(), financeiro.Contribution(), estoque.Contribution())...)
 	if err != nil {
 		return nil, fmt.Errorf("matriz de papéis inválida: %w", err)
 	}
@@ -75,6 +76,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	}
 	docs := &documents.Service{DB: db, Storage: s3, Authz: authorizer, Audit: recorder, URLTTL: cfg.DocumentURLTTL}
 	fin := financeiro.New(financeiro.Deps{DB: db, Recorder: recorder, Authorizer: authorizer, Documents: docs})
+	est := estoque.New(estoque.Deps{DB: db, Recorder: recorder, Authorizer: authorizer})
 
 	mod := identity.New(identity.Deps{
 		DB: db, Recorder: recorder, Authorizer: authorizer, Matrix: matrix, Hasher: hasher, Denylist: password.DefaultDenylist(),
@@ -94,7 +96,7 @@ func boot(cfg config.Config, logger *slog.Logger) (http.Handler, error) {
 	logger.Info("papéis e permissões sincronizados", "changed", synced.Changed)
 
 	return httpapi.NewRouter(httpapi.Deps{
-		Ping: database.Ping(db), Identity: mod, Financeiro: fin, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: logger,
+		Ping: database.Ping(db), Identity: mod, Financeiro: fin, Estoque: est, AuditQuery: &audit.Query{Authz: authorizer, DB: db}, Log: logger,
 		AllowedOrigins: cfg.AllowedOrigins, Cookie: httpx.SessionCookie{Domain: cfg.CookieDomain, Secure: cfg.CookieSecure},
 	}), nil
 }
