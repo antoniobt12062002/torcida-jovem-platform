@@ -30,7 +30,7 @@ O `financeiro` V1 está em `develop` com 15 operações HTTP: plano de contas, l
 | Plano de contas | Árvore por `parent_id`, com contas inativas visíveis e marcadas | Contas nunca são excluídas (AD-007) | y |
 | Contas oferecidas num lançamento | Só contas ativas cujo `tipo` é o do lançamento; a API decide no fim (`conta_invalida`, `lancamento_tipo_incompativel`) | Evita erro previsível sem criar regra | y |
 | Valor líquido | Exibido como prévia (bruto − taxa) durante a digitação; o valor gravado é o devolvido pela API | A API calcula `valor_liquido_cents` | y |
-| Tipos de arquivo de comprovante | Seletor sugere `.pdf`, `.jpg`, `.jpeg`, `.png`, `.webp` e avisa acima de 10 MiB antes de enviar; a API decide | Lista e limite de `platform/documents` | y |
+| Tipos de arquivo de comprovante | Seletor sugere `.pdf`, `.jpg`, `.jpeg`, `.png`, `.webp` e recusa antes do envio arquivos acima de 10 MiB − 64 KiB (10.420.224 bytes); a API decide tipo e limite (10 MiB) | Lista e limite de `platform/documents`; margem para o envelope `multipart/form-data`, porque o rewrite do Next trunca corpos acima de cerca de 10 MiB (WEB-D-009, correção de 2026-10-04) | y |
 | Atualização do saldo | Toda escrita que muda status (receber, pagar, cancelar) invalida `queryKeys.financeiro.saldo` | WEB-D-010 | y |
 
 **Open questions:** none.
@@ -112,12 +112,12 @@ O `financeiro` V1 está em `develop` com 15 operações HTTP: plano de contas, l
 
 1. WHEN uma pessoa com `financeiro:comprovante:read` abre o detalhe de um lançamento THEN o sistema SHALL chamar `GET /api/v1/financeiro/lancamentos/{id}/comprovantes` e listar nome, tipo, tamanho, versão, autor e data, do mais novo para o mais antigo.
 2. WHEN uma pessoa com `financeiro:comprovante:create` escolhe um arquivo THEN o sistema SHALL enviá-lo como `multipart/form-data` no campo `file` para `POST /api/v1/financeiro/lancamentos/{id}/comprovantes`, mostrar o progresso como "enviando" e, em `201`, atualizar a lista.
-3. IF o arquivo escolhido tem mais de 10 MiB THEN o sistema SHALL avisar antes de enviar e não SHALL chamar a API.
+3. IF o arquivo escolhido tem mais de 10.420.224 bytes (10 MiB − 64 KiB, limite efetivo do cliente) THEN o sistema SHALL informar que o arquivo excede o limite permitido e não SHALL chamar a API; WHEN o arquivo tem até 10.420.224 bytes THEN o sistema SHALL enviá-lo. Essa margem é mitigação da camada Web (WEB-D-009); o limite da API continua 10 MiB.
 4. IF a API responde `413` (`payload_too_large` ou `document_too_large`) ou `422` (`document_extension_not_allowed`, `document_type_not_allowed`, `document_type_mismatch`) THEN o sistema SHALL mostrar a mensagem correspondente.
 5. WHEN uma pessoa com `financeiro:comprovante:read` pede para baixar THEN o sistema SHALL chamar `GET /api/v1/financeiro/comprovantes/{documentId}/url` no momento do clique e abrir a URL assinada, sem guardá-la no cache de consultas.
 6. IF a API responde `404 document_not_found` ou `lancamento_nao_encontrado` THEN o sistema SHALL mostrar a mensagem correspondente.
 
-**Independent Test**: com MSW, anexar um PDF, recusar um arquivo de 11 MiB antes do envio, baixar pela URL assinada.
+**Independent Test**: com MSW, anexar um PDF, aceitar um arquivo de exatamente 10.420.224 bytes, recusar um de 10.420.225 bytes sem nenhuma requisição, mostrar a mensagem do `413 document_too_large` devolvido pela API, baixar pela URL assinada.
 
 ---
 

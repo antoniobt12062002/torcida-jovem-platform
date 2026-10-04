@@ -107,6 +107,10 @@ Cada módulo expõe seus itens de navegação em `features/<modulo>/nav.ts`, arq
 
 Definidos em cada `tasks/*.md`. Em todas: **Web** (`pnpm lint && pnpm exec next typegen && pnpm exec tsc --noEmit && pnpm test && pnpm build`), **Contract** (`pnpm lint:api && pnpm gen:api:check`), **Backend intacto** (`git diff --name-only develop -- api/` vazio) e **Ownership** (diff só nos caminhos da unidade). **Audit** (`pnpm audit --audit-level high`) na task de dependências (01/T1) e na última task de cada unidade. Códigos de saída capturados de verdade (no Windows, `cmd /v:on` com `!ERRORLEVEL!`).
 
+### Configuração de CI necessária para o build
+
+Não é decisão de arquitetura. O rewrite é resolvido ao carregar `next.config.ts`, e `next typegen` e `next build` falham sem `API_URL`, por design: não há valor padrão. O job `web` do CI fornece `API_URL=http://localhost:8080` só nesses dois passos, como valor de validação. Os gates locais rodam com `API_URL` no ambiente. Cada ambiente implantado fornece o seu próprio `API_URL` no build (nota da ADR-010 de 2026-10-04).
+
 ### Critérios de integração e verificador independente
 
 Definidos em `design/06-integracao.md`: o que cada agente entrega, conferência de propriedade, integração sem resolução manual de conflito, gates completos por rodada, e a estratégia do agente VERIFY (checagem ancorada na spec, sensor com dez falhas mínimas em worktree temporário, smoke repetido, `validation.md`).
@@ -144,6 +148,8 @@ O DAG da auditoria punha F2 (login) e F3 (senha) antes ou em paralelo a F4, mas 
 
 ### WEB-D-009 — Proteção de rotas no layout autenticado, sem `proxy.ts` (derivada de WEB-D-001 e WEB-D-002)
 O layout `app/(app)/layout.tsx` consulta `GET /api/v1/auth/me` e redireciona quando não há sessão. Não se usa `proxy.ts`, porque no Next 16 ele trunca em silêncio corpos acima de 10 MB, e o upload de comprovantes aceita até 11 MiB. A segurança real continua na API: o gate do front é só navegação.
+
+**Correção (2026-10-04, achado técnico de F1, resolvido pelo mantenedor):** o próprio rewrite também trunca corpos acima de cerca de 10 MiB, mesmo sem `proxy.ts`; acima disso a pessoa recebe `500` e não o `413` da API (evidência em `evidence/f1-rewrite.md`). Resolução, como mitigação só da camada Web e não como regra de negócio: o front recusa antes do envio arquivos acima de **10 MiB − 64 KiB (10.420.224 bytes)**, margem para o envelope `multipart/form-data` (FWB-05 AC3). O limite da API continua 10 MiB e é a autoridade. Sem `experimental.proxyClientMaxBodySize` e sem proxy externo na V1. Nota correspondente na ADR-010.
 
 ### WEB-D-010 — Chaves de consulta centralizadas em `lib/api/query-keys.ts` (derivada de WEB-D-003 e da regra de propriedade)
 F1 define as chaves do TanStack Query para todos os recursos do contrato. Assim FIN-b pode ler contas e invalidar o saldo sem importar código de FIN-a, e frentes paralelas compartilham cache sem compartilhar arquivo.

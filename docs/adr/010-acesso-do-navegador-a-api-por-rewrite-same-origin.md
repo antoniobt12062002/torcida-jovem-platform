@@ -67,6 +67,13 @@ Consequências diretas:
 - ❌ Exige mudar a API (CORS e preflight) e o cookie (`SameSite=None`), contrariando o `SameSite=Lax` confirmado na ADR-005
 - ❌ Amplia a superfície de CSRF
 
+## Notas
+
+Achados da verificação contra a API real (F1, evidência em `.specs/features/web/evidence/f1-rewrite.md`). A decisão não muda; as duas notas corrigem consequências esperadas.
+
+- 2026-10-04: **o destino do rewrite é fixado no build.** `next build`, `next typegen` e `next dev` falham sem `API_URL`, e `next start` usa o destino gravado no build; mudar o endereço da API exige novo build. Não há valor padrão. O CI fornece `API_URL` só nos passos `next typegen` e `next build`, como configuração de validação; cada ambiente implantado fornece o seu próprio valor no build.
+- 2026-10-04: **o rewrite também limita o corpo a cerca de 10 MiB.** Mesmo sem `proxy.ts`, uma requisição maior encaminhada pelo rewrite é truncada pelo Next ("Request body exceeded 10MB"), e a pessoa recebe `500`, não o `413` da API. A consequência acima sobre `proxy.ts` continua válida, mas não basta. Resolução, como mitigação só da camada Web: o front recusa, antes do envio, arquivos acima de 10 MiB − 64 KiB (10.420.224 bytes), margem para o envelope `multipart/form-data`. O limite da API (10 MiB) não muda e continua sendo a autoridade. Não se usa `experimental.proxyClientMaxBodySize` nem proxy externo na V1.
+
 ## Links
 
 - [ADR-005](005-autenticacao-e-rbac.md): resolve a pendência "uso de proxy pelo Next" registrada nas notas

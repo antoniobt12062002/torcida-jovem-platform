@@ -92,7 +92,7 @@ Upload: `openapi-fetch` com `bodySerializer` que monta `FormData` com o campo `f
 
 | Risco | Mitigação |
 | --- | --- |
-| Upload grande pelo rewrite | Verificado em F1 (FND-01 AC5). |
+| Upload grande pelo rewrite | Verificado em F1 (FND-01 AC5): o rewrite trunca corpos acima de cerca de 10 MiB. O painel recusa antes do envio arquivos acima de 10.420.224 bytes (10 MiB − 64 KiB), constante única em `features/financeiro/comprovantes/`, com mensagem de arquivo acima do limite (WEB-D-009, correção de 2026-10-04). |
 | URL assinada expirar se guardada | Buscada no clique, nunca em cache. |
 | FIN-a e FIN-b divergirem na consulta de contas | Mesma chave e mesma forma de retorno; teste de FIN-b usa a fixture de contas de `test/msw/fixtures.ts`. |
 
