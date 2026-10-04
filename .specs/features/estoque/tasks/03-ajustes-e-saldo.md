@@ -99,9 +99,9 @@ T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 3 ACs de AJS-02 cobertos (sucesso inclusive zero/negativo, produto inexistente, sem permissão)
-- [ ] `estoque:saldo:read` é permissão distinta de `estoque:movimentacao:read` — teste confirma que um ator com só a segunda é recusado
-- [ ] Gate check passes
+- [x] Os 3 ACs de AJS-02 cobertos (sucesso inclusive zero/negativo, produto inexistente, sem permissão)
+- [x] `estoque:saldo:read` é permissão distinta de `estoque:movimentacao:read` — teste confirma que um ator com só a segunda é recusado
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real via `testutil.NewTestDB`)
 **Gate**: Full

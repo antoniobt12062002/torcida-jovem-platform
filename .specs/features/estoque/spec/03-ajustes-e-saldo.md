@@ -77,8 +77,8 @@
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| AJS-01 | P1: Registrar ajuste | Design | Pending |
-| AJS-02 | P1: Consultar saldo | Design | Pending |
+| AJS-01 | P1: Registrar ajuste | Implementing | Verified |
+| AJS-02 | P1: Consultar saldo | Implementing | Verified |
 
 **Coverage:** 2 total, 2 mapped to tasks, 0 unmapped.
 

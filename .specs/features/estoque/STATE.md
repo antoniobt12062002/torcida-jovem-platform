@@ -12,7 +12,7 @@ Convenção de numeração local: **EST-D-NNN** para decisões que valem só par
 |---|---|---|---|
 | 01 | `spec/01-produtos.md` | PRD-01, PRD-02 | Concluída (T1-T5) |
 | 02 | `spec/02-movimentacoes.md` | MOV-01 a MOV-04 | Concluída (T1-T5) |
-| 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Em andamento (T1/3) |
+| 03 | `spec/03-ajustes-e-saldo.md` | AJS-01, AJS-02 | Concluída (T1-T3) |
 | 04 | `spec/04-permissoes.md` | PERM-01 | Especificada; não implementada |
 | 05 | `spec/05-api-http.md` | API-01 a API-04 | Especificada; não implementada |
 
@@ -167,6 +167,8 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 - **`03-ajustes-e-saldo`/`T1`**: `estoque/app/ajustar_estoque.go` — `AjustarEstoque`, permissão própria (`estoque:movimentacao:adjust`, distinta de `create`), ordem permissão→quantidade≠0→motivo→busca→transação (mesmo molde de `financeiro/app.CancelarLancamento`), nunca checa saldo (porta `MovimentacaoCreatorOnly` sem `SaldoComLock` — garantia estrutural). `domain.ErrMotivoObrigatorio` adicionado a `movimentacao.go`. 5 testes de integração (os 5 ACs de AJS-01) + mutação em 2 pontos (motivo removido, permissão removida) — ambos mortos.
 
 - **`03-ajustes-e-saldo`/`T2`**: `estoque/infra/movimentacao_repository.go` estendido com `Saldo` (sem lock) — mesma agregação de `SaldoComLock`, sem a linha do lock, reaproveitado por `ConsultarSaldo` (consulta pura, nunca paga o custo do lock). 2 testes de integração (saldo zero sem movimentação, soma combinada dos 4 tipos) + mutação (`Saldo` fixado em `0`) — morta.
+
+- **`03-ajustes-e-saldo`/`T3`**: `estoque/app/consultar_saldo.go` — `ConsultarSaldo`, consulta pura, permissão própria (`estoque:saldo:read`, distinta de `movimentacao:read`, mesma lógica de `FIN-D-013`). 3 testes de integração (os 3 ACs de AJS-02) + mutação em 2 pontos (permissão removida, checagem de produto removida) — ambos mortos. **`03-ajustes-e-saldo` concluída (T1-T3)** — gate completo (full, integration, lint, arquitetura) 100% verde, sem nenhuma exceção. Domínio V1 de `estoque` (`01`-`03`) está completo — restam só `04-permissoes` e `05-api-http`.
 
 ## Handoff
 
