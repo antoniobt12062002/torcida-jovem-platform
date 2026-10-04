@@ -159,11 +159,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-03 (AC5-9), FND-04 (AC3)
 
 **Done when**:
-- [ ] Token CSRF e contexto só em memória (teste confere que `localStorage` e `sessionStorage` ficam vazios)
-- [ ] Logout limpa todo o cache de consultas
-- [ ] Dois `401` simultâneos produzem um único redirecionamento
-- [ ] `safeNext` recusa `//x`, `https://x` e caminhos sem `/` inicial
-- [ ] Gates passam
+- [x] Token CSRF e contexto só em memória (teste confere que `localStorage` e `sessionStorage` ficam vazios)
+- [x] Logout limpa todo o cache de consultas
+- [x] Dois `401` simultâneos produzem um único redirecionamento
+- [x] `safeNext` recusa `//x`, `https://x` e caminhos sem `/` inicial
+- [x] Gates passam
 
 **Tests**: unit + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
