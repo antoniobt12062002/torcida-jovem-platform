@@ -52,8 +52,8 @@ func TestEveryRegisteredRouteHasAContractOperationAndViceVersa(t *testing.T) {
 	if len(withoutRoute) > 0 {
 		t.Errorf("operações de contrato sem rota registrada: %v", withoutRoute)
 	}
-	if len(routeKeys(router.Routes())) != 31 {
-		t.Errorf("rotas = %d, esperado 31 (healthz, auditoria, 14 de identidade e 15 de financeiro)", len(routeKeys(router.Routes())))
+	if len(routeKeys(router.Routes())) != 37 {
+		t.Errorf("rotas = %d, esperado 37 (healthz, auditoria, 14 de identidade, 15 de financeiro e 6 de estoque)", len(routeKeys(router.Routes())))
 	}
 }
 

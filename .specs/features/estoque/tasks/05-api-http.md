@@ -156,11 +156,11 @@ T4 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `httpapi.NewRouter` falha se rota e contrato de `estoque` divergirem
-- [ ] Um teste e2e por recurso (produtos, movimentações, ajustes+saldo) através do roteador real
-- [ ] Os 2 testes de paridade voltam a passar sem exceção
-- [ ] `pnpm lint:api`/`pnpm gen:api:check` seguem verdes com `estoque.yaml` incluído
-- [ ] Gate check passes (Full + Contract, sem nenhuma exceção remanescente)
+- [x] `httpapi.NewRouter` falha se rota e contrato de `estoque` divergirem
+- [x] Um teste e2e por recurso (produtos, movimentações, ajustes+saldo) através do roteador real
+- [x] Os 2 testes de paridade voltam a passar sem exceção
+- [x] `pnpm lint:api`/`pnpm gen:api:check` seguem verdes com `estoque.yaml` incluído
+- [x] Gate check passes (Full + Contract, sem nenhuma exceção remanescente)
 
 **Tests**: integration (e2e, mesmo padrão de `httpapi/financeiro_e2e_test.go`)
 **Gate**: Full + Contract
