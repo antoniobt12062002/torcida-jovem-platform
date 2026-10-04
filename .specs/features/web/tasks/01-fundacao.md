@@ -120,9 +120,9 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC5, AC6)
 
 **Done when**:
-- [ ] Os três itens de FND-01 AC5 demonstrados, com status HTTP e cabeçalhos relevantes registrados (sem cookie, token ou senha no arquivo)
-- [ ] Se algum item falhar: unidade F1 parada, falha registrada e reportada ao coordenador, sem contorno
-- [ ] Gates passam
+- [x] Os três itens de FND-01 AC5 demonstrados, com status HTTP e cabeçalhos relevantes registrados (sem cookie, token ou senha no arquivo)
+- [x] Se algum item falhar: unidade F1 parada, falha registrada e reportada ao coordenador, sem contorno
+- [x] Gates passam
 
 **Tests**: aceite manual contra a stack real (roteiro registrado)
 **Gate**: Web + Contract + Backend intacto + Ownership
