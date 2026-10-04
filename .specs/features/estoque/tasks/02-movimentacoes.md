@@ -97,9 +97,9 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `SaldoComLock` serializa corretamente — **teste de integração real com 2 goroutines disputando a última unidade do mesmo produto: exatamente uma conclui com sucesso, a outra falha por saldo insuficiente, nunca as duas sucedem nem as duas falham**
-- [ ] `Buscar` devolve `domain.ErrMovimentacaoNaoEncontrada` quando o id não existe
-- [ ] Gate check passes
+- [x] `SaldoComLock` serializa corretamente — **teste de integração real com 2 goroutines disputando a última unidade do mesmo produto: exatamente uma conclui com sucesso, a outra falha por saldo insuficiente, nunca as duas sucedem nem as duas falham**
+- [x] `Buscar` devolve `domain.ErrMovimentacaoNaoEncontrada` quando o id não existe
+- [x] Gate check passes
 
 **Tests**: integration (Postgres real, incluindo o teste de concorrência obrigatório)
 **Gate**: Full
