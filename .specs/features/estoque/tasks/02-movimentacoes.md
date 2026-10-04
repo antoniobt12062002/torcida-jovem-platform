@@ -56,9 +56,9 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `up`/`down` corretos, incluindo ajuste do teste de down-migration de `01-produtos` (desfazer `000009` antes de `000008`, mesmo cuidado que `financeiro/01/T1` teve com `identity`)
-- [ ] `CHECK` de `tipo`/`origem`/`quantidade <> 0` confirmados por teste
-- [ ] Gate check passes
+- [x] `up`/`down` corretos, incluindo ajuste do teste de down-migration de `01-produtos` (desfazer `000009` antes de `000008`, mesmo cuidado que `financeiro/01/T1` teve com `identity`) e de `identity` (desfazer `000009` antes de `000003`, `responsavel_id` FK para `users`)
+- [x] `CHECK` de `tipo`/`origem`/`quantidade <> 0` confirmados por teste
+- [x] Gate check passes
 
 **Tests**: integration (teste de migração)
 **Gate**: Full

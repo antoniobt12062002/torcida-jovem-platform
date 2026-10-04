@@ -66,6 +66,10 @@ func TestProdutosEstoqueDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 		t.Fatalf("inserir: %v", err)
 	}
 
+	// 000009 depende de produtos_estoque (FK produto_id): é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000009_estoque_movimentacoes.down.sql")); err != nil {
+		t.Fatalf("down 000009: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000008_estoque_produtos.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}
@@ -80,6 +84,10 @@ func TestProdutosEstoqueDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 
 func TestProdutosEstoqueMigrationFailsClearlyWithoutTheApplicationRole(t *testing.T) {
 	_, owner := newAuditDBs(t)
+	// 000009 depende de produtos_estoque (FK produto_id): é desfeita antes.
+	if err := execScript(t, owner, migrationFile(t, "000009_estoque_movimentacoes.down.sql")); err != nil {
+		t.Fatalf("down 000009: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000008_estoque_produtos.down.sql")); err != nil {
 		t.Fatalf("down: %v", err)
 	}
