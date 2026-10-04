@@ -77,8 +77,8 @@ T3 → T5
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Enums e struct declarados, 4 sentinels
-- [ ] Gate check passes
+- [x] Enums e struct declarados, 4 sentinels
+- [x] Gate check passes
 
 **Tests**: none (build gate only)
 **Gate**: Full
