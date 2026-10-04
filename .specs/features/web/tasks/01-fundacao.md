@@ -78,10 +78,10 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC1, AC2 parcial)
 
 **Done when**:
-- [ ] Só as quatro dependências de WEB-D-003 entram (`pnpm-lock.yaml` coerente, `--frozen-lockfile` passa)
-- [ ] `next.config.ts` aponta `/api/v1/:path*` para `${API_URL}/api/v1/:path*` e falha com mensagem clara sem `API_URL`
-- [ ] Harness MSW ligado no setup do Vitest, com teste de fumaça
-- [ ] Gates Web, Audit, Contract, Backend intacto e Ownership passam
+- [x] Só as quatro dependências de WEB-D-003 entram (`pnpm-lock.yaml` coerente, `--frozen-lockfile` passa)
+- [x] `next.config.ts` aponta `/api/v1/:path*` para `${API_URL}/api/v1/:path*` e falha com mensagem clara sem `API_URL`
+- [x] Harness MSW ligado no setup do Vitest, com teste de fumaça
+- [x] Gates Web, Audit, Contract, Backend intacto e Ownership passam
 
 **Tests**: unit (configuração do rewrite; harness)
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
@@ -98,12 +98,12 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC2-4), FND-06
 
 **Done when**:
-- [ ] `X-CSRF-Token` presente em `POST`/`PUT`/`PATCH`/`DELETE` e ausente em `GET`
-- [ ] `401` em rota diferente de `POST /auth/login` chama `onUnauthenticated`; `403 password_change_required` e `403 csrf_invalid` chamam seus callbacks; `403 forbidden` não chama nenhum
-- [ ] `problem+json` vira `ApiError` com `status`, `code` e `errors[]`; `413`, `503`, rede e `code` desconhecido têm mensagens genéricas
-- [ ] `applyProblemToForm` põe erros nos campos e o resto em `root`
-- [ ] Chaves de consulta cobrem todos os recursos do design
-- [ ] Gates passam
+- [x] `X-CSRF-Token` presente em `POST`/`PUT`/`PATCH`/`DELETE` e ausente em `GET`
+- [x] `401` em rota diferente de `POST /auth/login` chama `onUnauthenticated`; `403 password_change_required` e `403 csrf_invalid` chamam seus callbacks; `403 forbidden` não chama nenhum
+- [x] `problem+json` vira `ApiError` com `status`, `code` e `errors[]`; `413`, `503`, rede e `code` desconhecido têm mensagens genéricas
+- [x] `applyProblemToForm` põe erros nos campos e o resto em `root`
+- [x] Chaves de consulta cobrem todos os recursos do design
+- [x] Gates passam
 
 **Tests**: unit com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -120,9 +120,9 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-01 (AC5, AC6)
 
 **Done when**:
-- [ ] Os três itens de FND-01 AC5 demonstrados, com status HTTP e cabeçalhos relevantes registrados (sem cookie, token ou senha no arquivo)
-- [ ] Se algum item falhar: unidade F1 parada, falha registrada e reportada ao coordenador, sem contorno
-- [ ] Gates passam
+- [x] Os três itens de FND-01 AC5 demonstrados, com status HTTP e cabeçalhos relevantes registrados (sem cookie, token ou senha no arquivo)
+- [x] Se algum item falhar: unidade F1 parada, falha registrada e reportada ao coordenador, sem contorno
+- [x] Gates passam
 
 **Tests**: aceite manual contra a stack real (roteiro registrado)
 **Gate**: Web + Contract + Backend intacto + Ownership
