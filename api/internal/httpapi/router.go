@@ -11,6 +11,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 
+	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque"
+	estoquehttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/estoque/http"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro"
 	financeirohttp "github.com/antoniobt12062002/torcida-jovem-platform/api/internal/financeiro/http"
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/identity"
@@ -41,9 +43,10 @@ type PingFunc func(ctx context.Context) error
 
 // Deps are what the router composes.
 type Deps struct {
-	Ping     PingFunc
-	Identity *identity.Module
+	Ping           PingFunc
+	Identity       *identity.Module
 	Financeiro     *financeiro.Module
+	Estoque        *estoque.Module
 	AuditQuery     *audit.Query
 	Log            *slog.Logger
 	AllowedOrigins []string
@@ -70,8 +73,8 @@ type platformServer struct {
 // (deny by default), CSRF and contract validation, in that order, so a caller
 // who is not signed in learns nothing of the structure of the API.
 func NewRouter(d Deps) *gin.Engine {
-	if d.Ping == nil || d.Identity == nil || d.Financeiro == nil || d.AuditQuery == nil || d.Log == nil {
-		panic("httpapi: NewRouter exige Ping, Identity, Financeiro, AuditQuery e Log")
+	if d.Ping == nil || d.Identity == nil || d.Financeiro == nil || d.Estoque == nil || d.AuditQuery == nil || d.Log == nil {
+		panic("httpapi: NewRouter exige Ping, Identity, Financeiro, Estoque, AuditQuery e Log")
 	}
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -92,7 +95,11 @@ func NewRouter(d Deps) *gin.Engine {
 	if err != nil {
 		panic(fmt.Sprintf("contrato financeiro embutido inválido: %v", err))
 	}
-	validate, err := httpx.NewContractValidator(platformSpec, identitySpec, financeiroSpec)
+	estoqueSpec, err := estoquehttp.GetSpec()
+	if err != nil {
+		panic(fmt.Sprintf("contrato estoque embutido inválido: %v", err))
+	}
+	validate, err := httpx.NewContractValidator(platformSpec, identitySpec, financeiroSpec, estoqueSpec)
 	if err != nil {
 		panic(fmt.Sprintf("validador do contrato: %v", err))
 	}
@@ -125,8 +132,12 @@ func NewRouter(d Deps) *gin.Engine {
 	r.GET("/api/v1/audit-logs", append(append([]gin.HandlerFunc{}, authenticated...), platform.GetAuditLogs)...)
 	identityhttp.Register(r, handler, handler, identityhttp.Chains{Public: public, Authenticated: authenticated})
 	finWrapper := financeirohttp.Register(finHandler, finHandler)
-	auth := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticated...), op) }
-	upload := func(op gin.HandlerFunc) []gin.HandlerFunc { return append(append([]gin.HandlerFunc{}, authenticatedUpload...), op) }
+	auth := func(op gin.HandlerFunc) []gin.HandlerFunc {
+		return append(append([]gin.HandlerFunc{}, authenticated...), op)
+	}
+	upload := func(op gin.HandlerFunc) []gin.HandlerFunc {
+		return append(append([]gin.HandlerFunc{}, authenticatedUpload...), op)
+	}
 	r.GET("/api/v1/financeiro/contas", auth(finWrapper.ListContas)...)
 	r.POST("/api/v1/financeiro/contas", auth(finWrapper.CreateConta)...)
 	r.PATCH("/api/v1/financeiro/contas/:id", auth(finWrapper.RenameConta)...)
@@ -142,11 +153,14 @@ func NewRouter(d Deps) *gin.Engine {
 	r.POST("/api/v1/financeiro/lancamentos/:id/comprovantes", upload(finWrapper.CreateComprovante)...)
 	r.GET("/api/v1/financeiro/lancamentos/:id/comprovantes", auth(finWrapper.ListComprovantes)...)
 	r.GET("/api/v1/financeiro/comprovantes/:documentId/url", auth(finWrapper.GetComprovanteUrl)...)
+	estHandler := estoquehttp.New(d.Estoque, d.Log)
+	estoquehttp.Register(r, estHandler, estHandler, estoquehttp.Chains{Authenticated: authenticated})
 	if d.extraRoutes != nil {
 		d.extraRoutes(r)
 	}
 
-	withoutContract, withoutRoute := parity(routeKeys(r.Routes()), append(append(operationKeys(platformSpec), operationKeys(identitySpec)...), operationKeys(financeiroSpec)...))
+	operations := append(append(append(operationKeys(platformSpec), operationKeys(identitySpec)...), operationKeys(financeiroSpec)...), operationKeys(estoqueSpec)...)
+	withoutContract, withoutRoute := parity(routeKeys(r.Routes()), operations)
 	if len(withoutContract) > 0 || len(withoutRoute) > 0 {
 		panic(fmt.Sprintf("rotas e contratos divergem: rotas sem operação %v; operações sem rota %v", withoutContract, withoutRoute))
 	}

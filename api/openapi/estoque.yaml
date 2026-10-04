@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: TJ Platform - módulo estoque
+  version: 1.0.0
+  description: |
+    Contrato de comunicação de estoque: produtos (SKU mínimo), movimentações
+    (entrada, saída, devolução), ajustes e consulta de saldo. Descreve
+    caminhos, esquemas e segurança; não contém regras de negócio, que ficam
+    nos casos de uso de estoque/app (01-03).
+
+    Toda rota exige sessão (cookie tj_session); as que alteram estado exigem
+    também o cabeçalho X-CSRF-Token. Nenhuma rota de estoque é pública.
+
+    Paginação, filtro e ordenação de listagens ficam fora do escopo desta
+    versão (mesma decisão deliberada de FIN-D-021): ListProdutos e
+    ListMovimentacoes devolvem sempre a lista inteira.
+servers:
+  - url: /
+tags:
+  - name: produtos
+    description: Produtos (SKU mínimo de estoque) — criação e listagem, nunca edição ou exclusão.
+  - name: movimentacoes
+    description: Entrada, saída e devolução de estoque.
+  - name: ajustes
+    description: Ajuste de estoque, válvula de escape autorizada com motivo obrigatório.
+  - name: saldo
+    description: Consulta de saldo por produto.
+security:
+  - sessionCookie: []
+paths:
+  /api/v1/estoque/produtos:
+    post:
+      operationId: createProduto
+      tags: [produtos]
+      summary: Cria um produto (SKU) de estoque.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProdutoRequest'
+      responses:
+        '201':
+          description: Produto criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '409':
+          description: Código já utilizado por outro produto (code codigo_duplicado).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: 'common.yaml#/components/responses/ValidationFailed'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+    get:
+      operationId: listProdutos
+      tags: [produtos]
+      summary: Lista todos os produtos (SKUs) de estoque (sem paginação).
+      responses:
+        '200':
+          description: Todos os produtos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdutoList'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/estoque/produtos/{id}/movimentacoes:
+    get:
+      operationId: listMovimentacoes
+      tags: [movimentacoes]
+      summary: Lista todas as movimentações do produto, na ordem em que ocorreram (todos os tipos, sem paginação).
+      parameters:
+        - $ref: '#/components/parameters/ProdutoId'
+      responses:
+        '200':
+          description: Todas as movimentações do produto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovimentacaoList'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/estoque/produtos/{id}/saldo:
+    get:
+      operationId: getSaldo
+      tags: [saldo]
+      summary: Consulta o saldo atual do produto (soma de todas as movimentações, zero e negativo incluídos).
+      parameters:
+        - $ref: '#/components/parameters/ProdutoId'
+      responses:
+        '200':
+          description: Saldo atual do produto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saldo'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          $ref: 'common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/estoque/movimentacoes:
+    post:
+      operationId: createMovimentacao
+      tags: [movimentacoes]
+      summary: Registra uma entrada, saída ou devolução de estoque (nunca ajuste — endpoint próprio).
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMovimentacaoRequest'
+      responses:
+        '201':
+          description: Movimentação registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimentacao'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          description: Produto não encontrado (code produto_nao_encontrado).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '409':
+          description: Saída (ou devolução de entrada) resultaria em saldo negativo (code saldo_insuficiente).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Quantidade inválida ou devolução inválida (quantidade_invalida, devolucao_invalida).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+  /api/v1/estoque/ajustes:
+    post:
+      operationId: createAjuste
+      tags: [ajustes]
+      summary: Registra um ajuste de estoque, com motivo obrigatório — pode levar o saldo a negativo.
+      parameters:
+        - $ref: 'common.yaml#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAjusteRequest'
+      responses:
+        '201':
+          description: Ajuste registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimentacao'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common.yaml#/components/responses/Forbidden'
+        '404':
+          description: Produto não encontrado (code produto_nao_encontrado).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '413':
+          $ref: 'common.yaml#/components/responses/PayloadTooLarge'
+        '422':
+          description: Quantidade inválida ou motivo ausente (quantidade_invalida, motivo_obrigatorio).
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/Problem'
+        '500':
+          $ref: 'common.yaml#/components/responses/InternalError'
+        '503':
+          $ref: 'common.yaml#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: 'common.yaml#/components/securitySchemes/sessionCookie'
+  parameters:
+    ProdutoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    TipoMovimentacao:
+      type: string
+      description: O tipo de uma movimentação já registrada — inclui AJUSTE, que só chega aqui através de /api/v1/estoque/ajustes.
+      enum: [ENTRADA, SAIDA, AJUSTE, DEVOLUCAO]
+    OrigemMovimentacao:
+      type: string
+      enum: [VENDA, COMPRA, EVENTO, INVENTARIO, AJUSTE_MANUAL]
+    Produto:
+      type: object
+      required: [id, codigo, nome, unidade_medida, criado_em]
+      properties:
+        id:
+          type: string
+          format: uuid
+        codigo:
+          type: string
+        nome:
+          type: string
+        unidade_medida:
+          type: string
+        criado_em:
+          type: string
+          format: date-time
+    ProdutoList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Produto'
+    CreateProdutoRequest:
+      type: object
+      required: [codigo, nome, unidade_medida]
+      properties:
+        codigo:
+          type: string
+          minLength: 1
+          maxLength: 100
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 200
+        unidade_medida:
+          type: string
+          minLength: 1
+          maxLength: 20
+    Movimentacao:
+      type: object
+      required: [id, produto_id, tipo, quantidade, origem, motivo, movimentacao_de_id, responsavel_id, criado_em]
+      properties:
+        id:
+          type: string
+          format: uuid
+        produto_id:
+          type: string
+          format: uuid
+        tipo:
+          $ref: '#/components/schemas/TipoMovimentacao'
+        quantidade:
+          type: integer
+          format: int64
+          description: Já assinado pela aplicação (positivo ou negativo, nunca zero) — soma direta compõe o saldo.
+        origem:
+          $ref: '#/components/schemas/OrigemMovimentacao'
+        motivo:
+          type: string
+          nullable: true
+          description: Preenchido só quando tipo=AJUSTE.
+        movimentacao_de_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Preenchido só quando tipo=DEVOLUCAO.
+        responsavel_id:
+          type: string
+          format: uuid
+        criado_em:
+          type: string
+          format: date-time
+    MovimentacaoList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movimentacao'
+    CreateMovimentacaoRequest:
+      type: object
+      required: [tipo, produto_id, quantidade, origem]
+      properties:
+        tipo:
+          type: string
+          description: Nunca AJUSTE aqui — use /api/v1/estoque/ajustes.
+          enum: [ENTRADA, SAIDA, DEVOLUCAO]
+        produto_id:
+          type: string
+          format: uuid
+        quantidade:
+          type: integer
+          format: int64
+          description: Sempre um inteiro positivo — o sinal é calculado internamente a partir de tipo.
+        origem:
+          $ref: '#/components/schemas/OrigemMovimentacao'
+        movimentacao_de_id:
+          type: string
+          format: uuid
+          description: Obrigatório quando tipo=DEVOLUCAO (validado no caso de uso, nunca aqui — devolucao_invalida quando ausente).
+    CreateAjusteRequest:
+      type: object
+      required: [produto_id, quantidade, motivo]
+      properties:
+        produto_id:
+          type: string
+          format: uuid
+        quantidade:
+          type: integer
+          format: int64
+          description: Delta assinado, nunca zero — pode ser negativo, inclusive levando o saldo a negativo.
+        motivo:
+          type: string
+          description: Não pode ser vazio (verificado no caso de uso — AJS-01 AC2, motivo_obrigatorio), nunca no contrato — mesma decisão de financeiro's CancelLancamentoRequest.reason.
+          maxLength: 500
+    Saldo:
+      type: object
+      required: [saldo]
+      properties:
+        saldo:
+          type: integer
+          format: int64

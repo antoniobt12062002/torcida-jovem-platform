@@ -16,6 +16,10 @@ apis:
     root: ../api/openapi/financeiro.yaml
     x-openapi-ts:
       output: ./lib/api/financeiro.d.ts
+  estoque@v1:
+    root: ../api/openapi/estoque.yaml
+    x-openapi-ts:
+      output: ./lib/api/estoque.d.ts
 
 extends:
   - recommended

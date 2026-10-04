@@ -152,7 +152,10 @@ func TestIdentityDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 	app, owner := newAuditDBs(t)
 	newUser(t, app, "a@x.com")
 
-	// 000004, 000005 e 000007 dependem de users: são desfeitas antes.
+	// 000004, 000005, 000007 e 000009 dependem de users: são desfeitas antes.
+	if err := execScript(t, owner, migrationFile(t, "000009_estoque_movimentacoes.down.sql")); err != nil {
+		t.Fatalf("down 000009: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000007_financeiro_lancamentos.down.sql")); err != nil {
 		t.Fatalf("down 000007: %v", err)
 	}
@@ -176,7 +179,10 @@ func TestIdentityDownMigrationRevertsAndUpCanRunAgain(t *testing.T) {
 
 func TestIdentityMigrationFailsClearlyWithoutTheApplicationRole(t *testing.T) {
 	_, owner := newAuditDBs(t)
-	// 000004, 000005 e 000007 dependem de users: são desfeitas antes.
+	// 000004, 000005, 000007 e 000009 dependem de users: são desfeitas antes.
+	if err := execScript(t, owner, migrationFile(t, "000009_estoque_movimentacoes.down.sql")); err != nil {
+		t.Fatalf("down 000009: %v", err)
+	}
 	if err := execScript(t, owner, migrationFile(t, "000007_financeiro_lancamentos.down.sql")); err != nil {
 		t.Fatalf("down 000007: %v", err)
 	}
