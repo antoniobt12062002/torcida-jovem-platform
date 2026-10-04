@@ -90,7 +90,7 @@
 
 ## Edge Cases
 
-- IF o corpo de `POST /estoque/movimentacoes` tiver `tipo=DEVOLUCAO` sem `movimentacao_de_id` THEN o sistema SHALL recusar na validação de forma do contrato (campo obrigatório condicional), antes de qualquer chamada ao caso de uso — a ser detalhado no design (a estratégia depende de como o contrato OpenAPI expressa campo condicional, ver `design/05-api-http.md`).
+- IF o corpo de `POST /estoque/movimentacoes` tiver `tipo=DEVOLUCAO` sem `movimentacao_de_id` THEN o sistema SHALL recusar com `422 devolucao_invalida`, sem gravar nenhuma movimentação. A recusa acontece em `RegistrarMovimentacao.Execute`, não no contrato: `movimentacao_de_id` é opcional no schema, sem `oneOf`/discriminador (decisão de `design/05-api-http.md`, seção do contrato e Tech Decisions — mesma disciplina de `financeiro`: o contrato descreve forma, a regra condicional fica no caso de uso).
 
 ---
 
