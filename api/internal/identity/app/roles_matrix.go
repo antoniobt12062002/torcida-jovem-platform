@@ -22,9 +22,10 @@ type Contribution struct {
 // forbiddenToConselhoFiscal are the actions the Conselho Fiscal never receives
 // (ADR-005, FIN-001 section 24): it supervises, it does not change. Includes
 // both the original write actions and the state-transition/deactivation
-// actions a business module (e.g. financeiro) may introduce (deactivate,
-// receive, pay) — the invariant is "never operates", not just "never writes".
-var forbiddenToConselhoFiscal = []string{"create", "update", "delete", "cancel", "deactivate", "receive", "pay"}
+// actions a business module may introduce (deactivate, receive, pay from
+// financeiro; adjust from estoque) — the invariant is "never operates", not
+// just "never writes".
+var forbiddenToConselhoFiscal = []string{"create", "update", "delete", "cancel", "deactivate", "receive", "pay", "adjust"}
 
 // BuildMatrix aggregates the contributions of every module into the final
 // matrix and validates it. The API refuses to start when it fails.
