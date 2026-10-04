@@ -1,3 +1,12 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Exceção de auditoria criada em 2026-10-04 (AD-016; SEC-001 em docs/development/tooling.md).
+# GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces@3.0.3, via eslint-config-next >
+# @next/eslint-plugin-next > fast-glob > micromatch > braces. Sem versão corrigida.
+# Ignora só esta GHSA: não o pacote braces, não todo "high". Remover quando houver versão
+# corrigida de braces ou quando @next/eslint-plugin-next deixar de trazer essa cadeia.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
