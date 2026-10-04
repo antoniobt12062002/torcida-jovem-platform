@@ -139,10 +139,10 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-02
 
 **Done when**:
-- [ ] Todos os componentes de FND-02 AC1 presentes
-- [ ] Campos com erro têm `aria-invalid` e `aria-describedby` apontando para a mensagem
-- [ ] `package.json` e `pnpm-lock.yaml` intactos; se algum componente exigir dependência nova, a task para e reporta
-- [ ] Gates passam
+- [x] Todos os componentes de FND-02 AC1 presentes
+- [x] Campos com erro têm `aria-invalid` e `aria-describedby` apontando para a mensagem
+- [x] `package.json` e `pnpm-lock.yaml` intactos; se algum componente exigir dependência nova, a task para e reporta
+- [x] Gates passam
 
 **Tests**: component
 **Gate**: Web + Contract + Backend intacto + Ownership
