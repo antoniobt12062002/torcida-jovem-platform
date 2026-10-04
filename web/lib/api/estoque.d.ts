@@ -173,6 +173,7 @@ export interface components {
              * @description Delta assinado, nunca zero — pode ser negativo, inclusive levando o saldo a negativo.
              */
             quantidade: number;
+            /** @description Não pode ser vazio (verificado no caso de uso — AJS-01 AC2, motivo_obrigatorio), nunca no contrato — mesma decisão de financeiro's CancelLancamentoRequest.reason. */
             motivo: string;
         };
         Saldo: {

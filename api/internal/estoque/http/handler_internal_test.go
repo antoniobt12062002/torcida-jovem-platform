@@ -17,10 +17,11 @@ import (
 	"github.com/antoniobt12062002/torcida-jovem-platform/api/internal/platform/database"
 )
 
-// A tabela única de erros (EST-D-006, API-04): cada um dos 7 mapeamentos de
-// domínio/autorização vira o status e o code exatos do contrato, embrulhado
-// ou não, mais os 2 mapeamentos transversais (service_unavailable,
-// audit_failed) já cobertos pelo switch de writeError.
+// A tabela única de erros (EST-D-006 + achado mecânico de ErrCampoObrigatorio,
+// API-04): cada um dos 8 mapeamentos de domínio/autorização vira o status e
+// o code exatos do contrato, embrulhado ou não, mais os 2 mapeamentos
+// transversais (service_unavailable, audit_failed) já cobertos pelo switch
+// de writeError.
 func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 	cases := []struct {
 		err    error
@@ -29,6 +30,7 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 	}{
 		{domain.ErrProdutoNaoEncontrado, http.StatusNotFound, "produto_nao_encontrado"},
 		{domain.ErrCodigoDuplicado, http.StatusConflict, "codigo_duplicado"},
+		{domain.ErrCampoObrigatorio, http.StatusUnprocessableEntity, "campo_obrigatorio"},
 		{domain.ErrDevolucaoInvalida, http.StatusUnprocessableEntity, "devolucao_invalida"},
 		{domain.ErrSaldoInsuficiente, http.StatusConflict, "saldo_insuficiente"},
 		{domain.ErrQuantidadeInvalida, http.StatusUnprocessableEntity, "quantidade_invalida"},
@@ -37,8 +39,8 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 		{database.ErrUnavailable, http.StatusServiceUnavailable, "service_unavailable"},
 		{fmt.Errorf("%w: disco cheio", audit.ErrWrite), http.StatusInternalServerError, "audit_failed"},
 	}
-	if len(cases) != 9 {
-		t.Fatalf("EST-D-006 define 7 mapeamentos de domínio/autorização + 2 transversais, a tabela do teste tem %d", len(cases))
+	if len(cases) != 10 {
+		t.Fatalf("8 mapeamentos de domínio/autorização + 2 transversais, a tabela do teste tem %d", len(cases))
 	}
 	h := &Handler{}
 	for _, tc := range cases {
@@ -63,7 +65,7 @@ func TestEveryDomainErrorMapsToItsStatusAndCode(t *testing.T) {
 // nunca a mensagem original do sentinel.
 func TestDomainSentinelsNeverUseTheirErrorStringAsCode(t *testing.T) {
 	prose := []error{
-		domain.ErrProdutoNaoEncontrado, domain.ErrCodigoDuplicado, domain.ErrDevolucaoInvalida,
+		domain.ErrProdutoNaoEncontrado, domain.ErrCodigoDuplicado, domain.ErrCampoObrigatorio, domain.ErrDevolucaoInvalida,
 		domain.ErrSaldoInsuficiente, domain.ErrQuantidadeInvalida, domain.ErrMotivoObrigatorio,
 	}
 	for _, s := range sentinels {

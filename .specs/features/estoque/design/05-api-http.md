@@ -71,6 +71,7 @@ Tabela de erro completa (API-04):
 ```
 domain.ErrProdutoNaoEncontrado       → 404  produto_nao_encontrado
 domain.ErrCodigoDuplicado            → 409  codigo_duplicado
+domain.ErrCampoObrigatorio           → 422  campo_obrigatorio
 domain.ErrDevolucaoInvalida          → 422  devolucao_invalida
 domain.ErrSaldoInsuficiente          → 409  saldo_insuficiente
 domain.ErrQuantidadeInvalida         → 422  quantidade_invalida
@@ -82,6 +83,8 @@ default                              → 500  internal_error
 ```
 
 (`domain.ErrMovimentacaoNaoEncontrada` nunca chega à camada HTTP — `RegistrarMovimentacao.Execute` já a traduz para `ErrDevolucaoInvalida` antes de retornar, mesmo padrão que `financeiro/app.CriarDevolucao` já aplica para `ErrLancamentoNaoEncontrado`→`ErrDevolucaoInvalida`.)
+
+(`domain.ErrCampoObrigatorio` foi adicionado a esta tabela durante `T4`, achado mecânico: esse sentinel só existe desde `01-produtos/T4` — depois desta sub-spec já ter sido desenhada — e nenhuma task anterior exercitava a camada HTTP para revelar a lacuna. `CreateProdutoRequest.codigo`/`nome`/`unidade_medida` mantêm `minLength: 1` no contrato [PRD-01 AC3 não nomeia um `code` específico, só "um erro de validação" — minLength é suficiente]; um valor só com espaços passa esse `minLength` mas é recusado pelo caso de uso, por isso a tabela HTTP precisa da linha.)
 
 ### `estoque.New` (composition root)
 

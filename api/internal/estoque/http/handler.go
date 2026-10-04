@@ -43,8 +43,6 @@ type Chains struct {
 // layers do not share a module, FIN-D-028)
 
 // ginContext returns the *gin.Context the strict handler passes as context.
-//
-//nolint:unused // consumed by the 6 handler methods of T4 (05-api-http), not yet written in T3.
 func ginContext(ctx context.Context) *gin.Context {
 	c, _ := ctx.(*gin.Context)
 	return c
@@ -52,8 +50,6 @@ func ginContext(ctx context.Context) *gin.Context {
 
 // requestContext is the context of the request: it carries the request id
 // and the audit actor, which the use cases read.
-//
-//nolint:unused // consumed by the 6 handler methods of T4 (05-api-http), not yet written in T3.
 func requestContext(ctx context.Context) context.Context {
 	if c := ginContext(ctx); c != nil && c.Request != nil {
 		return c.Request.Context()
@@ -67,8 +63,6 @@ var errNoSession = errors.New("sem sessão no contexto")
 // resource handler calls this first: estoque never checks permissions
 // itself (that is the use case's job, via Authz.Require) — it only needs the
 // authenticated Principal to pass through as Actor.
-//
-//nolint:unused // consumed by the 6 handler methods of T4 (05-api-http), not yet written in T3.
 func sessionOf(ctx context.Context) (httpx.SessionInfo, error) {
 	info, ok := httpx.SessionFrom(requestContext(ctx))
 	if !ok {
@@ -98,9 +92,14 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 	}
 }
 
-// sentinels is the explicit status+code table of EST-D-006. Like
-// financeiro/domain's sentinels (FIN-D-022), estoque/domain's are Portuguese
-// prose, so their .Error() can never be the API code.
+// sentinels is the explicit status+code table of EST-D-006, extended with
+// domain.ErrCampoObrigatorio (achado mecânico de 05-api-http/T4: esse
+// sentinel só existe desde 01-produtos/T4, depois de EST-D-006 já fechada —
+// sem esta linha, um campo só com espaços em CreateProdutoRequest caía no
+// default de 500, nunca testado por nenhuma task anterior porque nenhuma
+// delas exercitava a camada HTTP). Como financeiro/domain's sentinels
+// (FIN-D-022), estoque/domain's são prosa em português, então seu .Error()
+// nunca pode ser o code da API.
 var sentinels = []struct {
 	err    error
 	status int
@@ -108,6 +107,7 @@ var sentinels = []struct {
 }{
 	{domain.ErrProdutoNaoEncontrado, http.StatusNotFound, "produto_nao_encontrado"},
 	{domain.ErrCodigoDuplicado, http.StatusConflict, "codigo_duplicado"},
+	{domain.ErrCampoObrigatorio, http.StatusUnprocessableEntity, "campo_obrigatorio"},
 	{domain.ErrDevolucaoInvalida, http.StatusUnprocessableEntity, "devolucao_invalida"},
 	// Conflito com o estado atual do estoque, não erro estrutural de payload
 	// (EST-D-006).
