@@ -106,8 +106,18 @@ func (r *MovimentacaoRepository) SaldoComLock(ctx context.Context, produtoID str
 	return saldo, nil
 }
 
-// Saldo (sem lock, para ConsultarSaldo) é adicionado em 03-ajustes-e-saldo/T2
-// — não antes, para manter os limites de tarefa aprovados no DAG.
+// Saldo computes SUM(quantidade) without taking any lock — used by
+// ConsultarSaldo (03-ajustes-e-saldo/T3), a read-only query that must
+// never pay the cost (or the risk) of a lock it does not need.
+func (r *MovimentacaoRepository) Saldo(ctx context.Context, produtoID string) (int64, error) {
+	var saldo int64
+	err := conn(ctx, r.db).Raw(`SELECT COALESCE(SUM(quantidade), 0) FROM movimentacoes_estoque WHERE produto_id = ?::uuid`, produtoID).
+		Scan(&saldo).Error
+	if err != nil {
+		return 0, fmt.Errorf("estoque: calcular saldo: %w", err)
+	}
+	return saldo, nil
+}
 
 func nullableUUID(id *string) any {
 	if id == nil {

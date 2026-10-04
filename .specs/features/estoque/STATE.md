@@ -166,6 +166,8 @@ Ver seção "Fora do V1" acima — repetida aqui por paralelismo com `financeiro
 
 - **`03-ajustes-e-saldo`/`T1`**: `estoque/app/ajustar_estoque.go` — `AjustarEstoque`, permissão própria (`estoque:movimentacao:adjust`, distinta de `create`), ordem permissão→quantidade≠0→motivo→busca→transação (mesmo molde de `financeiro/app.CancelarLancamento`), nunca checa saldo (porta `MovimentacaoCreatorOnly` sem `SaldoComLock` — garantia estrutural). `domain.ErrMotivoObrigatorio` adicionado a `movimentacao.go`. 5 testes de integração (os 5 ACs de AJS-01) + mutação em 2 pontos (motivo removido, permissão removida) — ambos mortos.
 
+- **`03-ajustes-e-saldo`/`T2`**: `estoque/infra/movimentacao_repository.go` estendido com `Saldo` (sem lock) — mesma agregação de `SaldoComLock`, sem a linha do lock, reaproveitado por `ConsultarSaldo` (consulta pura, nunca paga o custo do lock). 2 testes de integração (saldo zero sem movimentação, soma combinada dos 4 tipos) + mutação (`Saldo` fixado em `0`) — morta.
+
 ## Handoff
 
 - **Fase**: `Specify`+`Discuss`+`Design`+`Tasks` concluídos para as 5 sub-specs de `estoque` (`01-produtos`, `02-movimentacoes`, `03-ajustes-e-saldo`, `04-permissoes`, `05-api-http`), validados por `validate_spec.py` (0 erros/0 avisos nas 5) e `validate_tasks.py` (0 erros nas 5; avisos de granularidade aceitos, mesma categoria dos já aceitos em `financeiro`). `EST-D-001` a `EST-D-011` fechadas pelo mantenedor em 2026-10-03 (`EST-D-008`-`EST-D-010` são achados lógicos derivados das regras já fechadas, não decisões de negócio novas — registrados com justificativa explícita, nunca escolhidos silenciosamente). Nenhum código, migration, branch, commit ou PR criado nesta rodada.

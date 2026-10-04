@@ -78,9 +78,9 @@ T2 → T3
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Saldo` devolve `0` para um SKU sem nenhuma movimentação (nunca erro)
-- [ ] `Saldo` reflete corretamente entrada+saída+ajuste+devolução combinados (teste de integração com os 4 tipos)
-- [ ] Gate check passes
+- [x] `Saldo` devolve `0` para um SKU sem nenhuma movimentação (nunca erro)
+- [x] `Saldo` reflete corretamente entrada+saída+ajuste+devolução combinados (teste de integração com os 4 tipos)
+- [x] Gate check passes
 
 **Tests**: integration
 **Gate**: Full
