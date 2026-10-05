@@ -3,17 +3,40 @@
 import { useId, useState } from "react";
 
 import { ApiErrorAlert } from "@/components/app/api-error";
+import { RequirePermission } from "@/components/app/require-permission";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
 import { isApiError } from "@/lib/api/problem";
+import { useSession } from "@/lib/session/session-provider";
 
+import { availableActions, type UserAction } from "./actions";
+import { CreateUserDialog } from "./dialogs/create-user-dialog";
+import { DeactivateUserDialog, ReactivateUserDialog } from "./dialogs/status-dialogs";
 import { usersCatalog } from "./errors";
-import { type UsersListFilters, useUsers } from "./hooks";
+import { type User, type UsersListFilters, useUsers } from "./hooks";
 import { ALL_ROLES, type Role, roleLabel } from "./roles";
 import { UsersTable } from "./users-table";
 
-// Administração de usuários (USR-01): filtros enviados à API, lista paginada
-// por cursor e "Carregar mais".
+// Administração de usuários (USR-01 a USR-05): filtros enviados à API, lista
+// paginada por cursor, "Carregar mais" e ações por linha em diálogos.
+
+type OpenAction = { action: UserAction; user: User };
+
+function ActionDialog({ open, onClose }: { open: OpenAction; onClose: () => void }) {
+  const props = {
+    user: open.user,
+    open: true,
+    onOpenChange: (next: boolean) => {
+      if (!next) onClose();
+    },
+  };
+  switch (open.action) {
+    case "deactivate":
+      return <DeactivateUserDialog {...props} />;
+    case "reactivate":
+      return <ReactivateUserDialog {...props} />;
+  }
+}
 
 type ActiveFilter = "todos" | "ativos" | "inativos";
 
@@ -41,11 +64,20 @@ export function UsersPage() {
   const [role, setRole] = useState<Role | "">("");
   const query = useUsers(toFilters(active, role));
   const users = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const { context } = useSession();
+  const sessionUserId = context?.user.id;
+  const permissions = context?.permissions ?? [];
+  const [creating, setCreating] = useState(false);
+  const [openAction, setOpenAction] = useState<OpenAction | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-xl font-semibold">Usuários</h1>
+        <RequirePermission permission="identity:user:create" mode="action">
+          <Button onClick={() => setCreating(true)}>Novo usuário</Button>
+          <CreateUserDialog open={creating} onOpenChange={setCreating} />
+        </RequirePermission>
       </div>
 
       <div className="flex flex-wrap gap-4">
@@ -92,7 +124,11 @@ export function UsersPage() {
         <EmptyState title="Nenhum usuário encontrado." />
       ) : (
         <div className="flex flex-col gap-4">
-          <UsersTable users={users} />
+          <UsersTable
+            users={users}
+            actionsFor={(user) => availableActions(user, sessionUserId, permissions)}
+            onAction={(action, user) => setOpenAction({ action, user })}
+          />
           {query.isFetchNextPageError && isApiError(query.error) ? (
             <ApiErrorAlert
               error={query.error}
@@ -112,6 +148,14 @@ export function UsersPage() {
           ) : null}
         </div>
       )}
+
+      {openAction ? (
+        <ActionDialog
+          key={`${openAction.action}:${openAction.user.id}`}
+          open={openAction}
+          onClose={() => setOpenAction(null)}
+        />
+      ) : null}
     </div>
   );
 }

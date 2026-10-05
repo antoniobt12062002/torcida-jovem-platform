@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 
 import type { components } from "@/lib/api/identity";
@@ -57,9 +57,40 @@ export function rowOf(text: string): HTMLElement {
   return row;
 }
 
-/** Textos das células de uma linha. */
+/**
+ * Textos das células de dados de uma linha (sem a coluna de ações). Inclui a
+ * lista escondida da acessibilidade por um diálogo modal aberto.
+ */
 export function cellsOf(text: string): string[] {
   return within(rowOf(text))
-    .getAllByRole("cell")
+    .getAllByRole("cell", { hidden: true })
+    .filter((cell) => cell.getAttribute("data-column") !== "acoes")
     .map((cell) => cell.textContent ?? "");
+}
+
+/** Abre o menu de ações da linha da pessoa e devolve os rótulos dos itens. */
+export async function openRowMenu(name: string): Promise<string[]> {
+  fireEvent.click(screen.getByRole("button", { name: `Ações de ${name}` }));
+  await screen.findByRole("menu");
+  return screen.getAllByRole("menuitem").map((item) => item.textContent ?? "");
+}
+
+/** Abre o menu da linha e escolhe a ação. */
+export async function chooseAction(name: string, label: string) {
+  await openRowMenu(name);
+  fireEvent.click(screen.getByRole("menuitem", { name: label }));
+}
+
+/** Textos ligados ao campo por aria-describedby (dica e erro do campo). */
+export function describedByText(el: HTMLElement): string[] {
+  const ids = (el.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean);
+  return ids.map((id) => document.getElementById(id)?.textContent ?? "");
+}
+
+export function isInvalid(el: HTMLElement): boolean {
+  return el.getAttribute("aria-invalid") === "true";
+}
+
+export function type(label: string, value: string) {
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }

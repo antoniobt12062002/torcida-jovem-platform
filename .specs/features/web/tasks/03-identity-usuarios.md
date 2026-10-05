@@ -74,9 +74,9 @@ T2 → T3
 **Requirement**: USR-02, USR-03
 
 **Done when**:
-- [ ] Ações visíveis só com a permissão certa e nunca na própria linha
-- [ ] `email_taken` no campo de e-mail; `last_admin` e `self_change_forbidden` com mensagem
-- [ ] Gates passam
+- [x] Ações visíveis só com a permissão certa e nunca na própria linha
+- [x] `email_taken` no campo de e-mail; `last_admin` e `self_change_forbidden` com mensagem
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership

@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api, unwrap } from "@/lib/api/client";
 import type { components } from "@/lib/api/identity";
@@ -39,5 +39,51 @@ export function useUsers(filters: UsersListFilters) {
         }),
       ),
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+  });
+}
+
+export type CreateUserRequest = components["schemas"]["CreateUserRequest"];
+
+/**
+ * Invalida todas as listas de usuários (qualquer filtro), para que reflitam a
+ * mudança. A mutação só termina depois da nova consulta.
+ */
+function useInvalidateUsers() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: queryKeys.identity.usersAll });
+}
+
+/**
+ * POST /users (USR-02). As variáveis da mutação trazem a senha inicial:
+ * gcTime 0 tira a mutação do cache assim que o diálogo deixa de observá-la.
+ */
+export function useCreateUser() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: (body: CreateUserRequest) => unwrap(api.identity.POST("/api/v1/users", { body })),
+    onSuccess: invalidate,
+    gcTime: 0,
+  });
+}
+
+/** POST /users/{id}/deactivate (USR-03 AC1). */
+export function useDeactivateUser() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await unwrap(api.identity.POST("/api/v1/users/{id}/deactivate", { params: { path: { id } } }));
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/** POST /users/{id}/reactivate (USR-03 AC2). */
+export function useReactivateUser() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await unwrap(api.identity.POST("/api/v1/users/{id}/reactivate", { params: { path: { id } } }));
+    },
+    onSuccess: invalidate,
   });
 }
