@@ -94,9 +94,9 @@ T2 → T3
 **Requirement**: EWB-03
 
 **Done when**:
-- [ ] Zero ou motivo vazio mantém a confirmação desabilitada
-- [ ] Saldo resultante negativo avisado sem impedir
-- [ ] Gates passam (incluindo Audit)
+- [x] Zero ou motivo vazio mantém a confirmação desabilitada
+- [x] Saldo resultante negativo avisado sem impedir
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership

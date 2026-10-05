@@ -7,6 +7,7 @@ import { ErrorState, LoadingState } from "@/components/app/states";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+import { AjusteDialog } from "./ajustes/ajuste-dialog";
 import { estoqueCatalog, MESSAGE_PRODUTO_NAO_ENCONTRADO } from "./errors";
 import { MovimentacaoDialog } from "./movimentacoes/movimentacao-dialog";
 import { MovimentacoesPanel } from "./movimentacoes/movimentacoes-panel";
@@ -103,6 +104,10 @@ function SaldoSection({ produto }: { produto: Produto }) {
             {`${query.data} ${produto.unidade_medida}`}
           </span>
           {query.data < 0 ? <Badge variant="destructive">Saldo negativo</Badge> : null}
+          {/* O ajuste fica aqui porque a confirmação mostra o saldo atual (EWB-03 AC3). */}
+          <RequirePermission permission="estoque:movimentacao:adjust" mode="action">
+            <AjusteDialog produto={produto} saldoAtual={query.data} />
+          </RequirePermission>
         </div>
       )}
     </section>
