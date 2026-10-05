@@ -55,9 +55,9 @@ T2 → T3
 **Requirement**: EWB-01, EWB-04
 
 **Done when**:
-- [ ] `codigo_duplicado` no campo de código; `validation_failed` nos campos
-- [ ] Saldo negativo destacado; seção omitida sem a permissão (sem chamar a API)
-- [ ] Gates passam
+- [x] `codigo_duplicado` no campo de código; `validation_failed` nos campos
+- [x] Saldo negativo destacado; seção omitida sem a permissão (sem chamar a API)
+- [x] Gates passam
 
 **Tests**: unit (`search.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -74,10 +74,10 @@ T2 → T3
 **Requirement**: EWB-02
 
 **Done when**:
-- [ ] Corpo enviado sempre com `origem = INVENTARIO`; nenhuma origem reservada oferecida
-- [ ] "Devolver" só em `ENTRADA` e `SAIDA`
-- [ ] Histórico e saldo invalidados depois do registro
-- [ ] Gates passam
+- [x] Corpo enviado sempre com `origem = INVENTARIO`; nenhuma origem reservada oferecida
+- [x] "Devolver" só em `ENTRADA` e `SAIDA`
+- [x] Histórico e saldo invalidados depois do registro
+- [x] Gates passam
 
 **Tests**: unit (`payload.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -94,9 +94,9 @@ T2 → T3
 **Requirement**: EWB-03
 
 **Done when**:
-- [ ] Zero ou motivo vazio mantém a confirmação desabilitada
-- [ ] Saldo resultante negativo avisado sem impedir
-- [ ] Gates passam (incluindo Audit)
+- [x] Zero ou motivo vazio mantém a confirmação desabilitada
+- [x] Saldo resultante negativo avisado sem impedir
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
