@@ -54,9 +54,9 @@ T1 → T2
 **Requirement**: ACS-01
 
 **Done when**:
-- [ ] Todos os ACs de ACS-01 cobertos por teste
-- [ ] Depois da troca obrigatória, `queryKeys.session.me` é invalidada e a pessoa segue para o destino
-- [ ] Gates passam
+- [x] Todos os ACs de ACS-01 cobertos por teste
+- [x] Depois da troca obrigatória, `queryKeys.session.me` é invalidada e a pessoa segue para o destino
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
