@@ -65,10 +65,10 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-01
 
 **Done when**:
-- [ ] Árvore com contas inativas marcadas; subconta herda o tipo do pai
-- [ ] `conta_ja_utilizada`, `conta_nao_encontrada` e `conta_tipo_incompativel` com mensagem
-- [ ] Ações só com a permissão correspondente
-- [ ] Gates passam
+- [x] Árvore com contas inativas marcadas; subconta herda o tipo do pai
+- [x] `conta_ja_utilizada`, `conta_nao_encontrada` e `conta_tipo_incompativel` com mensagem
+- [x] Ações só com a permissão correspondente
+- [x] Gates passam
 
 **Tests**: unit (`tree.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
