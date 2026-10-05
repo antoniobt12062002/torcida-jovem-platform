@@ -57,9 +57,9 @@ T3 → T4
 **Requirement**: INT-01
 
 **Done when**:
-- [ ] Os cinco perfis de sessão mostram exatamente os itens esperados
-- [ ] `/` leva a `/inicio`; conta sem área vê a mensagem
-- [ ] Gates passam
+- [x] Os cinco perfis de sessão mostram exatamente os itens esperados
+- [x] `/` leva a `/inicio`; conta sem área vê a mensagem
+- [x] Gates passam
 
 **Tests**: unit + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
