@@ -57,9 +57,9 @@ T3 → T4
 **Requirement**: INT-01
 
 **Done when**:
-- [ ] Os cinco perfis de sessão mostram exatamente os itens esperados
-- [ ] `/` leva a `/inicio`; conta sem área vê a mensagem
-- [ ] Gates passam
+- [x] Os cinco perfis de sessão mostram exatamente os itens esperados
+- [x] `/` leva a `/inicio`; conta sem área vê a mensagem
+- [x] Gates passam
 
 **Tests**: unit + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -76,9 +76,9 @@ T3 → T4
 **Requirement**: INT-02
 
 **Done when**:
-- [ ] Variáveis, ordem de subida (incluindo o S3 local avulso), rewrite e gates documentados; comportamento de `API_URL` no build registrado
-- [ ] Nenhum segredo ou dado pessoal
-- [ ] Gates passam
+- [x] Variáveis, ordem de subida (incluindo o S3 local avulso), rewrite e gates documentados; comportamento de `API_URL` no build registrado
+- [x] Nenhum segredo ou dado pessoal
+- [x] Gates passam
 
 **Tests**: revisão manual
 **Gate**: Contract + Backend intacto + Ownership
@@ -95,9 +95,9 @@ T3 → T4
 **Requirement**: INT-03
 
 **Done when**:
-- [ ] Todos os itens com resultado, data e observação
-- [ ] Nenhuma falha pendente (falhas corrigidas pela frente dona e repetidas)
-- [ ] Gates passam
+- [x] Todos os itens com resultado, data e observação
+- [x] Nenhuma falha pendente (falhas corrigidas pela frente dona e repetidas)
+- [x] Gates passam
 
 **Tests**: aceite manual contra a stack real
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership

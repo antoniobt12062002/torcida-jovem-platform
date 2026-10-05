@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
+import { navItems } from "@/components/app/nav-items";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,8 +31,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (mustChangePassword) router.replace(routes.contaSenha);
   }, [mustChangePassword, router]);
 
-  // A lista real de itens é ligada pela INT (components/app/nav-items.ts).
-  if (status === "authenticated" && !mustChangePassword) return <AppShell items={[]}>{children}</AppShell>;
+  if (status === "authenticated" && !mustChangePassword) return <AppShell items={navItems}>{children}</AppShell>;
 
   if (status === "loading" && error) {
     return (
