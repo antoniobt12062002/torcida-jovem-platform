@@ -48,7 +48,7 @@ export type CreateUserRequest = components["schemas"]["CreateUserRequest"];
  * Invalida todas as listas de usuários (qualquer filtro), para que reflitam a
  * mudança. A mutação só termina depois da nova consulta.
  */
-function useInvalidateUsers() {
+export function useInvalidateUsers() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: queryKeys.identity.usersAll });
 }
@@ -75,6 +75,65 @@ export function useDeactivateUser() {
     },
     onSuccess: invalidate,
   });
+}
+
+export type GrantAdminRequest = components["schemas"]["GrantAdminRequest"];
+export type SetRolesRequest = components["schemas"]["SetRolesRequest"];
+export type RevokeAdminRequest = components["schemas"]["RevokeAdminRequest"];
+
+/** POST /users/{id}/admin-membership (USR-04 AC1). */
+export function useGrantAdmin() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: GrantAdminRequest }) => {
+      await unwrap(
+        api.identity.POST("/api/v1/users/{id}/admin-membership", { params: { path: { id } }, body }),
+      );
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/** PUT /users/{id}/roles (USR-04 AC3). */
+export function useSetRoles() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: SetRolesRequest }) => {
+      await unwrap(api.identity.PUT("/api/v1/users/{id}/roles", { params: { path: { id } }, body }));
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/** POST /users/{id}/admin-membership/revoke (USR-04 AC4). */
+export function useRevokeAdmin() {
+  const invalidate = useInvalidateUsers();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: RevokeAdminRequest }) => {
+      await unwrap(
+        api.identity.POST("/api/v1/users/{id}/admin-membership/revoke", {
+          params: { path: { id } },
+          body,
+        }),
+      );
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/**
+ * POST /users/{id}/password-reset (USR-05). Fora do TanStack Query de
+ * propósito: o cache de mutações guardaria a senha temporária no resultado.
+ * Quem chama mantém a senha só no estado do diálogo.
+ */
+export async function requestTemporaryPassword(id: string, reason: string): Promise<string> {
+  const body = await unwrap(
+    api.identity.POST("/api/v1/users/{id}/password-reset", {
+      params: { path: { id } },
+      body: { reason },
+    }),
+  );
+  return body.temporary_password;
 }
 
 /** POST /users/{id}/reactivate (USR-03 AC2). */

@@ -25,7 +25,7 @@ import { roleLabel } from "./roles";
 
 // Linhas da lista de usuários (USR-01 AC1) e menu de ações por linha.
 
-const DESTRUCTIVE: ReadonlySet<UserAction> = new Set(["deactivate"]);
+const DESTRUCTIVE: ReadonlySet<UserAction> = new Set(["deactivate", "revoke"]);
 
 export type UsersTableProps = {
   users: readonly User[];

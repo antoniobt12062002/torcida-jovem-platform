@@ -10,8 +10,10 @@ import { isApiError } from "@/lib/api/problem";
 import { useSession } from "@/lib/session/session-provider";
 
 import { availableActions, type UserAction } from "./actions";
+import { GrantAdminDialog, RevokeAdminDialog, SetRolesDialog } from "./dialogs/admin-dialogs";
 import { CreateUserDialog } from "./dialogs/create-user-dialog";
 import { DeactivateUserDialog, ReactivateUserDialog } from "./dialogs/status-dialogs";
+import { TemporaryPasswordDialog } from "./dialogs/temporary-password-dialog";
 import { usersCatalog } from "./errors";
 import { type User, type UsersListFilters, useUsers } from "./hooks";
 import { ALL_ROLES, type Role, roleLabel } from "./roles";
@@ -35,6 +37,14 @@ function ActionDialog({ open, onClose }: { open: OpenAction; onClose: () => void
       return <DeactivateUserDialog {...props} />;
     case "reactivate":
       return <ReactivateUserDialog {...props} />;
+    case "grant":
+      return <GrantAdminDialog {...props} />;
+    case "setRoles":
+      return <SetRolesDialog {...props} />;
+    case "revoke":
+      return <RevokeAdminDialog {...props} />;
+    case "resetPassword":
+      return <TemporaryPasswordDialog {...props} />;
   }
 }
 

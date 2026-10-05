@@ -93,10 +93,10 @@ T2 → T3
 **Requirement**: USR-04, USR-05
 
 **Done when**:
-- [ ] Só a ação compatível com o estado do usuário aparece
-- [ ] Motivo com menos de 10 caracteres úteis mantém o envio desabilitado na promoção e na senha temporária
-- [ ] Senha temporária some do DOM ao fechar e nunca está no `QueryClient` nem em armazenamento
-- [ ] Gates passam (incluindo Audit)
+- [x] Só a ação compatível com o estado do usuário aparece
+- [x] Motivo com menos de 10 caracteres úteis mantém o envio desabilitado na promoção e na senha temporária
+- [x] Senha temporária some do DOM ao fechar e nunca está no `QueryClient` nem em armazenamento
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
