@@ -201,11 +201,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-05 (AC1-3, AC8), FND-04 (AC5), FND-06 (apresentação)
 
 **Done when**:
-- [ ] Shell mostra só itens com permissão; menu recolhível abaixo do ponto de quebra
-- [ ] Com `must_change_password = true`, o shell esconde a navegação e mantém só "Sair"
-- [ ] `RequirePermission` cobre os modos página e ação
-- [ ] Estados de carregamento, vazio e erro com tentar de novo
-- [ ] Gates passam
+- [x] Shell mostra só itens com permissão; menu recolhível abaixo do ponto de quebra
+- [x] Com `must_change_password = true`, o shell esconde a navegação e mantém só "Sair"
+- [x] `RequirePermission` cobre os modos página e ação
+- [x] Estados de carregamento, vazio e erro com tentar de novo
+- [x] Gates passam
 
 **Tests**: component
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -222,11 +222,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-05 (AC4-7)
 
 **Done when**:
-- [ ] Campo de dinheiro entrega inteiro em centavos (nunca `float`), com os vetores de `lib/money.test.ts`
-- [ ] Campo de quantidade recusa decimal; modos `positive` e `nonZero`
-- [ ] Confirmação com motivo obrigatório não habilita o botão com motivo vazio ou só espaços
-- [ ] Datas em pt-BR no fuso de São Paulo; `authorLabel` devolve "você" para o id da sessão
-- [ ] Gates passam (incluindo Audit, fim da unidade F5)
+- [x] Campo de dinheiro entrega inteiro em centavos (nunca `float`), com os vetores de `lib/money.test.ts`
+- [x] Campo de quantidade recusa decimal; modos `positive` e `nonZero`
+- [x] Confirmação com motivo obrigatório não habilita o botão com motivo vazio ou só espaços
+- [x] Datas em pt-BR no fuso de São Paulo; `authorLabel` devolve "você" para o id da sessão
+- [x] Gates passam (incluindo Audit, fim da unidade F5)
 
 **Tests**: component + unit
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
