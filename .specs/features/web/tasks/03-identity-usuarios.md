@@ -55,9 +55,9 @@ T2 → T3
 **Requirement**: USR-01
 
 **Done when**:
-- [ ] Filtros `active` e `role` enviados à API; "Carregar mais" com `next_cursor`
-- [ ] Sem `identity:user:read`: "Sem acesso"
-- [ ] Gates passam
+- [x] Filtros `active` e `role` enviados à API; "Carregar mais" com `next_cursor`
+- [x] Sem `identity:user:read`: "Sem acesso"
+- [x] Gates passam
 
 **Tests**: component com MSW + unit (`nav.ts`)
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -74,9 +74,9 @@ T2 → T3
 **Requirement**: USR-02, USR-03
 
 **Done when**:
-- [ ] Ações visíveis só com a permissão certa e nunca na própria linha
-- [ ] `email_taken` no campo de e-mail; `last_admin` e `self_change_forbidden` com mensagem
-- [ ] Gates passam
+- [x] Ações visíveis só com a permissão certa e nunca na própria linha
+- [x] `email_taken` no campo de e-mail; `last_admin` e `self_change_forbidden` com mensagem
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -93,10 +93,10 @@ T2 → T3
 **Requirement**: USR-04, USR-05
 
 **Done when**:
-- [ ] Só a ação compatível com o estado do usuário aparece
-- [ ] Motivo com menos de 10 caracteres úteis mantém o envio desabilitado na promoção e na senha temporária
-- [ ] Senha temporária some do DOM ao fechar e nunca está no `QueryClient` nem em armazenamento
-- [ ] Gates passam (incluindo Audit)
+- [x] Só a ação compatível com o estado do usuário aparece
+- [x] Motivo com menos de 10 caracteres úteis mantém o envio desabilitado na promoção e na senha temporária
+- [x] Senha temporária some do DOM ao fechar e nunca está no `QueryClient` nem em armazenamento
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
