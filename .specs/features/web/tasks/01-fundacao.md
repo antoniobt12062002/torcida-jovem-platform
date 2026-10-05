@@ -222,11 +222,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-05 (AC4-7)
 
 **Done when**:
-- [ ] Campo de dinheiro entrega inteiro em centavos (nunca `float`), com os vetores de `lib/money.test.ts`
-- [ ] Campo de quantidade recusa decimal; modos `positive` e `nonZero`
-- [ ] Confirmação com motivo obrigatório não habilita o botão com motivo vazio ou só espaços
-- [ ] Datas em pt-BR no fuso de São Paulo; `authorLabel` devolve "você" para o id da sessão
-- [ ] Gates passam (incluindo Audit, fim da unidade F5)
+- [x] Campo de dinheiro entrega inteiro em centavos (nunca `float`), com os vetores de `lib/money.test.ts`
+- [x] Campo de quantidade recusa decimal; modos `positive` e `nonZero`
+- [x] Confirmação com motivo obrigatório não habilita o botão com motivo vazio ou só espaços
+- [x] Datas em pt-BR no fuso de São Paulo; `authorLabel` devolve "você" para o id da sessão
+- [x] Gates passam (incluindo Audit, fim da unidade F5)
 
 **Tests**: component + unit
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
