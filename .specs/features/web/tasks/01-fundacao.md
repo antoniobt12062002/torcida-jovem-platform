@@ -201,11 +201,11 @@ T1-T3 (F1) e T4 (F4) rodam em paralelo, em agentes e worktrees separados. T5 só
 **Requirement**: FND-05 (AC1-3, AC8), FND-04 (AC5), FND-06 (apresentação)
 
 **Done when**:
-- [ ] Shell mostra só itens com permissão; menu recolhível abaixo do ponto de quebra
-- [ ] Com `must_change_password = true`, o shell esconde a navegação e mantém só "Sair"
-- [ ] `RequirePermission` cobre os modos página e ação
-- [ ] Estados de carregamento, vazio e erro com tentar de novo
-- [ ] Gates passam
+- [x] Shell mostra só itens com permissão; menu recolhível abaixo do ponto de quebra
+- [x] Com `must_change_password = true`, o shell esconde a navegação e mantém só "Sair"
+- [x] `RequirePermission` cobre os modos página e ação
+- [x] Estados de carregamento, vazio e erro com tentar de novo
+- [x] Gates passam
 
 **Tests**: component
 **Gate**: Web + Contract + Backend intacto + Ownership
