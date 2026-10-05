@@ -103,11 +103,11 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-03
 
 **Done when**:
-- [ ] Valores enviados em centavos inteiros
-- [ ] Editar só em `CRIADA`; `lancamento_imutavel` explicado
-- [ ] Filtros e ordenação no cliente cobertos por teste unitário
-- [ ] Detalhe de id inexistente mostra "Lançamento não encontrado"
-- [ ] Gates passam
+- [x] Valores enviados em centavos inteiros
+- [x] Editar só em `CRIADA`; `lancamento_imutavel` explicado
+- [x] Filtros e ordenação no cliente cobertos por teste unitário
+- [x] Detalhe de id inexistente mostra "Lançamento não encontrado"
+- [x] Gates passam
 
 **Tests**: unit (`filters.ts`, `actions.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -124,10 +124,10 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-04
 
 **Done when**:
-- [ ] Cada ação aparece só no status e com a permissão certos (`actions.ts` testado em todas as combinações)
-- [ ] Cancelamento com motivo vazio ou só espaços não chama a API
-- [ ] Mudança de status invalida `financeiro.lancamentos` e `financeiro.saldo`
-- [ ] Gates passam
+- [x] Cada ação aparece só no status e com a permissão certos (`actions.ts` testado em todas as combinações)
+- [x] Cancelamento com motivo vazio ou só espaços não chama a API
+- [x] Mudança de status invalida `financeiro.lancamentos` e `financeiro.saldo`
+- [x] Gates passam
 
 **Tests**: unit (`actions.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -144,12 +144,12 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-05
 
 **Done when**:
-- [ ] Upload como `multipart/form-data` no campo `file`, com `X-CSRF-Token`
-- [ ] Limite efetivo do cliente (10.420.224 bytes = 10 MiB − 64 KiB) testado: abaixo aceita, exatamente no limite aceita, um byte acima recusa sem requisição (MSW confirma zero chamadas)
-- [ ] `413 document_too_large` devolvido pela API continua mostrado com a mensagem correta (a API segue protegendo o limite, coberto no backend por `api/internal/platform/documents`)
-- [ ] URL assinada buscada no clique e nunca no cache
-- [ ] Erros `413` e `422` de documento com mensagem
-- [ ] Gates passam (incluindo Audit)
+- [x] Upload como `multipart/form-data` no campo `file`, com `X-CSRF-Token`
+- [x] Limite efetivo do cliente (10.420.224 bytes = 10 MiB − 64 KiB) testado: abaixo aceita, exatamente no limite aceita, um byte acima recusa sem requisição (MSW confirma zero chamadas)
+- [x] `413 document_too_large` devolvido pela API continua mostrado com a mensagem correta (a API segue protegendo o limite, coberto no backend por `api/internal/platform/documents`)
+- [x] URL assinada buscada no clique e nunca no cache
+- [x] Erros `413` e `422` de documento com mensagem
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
