@@ -54,9 +54,9 @@ T1 → T2
 **Requirement**: ACS-01
 
 **Done when**:
-- [ ] Todos os ACs de ACS-01 cobertos por teste
-- [ ] Depois da troca obrigatória, `queryKeys.session.me` é invalidada e a pessoa segue para o destino
-- [ ] Gates passam
+- [x] Todos os ACs de ACS-01 cobertos por teste
+- [x] Depois da troca obrigatória, `queryKeys.session.me` é invalidada e a pessoa segue para o destino
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
@@ -73,10 +73,10 @@ T1 → T2
 **Requirement**: ACS-02, ACS-03
 
 **Done when**:
-- [ ] Mesma mensagem para qualquer e-mail
-- [ ] Fragmento removido da barra de endereço; token nunca em query string nem em armazenamento (teste confere)
-- [ ] `invalid_reset_token` oferece pedir outro link
-- [ ] Gates passam (incluindo Audit)
+- [x] Mesma mensagem para qualquer e-mail
+- [x] Fragmento removido da barra de endereço; token nunca em query string nem em armazenamento (teste confere)
+- [x] `invalid_reset_token` oferece pedir outro link
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: unit (`read-reset-token`) + component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
