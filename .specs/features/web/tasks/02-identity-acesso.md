@@ -73,10 +73,10 @@ T1 → T2
 **Requirement**: ACS-02, ACS-03
 
 **Done when**:
-- [ ] Mesma mensagem para qualquer e-mail
-- [ ] Fragmento removido da barra de endereço; token nunca em query string nem em armazenamento (teste confere)
-- [ ] `invalid_reset_token` oferece pedir outro link
-- [ ] Gates passam (incluindo Audit)
+- [x] Mesma mensagem para qualquer e-mail
+- [x] Fragmento removido da barra de endereço; token nunca em query string nem em armazenamento (teste confere)
+- [x] `invalid_reset_token` oferece pedir outro link
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: unit (`read-reset-token`) + component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
