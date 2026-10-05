@@ -76,9 +76,9 @@ T3 → T4
 **Requirement**: INT-02
 
 **Done when**:
-- [ ] Variáveis, ordem de subida (incluindo o S3 local avulso), rewrite e gates documentados; comportamento de `API_URL` no build registrado
-- [ ] Nenhum segredo ou dado pessoal
-- [ ] Gates passam
+- [x] Variáveis, ordem de subida (incluindo o S3 local avulso), rewrite e gates documentados; comportamento de `API_URL` no build registrado
+- [x] Nenhum segredo ou dado pessoal
+- [x] Gates passam
 
 **Tests**: revisão manual
 **Gate**: Contract + Backend intacto + Ownership
