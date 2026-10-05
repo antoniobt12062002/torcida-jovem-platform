@@ -55,9 +55,9 @@ T2 → T3
 **Requirement**: EWB-01, EWB-04
 
 **Done when**:
-- [ ] `codigo_duplicado` no campo de código; `validation_failed` nos campos
-- [ ] Saldo negativo destacado; seção omitida sem a permissão (sem chamar a API)
-- [ ] Gates passam
+- [x] `codigo_duplicado` no campo de código; `validation_failed` nos campos
+- [x] Saldo negativo destacado; seção omitida sem a permissão (sem chamar a API)
+- [x] Gates passam
 
 **Tests**: unit (`search.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
