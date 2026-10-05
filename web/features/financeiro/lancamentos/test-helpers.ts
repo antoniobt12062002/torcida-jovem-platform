@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 
 import { apiUrl } from "@/lib/session/test-utils";
-import { type Conta, conta, type Lancamento } from "@/test/msw/fixtures";
+import { type Comprovante, type Conta, conta, type Lancamento } from "@/test/msw/fixtures";
 import { server } from "@/test/msw/server";
 
 // Ajudantes dos testes de lançamentos (e comprovantes).
@@ -57,6 +57,19 @@ export function mockContas(items: Conta[] = CONTAS) {
     http.get(apiUrl(`${BASE}/contas`), () => {
       calls.count += 1;
       return HttpResponse.json({ items });
+    }),
+  );
+  return calls;
+}
+
+/** GET /lancamentos/{id}/comprovantes devolve `current()`; conta as chamadas. */
+export function mockComprovantes(items: Comprovante[] | (() => Comprovante[]) = []) {
+  const calls = { count: 0 };
+  const current = typeof items === "function" ? items : () => items;
+  server.use(
+    http.get(apiUrl(`${BASE}/lancamentos/:id/comprovantes`), () => {
+      calls.count += 1;
+      return HttpResponse.json({ items: current() });
     }),
   );
   return calls;

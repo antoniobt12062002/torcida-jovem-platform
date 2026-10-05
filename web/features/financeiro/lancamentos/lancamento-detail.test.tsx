@@ -17,6 +17,7 @@ import {
   detailValue,
   dialog,
   formDialog,
+  mockComprovantes,
   mockContas,
   mockLancamentos,
   mockWrite,
@@ -49,6 +50,7 @@ const CRIADA = lancamento({
 async function renderDetail(items = [CRIADA], permissions = PERMISSOES_TESOURARIA, id = ID) {
   mockMe(authContext({ permissions }));
   mockContas();
+  mockComprovantes();
   const list = mockLancamentos(items);
   renderWithSession(<LancamentoDetail id={id} />);
   return list;
@@ -185,6 +187,7 @@ describe("permissões", () => {
   it("a página mostra o detalhe do id da rota", async () => {
     mockMe(authContext({ permissions: PERMISSOES_LEITURA }));
     mockContas();
+    mockComprovantes();
     mockLancamentos([CRIADA]);
     renderWithSession(await FinanceiroLancamentoPage({ params: Promise.resolve({ id: ID }) }));
     expect(await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` })).toBeTruthy();

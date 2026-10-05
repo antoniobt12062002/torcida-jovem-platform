@@ -144,12 +144,12 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-05
 
 **Done when**:
-- [ ] Upload como `multipart/form-data` no campo `file`, com `X-CSRF-Token`
-- [ ] Limite efetivo do cliente (10.420.224 bytes = 10 MiB − 64 KiB) testado: abaixo aceita, exatamente no limite aceita, um byte acima recusa sem requisição (MSW confirma zero chamadas)
-- [ ] `413 document_too_large` devolvido pela API continua mostrado com a mensagem correta (a API segue protegendo o limite, coberto no backend por `api/internal/platform/documents`)
-- [ ] URL assinada buscada no clique e nunca no cache
-- [ ] Erros `413` e `422` de documento com mensagem
-- [ ] Gates passam (incluindo Audit)
+- [x] Upload como `multipart/form-data` no campo `file`, com `X-CSRF-Token`
+- [x] Limite efetivo do cliente (10.420.224 bytes = 10 MiB − 64 KiB) testado: abaixo aceita, exatamente no limite aceita, um byte acima recusa sem requisição (MSW confirma zero chamadas)
+- [x] `413 document_too_large` devolvido pela API continua mostrado com a mensagem correta (a API segue protegendo o limite, coberto no backend por `api/internal/platform/documents`)
+- [x] URL assinada buscada no clique e nunca no cache
+- [x] Erros `413` e `422` de documento com mensagem
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership

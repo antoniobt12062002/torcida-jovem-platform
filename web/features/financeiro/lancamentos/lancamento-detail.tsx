@@ -15,6 +15,8 @@ import { type ApiError, isApiError, networkError } from "@/lib/api/problem";
 import { formatBRL } from "@/lib/money";
 import { useSession } from "@/lib/session";
 
+import { ComprovantesPanel } from "@/features/financeiro/comprovantes/comprovantes-panel";
+
 import { ACTION_PERMISSION, lancamentoActions } from "./actions";
 import { DevolucaoAction } from "./devolucao-form";
 import { lancamentosCatalog, MESSAGE_NAO_ENCONTRADO } from "./errors";
@@ -122,6 +124,10 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
           </>
         ) : null}
       </dl>
+
+      <RequirePermission permission="financeiro:comprovante:read" mode="action">
+        <ComprovantesPanel lancamentoId={l.id} />
+      </RequirePermission>
     </>
   );
 }

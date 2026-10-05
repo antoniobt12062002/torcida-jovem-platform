@@ -16,6 +16,7 @@ import {
   detailValue,
   dialog,
   formDialog,
+  mockComprovantes,
   mockContas,
   mockLancamentos,
   mockWrite,
@@ -43,6 +44,7 @@ async function renderDetail(initial: Lancamento[], permissions = PERMISSOES_TESO
   const state = { items: initial };
   mockMe(authContext({ permissions }));
   mockContas();
+  mockComprovantes();
   const list = mockLancamentos(() => state.items);
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(queryKeys.financeiro.saldo, { saldo_cents: 0 });
