@@ -55,9 +55,9 @@ T2 → T3
 **Requirement**: USR-01
 
 **Done when**:
-- [ ] Filtros `active` e `role` enviados à API; "Carregar mais" com `next_cursor`
-- [ ] Sem `identity:user:read`: "Sem acesso"
-- [ ] Gates passam
+- [x] Filtros `active` e `role` enviados à API; "Carregar mais" com `next_cursor`
+- [x] Sem `identity:user:read`: "Sem acesso"
+- [x] Gates passam
 
 **Tests**: component com MSW + unit (`nav.ts`)
 **Gate**: Web + Contract + Backend intacto + Ownership
