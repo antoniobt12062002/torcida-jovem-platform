@@ -72,6 +72,95 @@ export function recordPost(path: string, respond: (body: unknown) => Response) {
   return requests;
 }
 
+type MovBody = {
+  tipo: "ENTRADA" | "SAIDA" | "DEVOLUCAO";
+  produto_id: string;
+  quantidade: number;
+  origem: Movimentacao["origem"];
+  movimentacao_de_id?: string;
+};
+type AjusteBody = { produto_id: string; quantidade: number; motivo: string };
+
+/**
+ * Estoque falso de um produto: histórico, saldo (soma das movimentações) e
+ * os POST de movimentação e ajuste, com as regras de sinal e de saldo
+ * insuficiente da API. Registra corpo e CSRF de cada POST.
+ */
+export function mockEstoque(initial: Movimentacao[] = []) {
+  const state = {
+    items: [...initial],
+    saldoCalls: 0,
+    movCalls: 0,
+    movRequests: [] as Recorded[],
+    ajusteRequests: [] as Recorded[],
+    nextId: 900,
+  };
+  const saldo = () => state.items.reduce((sum, m) => sum + m.quantidade, 0);
+  const newId = () => `00000000-0000-4000-8000-000000000${state.nextId++}`;
+  server.use(
+    http.get(apiUrl("/api/v1/estoque/produtos/:id/movimentacoes"), () => {
+      state.movCalls += 1;
+      return HttpResponse.json({ items: state.items });
+    }),
+    http.get(apiUrl("/api/v1/estoque/produtos/:id/saldo"), () => {
+      state.saldoCalls += 1;
+      return HttpResponse.json({ saldo: saldo() });
+    }),
+    http.post(apiUrl("/api/v1/estoque/movimentacoes"), async ({ request }) => {
+      const body = (await request.json()) as MovBody;
+      state.movRequests.push({ body, csrf: request.headers.get("X-CSRF-Token") });
+      let signed = body.tipo === "SAIDA" ? -body.quantidade : body.quantidade;
+      if (body.tipo === "DEVOLUCAO") {
+        const ref = state.items.find((m) => m.id === body.movimentacao_de_id);
+        if (!ref || (ref.tipo !== "ENTRADA" && ref.tipo !== "SAIDA")) {
+          return HttpResponse.json(
+            { type: "about:blank", title: "x", status: 422, code: "devolucao_invalida" },
+            { status: 422, headers: { "Content-Type": "application/problem+json" } },
+          );
+        }
+        signed = ref.tipo === "SAIDA" ? body.quantidade : -body.quantidade;
+      }
+      if (signed < 0 && saldo() + signed < 0) {
+        return HttpResponse.json(
+          { type: "about:blank", title: "x", status: 409, code: "saldo_insuficiente" },
+          { status: 409, headers: { "Content-Type": "application/problem+json" } },
+        );
+      }
+      const created: Movimentacao = {
+        id: newId(),
+        produto_id: body.produto_id,
+        tipo: body.tipo,
+        quantidade: signed,
+        origem: body.origem,
+        motivo: null,
+        movimentacao_de_id: body.movimentacao_de_id ?? null,
+        responsavel_id: "00000000-0000-4000-8000-000000000001",
+        criado_em: "2026-10-04T15:00:00Z",
+      };
+      state.items = [...state.items, created];
+      return HttpResponse.json(created, { status: 201 });
+    }),
+    http.post(apiUrl("/api/v1/estoque/ajustes"), async ({ request }) => {
+      const body = (await request.json()) as AjusteBody;
+      state.ajusteRequests.push({ body, csrf: request.headers.get("X-CSRF-Token") });
+      const created: Movimentacao = {
+        id: newId(),
+        produto_id: body.produto_id,
+        tipo: "AJUSTE",
+        quantidade: body.quantidade,
+        origem: "AJUSTE_MANUAL",
+        motivo: body.motivo,
+        movimentacao_de_id: null,
+        responsavel_id: "00000000-0000-4000-8000-000000000001",
+        criado_em: "2026-10-04T15:00:00Z",
+      };
+      state.items = [...state.items, created];
+      return HttpResponse.json(created, { status: 201 });
+    }),
+  );
+  return state;
+}
+
 export function describedByText(el: HTMLElement): string[] {
   const ids = (el.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean);
   return ids.map((id) => document.getElementById(id)?.textContent ?? "");

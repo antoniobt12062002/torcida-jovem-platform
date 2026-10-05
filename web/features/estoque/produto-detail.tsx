@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 import { estoqueCatalog, MESSAGE_PRODUTO_NAO_ENCONTRADO } from "./errors";
+import { MovimentacaoDialog } from "./movimentacoes/movimentacao-dialog";
+import { MovimentacoesPanel } from "./movimentacoes/movimentacoes-panel";
 import { type Produto, useProduto, useSaldo } from "./produtos/hooks";
 
 // Detalhe do produto (EWB-01 AC4, EWB-04 AC2). O produto vem do cache da
@@ -61,8 +63,19 @@ function ProdutoSections({ produto }: { produto: Produto }) {
         </dl>
       </header>
 
+      <RequirePermission permission="estoque:movimentacao:create" mode="action">
+        <div className="flex flex-wrap gap-2">
+          <MovimentacaoDialog produto={produto} tipo="ENTRADA" />
+          <MovimentacaoDialog produto={produto} tipo="SAIDA" />
+        </div>
+      </RequirePermission>
+
       <RequirePermission permission="estoque:saldo:read" mode="action">
         <SaldoSection produto={produto} />
+      </RequirePermission>
+
+      <RequirePermission permission="estoque:movimentacao:read" mode="action">
+        <MovimentacoesPanel produto={produto} />
       </RequirePermission>
     </>
   );

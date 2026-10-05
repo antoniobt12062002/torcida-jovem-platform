@@ -74,10 +74,10 @@ T2 → T3
 **Requirement**: EWB-02
 
 **Done when**:
-- [ ] Corpo enviado sempre com `origem = INVENTARIO`; nenhuma origem reservada oferecida
-- [ ] "Devolver" só em `ENTRADA` e `SAIDA`
-- [ ] Histórico e saldo invalidados depois do registro
-- [ ] Gates passam
+- [x] Corpo enviado sempre com `origem = INVENTARIO`; nenhuma origem reservada oferecida
+- [x] "Devolver" só em `ENTRADA` e `SAIDA`
+- [x] Histórico e saldo invalidados depois do registro
+- [x] Gates passam
 
 **Tests**: unit (`payload.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
