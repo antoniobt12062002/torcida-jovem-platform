@@ -85,8 +85,8 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-02
 
 **Done when**:
-- [ ] Positivo, zero e negativo formatados com `formatBRL`
-- [ ] Gates passam (incluindo Audit)
+- [x] Positivo, zero e negativo formatados com `formatBRL`
+- [x] Gates passam (incluindo Audit)
 
 **Tests**: component com MSW
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
