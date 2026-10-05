@@ -3,17 +3,29 @@
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 
+import { ApiErrorAlert } from "@/components/app/api-error";
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { authorLabel, formatDateTime, shortId } from "@/components/app/format";
 import { RequirePermission } from "@/components/app/require-permission";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+import { type ApiError, isApiError, networkError } from "@/lib/api/problem";
 import { formatBRL } from "@/lib/money";
 import { useSession } from "@/lib/session";
 
-import { LANCAMENTO_PERMISSIONS, lancamentoActions } from "./actions";
+import { ACTION_PERMISSION, lancamentoActions } from "./actions";
+import { DevolucaoAction } from "./devolucao-form";
 import { lancamentosCatalog, MESSAGE_NAO_ENCONTRADO } from "./errors";
-import { useContaNome, useLancamento, useUpdateLancamento } from "./hooks";
+import {
+  useCancelarLancamento,
+  useContaNome,
+  useLancamento,
+  usePagarLancamento,
+  useReceberLancamento,
+  useUpdateLancamento,
+} from "./hooks";
 import { LancamentoFormDialog } from "./lancamento-form";
 import { FORMA_PAGAMENTO_LABEL, type Lancamento, TIPO_LABEL } from "./labels";
 
@@ -48,6 +60,8 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
   const userId = context?.user.id;
   const contaNome = useContaNome();
   const actions = lancamentoActions(l, context?.permissions ?? []);
+  const [actionError, setActionError] = useState<ApiError | null>(null);
+  const report = (error: unknown) => setActionError(isApiError(error) ? error : networkError(error));
 
   return (
     <>
@@ -58,13 +72,25 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
         <StatusBadge status={l.status} />
       </div>
 
+      {actionError ? <ApiErrorAlert error={actionError} catalog={lancamentosCatalog} /> : null}
+
       {actions.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {actions.includes("editar") ? (
-            <RequirePermission permission={LANCAMENTO_PERMISSIONS.update} mode="action">
-              <EditarAction lancamento={l} />
+          {actions.map((action) => (
+            <RequirePermission key={action} permission={ACTION_PERMISSION[action]} mode="action">
+              {action === "editar" ? <EditarAction lancamento={l} /> : null}
+              {action === "receber" ? (
+                <StatusAction kind="receber" lancamento={l} onStart={() => setActionError(null)} onError={report} />
+              ) : null}
+              {action === "pagar" ? (
+                <StatusAction kind="pagar" lancamento={l} onStart={() => setActionError(null)} onError={report} />
+              ) : null}
+              {action === "cancelar" ? (
+                <CancelarAction lancamento={l} onStart={() => setActionError(null)} onError={report} />
+              ) : null}
+              {action === "devolver" ? <DevolucaoAction receita={l} /> : null}
             </RequirePermission>
-          ) : null}
+          ))}
         </div>
       ) : null}
 
@@ -106,6 +132,83 @@ function Item({ label, children }: { label: string; children: ReactNode }) {
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-sm">{children}</dd>
     </div>
+  );
+}
+
+type ActionProps = {
+  lancamento: Lancamento;
+  onStart: () => void;
+  onError: (error: unknown) => void;
+};
+
+const STATUS_ACTION = {
+  receber: {
+    label: "Receber",
+    title: "Confirmar recebimento?",
+    description: "A receita passa a Recebida e entra no saldo.",
+    confirmLabel: "Confirmar recebimento",
+    success: "Recebimento registrado.",
+  },
+  pagar: {
+    label: "Pagar",
+    title: "Confirmar pagamento?",
+    description: "A despesa passa a Paga e sai do saldo.",
+    confirmLabel: "Confirmar pagamento",
+    success: "Pagamento registrado.",
+  },
+} as const;
+
+/** Receber (FWB-04 AC1) ou pagar (AC2), com confirmação. */
+function StatusAction({ kind, lancamento, onStart, onError }: ActionProps & { kind: "receber" | "pagar" }) {
+  const receber = useReceberLancamento(lancamento.id);
+  const pagar = usePagarLancamento(lancamento.id);
+  const mutation = kind === "receber" ? receber : pagar;
+  const text = STATUS_ACTION[kind];
+  return (
+    <ConfirmDialog
+      trigger={<Button>{text.label}</Button>}
+      title={text.title}
+      description={text.description}
+      confirmLabel={text.confirmLabel}
+      pending={mutation.isPending}
+      onConfirm={async () => {
+        onStart();
+        try {
+          await mutation.mutateAsync();
+          toast.success(text.success);
+        } catch (error) {
+          onError(error);
+        }
+      }}
+    />
+  );
+}
+
+/** Cancelamento com motivo obrigatório (FWB-04 AC3-4). */
+function CancelarAction({ lancamento, onStart, onError }: ActionProps) {
+  const cancelar = useCancelarLancamento(lancamento.id);
+  return (
+    <ConfirmDialog
+      trigger={<Button variant="destructive">Cancelar lançamento</Button>}
+      title="Cancelar lançamento?"
+      description="O lançamento não é excluído: fica como Cancelado, com o motivo registrado."
+      confirmLabel="Cancelar lançamento"
+      cancelLabel="Voltar"
+      destructive
+      reason="required"
+      reasonLabel="Motivo do cancelamento"
+      pending={cancelar.isPending}
+      onConfirm={async (reason) => {
+        if (!reason) return;
+        onStart();
+        try {
+          await cancelar.mutateAsync(reason);
+          toast.success("Lançamento cancelado.");
+        } catch (error) {
+          onError(error);
+        }
+      }}
+    />
   );
 }
 

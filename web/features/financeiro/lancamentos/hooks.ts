@@ -75,6 +75,67 @@ export function useCreateLancamento() {
   });
 }
 
+/** Depois de uma mudança de status: lista e saldo são buscados de novo. */
+function useInvalidateStatusChange() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.financeiro.lancamentos }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.financeiro.saldo }),
+    ]);
+}
+
+export function useReceberLancamento(id: string) {
+  const onSuccess = useInvalidateStatusChange();
+  const onStale = useInvalidateOnStale();
+  return useMutation({
+    mutationFn: () =>
+      unwrap(api.financeiro.POST("/api/v1/financeiro/lancamentos/{id}/receive", { params: { path: { id } } })),
+    onSuccess,
+    onError: onStale,
+  });
+}
+
+export function usePagarLancamento(id: string) {
+  const onSuccess = useInvalidateStatusChange();
+  const onStale = useInvalidateOnStale();
+  return useMutation({
+    mutationFn: () =>
+      unwrap(api.financeiro.POST("/api/v1/financeiro/lancamentos/{id}/pay", { params: { path: { id } } })),
+    onSuccess,
+    onError: onStale,
+  });
+}
+
+export function useCancelarLancamento(id: string) {
+  const onSuccess = useInvalidateStatusChange();
+  const onStale = useInvalidateOnStale();
+  return useMutation({
+    mutationFn: (reason: string) =>
+      unwrap(
+        api.financeiro.POST("/api/v1/financeiro/lancamentos/{id}/cancel", {
+          params: { path: { id } },
+          body: { reason },
+        }),
+      ),
+    onSuccess,
+    onError: onStale,
+  });
+}
+
+export type CreateDevolucaoBody = components["schemas"]["CreateDevolucaoRequest"];
+
+export function useRegistrarDevolucao() {
+  const queryClient = useQueryClient();
+  const onStale = useInvalidateOnStale();
+  return useMutation({
+    mutationFn: (body: CreateDevolucaoBody) =>
+      unwrap(api.financeiro.POST("/api/v1/financeiro/lancamentos/devolucoes", { body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.financeiro.lancamentos }),
+    onError: onStale,
+  });
+}
+
 export function useUpdateLancamento(id: string) {
   const queryClient = useQueryClient();
   const onStale = useInvalidateOnStale();

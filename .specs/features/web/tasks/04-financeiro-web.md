@@ -124,10 +124,10 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-04
 
 **Done when**:
-- [ ] Cada ação aparece só no status e com a permissão certos (`actions.ts` testado em todas as combinações)
-- [ ] Cancelamento com motivo vazio ou só espaços não chama a API
-- [ ] Mudança de status invalida `financeiro.lancamentos` e `financeiro.saldo`
-- [ ] Gates passam
+- [x] Cada ação aparece só no status e com a permissão certos (`actions.ts` testado em todas as combinações)
+- [x] Cancelamento com motivo vazio ou só espaços não chama a API
+- [x] Mudança de status invalida `financeiro.lancamentos` e `financeiro.saldo`
+- [x] Gates passam
 
 **Tests**: unit (`actions.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership

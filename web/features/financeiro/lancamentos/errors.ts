@@ -7,6 +7,10 @@ export const MESSAGE_TIPO_INCOMPATIVEL = "O tipo do lançamento não combina com
 export const MESSAGE_AMOUNT_OUT_OF_RANGE = "Valor fora da faixa permitida.";
 export const MESSAGE_IMUTAVEL = "Só lançamentos em aberto podem ser editados.";
 export const MESSAGE_NAO_ENCONTRADO = "Lançamento não encontrado.";
+export const MESSAGE_NAO_ESTA_EM_ABERTO = "Este lançamento não está mais em aberto.";
+export const MESSAGE_JA_CANCELADO = "Este lançamento já foi cancelado.";
+export const MESSAGE_MOTIVO_OBRIGATORIO = "Informe o motivo.";
+export const MESSAGE_DEVOLUCAO_INVALIDA = "Só é possível devolver uma receita recebida.";
 
 export const lancamentosCatalog: ErrorCatalog = {
   conta_invalida: MESSAGE_CONTA_INVALIDA,
@@ -14,6 +18,11 @@ export const lancamentosCatalog: ErrorCatalog = {
   amount_out_of_range: MESSAGE_AMOUNT_OUT_OF_RANGE,
   lancamento_imutavel: MESSAGE_IMUTAVEL,
   lancamento_nao_encontrado: MESSAGE_NAO_ENCONTRADO,
+  lancamento_nao_pode_ser_recebido: MESSAGE_NAO_ESTA_EM_ABERTO,
+  lancamento_nao_pode_ser_pago: MESSAGE_NAO_ESTA_EM_ABERTO,
+  lancamento_ja_cancelado: MESSAGE_JA_CANCELADO,
+  motivo_obrigatorio: MESSAGE_MOTIVO_OBRIGATORIO,
+  devolucao_invalida: MESSAGE_DEVOLUCAO_INVALIDA,
 };
 
 /**
@@ -27,4 +36,11 @@ export const FIELD_BY_CODE = {
 } as const;
 
 /** Erros que indicam lista desatualizada: a lista é buscada de novo. */
-export const STALE_CODES: ReadonlySet<string> = new Set(["lancamento_imutavel", "lancamento_nao_encontrado"]);
+export const STALE_CODES: ReadonlySet<string> = new Set([
+  "lancamento_imutavel",
+  "lancamento_nao_encontrado",
+  "lancamento_nao_pode_ser_recebido",
+  "lancamento_nao_pode_ser_pago",
+  "lancamento_ja_cancelado",
+  "devolucao_invalida",
+]);
