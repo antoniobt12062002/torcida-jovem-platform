@@ -134,5 +134,5 @@ A API cria usuários, promove a administrativo com papéis, ajusta papéis, reti
 
 ## Success Criteria
 
-- [ ] Um `ADMIN_SISTEMA` cria uma pessoa, promove a `TESOURARIA`, e essa pessoa entra, troca a senha e vê o Financeiro.
+- [ ] Um `PRESIDENTE` cria uma pessoa, promove a `TESOURARIA`, e essa pessoa entra, troca a senha e vê o Financeiro. (Um `ADMIN_SISTEMA` recebe `403 privilege_escalation` nessa promoção, pela regra de não escalada da API; a tela mostra a mensagem correspondente.)
 - [ ] Uma pessoa com só `identity:user:read` (por exemplo `DIRETORIA`) vê a lista sem nenhuma ação de escrita.
