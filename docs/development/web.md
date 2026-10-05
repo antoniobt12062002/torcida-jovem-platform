@@ -99,12 +99,12 @@ Com o banco migrado, crie a primeira conta pelo `bootstrap-admin` (detalhes em `
 cd api
 export DATABASE_URL="postgres://tj_app:tj_app_dev@localhost:5432/tj?sslmode=disable"
 read -rs BOOTSTRAP_ADMIN_PASSWORD && export BOOTSTRAP_ADMIN_PASSWORD
-go run ./cmd/bootstrap-admin --email admin@local.test --name "Administrador Local"
+go run ./cmd/bootstrap-admin --email presidente@local.test --name "Presidente Local" --role PRESIDENTE
 unset BOOTSTRAP_ADMIN_PASSWORD
 cd ..
 ```
 
-O padrão é `ADMIN_SISTEMA`, que administra usuários mas não opera `financeiro` nem `estoque`. Com `--role PRESIDENTE`, a conta recebe todas as permissões do catálogo. Para exercitar a tesouraria ou o estoque com o papel certo, crie as pessoas pela tela de usuários (`/admin/usuarios`) e promova-as com `TESOURARIA` ou `ESTOQUE_LOJA`. O primeiro login de qualquer conta exige a troca da senha.
+O padrão é `ADMIN_SISTEMA`, que administra usuários mas não opera `financeiro` nem `estoque`. A API só deixa alguém conceder um papel cujas permissões ele mesmo tem: um `ADMIN_SISTEMA` que tenta promover alguém a `TESOURARIA`, `ESTOQUE_LOJA` ou `CONSELHO_FISCAL` recebe `403 privilege_escalation`. Como o `bootstrap-admin` só cria a primeira conta administrativa, para exercitar localmente o ciclo completo crie-a com `--role PRESIDENTE`, que recebe todas as permissões do catálogo. Depois crie as pessoas pela tela de usuários (`/admin/usuarios`) e promova-as com o papel certo (o motivo da promoção precisa de pelo menos 10 caracteres). O primeiro login de qualquer conta exige a troca da senha.
 
 ### 4. API
 
@@ -191,4 +191,5 @@ pnpm lint:api && pnpm gen:api:check                                             
 | A API não sobe: `STORAGE_ENABLED=true é obrigatório` | `.env` copiado do exemplo; ligue o armazenamento e suba o Garage. |
 | Login funciona, mas toda escrita dá `403 origin_not_allowed` | `ALLOWED_ORIGINS` não contém a origem do front. |
 | Login responde `200` mas a sessão não fica | `COOKIE_SECURE=true` sem HTTPS local. |
+| Promover alguém a `TESOURARIA` dá `403 privilege_escalation` | A conta que promove não tem as permissões do papel (por exemplo, `ADMIN_SISTEMA`); use um `PRESIDENTE`. |
 | Upload de comprovante dá `500` | Anexo grande demais passou pelo rewrite sem a checagem do front. |

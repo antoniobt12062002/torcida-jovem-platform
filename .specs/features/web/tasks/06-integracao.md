@@ -95,9 +95,9 @@ T3 → T4
 **Requirement**: INT-03
 
 **Done when**:
-- [ ] Todos os itens com resultado, data e observação
-- [ ] Nenhuma falha pendente (falhas corrigidas pela frente dona e repetidas)
-- [ ] Gates passam
+- [x] Todos os itens com resultado, data e observação
+- [x] Nenhuma falha pendente (falhas corrigidas pela frente dona e repetidas)
+- [x] Gates passam
 
 **Tests**: aceite manual contra a stack real
 **Gate**: Web + Audit + Contract + Backend intacto + Ownership
