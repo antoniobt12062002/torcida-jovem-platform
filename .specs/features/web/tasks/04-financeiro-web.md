@@ -103,11 +103,11 @@ T1-T2 (FIN-a) e T3-T5 (FIN-b) rodam em paralelo, em agentes e worktrees separado
 **Requirement**: FWB-03
 
 **Done when**:
-- [ ] Valores enviados em centavos inteiros
-- [ ] Editar só em `CRIADA`; `lancamento_imutavel` explicado
-- [ ] Filtros e ordenação no cliente cobertos por teste unitário
-- [ ] Detalhe de id inexistente mostra "Lançamento não encontrado"
-- [ ] Gates passam
+- [x] Valores enviados em centavos inteiros
+- [x] Editar só em `CRIADA`; `lancamento_imutavel` explicado
+- [x] Filtros e ordenação no cliente cobertos por teste unitário
+- [x] Detalhe de id inexistente mostra "Lançamento não encontrado"
+- [x] Gates passam
 
 **Tests**: unit (`filters.ts`, `actions.ts`) + component com MSW
 **Gate**: Web + Contract + Backend intacto + Ownership
