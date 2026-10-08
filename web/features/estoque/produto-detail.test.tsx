@@ -6,7 +6,7 @@ import { mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext, ids, produto } from "@/test/msw/fixtures";
 
 import { ProdutoDetail } from "./produto-detail";
-import { mockMovimentacoes, mockProdutos, mockSaldo, PERM, READ_ONLY } from "./test-helpers";
+import { allExcept, mockMovimentacoes, mockProdutos, mockSaldo, PERM, READ_ONLY, WRITES } from "./test-helpers";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -83,6 +83,81 @@ describe("seções por permissão", () => {
     const { list, saldoState, movs } = renderDetail([PERM.saldoRead, PERM.movRead]);
     expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
     expect(list.count).toBe(0);
+    expect(saldoState.calls).toBe(0);
+    expect(movs.calls).toBe(0);
+  });
+});
+
+// FND-04 AC3-4, EWB-01 AC4, EWB-02 AC1, EWB-04 AC2: cada seção e a rota são
+// decididas pela sua própria permissão de leitura, e por nenhuma outra.
+describe("isolamento das permissões de leitura", () => {
+  it("só estoque:produto:read abre o detalhe, sem seção de saldo nem de histórico", async () => {
+    const { list, saldoState, movs } = renderDetail([PERM.produtoRead]);
+    expect(await screen.findByRole("heading", { name: "Camisa oficial" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Sem acesso" })).toBeNull();
+    expect(list.count).toBe(1);
+    expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
+    expect(saldoState.calls).toBe(0);
+    expect(movs.calls).toBe(0);
+  });
+
+  it("todas as permissões do estoque menos estoque:produto:read: Sem acesso e nenhuma requisição", async () => {
+    const { list, saldoState, movs } = renderDetail(allExcept(PERM.produtoRead), 5);
+    expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Camisa oficial" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
+    // Dá tempo a uma consulta indevida de acontecer antes de contar.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(list.count).toBe(0);
+    expect(saldoState.calls).toBe(0);
+    expect(movs.calls).toBe(0);
+  });
+
+  it("estoque:saldo:read sozinha (com a rota) mostra o saldo e não chama o histórico", async () => {
+    const { saldoState, movs } = renderDetail([PERM.produtoRead, PERM.saldoRead], 7);
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect(screen.getByRole("heading", { name: "Saldo" })).toBeTruthy();
+    expect(saldoState.calls).toBe(1);
+    expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
+    expect(movs.calls).toBe(0);
+  });
+
+  it("todas as permissões menos estoque:saldo:read: sem seção de saldo e sem chamar o saldo", async () => {
+    const { saldoState, movs } = renderDetail(allExcept(PERM.saldoRead), 7);
+    expect(await screen.findByRole("heading", { name: "Movimentações" })).toBeTruthy();
+    await screen.findByText("Nenhuma movimentação registrada.");
+    expect(movs.calls).toBe(1);
+    expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
+    expect(screen.queryByTestId("saldo-valor")).toBeNull();
+    expect(saldoState.calls).toBe(0);
+  });
+
+  it("estoque:movimentacao:read sozinha (com a rota) mostra o histórico e não chama o saldo", async () => {
+    const { saldoState, movs } = renderDetail([PERM.produtoRead, PERM.movRead], 7);
+    expect(await screen.findByRole("heading", { name: "Movimentações" })).toBeTruthy();
+    await screen.findByText("Nenhuma movimentação registrada.");
+    expect(movs.calls).toBe(1);
+    expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
+    expect(saldoState.calls).toBe(0);
+  });
+
+  it("todas as permissões menos estoque:movimentacao:read: sem histórico e sem chamá-lo", async () => {
+    const { saldoState, movs } = renderDetail(allExcept(PERM.movRead), 7);
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect(saldoState.calls).toBe(1);
+    expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(movs.calls).toBe(0);
+  });
+
+  // As escritas não abrem nenhuma leitura.
+  it("só as permissões de escrita, com a rota: nenhuma seção de leitura", async () => {
+    const { saldoState, movs } = renderDetail([PERM.produtoRead, ...WRITES], 7);
+    await screen.findByRole("heading", { name: "Camisa oficial" });
+    expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
     expect(saldoState.calls).toBe(0);
     expect(movs.calls).toBe(0);
   });

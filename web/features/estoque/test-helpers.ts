@@ -20,6 +20,13 @@ export const PERM = {
 export const READ_ONLY = [PERM.produtoRead, PERM.movRead, PERM.saldoRead];
 /** Responsável de estoque (ESTOQUE_LOJA). */
 export const ALL = Object.values(PERM);
+/** Escritas do módulo. */
+export const WRITES = [PERM.produtoCreate, PERM.movCreate, PERM.movAdjust];
+
+/** Todas as permissões do estoque, menos as dadas (negativo cruzado, FND-04 AC3). */
+export function allExcept(...excluded: string[]): string[] {
+  return ALL.filter((permission) => !excluded.includes(permission));
+}
 
 export type Recorded = { body: unknown; csrf: string | null };
 
