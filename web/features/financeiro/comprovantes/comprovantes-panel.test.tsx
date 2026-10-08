@@ -253,6 +253,23 @@ describe("baixar", () => {
     expect(calls.count).toBe(2);
   });
 
+  it("não guarda a URL assinada no cache de consultas nem no de mutações", async () => {
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    mockUrl(() => HttpResponse.json({ url: "https://s3.exemplo.test/assinada-secreta" }));
+    mockMe(authContext({ permissions: PERMISSOES_TESOURARIA }));
+    mockComprovantes([ANTIGO]);
+    const { queryClient } = renderWithSession(<ComprovantesPanel lancamentoId={LANCAMENTO_ID} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Baixar recibo-agosto.pdf" }));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+
+    const cached = JSON.stringify([
+      queryClient.getQueryCache().getAll().map((q) => [q.queryKey, q.state.data]),
+      queryClient.getMutationCache().getAll().map((m) => [m.state.data, m.state.variables]),
+    ]);
+    expect(cached).not.toContain("assinada-secreta");
+  });
+
   it("404 document_not_found mostra a mensagem", async () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     mockUrl(() => problem(404, "document_not_found"));
