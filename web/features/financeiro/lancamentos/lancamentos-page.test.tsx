@@ -22,6 +22,9 @@ import {
   mockWrite,
   PERMISSOES_LEITURA,
   PERMISSOES_TESOURARIA,
+  SESSOES_SEM_LANCAMENTO_READ,
+  leituraMais,
+  tesourariaSem,
 } from "./test-helpers";
 
 vi.mock("next/navigation", async () =>
@@ -285,5 +288,46 @@ describe("permissões", () => {
     renderWithSession(<FinanceiroLancamentosPage />);
     expect(await screen.findByRole("heading", { name: "Lançamentos" })).toBeTruthy();
     await waitFor(() => expect(rows()).toHaveLength(1));
+  });
+
+  // FWB-03 AC2 e FND-04 AC3: "Novo lançamento" depende só de lancamento:create.
+  // A rota só mostra o título com a sessão carregada, então a ausência do
+  // botão não é efeito de sessão ainda pendente.
+  async function renderRoute(permissions: string[]) {
+    mockMe(authContext({ permissions }));
+    const contas = mockContas();
+    const list = mockLancamentos([RECEITA]);
+    renderWithSession(<FinanceiroLancamentosPage />);
+    return { contas, list };
+  }
+
+  it("leituras + só lancamento:create vê Novo lançamento", async () => {
+    await renderRoute(leituraMais("financeiro:lancamento:create"));
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(await screen.findByRole("button", { name: "Novo lançamento" })).toBeTruthy();
+  });
+
+  it("todas as outras escritas, sem lancamento:create, não vê Novo lançamento", async () => {
+    await renderRoute(tesourariaSem("financeiro:lancamento:create"));
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(screen.queryByRole("button", { name: "Novo lançamento" })).toBeNull();
+  });
+
+  // FND-04 AC4: a rota depende de lancamento:read, não das leituras vizinhas.
+  it.each(SESSOES_SEM_LANCAMENTO_READ)("sem lancamento:read, %s: Sem acesso e nenhuma consulta", async (_, permissions) => {
+    const { contas, list } = await renderRoute(permissions);
+    expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("heading", { name: "Lançamentos" })).toBeNull();
+    expect(list.count).toBe(0);
+    expect(contas.count).toBe(0);
+  });
+
+  it("só com lancamento:read, a página mostra a lista", async () => {
+    const { list } = await renderRoute(["financeiro:lancamento:read"]);
+    expect(await screen.findByRole("heading", { name: "Lançamentos" })).toBeTruthy();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(screen.queryByRole("heading", { name: "Sem acesso" })).toBeNull();
+    expect(list.count).toBe(1);
   });
 });

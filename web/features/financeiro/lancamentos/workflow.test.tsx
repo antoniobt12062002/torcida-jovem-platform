@@ -22,6 +22,8 @@ import {
   mockWrite,
   PERMISSOES_LEITURA,
   PERMISSOES_TESOURARIA,
+  leituraMais,
+  tesourariaSem,
 } from "./test-helpers";
 
 vi.mock("next/navigation", async () =>
@@ -273,4 +275,30 @@ describe("ações visíveis", () => {
       expect(visibleActions()).toEqual([]);
     },
   );
+
+  // FND-04 AC3: cada ação depende só da permissão que a spec nomeia para ela.
+  // `outras` são as ações que o status do lançamento também permite.
+  const ISOLAMENTO: [string, string, Lancamento, string[]][] = [
+    ["Receber", "financeiro:lancamento:receive", RECEITA_CRIADA, ["Editar", "Cancelar lançamento"]],
+    ["Pagar", "financeiro:lancamento:pay", DESPESA_CRIADA, ["Editar", "Cancelar lançamento"]],
+    ["Editar", "financeiro:lancamento:update", RECEITA_CRIADA, ["Receber", "Cancelar lançamento"]],
+    ["Editar", "financeiro:lancamento:update", DESPESA_CRIADA, ["Pagar", "Cancelar lançamento"]],
+    ["Cancelar lançamento", "financeiro:lancamento:cancel", RECEITA_CRIADA, ["Receber", "Editar"]],
+    ["Cancelar lançamento", "financeiro:lancamento:cancel", DESPESA_CRIADA, ["Pagar", "Editar"]],
+    ["Cancelar lançamento", "financeiro:lancamento:cancel", RECEITA_RECEBIDA, ["Registrar devolução"]],
+    ["Registrar devolução", "financeiro:lancamento:create", RECEITA_RECEBIDA, ["Cancelar lançamento"]],
+  ];
+
+  it.each(ISOLAMENTO)("leituras + só %s (%s) vê só essa ação", async (action, permission, item) => {
+    await renderDetail([item], leituraMais(permission));
+    await waitFor(() => expect(visibleActions()).toEqual([action]));
+  });
+
+  it.each(ISOLAMENTO)("todas as outras escritas, sem a de %s (%s), não vê essa ação", async (action, permission, item, outras) => {
+    await renderDetail([item], tesourariaSem(permission));
+    const expected = ALL.filter((name) => outras.includes(name));
+    // As outras ações aparecem: a sessão já carregou e a ausência é da permissão.
+    await waitFor(() => expect(visibleActions()).toEqual(expected));
+    expect(screen.queryByRole("button", { name: action })).toBeNull();
+  });
 });
