@@ -9,6 +9,7 @@ import { server } from "@/test/msw/server";
 
 import {
   ALL,
+  allExcept,
   describedByText,
   isInvalid,
   mockProdutos,
@@ -192,5 +193,47 @@ describe("permissões", () => {
     const calls = await renderPage([PERM.saldoRead]);
     expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
     expect(calls.count).toBe(0);
+  });
+});
+
+// EWB-01 AC1-2, FND-04 AC3-4: a rota depende só de estoque:produto:read e
+// "Novo produto", só de estoque:produto:create.
+describe("isolamento das permissões da lista", () => {
+  it("só estoque:produto:read lista os produtos, sem Novo produto", async () => {
+    const calls = await renderPage([PERM.produtoRead]);
+    await screen.findByText("Camisa oficial");
+    expect(screen.queryByRole("heading", { name: "Sem acesso" })).toBeNull();
+    expect(calls.count).toBe(1);
+    expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
+  });
+
+  it("todas as permissões do estoque menos estoque:produto:read: Sem acesso e a API não é chamada", async () => {
+    const calls = await renderPage(allExcept(PERM.produtoRead));
+    expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Produtos" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls.count).toBe(0);
+  });
+
+  it("leitura + só estoque:produto:create mostra Novo produto", async () => {
+    await renderPage([PERM.produtoRead, PERM.produtoCreate]);
+    await screen.findByText("Camisa oficial");
+    expect(screen.getByRole("button", { name: "Novo produto" })).toBeTruthy();
+  });
+
+  it("todas as permissões menos estoque:produto:create: sem Novo produto", async () => {
+    await renderPage(allExcept(PERM.produtoCreate));
+    await screen.findByText("Camisa oficial");
+    expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
+  });
+
+  it.each([
+    ["estoque:movimentacao:create", PERM.movCreate],
+    ["estoque:movimentacao:adjust", PERM.movAdjust],
+  ])("leituras + só %s: sem Novo produto", async (_name, permission) => {
+    await renderPage([...READ_ONLY, permission]);
+    await screen.findByText("Camisa oficial");
+    expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
   });
 });

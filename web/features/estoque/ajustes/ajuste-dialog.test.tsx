@@ -8,7 +8,7 @@ import { authContext, movimentacao, problem, produto } from "@/test/msw/fixtures
 import { server } from "@/test/msw/server";
 
 import { ProdutoDetail } from "../produto-detail";
-import { ALL, mockEstoque, mockProdutos, PERM, READ_ONLY } from "../test-helpers";
+import { ALL, allExcept, mockEstoque, mockProdutos, PERM, READ_ONLY } from "../test-helpers";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -139,5 +139,40 @@ describe("permissões", () => {
     await screen.findByRole("heading", { name: "Camisa oficial" });
     expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
     expect(backend.saldoCalls).toBe(0);
+  });
+});
+
+// EWB-03 AC1, FND-04 AC3 (lacuna G5): o ajuste depende só de
+// estoque:movimentacao:adjust.
+describe("isolamento de estoque:movimentacao:adjust", () => {
+  it("leitura do saldo + só estoque:movimentacao:adjust: ajusta e envia o POST /ajustes", async () => {
+    const backend = renderDetail([PERM.produtoRead, PERM.saldoRead, PERM.movAdjust], 4);
+    const dialog = await openAjuste();
+    fill(dialog, "-1", "Peça danificada");
+    fireEvent.click(confirmButton(dialog));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("3 UN"));
+    expect(backend.ajusteRequests).toEqual([
+      {
+        body: { produto_id: camisa.id, quantidade: -1, motivo: "Peça danificada" },
+        csrf: "csrf-token-de-teste",
+      },
+    ]);
+    expect(backend.movRequests).toEqual([]);
+  });
+
+  it("todas as permissões menos estoque:movimentacao:adjust: sem Ajustar estoque", async () => {
+    renderDetail(allExcept(PERM.movAdjust), 4);
+    await screen.findByTestId("saldo-valor");
+    expect(await screen.findByRole("button", { name: "Registrar entrada" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+  });
+
+  it.each([
+    ["estoque:movimentacao:create", PERM.movCreate],
+    ["estoque:produto:create", PERM.produtoCreate],
+  ])("leituras + só %s: sem Ajustar estoque", async (_name, permission) => {
+    renderDetail([...READ_ONLY, permission], 4);
+    await screen.findByTestId("saldo-valor");
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
   });
 });

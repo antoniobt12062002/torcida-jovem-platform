@@ -8,7 +8,7 @@ import { server } from "@/test/msw/server";
 import { http } from "msw";
 
 import { ProdutoDetail } from "../produto-detail";
-import { ALL, mockEstoque, mockProdutos, PERM, READ_ONLY, type } from "../test-helpers";
+import { ALL, allExcept, mockEstoque, mockProdutos, PERM, READ_ONLY, type } from "../test-helpers";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -235,5 +235,144 @@ describe("somente leitura", () => {
     expect(screen.queryByRole("button", { name: "Registrar entrada" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Registrar saída" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Devolver" })).toBeNull();
+  });
+});
+
+// EWB-02 AC1 (lacuna G1): a tela mantém a ordem devolvida pela API. As datas
+// são distintas e não estão em ordem crescente nem decrescente, e os ids,
+// quantidades e tipos também não, então qualquer reordenação aparece.
+describe("ordem do histórico", () => {
+  const O = {
+    a: "00000000-0000-4000-8000-000000000523",
+    b: "00000000-0000-4000-8000-000000000521",
+    c: "00000000-0000-4000-8000-000000000524",
+    d: "00000000-0000-4000-8000-000000000522",
+  };
+  const foraDeOrdem = [
+    movimentacao({ id: O.a, tipo: "SAIDA", quantidade: -2, criado_em: "2026-10-03T12:00:00Z" }),
+    movimentacao({ id: O.b, tipo: "ENTRADA", quantidade: 30, criado_em: "2026-10-05T13:30:00Z" }),
+    movimentacao({
+      id: O.c,
+      tipo: "AJUSTE",
+      quantidade: 5,
+      origem: "AJUSTE_MANUAL",
+      motivo: "Recontagem",
+      criado_em: "2026-10-01T11:15:00Z",
+    }),
+    movimentacao({ id: O.d, tipo: "ENTRADA", quantidade: 8, criado_em: "2026-10-04T14:45:00Z" }),
+  ];
+
+  it("a fixture não está em ordem cronológica, em nenhum sentido", () => {
+    const datas = foraDeOrdem.map((m) => m.criado_em);
+    expect(new Set(datas).size).toBe(datas.length);
+    expect(datas).not.toEqual([...datas].sort());
+    expect(datas).not.toEqual([...datas].sort().reverse());
+  });
+
+  it("mostra as linhas exatamente na ordem da resposta, sem reordenar por data", async () => {
+    const backend = renderDetail(READ_ONLY, foraDeOrdem);
+    await screen.findByRole("table", { name: "Movimentações" });
+    expect(historyRows().map(cells)).toEqual([
+      ["Saída", "-2", "Inventário", "—", "—", "você", "03/10/2026 09:00"],
+      ["Entrada", "30", "Inventário", "—", "—", "você", "05/10/2026 10:30"],
+      ["Ajuste", "5", "Ajuste manual", "Recontagem", "—", "você", "01/10/2026 08:15"],
+      ["Entrada", "8", "Inventário", "—", "—", "você", "04/10/2026 11:45"],
+    ]);
+    expect(backend.movCalls).toBe(1);
+  });
+
+  it("a ordem da resposta também vale quando a API devolve o inverso", async () => {
+    renderDetail(READ_ONLY, [...foraDeOrdem].reverse());
+    await screen.findByRole("table", { name: "Movimentações" });
+    expect(historyRows().map((row) => cells(row)[6])).toEqual([
+      "04/10/2026 11:45",
+      "01/10/2026 08:15",
+      "05/10/2026 10:30",
+      "03/10/2026 09:00",
+    ]);
+  });
+});
+
+// EWB-02 AC2-3, EWB-03 AC1, FND-04 AC3 (lacuna G5): entrada, saída e Devolver
+// dependem só de estoque:movimentacao:create; o ajuste, só de
+// estoque:movimentacao:adjust.
+describe("isolamento das permissões de escrita no detalhe", () => {
+  const HEADERS = ["Tipo", "Quantidade", "Origem", "Motivo", "Devolução de", "Responsável", "Data"];
+
+  async function ready() {
+    await screen.findByRole("table", { name: "Movimentações" });
+    await screen.findByTestId("saldo-valor");
+  }
+
+  function headers() {
+    return within(screen.getByRole("table", { name: "Movimentações" }))
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent);
+  }
+
+  function devolverPorLinha() {
+    return historyRows().map((row) => within(row).queryByRole("button", { name: "Devolver" }) !== null);
+  }
+
+  it("leituras + só estoque:movimentacao:create: entrada, saída e Devolver, sem Ajustar", async () => {
+    renderDetail([...READ_ONLY, PERM.movCreate]);
+    await ready();
+    expect(screen.getByRole("button", { name: "Registrar entrada" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Registrar saída" })).toBeTruthy();
+    expect(devolverPorLinha()).toEqual([true, true, false, false]);
+    expect(headers()).toEqual([...HEADERS, "Ações"]);
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+  });
+
+  it("leituras + só estoque:movimentacao:adjust: Ajustar, sem entrada, saída nem Devolver", async () => {
+    renderDetail([...READ_ONLY, PERM.movAdjust]);
+    await ready();
+    expect(screen.getByRole("button", { name: "Ajustar estoque" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Registrar entrada" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Registrar saída" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Devolver" })).toBeNull();
+    expect(devolverPorLinha()).toEqual([false, false, false, false]);
+    // Sem a permissão, nem a coluna de ações existe.
+    expect(headers()).toEqual(HEADERS);
+  });
+
+  it("todas menos estoque:movimentacao:create: sem entrada, saída nem Devolver; Ajustar continua", async () => {
+    renderDetail(allExcept(PERM.movCreate));
+    await ready();
+    expect(screen.queryByRole("button", { name: "Registrar entrada" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Registrar saída" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Devolver" })).toBeNull();
+    expect(headers()).toEqual(HEADERS);
+    expect(screen.getByRole("button", { name: "Ajustar estoque" })).toBeTruthy();
+  });
+
+  it("todas menos estoque:movimentacao:adjust: sem Ajustar; entrada, saída e Devolver continuam", async () => {
+    renderDetail(allExcept(PERM.movAdjust));
+    await ready();
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Registrar entrada" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Registrar saída" })).toBeTruthy();
+    expect(devolverPorLinha()).toEqual([true, true, false, false]);
+  });
+
+  it("estoque:produto:create não libera nenhuma ação do detalhe", async () => {
+    renderDetail([...READ_ONLY, PERM.produtoCreate]);
+    await ready();
+    expect(screen.queryByRole("button", { name: "Registrar entrada" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Registrar saída" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Devolver" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+    expect(headers()).toEqual(HEADERS);
+  });
+
+  // Entrada e saída ficam fora das seções de leitura: só dependem da rota e
+  // de estoque:movimentacao:create.
+  it("só a rota + estoque:movimentacao:create: entrada e saída, sem consultar saldo nem histórico", async () => {
+    const backend = renderDetail([PERM.produtoRead, PERM.movCreate]);
+    expect(await screen.findByRole("button", { name: "Registrar entrada" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Registrar saída" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+    expect(backend.saldoCalls).toBe(0);
+    expect(backend.movCalls).toBe(0);
   });
 });
