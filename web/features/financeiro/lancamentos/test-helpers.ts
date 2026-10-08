@@ -25,7 +25,31 @@ export const PERMISSOES_LEITURA = [
   "financeiro:comprovante:read",
 ];
 
-export const CONTA_RECEITA = conta({ id: "00000000-0000-4000-8000-000000000111", tipo: "RECEITA", nome: "Mensalidades" });
+/** Leituras + somente `permission`: o caso positivo isolado de uma ação. */
+export function leituraMais(permission: string): string[] {
+  return [...PERMISSOES_LEITURA, permission];
+}
+
+/** Tesouraria completa menos `permission`: o caso negativo cruzado de uma ação. */
+export function tesourariaSem(permission: string): string[] {
+  const rest = PERMISSOES_TESOURARIA.filter((p) => p !== permission);
+  if (rest.length === PERMISSOES_TESOURARIA.length) throw new Error(`permissão desconhecida: ${permission}`);
+  return rest;
+}
+
+/** Sessões que não podem abrir as rotas de lançamentos (FND-04 AC4). */
+export const SESSOES_SEM_LANCAMENTO_READ: [string, string[]][] = [
+  [
+    "só com as leituras vizinhas",
+    ["financeiro:conta:read", "financeiro:comprovante:read", "financeiro:saldo:read"],
+  ],
+  [
+    "com todas as outras permissões do financeiro",
+    [...tesourariaSem("financeiro:lancamento:read"), "financeiro:saldo:read"],
+  ],
+];
+
+export const CONTA_RECEITA =conta({ id: "00000000-0000-4000-8000-000000000111", tipo: "RECEITA", nome: "Mensalidades" });
 export const CONTA_RECEITA_INATIVA = conta({
   id: "00000000-0000-4000-8000-000000000112",
   tipo: "RECEITA",

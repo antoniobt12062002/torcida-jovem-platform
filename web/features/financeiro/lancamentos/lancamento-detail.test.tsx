@@ -23,6 +23,7 @@ import {
   mockWrite,
   PERMISSOES_LEITURA,
   PERMISSOES_TESOURARIA,
+  SESSOES_SEM_LANCAMENTO_READ,
 } from "./test-helpers";
 
 vi.mock("next/navigation", async () =>
@@ -191,5 +192,38 @@ describe("permissões", () => {
     mockLancamentos([CRIADA]);
     renderWithSession(await FinanceiroLancamentoPage({ params: Promise.resolve({ id: ID }) }));
     expect(await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` })).toBeTruthy();
+  });
+
+  async function renderRoute(permissions: string[]) {
+    mockMe(authContext({ permissions }));
+    const contas = mockContas();
+    const comprovantes = mockComprovantes();
+    const list = mockLancamentos([CRIADA]);
+    renderWithSession(await FinanceiroLancamentoPage({ params: Promise.resolve({ id: ID }) }));
+    return { contas, comprovantes, list };
+  }
+
+  // FND-04 AC4: a rota depende de lancamento:read, não das leituras vizinhas.
+  it.each(SESSOES_SEM_LANCAMENTO_READ)("sem lancamento:read, %s: Sem acesso e nenhuma consulta", async (_, permissions) => {
+    const { contas, comprovantes, list } = await renderRoute(permissions);
+    expect(await screen.findByRole("heading", { name: "Sem acesso" })).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("heading", { name: `Receita ${ID.slice(0, 8)}` })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Comprovantes" })).toBeNull();
+    expect(list.count).toBe(0);
+    expect(comprovantes.count).toBe(0);
+    expect(contas.count).toBe(0);
+  });
+
+  it("só com lancamento:read, a página mostra o detalhe, sem ações nem comprovantes", async () => {
+    const { comprovantes, list } = await renderRoute(["financeiro:lancamento:read"]);
+    expect(await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` })).toBeTruthy();
+    expect(detailValue("Valor bruto")).toBe("R$ 100,00");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("heading", { name: "Sem acesso" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Comprovantes" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
+    expect(list.count).toBe(1);
+    expect(comprovantes.count).toBe(0);
   });
 });

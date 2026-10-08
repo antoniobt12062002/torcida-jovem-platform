@@ -9,6 +9,7 @@ import {
   mockLancamentos,
   PERMISSOES_LEITURA,
   PERMISSOES_TESOURARIA,
+  tesourariaSem,
 } from "@/features/financeiro/lancamentos/test-helpers";
 import { resetNavigation } from "@/lib/session/navigation-mock";
 import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
@@ -309,6 +310,56 @@ describe("permissões", () => {
     const list = await renderDetail(["financeiro:lancamento:read", "financeiro:conta:read"]);
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByRole("heading", { name: "Comprovantes" })).toBeNull();
+    expect(list.count).toBe(0);
+  });
+
+  // FWB-05 AC2 e FND-04 AC3: anexar depende só de comprovante:create.
+  it("comprovante:read + só comprovante:create pode anexar", async () => {
+    await renderDetail([
+      "financeiro:lancamento:read",
+      "financeiro:comprovante:read",
+      "financeiro:comprovante:create",
+    ]);
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(await screen.findByLabelText("Anexar comprovante")).toBeTruthy();
+  });
+
+  it("todas as escritas de lançamento, sem comprovante:create, não anexa", async () => {
+    await renderDetail(tesourariaSem("financeiro:comprovante:create"));
+    // A lista do painel e as ações do lançamento aparecem: a sessão já carregou.
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(await screen.findByRole("button", { name: "Cancelar lançamento" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Baixar recibo-agosto.pdf" })).toBeTruthy();
+    expect(screen.queryByLabelText("Anexar comprovante")).toBeNull();
+  });
+
+  it("no painel isolado, só comprovante:create mostra o campo de anexar", async () => {
+    await renderPanel([ANTIGO], ["financeiro:comprovante:read", "financeiro:comprovante:create"]);
+    expect(fileInput().type).toBe("file");
+  });
+
+  it("no painel isolado, sem comprovante:create não há campo de anexar", async () => {
+    await renderPanel([ANTIGO], tesourariaSem("financeiro:comprovante:create"));
+    // "você" depende do usuário da sessão: a sessão já carregou.
+    await waitFor(() => expect(within(rows()[0]).getByText("você")).toBeTruthy());
+    expect(screen.queryByLabelText("Anexar comprovante")).toBeNull();
+  });
+
+  // FWB-05 AC1 e FND-04 AC3: o painel depende só de comprovante:read.
+  it("lancamento:read + só comprovante:read vê o painel e a lista", async () => {
+    const list = await renderDetail(["financeiro:lancamento:read", "financeiro:comprovante:read"]);
+    expect(await screen.findByRole("heading", { name: "Comprovantes" })).toBeTruthy();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(list.count).toBe(1);
+  });
+
+  it("todas as outras permissões, sem comprovante:read, não vê o painel nem consulta comprovantes", async () => {
+    const list = await renderDetail(tesourariaSem("financeiro:comprovante:read"));
+    // As ações do lançamento aparecem: a sessão já carregou.
+    expect(await screen.findByRole("button", { name: "Cancelar lançamento" })).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("heading", { name: "Comprovantes" })).toBeNull();
+    expect(screen.queryByLabelText("Anexar comprovante")).toBeNull();
     expect(list.count).toBe(0);
   });
 });
