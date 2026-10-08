@@ -1,19 +1,26 @@
-# Web V1 — Relatório de verificação independente
+# Web V1 — Relatório de verificação independente (ciclo 1)
 
 ## Validation: Web V1 - FAIL
 
+**Result**: FAIL ❌
+
 **Data**: 2026-10-08
+**Ciclo**: 1 (de no máximo 3 ciclos de correção e nova verificação; o ciclo 0 também terminou reprovado)
 **Specs**: `.specs/features/web/spec/01-fundacao.md` a `06-integracao.md`
-**Intervalo de commits verificado**: `ee1b497..2c50de6` (código da Web V1; `ee1b497` é a especificação; `develop` = `1a508d1`)
-**Verificador**: agente independente (autor ≠ verificador), task T4 de `tasks/06-integracao.md`
-**Fontes de verdade usadas**: as 6 specs, designs, tasks, `STATE.md` (WEB-D-*), ADR-010. Os relatórios dos autores não foram usados como prova; `evidence/f1-rewrite.md` e `smoke.md` serviram só de pista e foram refeitos (seção "Smoke repetido").
+**Intervalo de commits verificado**: `ee1b497..8bf79ec` em `feature/web-v1` (`ee1b497` é a especificação; `develop` = `6382fe1`; 42 commits)
+**Verificador**: agente independente (autor ≠ verificador), task T4 de `tasks/06-integracao.md`. Não participou do ciclo 0.
+**Fontes de verdade**: as 6 specs, designs, tasks, `STATE.md` (WEB-D-*, correção de WEB-D-009), ADR-010 com as Notas. Toda citação `arquivo:linha` deste relatório vem da leitura do código e dos testes em `8bf79ec`. O relatório do ciclo 0, `.specs/LESSONS.md`, `lessons.json` e relatórios de autores não foram usados como prova. `evidence/f1-rewrite.md` e `smoke.md` serviram só de pista e foram refeitos (seção "Smoke repetido").
 
-### Por que FAIL
+Caminhos de código e de teste são relativos a `web/`, salvo indicação.
 
-1. **O gate Audit está vermelho** (`pnpm audit --audit-level high` → `EXIT=1`): GHSA-68fv-2mgg-jv7q (`source-map-js` 1.2.1, alta). O aviso não vem do diff da Web V1 (o lockfile de `develop` tem a mesma versão e falha igual hoje), mas o gate é obrigatório em T4 e faz parte da definição de "pronta para uso" (`STATE.md`, item 7); o job `web` do CI falharia no mesmo passo.
-2. **Um mutante sobreviveu** (O06): a URL assinada do comprovante pode ser gravada no cache de consultas sem nenhum teste falhar. A cláusula "sem guardá-la no cache de consultas" de FWB-05 AC5 não tem asserção discriminante.
+### Por que a Web V1 não foi aprovada neste ciclo
 
-Todo o resto passou: os 10 mutantes mínimos de INT-04 AC3 foram mortos (16 variantes), o smoke repetido contra a stack real não teve falha e os demais gates estão verdes. As correções são pequenas (ver "Lacunas").
+As duas lacunas do ciclo 0 estão fechadas (seção "Fechamento de L1 e L2"), os gates estão todos em `EXIT=0`, os 10 mutantes mínimos de INT-04 AC3 morreram e o smoke repetido não teve falha. O que reprova é novo: **9 dos 34 mutantes próprios sobreviveram**, em duas classes.
+
+1. **Permissão trocada por outra que os perfis de teste sempre trazem junto** (8 mutantes, O02 a O09). Trocar a permissão que libera uma ação ou uma rota por outra permissão do mesmo módulo não derruba nenhum teste, porque os testes dessas telas só usam "todas as permissões" ou "só leitura". A spec nomeia a permissão de cada ação ("WHEN uma pessoa com `X` ...") e FND-04 AC3 manda decidir a exibição pelas permissões efetivas.
+2. **Ordem do histórico de estoque** (O01). Reordenar o histórico por data, em vez de manter a ordem da API (EWB-02 AC1), não derruba nenhum teste, porque todas as movimentações das fixtures têm a mesma data.
+
+Nenhum dos nove indica defeito no código de produção: o código em `8bf79ec` usa a permissão certa em cada ponto e mantém a ordem da API. São lacunas de teste. Com a matriz de papéis atual da API, cada papel tem todas as escritas de um módulo ou só as leituras, então a troca de permissão não muda o que nenhum papel de hoje vê. A regra desta verificação, porém, é que mutante relevante sobrevivente reprova, e a spec existe justamente para a interface não depender do agrupamento por papel. As correções são pequenas e só de teste (seção "Lacunas").
 
 ---
 
@@ -21,315 +28,342 @@ Todo o resto passou: os 10 mutantes mínimos de INT-04 AC3 foram mortos (16 vari
 
 | Sub-spec | Tasks | Status | Observação |
 | --- | --- | --- | --- |
-| 01 Fundação | T1-T8 | ✅ Concluídas | Todas as caixas marcadas em `tasks/01-fundacao.md` |
+| 01 Fundação | T1-T8 | ✅ Concluídas | — |
 | 02 Identity acesso | T1-T2 | ✅ Concluídas | — |
 | 03 Identity usuários | T1-T3 | ✅ Concluídas | — |
 | 04 Financeiro | T1-T5 | ✅ Concluídas | — |
 | 05 Estoque | T1-T3 | ✅ Concluídas | — |
 | 06 Integração | T1-T3 | ✅ Concluídas | — |
-| 06 Integração | T4 | ❌ Não concluída | Veredito FAIL; caixas de T4 não marcadas (`.specs/features/web/tasks/06-integracao.md:117`) |
+| 06 Integração | T4 | ❌ Não concluída | Veredito reprovado; caixas de T4 não marcadas (`.specs/features/web/tasks/06-integracao.md:117`) |
+
+---
+
+## Fechamento de L1 e L2 (lacunas do ciclo 0)
+
+### L1 — gate Audit: fechada
+
+| Verificação | Observado |
+| --- | --- |
+| `pnpm audit --audit-level high` | `EXIT=0`; saída: `1 vulnerabilities found / Severity: 1 high (1 ignored)` |
+| GHSA-68fv-2mgg-jv7q | Não aparece: 0 ocorrências de `68fv` e de `source-map` no JSON do audit |
+| Única exceção ignorada | `GHSA-vfj7-8cjw-p6xm`, em `pnpm-workspace.yaml:10-12`. Conferido por fora: o audit de uma cópia de `package.json` e `pnpm-lock.yaml` **sem** a lista de exceções devolve um único aviso, `GHSA-vfj7-8cjw-p6xm` (`braces`, alta) |
+| `pnpm why source-map-js` | `Found 1 version of source-map-js`: `1.2.2`. No lockfile, só `source-map-js@1.2.2` (`pnpm-lock.yaml:3307`, `:7148`) |
+| `package.json` | Sem mudança relacionada: no intervalo, só `57cfbad` (F1) altera o arquivo, acrescentando `@tanstack/react-query`, `openapi-fetch`, `react-hook-form` e `msw`. O PR #62 (`6382fe1`) e o merge `8bf79ec` alteram só `pnpm-lock.yaml` (2 inserções, 8 remoções). `pnpm-workspace.yaml` é igual ao de `develop` |
+
+### L2 — FWB-05 AC5, URL assinada fora do cache: fechada
+
+O teste acrescentado em `e2bf7c7` é `features/financeiro/comprovantes/comprovantes-panel.test.tsx:256-271`: depois do clique em "Baixar", serializa os dados de todas as consultas e os dados e variáveis de todas as mutações do `QueryClient` e afirma `expect(cached).not.toContain("assinada-secreta")`.
+
+Recriei três mutantes em `features/financeiro/comprovantes/comprovantes-panel.tsx:42-50`, um por vez, no worktree temporário. Os três morreram pelo teste da linha 256, sem timeout:
+
+| Mutante | Como | Resultado |
+| --- | --- | --- |
+| L2a | `queryClient.setQueryData(["financeiro","comprovante-url",id], url)` depois de obter a URL (o mutante que sobreviveu no ciclo 0) | ✅ Morto (1 falha, 688 passam) |
+| L2b | `useMutation({ mutationFn: downloadComprovante })` e `mutateAsync` no clique | ✅ Morto (1 falha, 688 passam) |
+| L2c | `queryClient.fetchQuery({ queryKey, queryFn })` no clique (consulta, como `useQuery`) | ✅ Morto (1 falha, 688 passam) |
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Caminhos relativos a `web/`, salvo indicação. "T:" é o teste; "C:" é o código de produção. Resultado: ✅ PASS, ❌ GAP, ⚠️ gap de precisão da spec.
+Legenda: ✅ o teste afirma o resultado que a spec define; ❌ **LACUNA** falta asserção discriminante (mutante sobrevivente citado); ⚠️ a spec não define o resultado com precisão; 🔎 aceite manual ou por inspeção, conferido por evidência e smoke repetido.
 
 ### 01 — Fundação
 
-| Critério | Resultado definido na spec | Evidência (`arquivo:linha` + asserção) | Resultado |
-| --- | --- | --- | --- |
-| FND-01 AC1 | `/api/v1/*` → mesmo caminho em `API_URL`; preserva método, corpo, `Cookie`, `Origin`, `Content-Type`, `X-CSRF-Token`; devolve status, corpo, `Set-Cookie`, `Content-Type`, `Retry-After`, `Cache-Control` | T: `next.config.test.ts:13` `toEqual([{source:"/api/v1/:path*", destination:"http://localhost:8080/api/v1/:path*"}])`; C: `next.config.ts:15`. Cabeçalhos: smoke repetido (itens S1-S4, S20-S23) | ✅ PASS (cabeçalhos só pelo smoke: ⚠️ SP-5) |
-| FND-01 AC2 | `openapi-fetch`, `credentials: "same-origin"`; nenhuma tela chama `fetch` direto | T: `lib/api/client.test.ts:49` `expect(seen[0].credentials).toBe("same-origin")` e URL na origem; C: `lib/api/client.ts:112`. "Nenhum `fetch` direto": busca no código de produção só achou `lib/api/client.ts:116` | ✅ PASS (a segunda cláusula é conferida por inspeção, sem guarda automática) |
-| FND-01 AC3 | `X-CSRF-Token` em todo método que não seja GET/HEAD/OPTIONS | T: `lib/api/client.test.ts:72` (POST), `:80` (PUT), `:89` (PATCH), `:98` (DELETE) `expect(seen[0].csrf).toBe(TOKEN)`; `:110` GET `toBeNull()`; C: `lib/api/client.ts:66` | ✅ PASS (mutante M01 morto) |
-| FND-01 AC4 | Erro tipado com `status`, `code`, `errors[]` | T: `lib/api/client.test.ts:208` `toMatchObject({status:422, code:"validation_failed", errors:[{field:"nome",code:"required"}]})`; `lib/api/problem.test.ts:24`; C: `lib/api/problem.ts:59` | ✅ PASS |
-| FND-01 AC5 (aceite manual) | (a) cookie `tj_session` na origem do front; (b) escrita passa pelo `Origin`; (c) comprovante ≥ 9,5 MiB íntegro | Smoke repetido: S2 (`Set-Cookie ... HttpOnly; SameSite=Lax`, sem `Domain`), S5 (`201`; origem externa `403 origin_not_allowed`), S9 (10.420.224 bytes → `201`, SHA-256 do download igual) | ✅ PASS |
-| FND-01 AC6 | Parar e reportar se AC5 falhar | Não acionado (AC5 passou). O achado do limite do rewrite foi reportado e resolvido pelo mantenedor: `.specs/features/web/STATE.md:152` | ✅ PASS (condicional, sem teste possível) |
-| FND-02 AC1 | Componentes listados em `components/ui/` | C: `components/ui/input.tsx`, `label.tsx`, `field.tsx`, `select.tsx`, `textarea.tsx`, `checkbox.tsx`, `dialog.tsx`, `alert-dialog.tsx`, `table.tsx`, `dropdown-menu.tsx`, `skeleton.tsx`, `alert.tsx`, `toast.tsx`; T: `components/ui/display.test.tsx:19`, `:44`, `:58`, `:67`; `components/ui/overlays.test.tsx:41`, `:63`, `:114` | ✅ PASS |
-| FND-02 AC2 | Erro associado por `aria-describedby` e campo com `aria-invalid` | T: `components/ui/field.test.tsx:39` `expect(input.getAttribute("aria-invalid")).toBe("true")` e `describedByText(input)` contém a mensagem; `:82`, `:98`, `:115`; C: `components/ui/field.tsx:213` | ✅ PASS (mutante O03 morto) |
-| FND-02 AC3 | F4 não altera `package.json` | `git log ee1b497..2c50de6 -- web/package.json web/pnpm-lock.yaml` → só `57cfbad` (F1) | ✅ PASS (processo) |
-| FND-03 AC1 | `POST /auth/login`, guarda contexto, vai a `next` interno ou à inicial | T: `app/(public)/entrar/login-form.test.tsx:48` `navigations()` = `["/financeiro/contas?tipo=RECEITA"]` e corpo `{email, password}`; `:57` `["/inicio"]`; `lib/session/routes.test.ts:19`; C: `app/(public)/entrar/login-form.tsx:62`, `lib/session/routes.ts:43` | ✅ PASS (mutante M04 morto) |
-| FND-03 AC2 | "E-mail ou senha inválidos." sem indicar o campo | T: `login-form.test.tsx:90` `findByText("E-mail ou senha inválidos.")` e `aria-invalid` ausente nos dois campos; C: `login-form.tsx:27` | ✅ PASS |
-| FND-03 AC3 | Bloqueio temporário e tempo de espera a partir de `Retry-After` | T: `login-form.test.tsx:104` `Retry-After: 900` → texto contém "15 minutos"; C: `login-form.tsx:29` | ✅ PASS (formato do tempo não definido: ⚠️ SP-2) |
-| FND-03 AC4 | `must_change_password` → `/conta/senha`, nenhuma outra tela | T: `login-form.test.tsx:79` `["/conta/senha"]`; `app/(app)/layout.test.tsx:64` conteúdo protegido ausente; C: `app/(app)/layout.tsx:23` | ✅ PASS (mutante O08 morto) |
-| FND-03 AC5 | Logout: `POST /auth/logout`, limpa cache e contexto, vai a `/entrar` | T: `lib/session/session-provider.test.tsx:196` `navigations()` = `["/entrar"]`, `getQueryData(...)` `toBeUndefined()`, nenhuma consulta com dado; C: `lib/session/session-provider.tsx:181` | ✅ PASS (mutante O15 morto) |
-| FND-03 AC6 | `401` → limpa cache e contexto, `/entrar` com aviso e `next` | T: `session-provider.test.tsx:259` `next` = `/financeiro/contas?tipo=RECEITA`, `sessao` = `encerrada`; `login-form.test.tsx:165` aviso exibido; C: `session-provider.tsx:141` | ✅ PASS (mutante M02 morto) |
-| FND-03 AC7 | `403 password_change_required` → `/conta/senha` | T: `session-provider.test.tsx:355` `["/conta/senha"]`; C: `session-provider.tsx:149` | ✅ PASS |
-| FND-03 AC8 | `403 csrf_invalid` → rebusca `/auth/me`, pede para repetir, sem repetir a escrita | T: `session-provider.test.tsx:372` `me.count` = 2, mensagem "A sessão foi atualizada. Repita a ação, por favor.", `writes` = 1; C: `session-provider.tsx:152` | ✅ PASS (mutante O16 morto) |
-| FND-03 AC9 | Token e contexto só em memória | T: `session-provider.test.tsx:159` `localStorage.length` = 0, `sessionStorage.length` = 0, `document.cookie` inalterado; C: `session-provider.tsx:175` | ✅ PASS (mutante O14 morto) |
-| FND-03 AC10 | Link "Esqueci minha senha" → `/recuperar-acesso` | T: `login-form.test.tsx:158` `href` = `/recuperar-acesso`; C: `login-form.tsx:128` | ✅ PASS |
-| FND-04 AC1 | Sem sessão → `/entrar` com `next`, sem conteúdo | T: `app/(app)/layout.test.tsx:42`; C: `app/(app)/layout.tsx:27` | ✅ PASS |
-| FND-04 AC2 | Carregando, sem conteúdo protegido | T: `layout.test.tsx:27` `getByRole("status")` contém "Carregando" e conteúdo ausente; C: `layout.tsx:49` | ✅ PASS |
-| FND-04 AC3 | Exibição por `permissions`, nunca pelo papel | T: `session-provider.test.tsx:78` papel `PRESIDENTE` sem permissão → `false`; `components/app/nav.test.ts:41`; `components/app/require-permission.test.tsx:102`; C: `session-provider.tsx:227`, `components/app/require-permission.tsx:26` | ✅ PASS (mutantes M03a e M03b mortos) |
-| FND-04 AC4 | Sem a permissão de leitura: "Sem acesso", sem chamar a API | T: `require-permission.test.tsx:60` `calls.count` = 0; por área: `app/(app)/financeiro/contas/page.test.tsx:40`, `app/(app)/financeiro/saldo/page.test.tsx:39`, `features/financeiro/lancamentos/lancamentos-page.test.tsx:275`, `app/(app)/admin/usuarios/page.test.tsx:30`, `features/estoque/produtos/produtos-page.test.tsx:191` | ✅ PASS |
-| FND-04 AC5 | `403 forbidden` → "Você não tem permissão para esta ação.", estado inalterado | T: `components/app/api-error.test.tsx:14`; `features/financeiro/contas/contas-page.test.tsx:228` (linha não criada) e `:341` (conta continua "Ativo"); C: `components/app/api-error.tsx:9` | ✅ PASS |
-| FND-05 AC1 | Shell: nome, "Trocar senha", "Sair", navegação filtrada por permissão | T: `components/app/app-shell.test.tsx:55`, `:66`, `:102`, `:110`; C: `components/app/app-shell.tsx:38` | ✅ PASS |
-| FND-05 AC2 | Abaixo do ponto de quebra de tablet a navegação vira menu recolhível | T: `app-shell.test.tsx:87` menu "Abrir menu" com os mesmos itens e fecha ao navegar; C: `app-shell.tsx:45` (`md:hidden`) e `:84` (`hidden md:block`). A troca pelo ponto de quebra não é testável em jsdom nem foi vista em navegador | ⚠️ SP-1 (evidência parcial) |
-| FND-05 AC3 | Estados de carregamento, vazio e erro com tentar de novo | T: `components/app/states.test.tsx:12`, `:19`, `:32` | ✅ PASS |
-| FND-05 AC4 | pt-BR → centavos inteiros por `parseBRL`, nunca float | T: `components/app/money-field.test.tsx:35` `expect(last).toBe(cents)` e `Number.isSafeInteger(last)`; `:112` `{valor: 123456}`; C: `components/app/money-field.tsx:17` | ✅ PASS (mutante M05 morto) |
-| FND-05 AC5 | Só inteiros; sinal configurável | T: `components/app/quantity-field.test.tsx:40`, `:51`, `:58`, `:67`, `:78`; C: `components/app/quantity-field.tsx:19` | ✅ PASS |
-| FND-05 AC6 | Confirmação explícita; com motivo obrigatório, confirmar desabilitado se vazio ou só espaços | T: `components/app/confirm-dialog.test.tsx:16` `onConfirm` não chamado antes de confirmar; `:74` e `:81` `disabled` = `true`; C: `components/app/confirm-dialog.tsx:80` | ✅ PASS (mutantes M06a e M07a mortos) |
-| FND-05 AC7 | `formatBRL`; datas pt-BR no fuso de São Paulo | T: `components/app/format.test.ts:8`, `:12` (`"03/10/2026"`), `:23` (`"04/10/2026 09:00"`); C: `components/app/format.ts:4` | ✅ PASS |
-| FND-05 AC8 | Com troca obrigatória o shell esconde a navegação e mostra só sair | T: `app-shell.test.tsx:128` sem `navigation`, sem links, menu = `["Sair"]`; C: `app-shell.tsx:37` | ✅ PASS (mutante O10 morto) |
-| FND-06 AC1 | `422 validation_failed`: cada erro no campo | T: `lib/forms/apply-problem.test.ts:21`; `login-form.test.tsx:134` `aria-invalid` = `true` e "Formato inválido."; `features/estoque/produtos/produtos-page.test.tsx:156`; C: `lib/forms/apply-problem.ts:39` | ✅ PASS |
-| FND-06 AC2 | `code` conhecido → mensagem do catálogo | T: `lib/api/problem.test.ts:63`; `api-error.test.tsx:19`; C: `lib/api/problem.ts:85` | ✅ PASS |
-| FND-06 AC3 | `code` desconhecido → mensagem genérica com o status, sem detalhes internos | T: `lib/api/problem.test.ts:70` contém "409", não contém o `code`, `title` nem `detail`; C: `problem.ts:89` | ✅ PASS (mutante O17 morto) |
-| FND-06 AC4 | `413` → conteúdo grande demais | T: `lib/api/problem.test.ts:87`; `api-error.test.tsx:34` `"O conteúdo enviado é grande demais."`; C: `problem.ts:87` | ✅ PASS |
-| FND-06 AC5 | `503` ou rede → indisponível, com tentar de novo | T: `lib/api/problem.test.ts:93`, `:100`; `api-error.test.tsx:46`; `layout.test.tsx:83`; C: `problem.ts:76` | ✅ PASS |
-| Borda: dois `401` | Um único redirecionamento | T: `session-provider.test.tsx:281` `navigations()` com 1 item; C: `session-provider.tsx:110` | ✅ PASS |
-| Borda: `next` externo | Ignorado, vai à inicial | T: `lib/session/routes.test.ts:29` (14 casos → `"/inicio"`); `login-form.test.tsx:65` | ✅ PASS |
-| Borda: autenticado em `/entrar` | Vai à inicial | T: `login-form.test.tsx:177` `["/inicio"]`; C: `login-form.tsx:53` | ✅ PASS |
+| AC | Resultado definido pela spec | Teste: `arquivo:linha` e asserção | Código | |
+| --- | --- | --- | --- | --- |
+| FND-01 AC1 | `/api/v1/*` vai para o mesmo caminho em `API_URL`, preservando cabeçalhos | `next.config.test.ts:13-20` `expect(apiRewrites("http://localhost:8080")).toEqual([{ source: "/api/v1/:path*", destination: "http://localhost:8080/api/v1/:path*" }])`; `:38-47` lê `API_URL` do ambiente. Cabeçalhos: smoke repetido (`Set-Cookie`, `Content-Type: application/problem+json`, `Retry-After=899`, `Cache-Control: no-store`, `Origin` e `X-CSRF-Token` verificados pela API) | `next.config.ts:7-21` | ✅ |
+| FND-01 AC2 | `openapi-fetch` sobre os tipos gerados, `credentials: "same-origin"`; nenhuma tela chama `fetch` direto | `lib/api/client.test.ts:49-67` `expect(seen[0].url).toBe(...)`, `expect(seen[0].credentials).toBe("same-origin")`. Cláusula negativa: inspeção (`fetch(` só em `lib/api/client.ts:116`, fora de testes) | `lib/api/client.ts:111-127` | ✅ (ver gap de precisão P3) |
+| FND-01 AC3 | Escritas levam `X-CSRF-Token` da sessão atual | `lib/api/client.test.ts:72-108` POST, PUT, PATCH e DELETE `expect(seen[0].csrf).toBe(TOKEN)`; `:110-114` GET `toBeNull()`; `lib/session/session-provider.test.tsx:139` `expect(csrf).toEqual(["token-do-login"])`, `:190` `["token-do-me"]` | `lib/api/client.ts:66-71`; `lib/session/session-provider.tsx:139-140` | ✅ |
+| FND-01 AC4 | Erro tipado com `status`, `code`, `errors[]` | `lib/api/client.test.ts:222-227` `toBeInstanceOf(ApiError)` e `toMatchObject({ status: 422, code: "validation_failed", errors: [{ field: "nome", code: "required" }] })`; `lib/api/problem.test.ts:36-44` | `lib/api/client.ts:135-147`; `lib/api/problem.ts:59-68` | ✅ |
+| FND-01 AC5 | (a) cookie da origem do front, (b) escrita sem `origin_not_allowed`, (c) comprovante ≥ 9,5 MiB íntegro | Smoke repetido: `Set-Cookie` com `Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`, sem `Domain`; escritas `201`/`204` com `Origin` do front e `403 origin_not_allowed` com `Origin` externa; arquivo de 10.420.224 bytes `201` e download com SHA-256 igual | — | 🔎 ✅ |
+| FND-01 AC6 | F1 para e reporta se o AC5 falhar | AC5 passou; o achado do limite de 10 MiB foi reportado e resolvido pelo mantenedor, sem contorno nem mudança na API (`.specs/features/web/STATE.md:152`, `docs/adr/010-acesso-do-navegador-a-api-por-rewrite-same-origin.md:75`); `git diff --name-only develop -- api/` vazio | — | 🔎 ✅ |
+| FND-02 AC1 | Kit em `components/ui/` | `components/ui/field.test.tsx:29-37` (campo e rótulo), `:81-95` (área de texto), `:97-112` (caixa de seleção), `:114-135` (seleção); `components/ui/overlays.test.tsx:41-61` (diálogo), `:63-92` (confirmação), `:114-130` (menu); `components/ui/display.test.tsx:19-42` (tabela), `:44-56` (alerta), `:58-65` (esqueleto), `:67-78` (toast) | `components/ui/*.tsx` (15 componentes, com `button.tsx` e `badge.tsx`) | ✅ |
+| FND-02 AC2 | Erro ligado por `aria-describedby`; campo com `aria-invalid` | `components/ui/field.test.tsx:48-49` `expect(input.getAttribute("aria-invalid")).toBe("true")`, `expect(describedByText(input)).toContain("Informe um e-mail válido.")` | `components/ui/field.tsx:210-211` | ✅ |
+| FND-02 AC3 | F4 não altera `package.json` | `git log ee1b497..8bf79ec -- web/package.json` lista só `57cfbad` (F1); o commit de F4 (`3020783`) não toca `package.json` nem o lockfile | — | 🔎 ✅ |
+| FND-03 AC1 | Login, contexto guardado, destino `next` só interno | `app/(public)/entrar/login-form.test.tsx:53-54` `expect(navigations()).toEqual(["/financeiro/contas?tipo=RECEITA"])`, `expect(bodies).toEqual([{ email, password }])`; `:62` `["/inicio"]`; `:65-74` `next` externo vira `/inicio`; `lib/session/routes.test.ts:29-46` | `app/(public)/entrar/login-form.tsx:58-62`; `lib/session/routes.ts:27-46`; `lib/session/session-provider.tsx:161-179` | ✅ (ver P2) |
+| FND-03 AC2 | "E-mail ou senha inválidos." sem indicar o campo | `login-form.test.tsx:95-97` `findByText("E-mail ou senha inválidos.")`; `aria-invalid` ausente nos dois campos | `login-form.tsx:27`, `:73` | ✅ |
+| FND-03 AC3 | Bloqueio com tempo de `Retry-After` | `login-form.test.tsx:105-110` `Retry-After: 900` → `expect(alert.textContent).toContain("15 minutos")`; `lib/session/retry-after.test.ts:8-20` | `login-form.tsx:29-33`, `:74`; `lib/session/retry-after.ts:19-34` | ✅ |
+| FND-03 AC4 | `must_change_password` leva a `/conta/senha`, sem outra tela | `login-form.test.tsx:84` `["/conta/senha"]`; `app/(app)/layout.test.tsx:68-69` `["/conta/senha"]` e conteúdo ausente | `app/(app)/layout.tsx:23-34` | ✅ |
+| FND-03 AC5 | Logout: `POST /auth/logout`, cache e contexto limpos, `/entrar` | `lib/session/session-provider.test.tsx:214-224` `["/entrar"]`, `logoutCsrf` igual a `["token-logout"]`, `getQueryData(["financeiro","contas"])` indefinido, `withData` vazio | `lib/session/session-provider.tsx:125-129`, `:181-199` | ✅ |
+| FND-03 AC6 | `401`: limpa, vai a `/entrar` com aviso e `next` | `session-provider.test.tsx:272-278` `pathname` `/entrar`, `next` = `/financeiro/contas?tipo=RECEITA`, `sessao` = `encerrada`, estado `anonymous`, cache limpo; `login-form.test.tsx:165-168` aviso | `lib/api/client.ts:80-81`; `session-provider.tsx:141-148`; `login-form.tsx:88-92` | ✅ |
+| FND-03 AC7 | `403 password_change_required` leva a `/conta/senha` | `session-provider.test.tsx:366` `expect(navigations()).toEqual(["/conta/senha"])` | `client.ts:82-83`; `session-provider.tsx:149-151` | ✅ |
+| FND-03 AC8 | `403 csrf_invalid`: rebusca `/auth/me`, pede repetição, não repete | `session-provider.test.tsx:389-395` `me.count` 2, texto "A sessão foi atualizada. Repita a ação, por favor.", `writes` 1 | `session-provider.tsx:152-156` | ✅ |
+| FND-03 AC9 | Token e contexto só em memória | `session-provider.test.tsx:172-175` `localStorage.length` 0, `sessionStorage.length` 0, `document.cookie` inalterado | `session-provider.tsx:94-100`, `:175` | ✅ |
+| FND-03 AC10 | Link "Esqueci minha senha" → `/recuperar-acesso` | `login-form.test.tsx:160-161` `expect(link.getAttribute("href")).toBe("/recuperar-acesso")` | `login-form.tsx:128-133` | ✅ |
+| FND-04 AC1 | Sem sessão: `/entrar` com `next`, sem conteúdo | `app/(app)/layout.test.tsx:46-50` | `layout.tsx:26-28`; `session-provider.tsx:201-203` | ✅ |
+| FND-04 AC2 | Carregando, sem conteúdo protegido | `layout.test.tsx:36-37` `toContain("Carregando")`, conteúdo ausente | `layout.tsx:49-58` | ✅ |
+| FND-04 AC3 | Exibição pelas permissões, nunca pelo papel | `session-provider.test.tsx:78-84` papéis `ADMIN_SISTEMA` e `PRESIDENTE` com `permissions: []` → `"false"`; `components/app/nav.test.ts:41-43`; `components/app/require-permission.test.tsx:102-121` | `session-provider.tsx:227-237`; `components/app/nav.ts:23-25`; `components/app/require-permission.tsx:21-31` | ✅ |
+| FND-04 AC4 | Sem a leitura da área: "Sem acesso", sem chamar a API | `require-permission.test.tsx:68-72` (`calls.count` 0); `app/(app)/admin/usuarios/page.test.tsx:34-36`; `app/(app)/financeiro/contas/page.test.tsx:44-47`; `app/(app)/financeiro/saldo/page.test.tsx:43-46`; `features/estoque/produtos/produtos-page.test.tsx:191-195`; `features/estoque/produto-detail.test.tsx:82-88`. Rotas de lançamentos: `features/financeiro/lancamentos/lancamentos-page.test.tsx:275-279` e `lancamento-detail.test.tsx:181-185` só testam a ausência com `financeiro:saldo:read` | `require-permission.tsx:26-30`; `app/(app)/financeiro/lancamentos/page.tsx:13`, `[id]/page.tsx:14` | ❌ **LACUNA G6** nas duas rotas de lançamentos (O08, O09); demais áreas ✅ |
+| FND-04 AC5 | `403 forbidden`: mensagem fixa, estado mantido | `components/app/api-error.test.tsx:15` `toBe("Você não tem permissão para esta ação.")`; `features/financeiro/contas/contas-page.test.tsx:228-244`, `:341-355` | `components/app/api-error.tsx:15-20` | ✅ |
+| FND-05 AC1 | Nome, "Trocar senha", "Sair", navegação por permissão | `components/app/app-shell.test.tsx:59-62`, `:69-73` listas exatas de links; `:105` itens `["Trocar senha","Sair"]` | `components/app/app-shell.tsx:37-38`, `:66-79` | ✅ |
+| FND-05 AC2 | Abaixo do ponto de quebra, menu recolhível; nada inacessível | `app-shell.test.tsx:87-97` o menu "Abrir menu" mostra os mesmos links e fecha ao escolher. A troca pela largura é CSS (`md:hidden`, `hidden md:block`) e não é exercitada no jsdom | `app-shell.tsx:43-56`, `:84` | ⚠️ P1 (pendência visual) |
+| FND-05 AC3 | Estados de carregamento, vazio e erro com nova tentativa | `components/app/states.test.tsx:14`, `:21-27`, `:35-37` | `components/app/states.tsx:17-72` | ✅ |
+| FND-05 AC4 | pt-BR → centavos inteiros, nunca ponto flutuante | `components/app/money-field.test.tsx:40-41` `expect(last).toBe(cents)`, `Number.isSafeInteger(last)`; `:118` `toEqual({ valor: 123456 })` | `components/app/money-field.tsx:14-23`; `lib/money.ts:36-46` | ✅ |
+| FND-05 AC5 | Só inteiros, sinal configurável | `components/app/quantity-field.test.tsx:40-63`, `:67-90` | `components/app/quantity-field.tsx:16-33` | ✅ |
+| FND-05 AC6 | Confirmação explícita; motivo vazio ou só espaços desabilita | `components/app/confirm-dialog.test.tsx:27-40`; `:76`, `:84` `expect(confirmButton().disabled).toBe(true)` | `components/app/confirm-dialog.tsx:78-98` | ✅ |
+| FND-05 AC7 | `formatBRL`; datas pt-BR em São Paulo | `lib/money.test.ts:7-9`; `components/app/format.test.ts:9`, `:14`, `:24-25` | `lib/money.ts:23-29`; `components/app/format.ts:4-42` | ✅ |
+| FND-05 AC8 | Troca obrigatória: sem navegação, só "Sair" | `app-shell.test.tsx:132-136` | `app-shell.tsx:37`, `:73-76` | ✅ |
+| FND-06 AC1 | `errors[]` junto do campo | `lib/forms/apply-problem.test.ts:33-41`, `:66-71`; `features/estoque/produtos/produtos-page.test.tsx:172-179` | `lib/forms/apply-problem.ts:30-52` | ✅ |
+| FND-06 AC2 | Mensagem do catálogo para o `code` | `lib/api/problem.test.ts:63-68`; `api-error.test.tsx:19-23` | `problem.ts:84-86` | ✅ |
+| FND-06 AC3 | Genérica com o status, sem detalhes internos | `problem.test.ts:81-84` `toContain("409")` e sem `code`, `title`, `detail` | `problem.ts:89` | ✅ |
+| FND-06 AC4 | `413`: conteúdo grande demais | `api-error.test.tsx:35` `toBe("O conteúdo enviado é grande demais.")` | `problem.ts:11`, `:87` | ✅ |
+| FND-06 AC5 | Indisponível, com nova tentativa | `problem.test.ts:93-105`; `api-error.test.tsx:46-52`; `app/(app)/layout.test.tsx:93-98` | `problem.ts:76-78`, `:88`; `api-error.tsx:35-39` | ✅ |
+| Borda | Dois `401` → um redirecionamento | `session-provider.test.tsx:298` `toHaveLength(1)` | `session-provider.tsx:104-118` | ✅ |
+| Borda | `next` de outra origem ignorado | `routes.test.ts:29-46`; `login-form.test.tsx:65-74` | `routes.ts:27-37` | ✅ |
+| Borda | Autenticado em `/entrar` → início | `login-form.test.tsx:181` `["/inicio"]` | `login-form.tsx:53-56` | ✅ |
 
 ### 02 — Identity: acesso e senha
 
-| Critério | Resultado definido na spec | Evidência | Resultado |
-| --- | --- | --- | --- |
-| ACS-01 AC1 | `POST /auth/password` com `current_password` e `new_password`; em `204`, confirmação | T: `features/identity/acesso/change-password-form.test.tsx:69` corpo e CSRF exatos, "Senha alterada com sucesso."; C: `features/identity/acesso/change-password-form.tsx:59` | ✅ PASS |
-| ACS-01 AC2 | Confirmação diferente: erro no campo de confirmação, sem chamar a API | T: `change-password-form.test.tsx:89` `requests` = `[]`, `aria-invalid` na confirmação; C: `change-password-form.tsx:151` | ✅ PASS |
-| ACS-01 AC3 | Troca obrigatória: rebusca `/auth/me` e vai ao destino ou à inicial | T: `change-password-form.test.tsx:107` `["/inicio"]`, `state.calls` = 2; `:120` `next`; C: `features/identity/acesso/use-change-password.ts:38` | ✅ PASS (mutante O13 morto) |
-| ACS-01 AC4 | Explica a obrigatoriedade, sem navegação, mantém sair | T: `change-password-form.test.tsx:139`; `app-shell.test.tsx:128`; C: `change-password-form.tsx:94` | ✅ PASS |
-| ACS-01 AC5 | Cinco códigos de senha, mensagem no campo certo | T: `change-password-form.test.tsx:184` (5 casos, campo marcado e os outros não); C: `features/identity/acesso/errors.ts:31` | ✅ PASS |
-| ACS-01 AC6 | `429 password_change_blocked` com tempo de `Retry-After` | T: `change-password-form.test.tsx:224` "Muitas tentativas. Tente de novo em 15 minutos."; C: `errors.ts:63` | ✅ PASS (⚠️ SP-2) |
-| ACS-02 AC1 | `POST /auth/password-reset/request`; em `202`, mensagem da API | T: `features/identity/acesso/request-reset-form.test.tsx:47` corpo `{email}`; `:64` mostra o texto devolvido; C: `features/identity/acesso/request-reset-form.tsx:58` | ✅ PASS |
-| ACS-02 AC2 | Mesma mensagem e comportamento para qualquer e-mail | T: `request-reset-form.test.tsx:54` `expect(second).toBe(first)`; smoke S21 (duas respostas `202` com a mesma mensagem) | ✅ PASS |
-| ACS-02 AC3 | Link em `/entrar` | T: `login-form.test.tsx:158` | ✅ PASS |
-| ACS-03 AC1 | Lê o token do fragmento, guarda em memória, remove o fragmento sem recarregar | T: `features/identity/acesso/reset-password-form.test.tsx:78` `window.location.hash` = `""`, `navigations()` = `[]`; `features/identity/acesso/read-reset-token.test.ts:7`; C: `features/identity/acesso/reset-password-form.tsx:50` | ✅ PASS (mutante M10 morto) |
-| ACS-03 AC2 | Sem token: link inválido e oferta de `/recuperar-acesso` | T: `reset-password-form.test.tsx:91` (3 casos); C: `reset-password-form.tsx:98` | ✅ PASS |
-| ACS-03 AC3 | `POST .../confirm` com `token` e `new_password`; em `204`, `/entrar` com aviso | T: `reset-password-form.test.tsx:103` corpo exato, `["/entrar"]`, "Senha redefinida. Entre com a nova senha."; C: `reset-password-form.tsx:73` | ✅ PASS |
-| ACS-03 AC4 | `400 invalid_reset_token`: link expirou ou já usado, oferta de novo pedido | T: `reset-password-form.test.tsx:151` "O link expirou ou já foi usado."; smoke S22 (`400 invalid_reset_token`); C: `reset-password-form.tsx:76` | ✅ PASS |
-| ACS-03 AC5 | Erros de senha no campo, token mantido | T: `reset-password-form.test.tsx:168` segunda tentativa envia o mesmo `token`; C: `reset-password-form.tsx:80` | ✅ PASS |
-| ACS-03 AC6 | Token nunca em query string, armazenamento ou log | T: `reset-password-form.test.tsx:65` (`expectTokenNotLeaked`), usado em `:85`, `:118`, `:162`, `:197`; `:116` `search` = `""` | ✅ PASS |
-| Borda: autenticado em `/redefinir-senha` | Redefine e vai a `/entrar` | T: `reset-password-form.test.tsx:121` sessão vira `null` | ✅ PASS |
-| Borda: troca voluntária | Funciona dentro do shell | T: `change-password-form.test.tsx:156`; `app/(app)/conta/senha/page.test.tsx:17` | ✅ PASS |
+| AC | Resultado definido pela spec | Teste | Código | |
+| --- | --- | --- | --- | --- |
+| ACS-01 AC1 | `POST /auth/password` com `current_password` e `new_password`; sucesso confirmado | `features/identity/acesso/change-password-form.test.tsx:75-81` texto "Senha alterada com sucesso." e `expect(requests).toEqual([{ body: { current_password, new_password }, csrf: "csrf-token-de-teste" }])` | `features/identity/acesso/change-password-form.tsx:59-62`, `:106-110` | ✅ |
+| ACS-01 AC2 | Confirmação diferente: erro no campo, sem API | `change-password-form.test.tsx:96-101` `expect(requests).toEqual([])` | `change-password-form.tsx:149-152` | ✅ |
+| ACS-01 AC3 | Rebusca `/auth/me`, vai ao destino | `:115-117` `["/inicio"]`, `state.calls` 2; `:125` `next` | `features/identity/acesso/use-change-password.ts:38`; `change-password-form.tsx:79-82` | ✅ |
+| ACS-01 AC4 | Explica a obrigatoriedade, sem navegação, com "Sair" | `:149-153` | `change-password-form.tsx:94-98`, `:162-166` | ✅ |
+| ACS-01 AC5 | Cinco códigos no campo certo | `:184-204` (`it.each`), `isInvalid(field)` e `describedByText(field)` | `features/identity/acesso/errors.ts:31-57` | ✅ |
+| ACS-01 AC6 | `429` com tempo de `Retry-After` | `:230-232` "Muitas tentativas. Tente de novo em 15 minutos." | `errors.ts:63-71`; `use-change-password.ts:21-25` | ✅ |
+| ACS-02 AC1 | `POST /password-reset/request`; mensagem da API | `features/identity/acesso/request-reset-form.test.tsx:50`, `:75` | `features/identity/acesso/request-reset-form.tsx:22-25`, `:53-62` | ✅ |
+| ACS-02 AC2 | Mesma tela para qualquer e-mail | `request-reset-form.test.tsx:59` `expect(second).toBe(first)` | `request-reset-form.tsx:53-62` | ✅ |
+| ACS-02 AC3 | Link em `/entrar` | `app/(public)/entrar/login-form.test.tsx:160-161`; smoke: `/recuperar-acesso` `200` | `login-form.tsx:128-133` | ✅ |
+| ACS-03 AC1 | Token do fragmento, só em memória, fragmento removido sem recarregar | `features/identity/acesso/reset-password-form.test.tsx:81-85` `hash` vazio, `navigations()` vazio; `read-reset-token.test.ts:7-21` | `features/identity/acesso/reset-password-form.tsx:46-56` | ✅ |
+| ACS-03 AC2 | Sem token: link inválido e `/recuperar-acesso` | `reset-password-form.test.tsx:93-97` | `reset-password-form.tsx:98-115` | ✅ |
+| ACS-03 AC3 | `POST /confirm` com `token` e `new_password`; `/entrar` com aviso | `:109-117` | `reset-password-form.tsx:58-61`, `:88-93` | ✅ |
+| ACS-03 AC4 | `invalid_reset_token`: link expirado e `/recuperar-acesso` | `:157-161` | `reset-password-form.tsx:76-79` | ✅ |
+| ACS-03 AC5 | Erro de senha no campo; token mantido | `:184-196` segunda requisição com o mesmo `TOKEN` | `reset-password-form.tsx:80-84` | ✅ |
+| ACS-03 AC6 | Token nunca em query, armazenamento ou log | `:65-74`, `:116` `expect(new URL(requests[0].url).search).toBe("")` | `reset-password-form.tsx:43` | ✅ |
+| Borda | Autenticado em `/redefinir-senha` | `:121-130` sessão vira `null`, `/entrar` | `reset-password-form.tsx:88-93` | ✅ |
+| Borda | `/conta/senha` voluntária | `change-password-form.test.tsx:83` `navigations()` vazio; `app/(app)/conta/senha/page.test.tsx:17-26` | `change-password-form.tsx:83-84` | ✅ |
 
 ### 03 — Identity: usuários
 
-| Critério | Resultado definido na spec | Evidência | Resultado |
-| --- | --- | --- | --- |
-| USR-01 AC1 | `GET /users`; nome, e-mail, situação, papéis, vínculo, troca pendente | T: `features/identity/usuarios/users-page.test.tsx:52` células exatas e `requests` = `[{limit:"50"}]`; C: `features/identity/usuarios/users-table.tsx:57` | ✅ PASS |
-| USR-01 AC2 | Filtros refazem a consulta com `active` e `role`, do início | T: `users-page.test.tsx:98`, `:115`, `:138` (sem `cursor` depois do filtro); C: `features/identity/usuarios/hooks.ts:23` | ✅ PASS (mutante O20 morto) |
-| USR-01 AC3 | "Carregar mais" com `next_cursor` | T: `users-page.test.tsx:163` `[{limit:"50"},{limit:"50",cursor:"pagina-2"}]`; `:180`; C: `hooks.ts:41` | ✅ PASS (mutante O04 morto) |
-| USR-01 AC4 | Sem `identity:user:read`: "Sem acesso" e item fora da navegação | T: `app/(app)/admin/usuarios/page.test.tsx:30` `requests` = `[]`; `features/identity/nav.test.ts:18` | ✅ PASS |
-| USR-02 AC1 | `POST /users`; em `201`, pessoa na lista e aviso da troca | T: `features/identity/usuarios/dialogs/create-user-dialog.test.tsx:68` corpo e CSRF exatos; C: `features/identity/usuarios/dialogs/create-user-dialog.tsx:68` | ✅ PASS |
-| USR-02 AC2 | `409 email_taken` no campo de e-mail | T: `create-user-dialog.test.tsx:98` (1º caso) | ✅ PASS |
-| USR-02 AC3 | Cinco códigos no campo correspondente | T: `create-user-dialog.test.tsx:98` (demais casos); C: `create-user-dialog.tsx:32` | ✅ PASS |
-| USR-02 AC4 | Sem `identity:user:create`, sem "Novo usuário" | T: `create-user-dialog.test.tsx:58`; C: `features/identity/usuarios/users-page.tsx:87` | ✅ PASS |
-| USR-03 AC1 | Desativar: `POST .../deactivate`; em `204`, inativo | T: `features/identity/usuarios/dialogs/status-dialogs.test.tsx:73` `[{body:null, csrf}]`, situação "Inativo" | ✅ PASS |
-| USR-03 AC2 | Reativar; aviso de que papéis e vínculo não voltam | T: `status-dialogs.test.tsx:98`; C: `features/identity/usuarios/dialogs/status-dialogs.tsx:15` | ✅ PASS |
-| USR-03 AC3 | Confirmação explícita informando o fim das sessões | T: `status-dialogs.test.tsx:83` texto do diálogo e `requests` = `[]` antes de confirmar; C: `status-dialogs.tsx:38` | ✅ PASS |
-| USR-03 AC4 | `self_change_forbidden`, `last_admin`, `privilege_escalation`: mensagem e estado mantido | T: `status-dialogs.test.tsx:122` (3 casos), `:139` | ✅ PASS |
-| USR-04 AC1 | Promover: `POST .../admin-membership`; aviso de sessões e troca de senha | T: `features/identity/usuarios/dialogs/admin-dialogs.test.tsx:129` corpo `{roles:["DIRETORIA","TESOURARIA"], reason}`; C: `features/identity/usuarios/dialogs/admin-dialogs.tsx:106` | ✅ PASS |
-| USR-04 AC2 | Envio desabilitado sem papel ou com motivo < 10 caracteres úteis | T: `admin-dialogs.test.tsx:108` (9 caracteres → desabilitado; 10 → habilitado); C: `features/identity/usuarios/dialogs/reason.ts:9` | ✅ PASS (mutante O12 morto) |
-| USR-04 AC3 | `PUT .../roles`; lista vazia avisa antes | T: `admin-dialogs.test.tsx:210`, `:230` (`requests` = `[]` até "Salvar sem papéis"); C: `admin-dialogs.tsx:161` | ✅ PASS (mutante O11 morto) |
-| USR-04 AC4 | Retirar acesso com motivo; só `ASSOCIADO` | T: `admin-dialogs.test.tsx:248` corpo `{reason:"Deixou a tesouraria"}`; C: `admin-dialogs.tsx:227` | ✅ PASS (mínimo do motivo não definido: ⚠️ SP-3) |
-| USR-04 AC5 | Dez códigos com mensagem em português | T: `admin-dialogs.test.tsx:159` (10 casos); C: `features/identity/usuarios/errors.ts:15` | ✅ PASS |
-| USR-04 AC6 | Só a ação compatível com o estado | T: `admin-dialogs.test.tsx:74`, `:85`; C: `features/identity/usuarios/actions.ts:33` | ✅ PASS |
-| USR-05 AC1 | Motivo ≥ 10; `POST .../password-reset`; senha uma vez, com copiar | T: `features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx:74`, `:92`; C: `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:63` | ✅ PASS |
-| USR-05 AC2 | Ao fechar, some da tela; fora do cache, do armazenamento e do log | T: `temporary-password-dialog.test.tsx:126` DOM; `:135` consultas; `:136` mutações; `:137` armazenamento; `:138` console | ✅ PASS (mutantes M09a e M09b mortos) |
-| USR-05 AC3 | Quatro códigos com mensagem | T: `temporary-password-dialog.test.tsx:151` | ✅ PASS |
-| Borda: própria linha | Esconde as ações | T: `status-dialogs.test.tsx:54`; C: `actions.ts:29` | ✅ PASS (mutante O07 morto) |
-| Borda: invalidação | Ações invalidam as consultas de usuários | T: lista muda depois da escrita em `status-dialogs.test.tsx:90`, `admin-dialogs.test.tsx:147`, `:224`, `:267`; C: `hooks.ts:51` | ✅ PASS |
+| AC | Resultado definido pela spec | Teste | Código | |
+| --- | --- | --- | --- | --- |
+| USR-01 AC1 | `GET /users`; seis colunas | `features/identity/usuarios/users-page.test.tsx:57-74` `cellsOf(...)` exato e `requests` = `[{ limit: "50" }]` | `features/identity/usuarios/users-table.tsx:58-65`; `hooks.ts:23-43` | ✅ |
+| USR-01 AC2 | Filtros enviados; recomeça do início | `users-page.test.tsx:112`, `:131-135`, `:153-157` | `users-page.tsx:62-68`; `hooks.ts:25` | ✅ |
+| USR-01 AC3 | "Carregar mais" com `next_cursor` | `:172-177`, `:184` | `users-page.tsx:149-158`; `hooks.ts:41` | ✅ |
+| USR-01 AC4 | Sem leitura: "Sem acesso"; item fora da navegação | `app/(app)/admin/usuarios/page.test.tsx:34-36`; `features/identity/nav.test.ts:19` | `app/(app)/admin/usuarios/page.tsx:13`; `features/identity/nav.ts:8` | ✅ |
+| USR-02 AC1 | `POST /users`; pessoa na lista; aviso da troca | `features/identity/usuarios/dialogs/create-user-dialog.test.tsx:82-92` | `dialogs/create-user-dialog.tsx:66-68`, `:84` | ✅ |
+| USR-02 AC2-AC3 | Erros no campo certo | `create-user-dialog.test.tsx:98-128` | `create-user-dialog.tsx:32-39`, `:71-75` | ✅ |
+| USR-02 AC4 | Sem `identity:user:create`: sem "Novo usuário" | `:58-63` | `users-page.tsx:87-90` | ✅ |
+| USR-03 AC1 | Desativar; mostra inativo | `dialogs/status-dialogs.test.tsx:88-92` | `dialogs/status-dialogs.tsx:31-51` | ✅ |
+| USR-03 AC2 | Reativar; aviso de não restauração | `status-dialogs.test.tsx:110-116` | `status-dialogs.tsx:53-72` | ✅ |
+| USR-03 AC3 | Confirmação com aviso das sessões | `:83-86` texto e `requests` vazio antes de confirmar | `status-dialogs.tsx:37-38` | ✅ |
+| USR-03 AC4 | Três códigos; estado mantido | `:122-137`, `:139-149` | `status-dialogs.tsx:25-29`; `errors.ts:24-26` | ✅ |
+| USR-04 AC1 | Promoção e aviso | `dialogs/admin-dialogs.test.tsx:142-153` corpo `{ roles: ["DIRETORIA","TESOURARIA"], reason }` | `dialogs/admin-dialogs.tsx:102-113` | ✅ |
+| USR-04 AC2 | Sem papel ou motivo < 10: desabilitado | `admin-dialogs.test.tsx:114-126` | `admin-dialogs.tsx:100`; `dialogs/reason.ts:9-11` | ✅ |
+| USR-04 AC3 | Com `identity:role:assign`: `PUT /roles`; lista vazia avisa antes | `:218-227`, `:237-242` afirmam corpo e aviso. A visibilidade de "Editar papéis" só é testada com as quatro permissões juntas ou sem nenhuma (`:74-90`) | `features/identity/usuarios/actions.ts:34`; `admin-dialogs.tsx:158-174` | ❌ **LACUNA G2** (O02) na permissão que libera a ação; corpo e aviso ✅ |
+| USR-04 AC4 | Com `identity:admin:revoke`: retirar acesso | `:259-269` afirmam corpo e resultado. Mesma limitação de `:74-90` | `actions.ts:35`; `admin-dialogs.tsx:214-235` | ❌ **LACUNA G2** (O02); corpo ✅ |
+| USR-04 AC5 | Dez códigos em português | `:159-187`, `:189-200`, `:272-285` | `errors.ts:24-34` | ✅ |
+| USR-04 AC6 | Ação compatível com o estado | `:76-82` | `actions.ts:31-35` | ✅ |
+| USR-05 AC1 | Motivo ≥ 10; senha uma vez, com cópia | `dialogs/temporary-password-dialog.test.tsx:80-86`, `:109-116` | `dialogs/temporary-password-dialog.tsx:48`, `:58-72` | ✅ |
+| USR-05 AC2 | Descartada; fora de cache, armazenamento e log | `:126-140` | `temporary-password-dialog.tsx:50-56`; `hooks.ts:129-137` | ✅ |
+| USR-05 AC3 | Quatro códigos | `:151-164` | `temporary-password-dialog.tsx:64-65`, `:96` | ✅ |
+| Borda | Própria linha sem ações | `status-dialogs.test.tsx:66-67` | `actions.ts:29` | ✅ |
+| Borda | Invalidar consultas de usuários | `status-dialogs.test.tsx:90`; `admin-dialogs.test.tsx:147` | `hooks.ts:51-54` | ✅ |
 
 ### 04 — Financeiro
 
-| Critério | Resultado definido na spec | Evidência | Resultado |
-| --- | --- | --- | --- |
-| FWB-01 AC1 | `GET /contas`, árvore por `parent_id`, tipo e situação | T: `features/financeiro/contas/contas-page.test.tsx:97`; `features/financeiro/contas/tree.test.ts`; C: `features/financeiro/contas/contas-page.tsx:87` | ✅ PASS |
-| FWB-01 AC2 | `POST /contas` com `tipo`, `nome`, `parent_id` | T: `contas-page.test.tsx:171` `{tipo:"DESPESA", nome:"Patrocínios"}`; `:188` com `parent_id`; C: `features/financeiro/contas/conta-dialogs.tsx:72` | ✅ PASS (mutante O19 morto) |
-| FWB-01 AC3 | Subconta fixa o tipo do pai | T: `contas-page.test.tsx:188` rádios `disabled`, o do pai marcado | ✅ PASS |
-| FWB-01 AC4 | `PATCH`; `409 conta_ja_utilizada` explicado | T: `contas-page.test.tsx:264`, `:283` | ✅ PASS |
-| FWB-01 AC5 | Desativar com confirmação; conta inativa | T: `contas-page.test.tsx:318` `requests` = `[]` ao cancelar | ✅ PASS (mutante M07b morto) |
-| FWB-01 AC6 | `conta_nao_encontrada`, `conta_tipo_incompativel` | T: `contas-page.test.tsx:228`, `:283`, `:341`; C: `features/financeiro/contas/errors.ts:7` | ✅ PASS |
-| FWB-02 AC1 | `GET /saldo`, `formatBRL`, zero e negativo | T: `features/financeiro/saldo/saldo-page.test.tsx:40` (`"R$ 1.234,56"`, `"R$ 0,00"`, `"-R$ 987,65"`); C: `features/financeiro/saldo/saldo-page.tsx:34` | ✅ PASS |
-| FWB-02 AC2 | Explicação do cálculo | T: `saldo-page.test.tsx:54`; C: `saldo-page.tsx:39` | ✅ PASS |
-| FWB-03 AC1 | `GET /lancamentos`, campos e filtros no cliente | T: `features/financeiro/lancamentos/lancamentos-page.test.tsx:84`, `:117` (`list.count` = 1), `:127`; `features/financeiro/lancamentos/filters.test.ts:22`; C: `features/financeiro/lancamentos/filters.ts:31` | ✅ PASS |
-| FWB-03 AC2 | `POST /lancamentos` em centavos inteiros | T: `lancamentos-page.test.tsx:164` `valor_bruto_cents: 15000`, `taxa_cents: 250`; smoke S6 (a API recusa decimal com `422`) | ✅ PASS |
-| FWB-03 AC3 | `PUT /lancamentos/{id}` | T: `features/financeiro/lancamentos/lancamento-detail.test.tsx:117` corpo exato | ✅ PASS |
-| FWB-03 AC4 | Editar só em `CRIADA`; `lancamento_imutavel` explicado e lista atualizada | T: `lancamento-detail.test.tsx:145`, `:151` (`list.count` = 2); `features/financeiro/lancamentos/actions.test.ts:34` | ✅ PASS |
-| FWB-03 AC5 | Três códigos junto do campo | T: `lancamentos-page.test.tsx:244`; C: `features/financeiro/lancamentos/errors.ts:32` | ✅ PASS |
-| FWB-03 AC6 | Detalhe com todos os campos, cancelamento e devolução | T: `lancamento-detail.test.tsx:61`, `:77`, `:93` | ✅ PASS |
-| FWB-04 AC1 | Receber: `POST .../receive`, `RECEBIDA`, saldo atualizado | T: `features/financeiro/lancamentos/workflow.test.tsx:71` `saldoInvalidated` = `true`; C: `features/financeiro/lancamentos/hooks.ts:79` | ✅ PASS (mutantes M07c e O02 mortos) |
-| FWB-04 AC2 | Pagar: `POST .../pay`, `PAGA`, saldo atualizado | T: `workflow.test.tsx:102` | ✅ PASS |
-| FWB-04 AC3 | Cancelar com `reason`; `CANCELADA` com o motivo | T: `workflow.test.tsx:151` corpo `{reason:"Lançado em duplicidade"}` | ✅ PASS |
-| FWB-04 AC4 | Motivo vazio ou só espaços: desabilitado, sem API | T: `workflow.test.tsx:137` `disabled` = `true`, `requests` = `[]` | ✅ PASS (mutante M06a morto) |
-| FWB-04 AC5 | Devolução com `devolucao_de_id`, conta de despesa, valores | T: `workflow.test.tsx:208` corpo exato | ✅ PASS (mutante O05a morto) |
-| FWB-04 AC6 | Devolução só em receita `RECEBIDA`; `devolucao_invalida` | T: `workflow.test.tsx:238`, `:258`; `actions.test.ts:29` | ✅ PASS |
-| FWB-04 AC7 | Receber, pagar e cancelar só nos estados certos; três códigos atualizam a lista | T: `workflow.test.tsx:86`, `:116`, `:178`, `:258`; `actions.test.ts:34` | ✅ PASS |
-| FWB-05 AC1 | Lista de comprovantes, do mais novo para o mais antigo | T: `features/financeiro/comprovantes/comprovantes-panel.test.tsx:104` | ✅ PASS |
-| FWB-05 AC2 | `multipart/form-data`, campo `file`, "enviando", lista atualizada | T: `comprovantes-panel.test.tsx:122` `contentType` casa `^multipart/form-data; boundary=`; C: `features/financeiro/comprovantes/hooks.ts:39` | ✅ PASS |
-| FWB-05 AC3 | > 10.420.224 bytes recusa sem requisição; até 10.420.224 envia | T: `comprovantes-panel.test.tsx:159` constante; `:173` envia; `:182` `requests` = `[]`; C: `features/financeiro/comprovantes/limits.ts:6`, `:21`; smoke S9 | ✅ PASS (mutantes O01a e O01b mortos) |
-| FWB-05 AC4 | `413` e três `422` com mensagem | T: `comprovantes-panel.test.tsx:203`; C: `features/financeiro/comprovantes/errors.ts:15` | ✅ PASS |
-| FWB-05 AC5 | URL assinada buscada no clique e aberta, **sem guardar no cache de consultas** | T: `comprovantes-panel.test.tsx:235` (`calls.count` = 2, `window.open` com a URL). Nenhuma asserção inspeciona o `QueryClient`; C: `features/financeiro/comprovantes/hooks.ts:52` | ❌ GAP parcial (mutante O06 sobreviveu) |
-| FWB-05 AC6 | `document_not_found`, `lancamento_nao_encontrado` | T: `comprovantes-panel.test.tsx:209`, `:256` | ✅ PASS |
-| Borda: só leitura | Nenhuma ação de escrita | T: `contas-page.test.tsx:373`; `lancamentos-page.test.tsx:269`; `workflow.test.tsx:269`; `comprovantes-panel.test.tsx:284`; smoke S15-S17 | ✅ PASS |
-| Borda: id fora da lista | "Lançamento não encontrado" | T: `lancamento-detail.test.tsx:103` | ✅ PASS |
-| Borda: mudança de status | Invalida a lista e o saldo | T: `workflow.test.tsx:82`, `:112`, `:174` | ✅ PASS |
+| AC | Resultado definido pela spec | Teste | Código | |
+| --- | --- | --- | --- | --- |
+| FWB-01 AC1 | Árvore por `parent_id`, tipo e situação | `features/financeiro/contas/contas-page.test.tsx:101-113`; `tree.test.ts:26-38` | `contas/contas-page.tsx:87`, `:112-123`; `contas/tree.ts:17-29` | ✅ |
+| FWB-01 AC2 | `POST /contas` com `tipo`, `nome`, `parent_id` | `contas-page.test.tsx:183`, `:206-208` | `contas/conta-dialogs.tsx:67-72` | ✅ |
+| FWB-01 AC3 | Subconta com tipo fixo | `:197-200` | `conta-dialogs.tsx:69`, `:107` | ✅ |
+| FWB-01 AC4 | `PATCH`; `409 conta_ja_utilizada` explicado | `:276-278`, `:284`, `:296` | `contas/hooks.ts:45-52`; `contas/errors.ts:8` | ✅ |
+| FWB-01 AC5 | Desativação confirmada | `:327`, `:334-335` | `contas-page.tsx:53-63`, `:96-106` | ✅ |
+| FWB-01 AC6 | Mensagens dos dois códigos | `:229-230`, `:285`, `:342` | `contas/errors.ts:9-10` | ✅ |
+| FWB-02 AC1 | `GET /saldo`; `formatBRL` com zero e negativo | `features/financeiro/saldo/saldo-page.test.tsx:41-49` "R$ 1.234,56", "R$ 0,00", "-R$ 987,65" | `saldo/saldo-page.tsx:34` | ✅ |
+| FWB-02 AC2 | Explicação do saldo | `saldo-page.test.tsx:58-62` | `saldo-page.tsx:39-42` | ✅ |
+| FWB-03 AC1 | Lista e filtros no cliente | `features/financeiro/lancamentos/lancamentos-page.test.tsx:90-100`, `:124` `list.count` 1; `filters.test.ts:22-87` | `lancamentos/lancamentos-page.tsx:41-42`, `:123-134`; `lancamentos/filters.ts:31-48` | ✅ |
+| FWB-03 AC2 | Com `financeiro:lancamento:create`: `POST` em centavos | `lancamentos-page.test.tsx:180-189` corpo exato. A visibilidade de "Novo lançamento" só é testada com todas as escritas ou só leitura (`:269-273`) | `lancamentos-page.tsx:50`; `lancamentos/lancamento-form.tsx:130-138` | ❌ **LACUNA G3** (O03) na permissão; corpo ✅ |
+| FWB-03 AC3 | `PUT` com conta, valores e forma | `lancamentos/lancamento-detail.test.tsx:132-140` | `lancamento-detail.tsx:244-246` | ✅ |
+| FWB-03 AC4 | Editar só em `CRIADA`; `lancamento_imutavel` | `lancamento-detail.test.tsx:145-149`, `:157-158`; `actions.test.ts:34-56` | `lancamentos/actions.ts:30-31`; `lancamentos/errors.ts:39-46` | ✅ |
+| FWB-03 AC5 | Três códigos junto do campo | `lancamentos-page.test.tsx:244-264` | `errors.ts:32-36` | ✅ |
+| FWB-03 AC6 | Detalhe completo | `lancamento-detail.test.tsx:63-74`, `:87-90`, `:98-100` | `lancamento-detail.tsx:99-126` | ✅ |
+| FWB-04 AC1 | Receber; `RECEBIDA`; saldo atualizado | `lancamentos/workflow.test.tsx:78-83` | `lancamento-detail.tsx:168-191`; `lancamentos/hooks.ts:79-97` | ✅ |
+| FWB-04 AC2 | Pagar; `PAGA`; saldo atualizado | `workflow.test.tsx:110-113` | `hooks.ts:99-108` | ✅ |
+| FWB-04 AC3 | Cancelar com `reason`; `CANCELADA` com motivo | `:169-175` | `lancamento-detail.tsx:194-219` | ✅ |
+| FWB-04 AC4 | Motivo vazio: desabilitado, sem API | `:145-148` | `components/app/confirm-dialog.tsx:80` | ✅ |
+| FWB-04 AC5 | Devolução com `devolucao_de_id` | `:224-233` | `lancamentos/devolucao-form.tsx:37-45` | ✅ |
+| FWB-04 AC6 | Devolução só em receita `RECEBIDA` | `:261`; `actions.test.ts:29`; `:246` | `actions.ts:38-39` | ✅ |
+| FWB-04 AC7 | Ações por status; três códigos atualizam a lista | `:258-267`; `:94-96`, `:121-122`, `:184-185` | `actions.ts:28-41`; `errors.ts:39-46` | ✅ |
+| FWB-05 AC1 | Lista, do mais novo ao mais antigo | `features/financeiro/comprovantes/comprovantes-panel.test.tsx:108-111` | `comprovantes/comprovantes-panel.tsx:31-33`, `:86-93` | ✅ |
+| FWB-05 AC2 | Com `financeiro:comprovante:create`: multipart no campo `file`, "enviando", lista | `comprovantes-panel.test.tsx:137-147`. A visibilidade de "Anexar comprovante" só é testada com tesouraria completa ou só leitura (`:295-306`) | `comprovantes-panel.tsx:58`; `comprovantes/hooks.ts:30-49` | ❌ **LACUNA G4** (O04) na permissão; envio ✅ |
+| FWB-05 AC3 | Acima de 10.420.224 recusa sem API; até o limite envia | `:160-161`; `:176-178` (exatamente no limite); `:189-194` 10.420.225, mensagem e `requests` vazio | `comprovantes/limits.ts:6`, `:21-23`; `comprovantes-panel.tsx:132-136` | ✅ |
+| FWB-05 AC4 | Mensagens de `413` e `422` | `:204-208` | `comprovantes/errors.ts:15-20` | ✅ |
+| FWB-05 AC5 | URL no clique, aberta, fora do cache | `:244-253`; `:266-270` | `comprovantes/hooks.ts:52-59`; `comprovantes-panel.tsx:42-50` | ✅ |
+| FWB-05 AC6 | `document_not_found`, `lancamento_nao_encontrado` | `:209`, `:278` | `comprovantes/errors.ts:21-22` | ✅ |
+| Borda | Só leitura: nenhuma escrita | `contas-page.test.tsx:376-377`; `lancamentos-page.test.tsx:272`; `workflow.test.tsx:273`; `comprovantes-panel.test.tsx:305` | — | ✅ |
+| Borda | Id fora da lista | `lancamento-detail.test.tsx:105` | `lancamento-detail.tsx:51-52` | ✅ |
+| Borda | Mudança de status invalida lista e saldo | `workflow.test.tsx:82-83`, `:112-113`, `:174-175` | `hooks.ts:79-86` | ✅ |
 
 ### 05 — Estoque
 
-| Critério | Resultado definido na spec | Evidência | Resultado |
-| --- | --- | --- | --- |
-| EWB-01 AC1 | `GET /produtos`; código, nome, unidade; busca no cliente | T: `features/estoque/produtos/produtos-page.test.tsx:83`, `:101` (`calls.count` = 1) | ✅ PASS |
-| EWB-01 AC2 | `POST /produtos` e produto na lista | T: `produtos-page.test.tsx:121` corpo exato | ✅ PASS |
-| EWB-01 AC3 | `409 codigo_duplicado` no campo; `422` em cada campo | T: `produtos-page.test.tsx:138`, `:156`; C: `features/estoque/produtos/create-produto-dialog.tsx:62` | ✅ PASS |
-| EWB-01 AC4 | Saldo com unidade; negativo destacado | T: `features/estoque/produto-detail.test.tsx:47`, `:55` (`"-3 UN"`, "Saldo negativo"); C: `features/estoque/produto-detail.tsx:106` | ✅ PASS |
-| EWB-02 AC1 | Histórico com as colunas, na ordem da API | T: `features/estoque/movimentacoes/movimentacoes-panel.test.tsx:77` | ✅ PASS |
-| EWB-02 AC2 | Entrada e saída com `origem = INVENTARIO` | T: `movimentacoes-panel.test.tsx:161` corpos exatos; `features/estoque/movimentacoes/payload.test.ts:14`; C: `features/estoque/movimentacoes/payload.ts:21` | ✅ PASS (mutante M08a morto) |
-| EWB-02 AC3 | Devolução com `movimentacao_de_id` | T: `movimentacoes-panel.test.tsx:170`; `payload.test.ts:32` | ✅ PASS |
-| EWB-02 AC4 | Nunca oferecer `VENDA`, `COMPRA`, `EVENTO`, `AJUSTE_MANUAL` | T: `movimentacoes-panel.test.tsx:131` sem `combobox`, `radio`, `listbox` nem os rótulos; C: `features/estoque/movimentacoes/movimentacao-dialog.tsx:128` | ✅ PASS (mutante M08b morto) |
-| EWB-02 AC5 | Quatro códigos com mensagem | T: `movimentacoes-panel.test.tsx:187`, `:200`; C: `features/estoque/errors.ts:14` | ✅ PASS |
-| EWB-02 AC6 | Invalida histórico e saldo | T: `movimentacoes-panel.test.tsx:182` `movCalls` = 4, `saldoCalls` = 4; C: `features/estoque/movimentacoes/hooks.ts:30` | ✅ PASS (mutante O09 morto) |
-| EWB-03 AC1 | `POST /ajustes` com `produto_id`, `quantidade`, `motivo` | T: `features/estoque/ajustes/ajuste-dialog.test.tsx:52` corpo `{quantidade:-3, motivo:"Contagem física do inventário"}` | ✅ PASS |
-| EWB-03 AC2 | Motivo vazio ou quantidade zero: desabilitado, sem API | T: `ajuste-dialog.test.tsx:94` (5 casos); C: `features/estoque/ajustes/ajuste-dialog.tsx:43` | ✅ PASS (mutante M06b morto) |
-| EWB-03 AC3 | Saldo atual e resultante; aviso de negativo, sem impedir | T: `ajuste-dialog.test.tsx:58` (`"0 UN"`, `"-3 UN"`, aviso, botão habilitado) | ✅ PASS (forma da confirmação: ⚠️ SP-4) |
-| EWB-03 AC4 | `motivo_obrigatorio`, `quantidade_invalida` | T: `ajuste-dialog.test.tsx:114` | ✅ PASS |
-| EWB-04 AC1 | Só leitura: vê tudo, sem escrita | T: `produtos-page.test.tsx:185`; `movimentacoes-panel.test.tsx:231`; `ajuste-dialog.test.tsx:131`; smoke S15-S17 | ✅ PASS |
-| EWB-04 AC2 | Sem a permissão da seção: omite e não chama a API | T: `produto-detail.test.tsx:74` (`saldoState.calls` = 0); `movimentacoes-panel.test.tsx:102` (`movCalls` = 0) | ✅ PASS (mutante O18 morto) |
-| Borda: id fora da lista | "Produto não encontrado" | T: `produto-detail.test.tsx:37` | ✅ PASS |
-| Borda: `AJUSTE` e `DEVOLUCAO` | Sem "Devolver" | T: `movimentacoes-panel.test.tsx:112` `[true,true,false,false]`; `payload.test.ts:54` | ✅ PASS |
+| AC | Resultado definido pela spec | Teste | Código | |
+| --- | --- | --- | --- | --- |
+| EWB-01 AC1 | Lista e busca no cliente | `features/estoque/produtos/produtos-page.test.tsx:88-92`, `:107-115` | `produtos/produtos-page.tsx:52`, `:65-79` | ✅ |
+| EWB-01 AC2 | `POST /produtos` | `produtos-page.test.tsx:131-133` | `produtos/create-produto-dialog.tsx:53-59` | ✅ |
+| EWB-01 AC3 | `codigo_duplicado` no código; `validation_failed` por campo | `:147-152`, `:172-179` | `create-produto-dialog.tsx:62-70` | ✅ |
+| EWB-01 AC4 | Saldo com unidade; negativo destacado | `features/estoque/produto-detail.test.tsx:50-51`, `:58-60` | `features/estoque/produto-detail.tsx:85-106` | ✅ |
+| EWB-02 AC1 | Histórico **na ordem devolvida pela API** | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx:92-97` afirma as quatro linhas na ordem da fixture, mas todas têm a mesma `criado_em` (`:28-39`) | `movimentacoes/movimentacoes-panel.tsx:51` | ❌ **LACUNA G1** (O01) |
+| EWB-02 AC2 | Com `estoque:movimentacao:create`: entrada e saída com `INVENTARIO` | `movimentacoes-panel.test.tsx:161-169` corpos exatos. A visibilidade só é testada com todas as permissões ou só leitura (`:231-238`) | `produto-detail.tsx:67`; `movimentacoes/payload.ts:16-25` | ❌ **LACUNA G5** (O05) na permissão; corpo ✅ |
+| EWB-02 AC3 | Com `estoque:movimentacao:create`: devolução com `movimentacao_de_id` | `:170-179` corpo exato. Mesma limitação | `movimentacoes-panel.tsx:23`, `:65` | ❌ **LACUNA G5** (O07) na permissão; corpo ✅ |
+| EWB-02 AC4 | Nunca oferece origem reservada | `:131-136`; `payload.test.ts:44-49` | `movimentacoes/movimentacao-dialog.tsx:126-129` | ✅ |
+| EWB-02 AC5 | Quatro códigos | `:193`, `:200-212` | `features/estoque/errors.ts:14-21` | ✅ |
+| EWB-02 AC6 | Invalida histórico e saldo | `:182-183` `movCalls` 4, `saldoCalls` 4 | `movimentacoes/hooks.ts:30-35` | ✅ |
+| EWB-03 AC1 | Com `estoque:movimentacao:adjust`: `POST /ajustes` | `features/estoque/ajustes/ajuste-dialog.test.tsx:67-72` corpo exato. A visibilidade só é testada com todas, só leitura ou sem `saldo:read` (`:131-142`) | `produto-detail.tsx:108`; `ajustes/ajuste-dialog.tsx:59-63` | ❌ **LACUNA G5** (O06) na permissão; corpo ✅ |
+| EWB-03 AC2 | Motivo vazio ou quantidade zero: desabilitado | `ajuste-dialog.test.tsx:94-109` | `ajuste-dialog.tsx:43` | ✅ |
+| EWB-03 AC3 | Saldo atual e resultante; aviso sem impedir | `:58-61` | `ajuste-dialog.tsx:44`, `:111-129` | ✅ |
+| EWB-03 AC4 | Dois códigos | `:114-126` | `errors.ts:18`, `:20` | ✅ |
+| EWB-04 AC1 | Só leitura: nenhuma escrita | `produtos-page.test.tsx:188`; `movimentacoes-panel.test.tsx:235-237`; `ajuste-dialog.test.tsx:134` | `produtos-page.tsx:35-37`; `produto-detail.tsx:67`, `:108` | ✅ |
+| EWB-04 AC2 | Seção omitida sem chamar a API | `produto-detail.test.tsx:77-79`; `movimentacoes-panel.test.tsx:105-106` | `produto-detail.tsx:74-80` | ✅ |
+| Borda | Id fora da lista | `produto-detail.test.tsx:39-41` | `produto-detail.tsx:44` | ✅ |
+| Borda | Sem "Devolver" em `AJUSTE` e `DEVOLUCAO` | `movimentacoes-panel.test.tsx:118` `[true, true, false, false]` | `payload.ts:28-30` | ✅ |
 
 ### 06 — Integração (INT-01 a INT-03)
 
-| Critério | Resultado definido na spec | Evidência | Resultado |
-| --- | --- | --- | --- |
-| INT-01 AC1 | `nav-items.ts` junta os itens dos módulos mais "Início", na ordem, sem redefinir | T: `components/app/nav-items.test.ts:14`, `:18`, `:22` (`toBe` da própria seção), `:28`; C: `components/app/nav-items.ts:13` | ✅ PASS |
-| INT-01 AC2 | Shell usa `nav-items.ts` e filtra por permissão | T: `app/(app)/inicio/page.test.tsx:122` (5 perfis); C: `app/(app)/layout.tsx:34` | ✅ PASS |
-| INT-01 AC3 | `/` → `/inicio` | T: `app/page.test.tsx:19` `redirect` chamado com `"/inicio"`; smoke S1 (`307`, `Location: /inicio`) | ✅ PASS |
-| INT-01 AC4 | Atalho por área visível; sem área, mensagem | T: `app/(app)/inicio/page.test.tsx:127`, `:147`; C: `app/(app)/inicio/atalhos.tsx:17` | ✅ PASS |
-| INT-01 AC5 | Raiz não consulta `/healthz` | T: `app/page.test.tsx:26` `fetchSpy` não chamado; C: `app/page.tsx:7` | ✅ PASS |
-| INT-02 AC1 (manual) | Guia explica variáveis, ordem de subida, rewrite e gates | `docs/development/web.md:19` (variáveis da API), `:39` (`API_URL`), `:43` (ordem), `:155` (rewrite), `:168` (gates). A stack do smoke repetido foi montada por este guia | ✅ PASS |
-| INT-02 AC2 (manual) | Comportamento de `API_URL` no build | `docs/development/web.md:39` | ✅ PASS |
-| INT-02 AC3 (manual) | Sem segredo nem dado pessoal | Leitura integral: só marcadores `<...>`, credenciais de desenvolvimento do compose e `presidente@local.test` | ✅ PASS |
-| INT-03 AC1 (manual) | Cada item com resultado, data e observação | `.specs/features/web/smoke.md:34` (tabela, 12 itens); data única em `smoke.md:3` | ✅ PASS (⚠️ SP-6: data por execução, não por item) |
-| INT-03 AC2 (manual) | Cobertura dos itens listados | `smoke.md:36` a `:48`. Repetição independente: seção "Smoke repetido" | ✅ PASS (a interação na tela não foi vista por ninguém; ver "Pendências") |
-| INT-03 AC3 (manual) | Declara que o token válido não é executável localmente | `smoke.md:12`, `:40`; confirmado no smoke (log só com `recipient_domain` e `subject`) | ✅ PASS |
-| INT-03 AC4 (manual) | Falha vira correção e repetição | `smoke.md:50` (nenhum item falhou) | ✅ PASS (condicional) |
-| INT-03 AC5 (manual) | Sem senha, token, cookie ou dado pessoal | Leitura integral de `smoke.md` | ✅ PASS |
-| Borda: módulo sem item visível | Seção não aparece | T: `components/app/nav.test.ts:26`; `app/(app)/inicio/page.test.tsx:111` (perfis sem a seção) | ✅ PASS |
+| AC | Resultado definido pela spec | Evidência | Código | |
+| --- | --- | --- | --- | --- |
+| INT-01 AC1 | Registro junta os módulos, na ordem, sem redefinir | `components/app/nav-items.test.ts:19`, `:23-25` (`toBe`), `:29-46` | `components/app/nav-items.ts:11-13` | ✅ |
+| INT-01 AC2 | Shell usa o registro, filtrado | `app/(app)/inicio/page.test.tsx:122-125` cinco perfis | `app/(app)/layout.tsx:34` | ✅ |
+| INT-01 AC3 | `/` → `/inicio` | `app/page.test.tsx:23-25`; smoke: `307`, `Location: /inicio` | `app/page.tsx:7-9` | ✅ |
+| INT-01 AC4 | Atalhos por área; mensagem sem área | `inicio/page.test.tsx:136-141`, `:149` | `app/(app)/inicio/atalhos.tsx:15-34` | ✅ |
+| INT-01 AC5 | Raiz sem `/healthz` | `app/page.test.tsx:26` `expect(fetchSpy).not.toHaveBeenCalled()` | `app/page.tsx:1-9` | ✅ |
+| Borda | Seção sem item visível some | `components/app/nav.test.ts:27`; `inicio/page.test.tsx:137-141` | `components/app/nav.ts:35-36` | ✅ |
+| INT-02 AC1 | Variáveis, ordem, rewrite e gates | `docs/development/web.md:13-41`, `:43-143`, `:155-166`, `:168-183`. Segui o guia no smoke repetido e cheguei a `/entrar` `200` | — | 🔎 ✅ |
+| INT-02 AC2 | `API_URL` no build | `docs/development/web.md:39` | — | 🔎 ✅ |
+| INT-02 AC3 | Sem segredo | Leitura integral: só marcadores `<...>` (`docs/development/web.md:32`) e credenciais de desenvolvimento do compose | — | 🔎 ✅ |
+| INT-03 AC1 | Resultado, data e observação por item | `.specs/features/web/smoke.md:3`, `:34-48` | — | 🔎 ✅ |
+| INT-03 AC2 | Cobertura do checklist | `.specs/features/web/smoke.md:36-47` (itens 1 a 11) | — | 🔎 ✅ |
+| INT-03 AC3 | Token válido não executável localmente | `.specs/features/web/smoke.md:12`, `:40` | — | 🔎 ✅ |
+| INT-03 AC4 | Falhas registradas e repetidas | `.specs/features/web/smoke.md:50` (nenhuma) | — | 🔎 ✅ |
+| INT-03 AC5 | Sem senha, token, cookie ou dado real | Leitura integral: valores como `<redigido>`, contas `*@local.test` | — | 🔎 ✅ |
 
-**Contagem**: 129 ACs e 13 casos de borda (142 critérios). Com evidência discriminante: 140. Lacuna: 1 (FWB-05 AC5, cláusula do cache). Evidência parcial por imprecisão da spec: 1 (FND-05 AC2).
+**Contagem**: 129 ACs e 13 casos de borda (142 critérios). Com evidência discriminante completa: 133. Com lacuna em uma cláusula (permissão ou ordem): 9 (FND-04 AC4, USR-04 AC3, USR-04 AC4, FWB-03 AC2, FWB-05 AC2, EWB-02 AC1, EWB-02 AC2, EWB-02 AC3, EWB-03 AC1). Nenhum AC ficou sem teste algum. Gaps de precisão: 3 (P1 a P3).
 
-**Status**: ❌ Há lacuna.
+**Status**: ❌ Lacunas presentes.
 
 ---
 
 ## Discrimination Sensor
 
-Worktree temporário `C:\Users\Michels\Desktop\tjw\vsensor` (`git worktree add ... 2c50de6 --detach`), uma falha por vez no código de produção, `pnpm test` completo (`API_URL=http://localhost:8080`), reversão com `git checkout -- .` antes da seguinte. Linha de base no worktree temporário: 66 arquivos, 688 testes, `EXIT=0`.
+Worktree temporário `tjw/vsensor2` em `8bf79ec` (`git -c core.autocrlf=false worktree add --detach`), `pnpm install --frozen-lockfile`, `API_URL=http://localhost:8080`. Um mutante por vez, só em código de produção, `pnpm test` completo (689 testes), `git checkout -- .` e conferência de `git status --porcelain` vazio depois de cada um. Nenhuma morte foi por timeout (0 ocorrências de "Test timed out" nos 51 registros).
 
-### Mínimo obrigatório (INT-04 AC3)
+### Mínimo obrigatório (INT-04 AC3) e L2
 
-| # | Falha injetada | Arquivo | Resultado | Teste que matou (primeiro) |
+| # | Mutante | Arquivo | Resultado | Teste que matou |
 | --- | --- | --- | --- | --- |
-| M01 | (1) Sem `X-CSRF-Token` nas escritas | `lib/api/client.ts:69` | ✅ Morto (30 falhas) | `lib/api/client.test.ts:72` "X-CSRF-Token vai em POST com o token da sessão atual" |
-| M02 | (2) Não redireciona em `401` | `lib/session/session-provider.tsx:145` | ✅ Morto (3) | `lib/session/session-provider.test.tsx:259` "limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next" |
-| M03a | (3) `RequirePermission` sempre renderiza | `components/app/require-permission.tsx:26` | ✅ Morto (24) | `components/app/require-permission.test.tsx:60` "sem a permissão, mostra Sem acesso e não chama a API da área" |
-| M03b | (3) `lancamentoActions` ignora a permissão | `features/financeiro/lancamentos/actions.ts:50` | ✅ Morto (18) | `features/financeiro/lancamentos/actions.test.ts:45` "editar sem a permissão → false" |
-| M04 | (4) `safeNext` aceita `next` externo | `lib/session/routes.ts:45` | ✅ Morto (19) | `lib/session/routes.test.ts:29` "recusa outra origem sem esquema e usa a página inicial" |
-| M05 | (5) `MoneyField` entrega reais com decimais | `components/app/money-field.tsx:17` | ✅ Morto (13) | `components/app/money-field.test.tsx:35` "1.234,56 vira 123456 centavos inteiros" |
-| M06a | (6) Cancelamento com motivo vazio habilitado e enviado | `components/app/confirm-dialog.tsx:80`, `features/financeiro/lancamentos/lancamento-detail.tsx:208` | ✅ Morto (5) | `features/financeiro/lancamentos/workflow.test.tsx:137` "motivo vazio mantém a confirmação desabilitada e não chama a API" |
-| M06b | (6) Ajuste com motivo vazio habilitado | `features/estoque/ajustes/ajuste-dialog.tsx:43` | ✅ Morto (2) | `features/estoque/ajustes/ajuste-dialog.test.tsx:94` "motivo vazio: desabilitada e a API não é chamada" |
-| M07a | (7) `ConfirmDialog` confirma ao abrir | `components/app/confirm-dialog.tsx:103` | ✅ Morto (10) | `components/app/confirm-dialog.test.tsx:16` "só chama onConfirm ao confirmar; cancelar não chama" |
-| M07b | (7) Desativar conta sem diálogo | `features/financeiro/contas/contas-page.tsx:49` | ✅ Morto (3) | `features/financeiro/contas/contas-page.test.tsx:318` "só chama a API depois de confirmar e mostra a conta como inativa" |
-| M07c | (7) Receber e pagar chamam a API no clique | `features/financeiro/lancamentos/lancamento-detail.tsx:175` | ✅ Morto (4) | `features/financeiro/lancamentos/workflow.test.tsx:71` "confirma, chama /receive com CSRF, mostra Recebida e invalida o saldo" |
-| M08a | (8) Corpo com origem reservada `VENDA` | `features/estoque/movimentacoes/payload.ts:21` | ✅ Morto (5) | `features/estoque/movimentacoes/payload.test.ts:14` "entrada: tipo, produto, quantidade e origem INVENTARIO, nada mais" |
-| M08b | (8) Diálogo oferece seletor de origens | `features/estoque/movimentacoes/movimentacao-dialog.tsx:128` | ✅ Morto (1) | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx:124` "entrada de 10, saída de 4, devolução da saída; corpo sempre com INVENTARIO" |
-| M09a | (9) Senha temporária em `setQueryData` | `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:63` | ✅ Morto (1) | `features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx:92` "ao fechar some do DOM, do cache, do armazenamento e do log" |
-| M09b | (9) Senha temporária por `useMutation` (cache de mutações) | `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:63` | ✅ Morto (1) | o mesmo teste (`:136`) |
-| M10 | (10) Token de recuperação fica na URL | `features/identity/acesso/reset-password-form.tsx:52` | ✅ Morto (6) | `features/identity/acesso/reset-password-form.test.tsx:78` "remove o fragmento da barra de endereço sem recarregar e mostra o formulário" |
+| 1 (M01) | Remover `X-CSRF-Token` das escritas | `lib/api/client.ts:69` | ✅ Morto (30 falhas) | `lib/api/client.test.ts:72` e as asserções de `csrf` de cada tela (por exemplo `workflow.test.tsx:170`) |
+| 2 (M02) | Não redirecionar em `401` | `lib/session/session-provider.tsx:145` | ✅ Morto (3 falhas) | `session-provider.test.tsx:259`, `:281`, `:302` |
+| 3 (M03) | Exibir ação sem a permissão | `components/app/require-permission.tsx:29` | ✅ Morto (15 falhas) | `require-permission.test.tsx:102`; `ajuste-dialog.test.tsx:131` |
+| 4 (M04) | Aceitar `next` externo | `lib/session/routes.ts:45` | ✅ Morto (19 falhas) | `login-form.test.tsx:65`; `routes.test.ts:29` |
+| 5 (M05) | Dinheiro como número com casas decimais | `features/financeiro/lancamentos/lancamento-form.tsx:135-136` | ✅ Morto (4 falhas) | `lancamentos-page.test.tsx:164`, `:206`; `lancamento-detail.test.tsx:117`; `workflow.test.tsx:208` |
+| 6a (M06a) | Cancelamento com motivo vazio | `components/app/confirm-dialog.tsx:80`; `lancamento-detail.tsx:208` | ✅ Morto (5 falhas) | `workflow.test.tsx:137`; `confirm-dialog.test.tsx:74`, `:81` |
+| 6b (M06b) | Ajuste com motivo vazio | `features/estoque/ajustes/ajuste-dialog.tsx:43` | ✅ Morto (2 falhas) | `ajuste-dialog.test.tsx:94` (motivo vazio e só espaços) |
+| 7a (M07a) | Diálogo de confirmação confirma ao abrir | `components/app/confirm-dialog.tsx:78` | ✅ Morto (9 falhas) | `confirm-dialog.test.tsx:16`; `workflow.test.tsx:71`, `:102` |
+| 7b (M07b) | Desativar conta sem confirmação | `features/financeiro/contas/contas-page.tsx:49` | ✅ Morto (3 falhas) | `contas-page.test.tsx:318`, `:341` |
+| 8a (M08a) | Saída manual enviada com origem `VENDA` | `features/estoque/movimentacoes/payload.ts:21` | ✅ Morto (2 falhas) | `payload.test.ts:23`; `movimentacoes-panel.test.tsx:124` |
+| 8b (M08b) | Origens reservadas oferecidas no formulário | `movimentacoes/movimentacao-dialog.tsx:128` | ✅ Morto (1 falha) | `movimentacoes-panel.test.tsx:124` |
+| 9a (M09a) | Senha temporária em `setQueryData` | `dialogs/temporary-password-dialog.tsx:63` | ✅ Morto (1 falha) | `temporary-password-dialog.test.tsx:92` |
+| 9b (M09b) | Senha temporária em `useMutation` | `dialogs/temporary-password-dialog.tsx:63` | ✅ Morto (1 falha) | `temporary-password-dialog.test.tsx:92` |
+| 10 (M10) | Token de recuperação mantido na URL | `features/identity/acesso/reset-password-form.tsx:51-53` | ✅ Morto (6 falhas) | `reset-password-form.test.tsx:78`, `:103`, `:167` |
+| L2a | URL assinada em `setQueryData` | `comprovantes/comprovantes-panel.tsx:45` | ✅ Morto (1 falha) | `comprovantes-panel.test.tsx:256` |
+| L2b | URL assinada por `useMutation` | `comprovantes/comprovantes-panel.tsx:45` | ✅ Morto (1 falha) | `comprovantes-panel.test.tsx:256` |
+| L2c | URL assinada por `fetchQuery` | `comprovantes/comprovantes-panel.tsx:45` | ✅ Morto (1 falha) | `comprovantes-panel.test.tsx:256` |
+
+Os 10 mutantes mínimos (14 variantes) e os 3 de L2: 17 de 17 mortos.
 
 ### Mutantes próprios
 
-| # | Falha injetada | Arquivo | Resultado | Teste que matou (primeiro) |
+| # | Mutante | Arquivo | Resultado | Teste que matou |
 | --- | --- | --- | --- | --- |
-| O01a | Limite de upload aceita 10.420.225 bytes | `features/financeiro/comprovantes/limits.ts:22` | ✅ Morto (1) | `features/financeiro/comprovantes/comprovantes-panel.test.tsx:182` |
-| O01b | Limite recusa exatamente 10.420.224 bytes | `features/financeiro/comprovantes/limits.ts:22` | ✅ Morto (1) | `comprovantes-panel.test.tsx:173` |
-| O02 | Mudança de status não invalida o saldo | `features/financeiro/lancamentos/hooks.ts:84` | ✅ Morto (3) | `features/financeiro/lancamentos/workflow.test.tsx:71` |
-| O03 | Campo numérico nunca marca `aria-invalid` | `components/app/numeric-text-field.tsx:74` | ✅ Morto (20) | `components/app/money-field.test.tsx:49` |
-| O04 | "Carregar mais" não envia o cursor | `features/identity/usuarios/hooks.ts:35` | ✅ Morto (2) | `features/identity/usuarios/users-page.test.tsx:163` |
-| O05a | Contas do lançamento sem filtro por tipo | `features/financeiro/lancamentos/filters.ts:53` | ✅ Morto (4) | `features/financeiro/lancamentos/filters.test.ts:99` |
-| O05b | Contas do lançamento incluem inativas | `features/financeiro/lancamentos/filters.ts:53` | ✅ Morto (3) | `filters.test.ts:99` |
-| O06 | URL assinada gravada no cache de consultas | `features/financeiro/comprovantes/comprovantes-panel.tsx:45` | ❌ **Sobreviveu** (688 passaram) | nenhum → lacuna L2 |
-| O07 | Própria linha oferece ações | `features/identity/usuarios/actions.ts:29` | ✅ Morto (1) | `features/identity/usuarios/dialogs/status-dialogs.test.tsx:54` |
-| O08 | Portão mostra conteúdo com troca obrigatória | `app/(app)/layout.tsx:34` | ✅ Morto (1) | `app/(app)/layout.test.tsx:64` |
-| O09 | Movimentação não invalida o saldo do produto | `features/estoque/movimentacoes/hooks.ts:33` | ✅ Morto (2) | `features/estoque/ajustes/ajuste-dialog.test.tsx:52` |
-| O10 | Shell mostra navegação na troca obrigatória | `components/app/app-shell.tsx:37` | ✅ Morto (1) | `components/app/app-shell.test.tsx:128` |
-| O11 | Salvar papéis vazios sem o aviso de vínculo dormente | `features/identity/usuarios/dialogs/admin-dialogs.tsx:161` | ✅ Morto (1) | `features/identity/usuarios/dialogs/admin-dialogs.test.tsx:230` |
-| O12 | Motivo mínimo aceita 9 caracteres | `features/identity/usuarios/dialogs/reason.ts:10` | ✅ Morto (2) | `admin-dialogs.test.tsx:108` |
-| O13 | Troca de senha não rebusca `/auth/me` | `features/identity/acesso/use-change-password.ts:38` | ✅ Morto (1) | `features/identity/acesso/change-password-form.test.tsx:107` |
-| O14 | Login grava o token CSRF em `localStorage` | `lib/session/session-provider.tsx:175` | ✅ Morto (1) | `lib/session/session-provider.test.tsx:159` |
-| O15 | Logout não limpa cache nem contexto | `lib/session/session-provider.tsx:198` | ✅ Morto (2) | `session-provider.test.tsx:196` |
-| O16 | `403 csrf_invalid` não rebusca `/auth/me` | `lib/session/session-provider.tsx:154` | ✅ Morto (1) | `session-provider.test.tsx:372` |
-| O17 | Mensagem genérica expõe o `code` interno | `lib/api/problem.ts:89` | ✅ Morto (2) | `lib/api/problem.test.ts:70` |
-| O18 | Histórico consultado sem `estoque:movimentacao:read` | `features/estoque/produto-detail.tsx:78` | ✅ Morto (1) | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx:102` |
-| O19 | Subconta não envia `parent_id` | `features/financeiro/contas/conta-dialogs.tsx:72` | ✅ Morto (1) | `features/financeiro/contas/contas-page.test.tsx:188` |
-| O20 | Filtro de papel não vai para a API | `features/identity/usuarios/hooks.ts:34` | ✅ Morto (2) | `features/identity/usuarios/users-page.test.tsx:98` |
-| O21 | `401` redireciona mas não limpa cache nem contexto | `lib/session/session-provider.tsx:146` | ✅ Morto (1) | `session-provider.test.tsx:259` |
+| O01 | Histórico reordenado por data (mais novo primeiro) em vez da ordem da API | `features/estoque/movimentacoes/movimentacoes-panel.tsx:51` | ❌ **Sobreviveu** (689 passam) | nenhum → G1 |
+| O02 | Permissões de "Editar papéis" e "Retirar acesso" trocadas entre si | `features/identity/usuarios/actions.ts:34-35` | ❌ **Sobreviveu** | nenhum → G2 |
+| O03 | "Novo lançamento" liberado por `lancamento:update` | `features/financeiro/lancamentos/lancamentos-page.tsx:50` | ❌ **Sobreviveu** | nenhum → G3 |
+| O04 | "Anexar comprovante" liberado por `lancamento:create` | `features/financeiro/comprovantes/comprovantes-panel.tsx:58` | ❌ **Sobreviveu** | nenhum → G4 |
+| O05 | Entrada e saída liberadas por `movimentacao:adjust` | `features/estoque/produto-detail.tsx:67` | ❌ **Sobreviveu** | nenhum → G5 |
+| O06 | Ajuste liberado por `movimentacao:create` | `features/estoque/produto-detail.tsx:108` | ❌ **Sobreviveu** | nenhum → G5 |
+| O07 | "Devolver" liberado por `movimentacao:adjust` | `features/estoque/movimentacoes/movimentacoes-panel.tsx:23`, `:65` | ❌ **Sobreviveu** | nenhum → G5 |
+| O08 | `/financeiro/lancamentos` protegida por `conta:read` | `app/(app)/financeiro/lancamentos/page.tsx:13` | ❌ **Sobreviveu** | nenhum → G6 |
+| O09 | `/financeiro/lancamentos/[id]` protegida por `conta:read` | `app/(app)/financeiro/lancamentos/[id]/page.tsx:14` | ❌ **Sobreviveu** | nenhum → G6 |
+| O10 | Tela de saldo chama `fetch` direto, sem o cliente | `features/financeiro/saldo/hooks.ts:17` | ✅ Morto | `saldo-page.test.tsx:66` (o erro `503` deixa de virar mensagem) |
+| O11 | Esquecer a sessão sem limpar o cache | `lib/session/session-provider.tsx:127-128` | ✅ Morto | `session-provider.test.tsx:259`, `:196` |
+| O12 | Troca de senha sem rebuscar `/auth/me` | `features/identity/acesso/use-change-password.ts:38` | ✅ Morto | `change-password-form.test.tsx:107` |
+| O13 | Mudança de status sem invalidar o saldo | `features/financeiro/lancamentos/hooks.ts:84` | ✅ Morto | `workflow.test.tsx:71`, `:102`, `:151` |
+| O14 | Limite de upload exclusivo (`<`) | `comprovantes/limits.ts:22` | ✅ Morto | `comprovantes-panel.test.tsx:173` |
+| O15 | Motivo mínimo contando espaços | `usuarios/dialogs/reason.ts:10` | ✅ Morto | `admin-dialogs.test.tsx:108`; `temporary-password-dialog.test.tsx:74` |
+| O16 | `useCan` decide pelo papel | `lib/session/session-provider.tsx:236` | ✅ Morto | `session-provider.test.tsx:78` |
+| O17 | Seção de saldo sem `estoque:saldo:read` | `features/estoque/produto-detail.tsx:74-76` | ✅ Morto | `produto-detail.test.tsx:74`; `ajuste-dialog.test.tsx:137` |
+| O18 | Navegação visível com troca obrigatória | `components/app/app-shell.tsx:37` | ✅ Morto | `app-shell.test.tsx:128` |
+| O19 | Ações na própria linha | `usuarios/actions.ts:29` | ✅ Morto | `status-dialogs.test.tsx:54` |
+| O20 | Token de recuperação também na query string | `acesso/reset-password-form.tsx:60` | ✅ Morto | `reset-password-form.test.tsx:103` |
+| O21 | Token CSRF em `sessionStorage` | `lib/session/session-provider.tsx:175` | ✅ Morto | `session-provider.test.tsx:159` |
+| O22 | Movimentação sem invalidar o saldo do produto | `estoque/movimentacoes/hooks.ts:33` | ✅ Morto | `ajuste-dialog.test.tsx:52`; `movimentacoes-panel.test.tsx:124` |
+| O23 | Bloqueio de login ignora `Retry-After` | `app/(public)/entrar/login-form.tsx:74` | ✅ Morto | `login-form.test.tsx:104` |
+| O25 | Conteúdo protegido durante o carregamento | `app/(app)/layout.tsx:34` | ✅ Morto (12 falhas) | `layout.test.tsx:27`; `inicio/page.test.tsx:147` |
+| O26 | Lançamentos sem ordenar do mais novo | `lancamentos/filters.ts:47` | ✅ Morto | `filters.test.ts:22`, `:48` |
+| O27 | Lista vazia de papéis sem o aviso | `dialogs/admin-dialogs.tsx:161` | ✅ Morto | `admin-dialogs.test.tsx:230` |
+| O28 | Tipo da subconta deixa de ser fixo | `contas/conta-dialogs.tsx:107` | ✅ Morto | `contas-page.test.tsx:188` |
+| O29 | Token descartado depois de erro de senha | `acesso/reset-password-form.tsx:80` | ✅ Morto | `reset-password-form.test.tsx:167` |
+| O30 | Ajuste que negativa o saldo é impedido | `ajustes/ajuste-dialog.tsx:43` | ✅ Morto | `ajuste-dialog.test.tsx:52` |
+| O31 | `csrf_invalid` sem rebuscar `/auth/me` | `lib/session/session-provider.tsx:154` | ✅ Morto | `session-provider.test.tsx:372` |
+| O36 | Mensagem genérica expõe o `code` | `lib/api/problem.ts:89` | ✅ Morto | `api-error.test.tsx:26`; `problem.test.ts:70` |
+| O38 | Devolução em qualquer receita | `lancamentos/actions.ts:39` | ✅ Morto (7 falhas) | `actions.test.ts:34`; `workflow.test.tsx:258` |
+| O52 | Atalhos de `/inicio` sem filtrar por permissão | `app/(app)/inicio/atalhos.tsx:15` | ✅ Morto (6 falhas) | `inicio/page.test.tsx:127`, `:147` |
 
-**Profundidade**: completa para caminhos críticos (autenticação, dinheiro, permissões, uploads).
-**Resultado do sensor**: 39 mutantes injetados, 38 mortos, 1 sobrevivente (O06). Os 10 obrigatórios de INT-04 AC3 morreram nas 16 variantes; dos 23 próprios, 22 morreram. Em todos os mortos, os testes que falharam são os que cobrem o comportamento mutado (nomes conferidos um a um; nenhuma morte por tempo esgotado).
+**Profundidade**: completa para caminho crítico (autenticação, dinheiro, permissões): 51 mutações manuais.
+**Resultado do sensor**: 42 de 51 mortos; 9 sobreviventes, todos entre os mutantes próprios. ❌
 
-**Isolamento**: `git status --porcelain` do worktree real (`tjw/verify`) e do repositório principal (`torcida-jovem`) vazio antes e depois do sensor; worktree temporário removido ao fim.
+**Isolamento**: `git worktree remove --force` executado; `tjw/vsensor2` não existe mais. `git status --porcelain` vazio em `tjw/verify2` antes de escrever este relatório e vazio em `C:\Users\Michels\Desktop\torcida-jovem` (`develop` em `6382fe1`).
 
 ---
 
 ## Smoke repetido (stack real, 2026-10-08)
 
-Montado pelo `docs/development/web.md` a partir deste worktree: `docker compose up -d db` e migrações 1 a 9, contêiner Garage avulso (`dxflrs/garage:v2.4.1`, porta 3900, chaves geradas na hora), `bootstrap-admin --role PRESIDENTE`, binário de `./cmd/api` na 8080 e `next build` + `next start` na 3000 com `API_URL=http://localhost:8080`. As chamadas são as que as telas fazem, sempre por `http://localhost:3000` (nunca direto na API), com `Origin`, cookie e `X-CSRF-Token`. Senhas geradas em memória; nenhum segredo foi gravado em arquivo.
+Montagem pelo `docs/development/web.md`, a partir do worktree `tjw/verify2`: `docker compose up -d db`, migrações (1 a 9) **antes** da API, contêiner Garage avulso (`dxflrs/garage:v2.4.1`, porta 3900), `bootstrap-admin --role PRESIDENTE`, binário de `./cmd/api`, e `next start` sobre o `next build` dos gates (`API_URL=http://localhost:8080`). Todas as chamadas foram feitas em `http://localhost:3000`, com `Origin: http://localhost:3000` e `X-CSRF-Token` nas escritas, com os mesmos caminhos e corpos que os hooks das telas montam. Senhas, cookies, token CSRF e chaves S3 existiram só na memória de um único processo; nenhum foi gravado em arquivo. Contas fictícias `*.v2@local.test`.
 
-**Sem navegador automatizado**: o servidor MCP do Playwright não conectou e a V1 não tem E2E (WEB-D-017). Renderização, cliques, diálogos e redirecionamentos feitos pelo JavaScript não foram vistos; ficam cobertos só pelos testes com MSW.
+**51 de 51 verificações passaram.**
 
-| # | Verificação | Resultado |
-| --- | --- | --- |
-| S1 | `GET /` → `307` com `Location: /inicio`; `/entrar`, `/inicio`, `/financeiro/lancamentos`, `/financeiro/saldo`, `/estoque/produtos` → `200` com o título certo | Passou |
-| S2 | Login: senha errada → `401 invalid_credentials`; certa → `200`, `Set-Cookie: tj_session=<redigido>; Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`, sem `Domain`; `must_change_password = true` | Passou |
-| S3 | Antes da troca: `GET /financeiro/contas` → `403 password_change_required`; troca sem CSRF → `403 csrf_invalid`; com CSRF → `204`; `/auth/me` → `must_change_password = false` | Passou |
-| S4 | `PRESIDENTE` cria duas pessoas (`201`) e promove a `TESOURARIA` e a `CONSELHO_FISCAL` (`204`); cada uma entra e faz a troca obrigatória (`204`) | Passou |
-| S5 | Tesouraria: contas `RECEITA`, `DESPESA` e subconta → `201`; `Origin` externa → `403 origin_not_allowed`; sem CSRF → `403 csrf_invalid` | Passou |
-| S6 | Lançamento `RECEITA` de 15000 centavos → `201 CRIADA`; valor decimal (`150.5`) → `422 validation_failed` | Passou |
-| S7 | `PUT` → `200`, líquido 19850; receber → `204`; receber de novo → `409 lancamento_nao_pode_ser_recebido`; editar recebida → `409 lancamento_imutavel` | Passou |
-| S8 | Comprovante de 200.000 bytes → `201`, `size_bytes` igual; sem CSRF → `403 csrf_invalid` | Passou |
-| S9 | Comprovante de **exatamente 10.420.224 bytes** (corpo multipart de 10.420.401 bytes) → `201`, `size_bytes = 10420224`; URL assinada → `200`; download com 10.420.224 bytes e SHA-256 igual ao enviado | Passou |
-| S10 | Lista de comprovantes → `200`, 2 itens | Passou |
-| S11 | Devolução → `201` (`DESPESA`, `CRIADA`, `devolucao_de_id` certo); pagar → `204` | Passou |
-| S12 | Cancelar com motivo só de espaços → `422 motivo_obrigatorio`; com motivo → `204`; lista mostra `CANCELADA` com o motivo | Passou |
-| S13 | Saldo → `200`, `saldo_cents = 14850` (19850 − 5000) | Passou |
-| S14 | Tesouraria em `GET /users` → `403 forbidden` | Passou |
-| S15 | `CONSELHO_FISCAL`: `/auth/me` com 11 permissões, nenhuma de escrita | Passou |
-| S16 | `CONSELHO_FISCAL`, leituras → `200`: contas, lançamentos, saldo, comprovantes, URL do comprovante, produtos, movimentações, saldo de estoque | Passou |
-| S17 | `CONSELHO_FISCAL`, escritas → `403 forbidden`: criar, renomear e desativar conta; criar, editar, receber, pagar, cancelar e devolver lançamento; anexar comprovante; criar produto; movimentação; ajuste. `GET /users` → `403`. Saldo inalterado depois | Passou |
-| S18 | Logout sem CSRF → `403 csrf_invalid`; com CSRF → `204` e `Set-Cookie ... Max-Age=0`; cookie antigo → `401` | Passou |
-| S19 | Sem cookie: `GET /auth/me` → `401` | Passou |
-| S20 | Erro pelo rewrite chega com `Content-Type: application/problem+json` (`422 reason_required`) | Passou |
-| S21 | Senha temporária → `200` com `Cache-Control: no-store` devolvido ao cliente; pedido de recuperação para conta existente e inexistente → `202` com a mesma mensagem | Passou |
-| S22 | Confirmar com token inválido → `400 invalid_reset_token`; o log da API registrou só `recipient_domain` e `subject` | Passou |
-| S23 | Seis senhas erradas → `429 login_blocked` com `Retry-After: 899` devolvido ao cliente | Passou |
+| Item | Observado |
+| --- | --- |
+| Rotas HTML | `/` → `307` com `Location: /inicio`; `/entrar`, `/inicio`, `/recuperar-acesso`, `/redefinir-senha`, `/conta/senha`, `/admin/usuarios`, `/financeiro/lancamentos`, `/financeiro/contas`, `/financeiro/saldo`, `/estoque/produtos`, `/sem-acesso` → `200` com o título esperado |
+| Login | Senha errada → `401 invalid_credentials` em `application/problem+json`. Senha certa → `200`; `Set-Cookie: tj_session=<redigido>; Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`, **sem `Domain`**; `must_change_password=true`, papéis `ASSOCIADO, PRESIDENTE`, 30 permissões, `csrf_token` presente |
+| Troca obrigatória | Antes: `403 password_change_required`. Sem `X-CSRF-Token`: `403 csrf_invalid`. Com ele: `204`; `/auth/me` com `must_change_password=false` |
+| Origem | Escrita com `Origin: http://evil.example` → `403 origin_not_allowed` |
+| Usuários | Criação `201` e promoção `204` a `TESOURARIA` e a `CONSELHO_FISCAL`; primeiro login e troca obrigatória das duas contas → `200` e `204`. Senha temporária → `200` com `Cache-Control: no-store` |
+| Financeiro (`TESOURARIA`) | Contas raiz e subconta → `201`. Receita de 15000 centavos → `201 CRIADA`; edição para 20000 com taxa 150 → `200`, líquido 19850; receber → `204`; receber de novo → `409 lancamento_nao_pode_ser_recebido`. Devolução de 5000 → `201` com `devolucao_de_id` certo; pagar → `204`. Despesa cancelada: motivo só de espaços → `422 motivo_obrigatorio`; com motivo → `204`, `CANCELADA`, motivo gravado. Saldo → `200`, `saldo_cents=14850` |
+| Comprovantes | Sem CSRF → `403 csrf_invalid`. PDF de 200.052 bytes → `201`, `size_bytes` igual. **Arquivo de exatamente 10.420.224 bytes** (corpo multipart de 10.420.403 bytes) → `201`, `size_bytes=10420224`. Lista → 2 itens. Download pela URL assinada dos dois: `200`, tamanho e SHA-256 iguais aos enviados |
+| `CONSELHO_FISCAL` | `/auth/me`: 11 permissões, nenhuma de escrita. Leituras `200`: contas, lançamentos, saldo, comprovantes, URL do comprovante (download íntegro), produtos, movimentações, saldo de estoque. Escritas `403 forbidden`: criar, renomear e desativar conta; criar, editar, receber, pagar e cancelar lançamento; devolução; anexar comprovante; criar produto; movimentação; ajuste. `GET /users` → `403 forbidden`. Saldo inalterado depois das tentativas |
+| Recuperação | Pedido para conta existente e inexistente → `202` com corpo idêntico. Token inválido → `400 invalid_reset_token` |
+| Bloqueio de login | Depois das falhas seguidas: `429 login_blocked` com `Retry-After: 899` (cabeçalho preservado pelo rewrite) |
+| Sessão e logout | Sem cookie → `401 unauthenticated`. Logout sem CSRF → `403 csrf_invalid`; com CSRF → `204` e `Set-Cookie` com `Max-Age=0`; cookie antigo → `401` |
 
-Total: 97 verificações em duas execuções (83 + 14), nenhuma falha. A primeira tentativa da segunda execução falhou por erro do próprio verificador (API iniciada antes das migrações); foi corrigida e repetida, sem relação com o produto.
+**Não exercitado**: a interação visual no navegador. Não há navegador automatizado nesta verificação (Playwright está fora da V1, WEB-D-017). Cliques, renderização, diálogos, redirecionamentos feitos pelo JavaScript, a remoção do fragmento `#token=` e o menu recolhível em tela estreita não foram vistos. É pendência humana (roteiro em `.specs/features/web/smoke.md:58-71`), não lacuna de teste. A redefinição com token válido continua não executável localmente (INT-03 AC3).
 
-**Desmontagem**: API e `next start` encerrados, contêiner Garage removido, `docker compose down -v`, binários, logs e configuração temporária apagados. Nenhum `.env` foi criado.
+**Desmontagem**: API e `next start` encerrados, Garage removido, `docker compose down -v`, binários e configuração do Garage apagados. Não foi criado `.env`. Os contêineres que já existiam (parados) não foram tocados. Portas 3000, 8080, 5432 e 3900 livres ao fim.
 
 ---
 
 ## Gate Check
 
-Rodados em `tjw/verify/web` com `API_URL=http://localhost:8080`, código de saída real por `cmd /v:on /c "<cmd> & echo EXIT=!ERRORLEVEL!"`.
+Em `tjw/verify2/web`, com `API_URL=http://localhost:8080`, código de saída real por `cmd /v:on /c "<cmd> & echo EXIT=!ERRORLEVEL!"`.
 
-| Gate | Comando | Resultado |
+| Gate | Comando | Saída |
 | --- | --- | --- |
-| Web | `pnpm lint` | `EXIT=0` |
-| Web | `pnpm exec next typegen` | `EXIT=0` |
-| Web | `pnpm exec tsc --noEmit` | `EXIT=0` |
-| Web | `pnpm test` | `EXIT=0` (66 arquivos, 688 testes, 0 falhas, 0 pulados) |
-| Web | `pnpm build` | `EXIT=0` (15 rotas) |
-| **Audit** | `pnpm audit --audit-level high` | **`EXIT=1`**: GHSA-68fv-2mgg-jv7q, alta, `source-map-js` `>=1.0.0 <1.2.2` (lockfile com 1.2.1, `web/pnpm-lock.yaml:3307`, via `@tailwindcss/node@4.3.3` e `css-tree@3.2.1`). "2 high (1 ignored)": o ignorado é GHSA-vfj7-8cjw-p6xm (`web/pnpm-workspace.yaml:12`) |
-| Contract | `pnpm lint:api` | `EXIT=0` |
-| Contract | `pnpm gen:api:check` | `EXIT=0` (com um aviso de validação de exemplo em `identity.yaml`, sem falha) |
+| Instalação | `pnpm install --frozen-lockfile` | `EXIT=0` |
+| Lint | `pnpm lint` | `EXIT=0` |
+| Tipos de rota | `pnpm exec next typegen` | `EXIT=0` |
+| Tipos | `pnpm exec tsc --noEmit` | `EXIT=0` |
+| Testes | `pnpm test` | `EXIT=0`: 66 arquivos, 689 testes, 0 falhas, 0 pulados |
+| Build | `pnpm build` | `EXIT=0`: 15 rotas |
+| Audit | `pnpm audit --audit-level high` | `EXIT=0`: 1 alta, ignorada (`GHSA-vfj7-8cjw-p6xm`) |
+| Contrato | `pnpm lint:api` | `EXIT=0` |
+| Contrato | `pnpm gen:api:check` | `EXIT=0` |
 | Backend intacto | `git diff --name-only develop -- api/` | vazio |
-| State | `validate_state.py --root <worktree> .specs/features/web` | `EXIT=1`, esperado com veredito FAIL ("validation.md verdict is FAIL"). Atenção: com o argumento literal `web` o script resolve o diretório de código `web/` da raiz (que existe) e acusa "no validation.md"; use o caminho `.specs/features/web` |
 
-- **Testes antes da feature** (`ee1b497`): 2 arquivos (`lib/money.test.ts` e `lib/smoke.test.ts`), ambos mantidos sem alteração. **Depois**: 66 arquivos, 688 testes. Nenhum teste removido, enfraquecido ou pulado.
-- **Sobre o Audit**: o lockfile de `develop` (`1a508d1`) tem a mesma versão e `pnpm audit --audit-level high` em `develop` também sai com 1 hoje. O aviso não foi introduzido pela Web V1; ele passou a reprovar depois da rodada dos autores.
+- **Arquivos de teste antes da feature** (`ee1b497`): 2. **Depois** (`8bf79ec`): 66.
+- **Testes pulados**: nenhum.
+- **Estado**: `validate_state.py --root tjw/verify2 .specs/features/web` → `EXIT=1`, como esperado para um relatório reprovado.
 
 ---
 
@@ -337,91 +371,120 @@ Rodados em `tjw/verify/web` com `API_URL=http://localhost:8080`, código de saí
 
 | Princípio | Status |
 | --- | --- |
-| Código mínimo, sem recurso além do pedido | ✅ |
-| Mudanças cirúrgicas (só `web/`, `docs/`, `.specs/features/web/` e `API_URL` no CI, previsto em `STATE.md:110`) | ✅ |
-| Sem dependência além de WEB-D-003; `package.json` só em F1 | ✅ |
-| Asserções com o valor definido na spec | ✅ com 1 exceção (FWB-05 AC5) |
-| Cobertura por camada (felizes, borda e erro por rota) | ✅ |
-| Diretrizes seguidas: `CLAUDE.md` (dinheiro em centavos inteiros, sem JWT, CSRF, RBAC por permissão) | ✅ |
-
-Observações sem peso no veredito: `features/identity/usuarios/actions.ts` não tem teste unitário próprio (a regra é coberta pelos testes de tela, e o mutante O07 morreu); a cláusula "nenhuma tela chama `fetch` diretamente" (FND-01 AC2) não tem guarda automática (por exemplo, regra de lint).
+| Código mínimo, sem escopo extra | ✅ |
+| Mudanças só nos caminhos de cada unidade; nada em `api/` | ✅ |
+| Padrões consistentes (cliente único, `RequirePermission`, catálogos de erro) | ✅ |
+| Valor afirmado igual ao da spec | ✅ nos 133 critérios completos; ❌ na cláusula de permissão ou de ordem dos 9 com lacuna |
+| Cobertura por camada (regra pura 1:1; telas com sucesso, borda e erro) | ✅ |
+| Todo teste mapeia para AC, borda ou "Done when" | ✅ |
+| Diretrizes documentadas: `docs/development/web.md` (gates, MSW com `onUnhandledRequest: "error"`) | ✅ |
 
 ---
 
 ## Lacunas (ordenadas por severidade)
 
-### L1 — Gate Audit vermelho (bloqueante)
+Todas são lacunas de teste; nenhuma pede mudança em código de produção. Severidade **menor** para as seis: a API continua sendo a autoridade, e com a matriz de papéis atual nenhum papel tem só parte das escritas de um módulo. Ainda assim reprovam o ciclo, porque são mutantes relevantes sobreviventes.
 
-- **Critério**: gate Audit de T4; `STATE.md`, "pronta para uso", item 7.
-- **Onde**: `web/pnpm-lock.yaml:3307` (`source-map-js@1.2.1`), trazido por `@tailwindcss/node@4.3.3` e `css-tree@3.2.1`.
-- **Causa**: GHSA-68fv-2mgg-jv7q (negação de serviço em `source-map-js` < 1.2.2). Já existia no lockfile de `develop`.
-- **Dona provável**: F1 (única unidade que altera `package.json` e `pnpm-lock.yaml`, WEB-D-011).
-- **Correção sugerida**: levar `source-map-js` a `>=1.2.2` (atualizar `@tailwindcss/postcss`, ou `overrides` do pnpm para `source-map-js`). Exceção de auditoria só se não houver versão corrigida, o que não é o caso (1.2.2 já está no lockfile por outro caminho). **Feito quando**: `pnpm audit --audit-level high` sai com 0 e os demais gates continuam verdes.
+### G1 — EWB-02 AC1: a ordem da API não é discriminada (O01)
 
-### L2 — FWB-05 AC5 sem asserção sobre o cache (menor)
+- **Onde**: `web/features/estoque/movimentacoes/movimentacoes-panel.test.tsx:28-39` e `:92-97`.
+- **Causa**: as quatro movimentações da fixture têm a mesma `criado_em`; qualquer reordenação estável por data preserva a ordem. A API devolve `ORDER BY criado_em` crescente, então um "mais novo primeiro" inverteria a tela real sem derrubar teste.
+- **Unidade dona provável**: EST.
+- **Correção sugerida**: dar `criado_em` distintos e fora de ordem cronológica às linhas da fixture e manter a asserção da ordem igual à da resposta.
 
-- **Critério**: FWB-05 AC5, "sem guardá-la no cache de consultas".
-- **Onde**: `web/features/financeiro/comprovantes/comprovantes-panel.test.tsx:235` (só conta as chamadas e confere `window.open`).
-- **Evidência**: mutante O06 (gravar a URL com `setQueryData` em `comprovantes-panel.tsx:45`) passou nos 688 testes. O código atual está correto (`web/features/financeiro/comprovantes/hooks.ts:52` não usa o `QueryClient`); falta o teste que impediria a regressão.
-- **Dona provável**: FIN-b.
-- **Correção sugerida**: no teste de download, depois dos cliques, afirmar que nenhuma consulta nem mutação do `QueryClient` contém a URL assinada (como `web/features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx:127` faz com a senha). **Feito quando**: o mutante O06 morre.
+### G2 — USR-04 AC3 e AC4: `identity:role:assign` e `identity:admin:revoke` não são isoladas (O02)
+
+- **Onde**: `web/features/identity/usuarios/dialogs/admin-dialogs.test.tsx:74-90`.
+- **Unidade dona provável**: ID-ADM.
+- **Correção sugerida**: dois casos na linha de quem tem vínculo: com `identity:user:read` e `identity:role:assign`, o menu é só `["Editar papéis"]`; com `identity:user:read` e `identity:admin:revoke`, é só `["Retirar acesso administrativo"]`.
+
+### G3 — FWB-03 AC2: `financeiro:lancamento:create` não é isolada em "Novo lançamento" (O03)
+
+- **Onde**: `web/features/financeiro/lancamentos/lancamentos-page.test.tsx:269-273`.
+- **Unidade dona provável**: FIN-b.
+- **Correção sugerida**: leitura mais `lancamento:update`, `receive`, `pay` e `cancel`, sem `create` → sem "Novo lançamento"; leitura mais só `create` → com o botão.
+
+### G4 — FWB-05 AC2: `financeiro:comprovante:create` não é isolada em "Anexar comprovante" (O04)
+
+- **Onde**: `web/features/financeiro/comprovantes/comprovantes-panel.test.tsx:295-306`.
+- **Unidade dona provável**: FIN-b.
+- **Correção sugerida**: `comprovante:read` mais `lancamento:create`, sem `comprovante:create` → sem o campo de anexar; `comprovante:read` mais só `comprovante:create` → com o campo.
+
+### G5 — EWB-02 AC2, EWB-02 AC3 e EWB-03 AC1: `movimentacao:create` e `movimentacao:adjust` não são isoladas (O05, O06, O07)
+
+- **Onde**: `web/features/estoque/movimentacoes/movimentacoes-panel.test.tsx:231-238` e `web/features/estoque/ajustes/ajuste-dialog.test.tsx:131-142`.
+- **Unidade dona provável**: EST.
+- **Correção sugerida**: leituras mais só `estoque:movimentacao:create` → "Registrar entrada", "Registrar saída" e "Devolver" visíveis, "Ajustar estoque" ausente; leituras mais só `estoque:movimentacao:adjust` → o inverso.
+
+### G6 — FND-04 AC4 nas rotas de lançamentos: `financeiro:lancamento:read` não é isolada (O08, O09)
+
+- **Onde**: `web/features/financeiro/lancamentos/lancamentos-page.test.tsx:275-288` e `web/features/financeiro/lancamentos/lancamento-detail.test.tsx:181-194`.
+- **Causa**: o caso negativo usa só `financeiro:saldo:read` e o positivo usa as três leituras juntas.
+- **Unidade dona provável**: FIN-b.
+- **Correção sugerida**: caso negativo com `financeiro:conta:read` e `financeiro:comprovante:read`, sem `lancamento:read` → "Sem acesso" e nenhum `GET /lancamentos`; caso positivo só com `financeiro:lancamento:read`.
 
 ### Pendências (não são lacunas de teste; exigem pessoa)
 
-- **Interação no navegador**: ninguém, nem os autores nem este verificador, viu as telas num navegador. O roteiro está em `.specs/features/web/smoke.md:58`. Recomenda-se que o mantenedor o execute antes de declarar a Web V1 pronta.
-- **FND-05 AC2**: a troca da navegação pelo ponto de quebra só é observável no navegador (SP-1).
+- Smoke visual no navegador pelo roteiro de `.specs/features/web/smoke.md:58-71`, incluindo o menu recolhível em tela estreita (FND-05 AC2).
+- Redefinição de senha com token válido, não executável na stack local (INT-03 AC3).
 
 ---
 
 ## Gaps de precisão da spec
 
-| # | Critério | Imprecisão | Efeito |
-| --- | --- | --- | --- |
-| SP-1 | FND-05 AC2 | "Ponto de quebra de tablet" sem valor nem forma de verificação; jsdom não avalia media queries | O teste confere o menu recolhível, não a troca pelo ponto de quebra |
-| SP-2 | FND-03 AC3, ACS-01 AC6 | "Quanto tempo esperar" sem formato | Os testes fixam "15 minutos", escolha do autor |
-| SP-3 | USR-04 AC4 | "Com motivo", sem tamanho mínimo (a promoção exige 10 caracteres; a API aceitou 5 na retirada, segundo `smoke.md:55`) | O front exige só motivo não vazio |
-| SP-4 | EWB-03 AC3 | "A confirmação" não diz se é um passo separado | Implementado como diálogo único com "Confirmar ajuste" |
-| SP-5 | FND-01 AC1 | Preservação de cabeçalhos sem tipo de teste definido | Só o smoke exercita; o teste unitário cobre a configuração do rewrite |
-| SP-6 | INT-03 AC1 | "Data" por item ou por execução | `smoke.md` traz uma data para a execução inteira |
+Não reprovam o veredito por si sós.
+
+| # | AC | Gap |
+| --- | --- | --- |
+| P1 | FND-05 AC2 | A spec fala em "ponto de quebra de tablet" sem valor. O código usa `md` do Tailwind (`components/app/app-shell.tsx:45`, `:84`). O teste cobre o menu recolhível, não a troca pela largura (CSS, fora do jsdom). Fica no smoke visual |
+| P2 | FND-03 AC1 | A spec diz "caminho interno começando com `/` e sem `//`". O código recusa `//` só no início (`lib/session/routes.ts:30`); um `next` como `/a//b` é aceito. Continua na mesma origem, então a intenção de segurança está atendida, mas a leitura literal da frase não. Convém a spec dizer "sem `//` no início" ou o código recusar em qualquer posição |
+| P3 | FND-01 AC2 | "Nenhuma tela SHALL chamar `fetch` diretamente" não tem guarda automatizada (regra de lint ou teste de código-fonte). Hoje vale por inspeção: `fetch(` só em `lib/api/client.ts:116`. O mutante ingênuo O10 morreu por efeito no tratamento de erro, mas uma chamada direta que trate erros passaria. Sugestão: `no-restricted-globals` ou `no-restricted-syntax` para `fetch` fora de `lib/api/` |
 
 ---
 
-## Lições registradas (`lessons.py`, candidatas)
+## Lições registradas (`lessons.py`)
 
-| Lição | Sinal | Origem |
-| --- | --- | --- |
-| L-002 | `gate_fail` | L1 (gate Audit) |
-| L-003 | `surviving_mutant` | L2 (mutante O06) |
-| L-004 a L-009 | `spec_precision_gap` | SP-1 a SP-6 |
+Só para as falhas reais novas deste ciclo, com sinal `surviving_mutant`:
+
+| Fonte | Lição |
+| --- | --- |
+| O02 a O09 | Teste de visibilidade por permissão isola a permissão da ação: um caso só com ela e um caso com as outras escritas do módulo sem ela |
+| O01 | Fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenação provável |
 
 ---
 
 ## Requirement Traceability Update
 
-Veredito FAIL: nenhum Status foi alterado nas specs e as caixas de T4 não foram marcadas. Situação proposta para depois das correções:
+Nenhum status foi alterado nas specs, porque o veredito é de reprovação.
 
-| Requisito | Status atual | Situação nesta verificação |
+| Requisito | Status atual | Situação neste ciclo |
 | --- | --- | --- |
-| FND-01 a FND-06 | In Tasks | Verificados (FND-05 AC2 com SP-1) |
-| ACS-01 a ACS-03 | In Tasks | Verificados |
-| USR-01 a USR-05 | In Tasks | Verificados |
-| FWB-01 a FWB-04 | In Tasks | Verificados |
-| FWB-05 | In Tasks | ❌ Precisa de correção (L2) |
-| EWB-01 a EWB-04 | In Tasks | Verificados |
-| INT-01 a INT-03 | In Tasks | Verificados |
-| INT-04 | In Tasks | ❌ Aberto até L1 e L2 fecharem |
+| FND-01, FND-02, FND-03, FND-05, FND-06 | In Tasks | Pronto para `Verified` |
+| FND-04 | In Tasks | ❌ Precisa de correção (G6) |
+| ACS-01 a ACS-03 | In Tasks | Pronto para `Verified` |
+| USR-01, USR-02, USR-03, USR-05 | In Tasks | Pronto para `Verified` |
+| USR-04 | In Tasks | ❌ Precisa de correção (G2) |
+| FWB-01, FWB-02, FWB-04 | In Tasks | Pronto para `Verified` |
+| FWB-03 | In Tasks | ❌ Precisa de correção (G3) |
+| FWB-05 | In Tasks | ❌ Precisa de correção (G4); L2 fechada |
+| EWB-01, EWB-04 | In Tasks | Pronto para `Verified` |
+| EWB-02, EWB-03 | In Tasks | ❌ Precisa de correção (G1, G5) |
+| INT-01 a INT-03 | In Tasks | Pronto para `Verified` |
+| INT-04 | In Tasks | ❌ Aberto até G1 a G6 fecharem |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready
+**Overall**: ❌ Não pronta neste ciclo.
 
-**Checagem ancorada na spec**: 140 de 142 critérios com evidência discriminante; 1 lacuna (FWB-05 AC5); 6 gaps de precisão sinalizados.
-**Sensor**: 38 de 39 mutantes mortos (os 10 obrigatórios, todos); 1 sobrevivente.
-**Gates**: Web, Contract e Backend intacto verdes; **Audit vermelho**.
-**Smoke repetido**: 97 verificações, nenhuma falha; sem navegador.
+**Checagem ancorada na spec**: 133 de 142 critérios com evidência discriminante completa; 9 com lacuna em uma cláusula; 3 gaps de precisão.
+**Sensor**: 42 de 51 mutantes mortos (17 de 17 entre os obrigatórios e L2; 25 de 34 entre os próprios).
+**Gates**: todos em `EXIT=0`; 689 testes passam.
+**Smoke repetido**: 51 de 51.
 
-**O que funciona**: acesso same-origin com cookie, `Origin` e CSRF; login, troca obrigatória, sessão expirada e logout; administração de usuários; ciclo do financeiro com comprovante no limite de 10.420.224 bytes; estoque; visão somente leitura.
+**O que funciona**: L1 e L2 fechadas; os dez mutantes mínimos de INT-04 AC3 mortos; login, sessão, CSRF, dinheiro em centavos, confirmações, motivos obrigatórios, origem de estoque, segredos fora de cache e de URL; ciclo do financeiro com comprovante no limite exato de 10.420.224 bytes contra a stack real; `CONSELHO_FISCAL` só com leituras.
 
-**Próximos passos**: F1 corrige L1; FIN-b corrige L2; nova verificação (ciclo 1 de 3). A re-verificação pode se limitar ao gate Audit, ao mutante O06 e aos gates completos.
+**O que falta**: seis correções só de teste (G1 a G6), nas frentes EST, ID-ADM e FIN-b.
+
+**Próximos passos**: as frentes donas acrescentam os casos; nova verificação (ciclo 2 de 3), que pode se limitar aos mutantes O01 a O09, aos gates completos e ao `validate_state.py`.
