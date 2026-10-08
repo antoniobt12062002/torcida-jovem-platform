@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 10,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -166,6 +166,42 @@
       ],
       "created": "2026-10-08T16:21:10Z",
       "last_seen": "2026-10-08T16:21:10Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::teste de visibilidade por permissao isola a permissao da acao um caso so com ela e um caso com as outras escritas do modulo sem ela",
+      "text": "Teste de visibilidade por permissao isola a permissao da acao: um caso so com ela e um caso com as outras escritas do modulo sem ela",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,permissions",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "O02-O09 (validation.md, ciclo 1) (web,tests,permissions)"
+      ],
+      "created": "2026-10-08T22:28:11Z",
+      "last_seen": "2026-10-08T22:28:11Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenacao provavel",
+      "text": "Fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenacao provavel",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,fixtures",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "O01 (validation.md, ciclo 1) (web,tests,fixtures)"
+      ],
+      "created": "2026-10-08T22:28:11Z",
+      "last_seen": "2026-10-08T22:28:11Z"
     }
   ]
 }

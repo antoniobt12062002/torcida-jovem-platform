@@ -68,6 +68,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SP-6; INT-03 AC1; .specs/features/web/smoke.md:3 (web/spec)
 - last seen: 2026-10-08T16:21:10Z
 
+### L-010 - Teste de visibilidade por permissao isola a permissao da acao: um caso so com ela e um caso com as outras escritas do modulo sem ela
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web,tests,permissions` · harmful: 0
+- features: web
+- evidence: O02-O09 (validation.md, ciclo 1) (web,tests,permissions)
+- last seen: 2026-10-08T22:28:11Z
+
+### L-011 - Fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenacao provavel
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web,tests,fixtures` · harmful: 0
+- features: web
+- evidence: O01 (validation.md, ciclo 1) (web,tests,fixtures)
+- last seen: 2026-10-08T22:28:11Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
