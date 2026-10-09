@@ -24,12 +24,12 @@ A Web V1 está pronta quando, com a API, o PostgreSQL e o armazenamento S3 rodan
 
 | # | Spec | Requisitos | Execução | Status |
 |---|---|---|---|---|
-| 01 | `spec/01-fundacao.md` | FND-01 a FND-06 | F1, F4, F2, F5 | Especificada |
-| 02 | `spec/02-identity-acesso.md` | ACS-01 a ACS-03 | F3 | Especificada |
-| 03 | `spec/03-identity-usuarios.md` | USR-01 a USR-05 | ID-ADM | Especificada |
-| 04 | `spec/04-financeiro-web.md` | FWB-01 a FWB-05 | FIN-a, FIN-b | Especificada |
-| 05 | `spec/05-estoque-web.md` | EWB-01 a EWB-04 | EST | Especificada |
-| 06 | `spec/06-integracao.md` | INT-01 a INT-04 | INT, VERIFY | Especificada |
+| 01 | `spec/01-fundacao.md` | FND-01 a FND-06 | F1, F4, F2, F5 | Verificada |
+| 02 | `spec/02-identity-acesso.md` | ACS-01 a ACS-03 | F3 | Verificada |
+| 03 | `spec/03-identity-usuarios.md` | USR-01 a USR-05 | ID-ADM | Verificada |
+| 04 | `spec/04-financeiro-web.md` | FWB-01 a FWB-05 | FIN-a, FIN-b | Verificada |
+| 05 | `spec/05-estoque-web.md` | EWB-01 a EWB-04 | EST | Verificada |
+| 06 | `spec/06-integracao.md` | INT-01 a INT-04 | INT, VERIFY | Verificada |
 
 Cada sub-spec tem `spec/`, `design/` e `tasks/` com o mesmo nome. A numeração `T1…Tn` é local a cada arquivo de tasks. As dependências entre sub-specs aparecem como pré-requisitos e no DAG global abaixo.
 
@@ -219,6 +219,9 @@ Fica fora da V1 e registrado aqui para um ciclo próprio, porque exige subir Pos
 
 ## Handoff
 
-- **Fase**: Specify, Discuss, Design e Tasks concluídos para as 6 sub-specs, em 2026-10-04, depois das decisões D1 a D7 do mantenedor. Nenhum código, branch, commit, push ou PR.
-- **Próximo passo**: aguardar autorização do mantenedor para iniciar a execução pela rodada 1 (F1 ∥ F4).
+- **Fase**: Web V1 implementada e verificada em 2026-10-09, na branch local `feature/web-v1`. As 6 sub-specs estão com todas as tasks concluídas e a rastreabilidade em `Verified`; `validation.md` com veredito PASS e `validate_state.py` com EXIT=0.
+- **Verificação**: quatro verificadores independentes (ciclos 0, 1, 2 e 3). Nenhum encontrou defeito no código de produção; as lacunas L1 a L4 e os mutantes O01 a O09 eram de teste (ou, em L1, um advisory externo remediado na `develop` pelo PR #62) e foram fechados. O ciclo 3 foi focado por decisão do mantenedor, depois do limite de 3 ciclos de INT-04 AC5.
+- **Pendências humanas**: conferência visual das telas no navegador (roteiro no fim de `smoke.md`); redefinição de senha com token válido, não executável localmente (provedor de e-mail `log`).
+- **Fora deste ciclo, registrado**: identidade visual e design (cores, padrão de layout, UI/UX), a tratar em ciclo próprio antes de novas telas; itens de "Fora do V1"; inconsistências documentais listadas acima.
+- **Próximo passo**: push de `feature/web-v1` e PR para `develop`, que dependem de autorização explícita do mantenedor.
 - **Bloqueios**: nenhum.
