@@ -256,7 +256,10 @@ function Contas() {
 
 // FND-03 AC6 e caso de borda dos 401 simultâneos.
 describe("401 numa chamada autenticada", () => {
-  it("limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next", async () => {
+  // O AC nomeia os dois codes; a API devolve unauthenticated quando o cookie some.
+  it.each(["session_expired", "unauthenticated"])(
+    "401 %s limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next",
+    async (code) => {
     setLocation("/financeiro/contas?tipo=RECEITA");
     mockMe(authContext());
     const queryClient = createTestQueryClient();
@@ -264,7 +267,7 @@ describe("401 numa chamada autenticada", () => {
     renderWithSession(<Probe />, { queryClient });
     await waitFor(() => expect(status()).toBe("authenticated"));
 
-    server.use(http.get(apiUrl("/api/v1/financeiro/contas"), () => problem(401, "session_expired")));
+    server.use(http.get(apiUrl("/api/v1/financeiro/contas"), () => problem(401, code)));
     await act(async () => {
       await api.financeiro.GET("/api/v1/financeiro/contas");
     });
@@ -276,7 +279,8 @@ describe("401 numa chamada autenticada", () => {
     expect(url.searchParams.get("sessao")).toBe("encerrada");
     await waitFor(() => expect(status()).toBe("anonymous"));
     expect(queryClient.getQueryData(["estoque", "produtos"])).toBeUndefined();
-  });
+    },
+  );
 
   it("dois 401 quase ao mesmo tempo produzem um único redirecionamento", async () => {
     setLocation("/financeiro/contas");

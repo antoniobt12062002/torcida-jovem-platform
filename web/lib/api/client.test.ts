@@ -128,13 +128,16 @@ describe("callbacks de 401 e 403", () => {
     server.use(http[method](`${ORIGIN}${path}`, () => problem(status, code)));
   }
 
-  it("401 numa chamada autenticada chama onUnauthenticated", async () => {
-    respond("get", "/api/v1/financeiro/contas", 401, "session_expired");
-    await api.financeiro.GET("/api/v1/financeiro/contas");
-    expect(callbacks.onUnauthenticated).toHaveBeenCalledTimes(1);
-    expect(callbacks.onPasswordChangeRequired).not.toHaveBeenCalled();
-    expect(callbacks.onCsrfInvalid).not.toHaveBeenCalled();
-  });
+  it.each(["session_expired", "unauthenticated"])(
+    "401 %s numa chamada autenticada chama onUnauthenticated",
+    async (code) => {
+      respond("get", "/api/v1/financeiro/contas", 401, code);
+      await api.financeiro.GET("/api/v1/financeiro/contas");
+      expect(callbacks.onUnauthenticated).toHaveBeenCalledTimes(1);
+      expect(callbacks.onPasswordChangeRequired).not.toHaveBeenCalled();
+      expect(callbacks.onCsrfInvalid).not.toHaveBeenCalled();
+    },
+  );
 
   it("401 em POST /auth/login não chama onUnauthenticated", async () => {
     respond("post", "/api/v1/auth/login", 401, "invalid_credentials");
