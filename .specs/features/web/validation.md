@@ -1,15 +1,44 @@
-# Web V1 — Validation (ciclo 2)
+# Web V1 — Validation (ciclo 3, escopo focado)
 
-**Date**: 2026-10-08
+**Date**: 2026-10-09
 **Veredito**: FAIL ❌
-**Ciclo**: 2 (terceira verificação independente; os ciclos 0 e 1 terminaram em FAIL)
+**Ciclo**: 3, com escopo focado por decisão do mantenedor (os ciclos 0, 1 e 2 também terminaram com veredito negativo)
 **Spec**: `.specs/features/web/spec/01-fundacao.md` a `06-integracao.md`
-**Diff range**: `ee1b497..b57ee9e` em `feature/web-v1` (`ee1b497` é a especificação; `develop` = `6382fe1`)
-**Verifier**: sub-agente independente (autor ≠ verificador), em `feature/web-verify3`
+**Diff range**: `ee1b497..1270f86` em `feature/web-v1` (`ee1b497` é a especificação; `develop` = `6382fe1`)
+**Verifier**: sub-agente independente (autor ≠ verificador), em `feature/web-verify4`. Não escreveu o código, os testes nem as correções, e não participou de nenhuma verificação anterior.
 
-Este relatório substitui por inteiro o do ciclo 1. Toda citação `arquivo:linha` vem da leitura do código e dos testes no commit `b57ee9e`, feita neste ciclo. O relatório anterior, `LESSONS.md`, `lessons.json` e os relatórios de autores não foram usados como evidência; o relatório do ciclo 1 foi lido só no fim, para conferir o fechamento das lacunas. `evidence/f1-rewrite.md` e `smoke.md` foram tratados como pista e re-verificados contra a stack real.
+## Validation: Web V1 — FAIL ❌
 
 Caminhos sem prefixo são relativos a `web/`.
+
+---
+
+## Escopo deste ciclo
+
+**Este ciclo é focado, por decisão do mantenedor.** O ciclo 2 (commit `b57ee9e`) terminou com uma única lacuna, só de teste: L3, em FND-03 AC6. A correção (`1270f86`) mexeu apenas em dois arquivos de teste. O mantenedor autorizou um ciclo extra restrito ao que essa correção pode ter afetado.
+
+**O que é herdado do ciclo 2, sem repetição.** A evidência por AC fora de FND-03 e o smoke contra a stack real são os do ciclo 2, feitos por outro verificador independente sobre código de produção idêntico. A base para herdar é o `git diff` abaixo, conferido por mim:
+
+```
+$ git diff --name-only b57ee9e 1270f86
+.specs/LESSONS.md
+.specs/features/web/validation.md
+.specs/lessons.json
+web/lib/api/client.test.ts
+web/lib/session/session-provider.test.tsx
+```
+
+Nenhum arquivo de produção mudou entre o commit verificado no ciclo 2 e o deste ciclo. `git diff --numstat b57ee9e 1270f86 -- web/` lista só `lib/api/client.test.ts` (+10 −7) e `lib/session/session-provider.test.tsx` (+7 −3). Li o diff dos dois: cada um troca um `it(...)` por `it.each(["session_expired", "unauthenticated"])(...)` e passa o código da resposta como parâmetro. Nenhuma afirmação foi removida nem enfraquecida; as mesmas afirmações agora rodam uma vez para cada código (845 → 847 testes).
+
+**O que foi verificado de novo, por mim, neste ciclo:**
+
+1. Produção inalterada (acima).
+2. L3 e todo o FND-03 (AC1 a AC10 e os três casos de borda), lendo a spec, o código e os testes em `1270f86`.
+3. Sensor de discriminação: os quatro mutantes de L3, as dez falhas obrigatórias de INT-04 AC3 e mutantes próprios em `lib/api/client.ts` e `lib/session/**`.
+4. Todos os gates, no commit `1270f86`.
+5. As citações `arquivo:linha` herdadas: corrigidas nos dois arquivos de teste alterados, validadas por script nas demais e conferidas à mão numa amostra.
+
+**O que não foi feito neste ciclo:** a checagem completa AC por AC fora de FND-03 (só a amostra) e o smoke contra a stack real. Quem ler este relatório deve tratar essas duas partes como evidência do ciclo 2.
 
 ---
 
@@ -17,15 +46,17 @@ Caminhos sem prefixo são relativos a `web/`.
 
 | Item | Resultado |
 | --- | --- |
-| ACs verificados (sub-specs 01 a 05 e INT-01 a INT-03) | 129 verificados, todos com teste e código citados em `arquivo:linha`; 128 com evidência discriminante completa; 1 com evidência parcial (FND-03 AC6, lacuna L3); 0 sem nenhuma evidência |
-| Casos de borda das specs | 13 de 13 com evidência |
-| Sensor de discriminação | 118 mutantes: 111 mortos por teste pertinente; 7 sobreviventes, dos quais 2 relevantes (S06 e S06c, a mesma lacuna L3) e 5 equivalentes ou fora da spec, justificados |
-| Gates | 10 de 10 com `EXIT=0`; `git diff --name-only develop -- api/` vazio |
-| Smoke repetido contra a stack real | 101 verificações, 0 falha |
-| Fechamento das lacunas dos ciclos 0 e 1 | L1, L2 e O01 a O09 fechadas |
-| Critérios de PASS | Não atendidos: há um AC sem evidência discriminante completa e um mutante relevante sobrevivente (a mesma lacuna, L3). Gates e smoke atendidos |
-| Lacunas novas | 1 — L3, FND-03 AC6: a variante `401 unauthenticated` não tem teste discriminante (severidade média; correção só de teste) |
-| Pendência humana | interação visual no navegador (não é lacuna de teste) |
+| Produção inalterada desde o ciclo 2 | Confirmado: `git diff --name-only b57ee9e 1270f86` lista só dois arquivos de teste e arquivos de `.specs/` |
+| L3 — FND-03 AC6 | Fechada: os dois códigos (`unauthenticated` e `session_expired`) têm teste discriminante nos dois níveis (cliente e provedor de sessão); mutantes L3a a L3d mortos |
+| FND-03 (AC1 a AC10 e casos de borda) | Reconferido por inteiro neste ciclo; 9 de 10 ACs e 3 de 3 casos de borda com evidência discriminante completa; AC6 parcial (L4) |
+| ACs das sub-specs 01 a 05 e INT-01 a INT-03 | 128 de 129 com evidência discriminante completa (FND-03 reconferido agora; os demais herdados do ciclo 2 e conferidos por amostra); FND-03 AC6 com evidência parcial (lacuna L4) |
+| Sensor de discriminação deste ciclo | 37 mutantes: 35 mortos por teste pertinente; 2 sobreviventes: V12, equivalente (justificado), e V07, relevante (lacuna L4) |
+| Gates | 9 de 9 comandos com `EXIT=0`; `git diff --name-only develop -- api/` vazio; `validate_state.py` com `EXIT=1`, só pelo veredito |
+| Citações herdadas | 857 citações `arquivo:linha` em 138 arquivos validadas por script (arquivo existe, linha dentro do arquivo); 8 corrigidas (dois arquivos de teste alterados); amostra manual de 32 trechos, sem erro |
+| Smoke contra a stack real | Herdado do ciclo 2 (101 verificações, 0 falha); não repetido |
+| Lacunas novas | 1 — L4, FND-03 AC6: nenhum teste exercita um segundo `401` depois de um redirecionamento anterior na mesma página (severidade média; correção só de teste) |
+| Critérios de PASS | Não atendidos: há um sobrevivente relevante novo (V07, lacuna L4). Atendidos: produção inalterada, L3 fechada, mutantes de L3 e as dez falhas obrigatórias mortos, gates `EXIT=0` |
+| Pendência humana | interação visual no navegador; redefinição de senha com token válido (não executável localmente) |
 
 ---
 
@@ -39,17 +70,15 @@ Caminhos sem prefixo são relativos a `web/`.
 | 04-financeiro-web T1 a T5 | ✅ Done | caixas marcadas |
 | 05-estoque-web T1 a T3 | ✅ Done | caixas marcadas |
 | 06-integracao T1 a T3 | ✅ Done | caixas marcadas |
-| 06-integracao T4 | ❌ Não concluída | esta verificação |
+| 06-integracao T4 | ❌ Não concluída | esta verificação; caixas não marcadas |
 
-Conferido por busca: nas seis listas de tasks as únicas caixas abertas antes deste ciclo eram as três de T4 (`.specs/features/web/tasks/06-integracao.md:117-119`).
-
-Correções desde `8bf79ec` (`git diff --name-only 8bf79ec b57ee9e`): só arquivos `*.test.ts(x)`, `features/estoque/test-helpers.ts`, `features/financeiro/lancamentos/test-helpers.ts` e `.specs/` (`LESSONS.md`, `lessons.json`, `validation.md`). Nenhum arquivo de produção mudou.
+Conferido por busca: nas seis listas de tasks as únicas caixas abertas são as três de T4 (`.specs/features/web/tasks/06-integracao.md:117-119`), que continuam abertas.
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Cada linha traz o resultado definido pela spec, o teste que o afirma e o código que o implementa. ✅ = o valor afirmado é o da spec. ⚠️ = gap de precisão da spec (seção própria; não derruba o veredito).
+Tabelas do ciclo 2 (outro verificador independente, commit `b57ee9e`), mantidas porque o código de produção é idêntico. Neste ciclo: FND-03 foi reconferido por inteiro; as citações aos dois arquivos de teste alterados foram corrigidas; as demais foram validadas por script e por amostra (seção "Validação das citações herdadas"). Cada linha traz o resultado definido pela spec, o teste que o afirma e o código que o implementa. ✅ = o valor afirmado é o da spec. ⚠️ = gap de precisão da spec (seção própria; não derruba o veredito).
 
 ### 01 — Fundação (FND)
 
@@ -58,9 +87,9 @@ Cada linha traz o resultado definido pela spec, o teste que o afirma e o código
 | FND-01 AC1 | `/api/v1/*` vai ao mesmo caminho em `API_URL`; método, corpo e cabeçalhos preservados nos dois sentidos | `next.config.test.ts:13-20` — `toEqual([{ source: "/api/v1/:path*", destination: "http://localhost:8080/api/v1/:path*" }])`; `:38-47` lê `API_URL` do ambiente. Preservação observada no smoke: `Set-Cookie`, `Content-Type` (`application/json`, `application/problem+json`, multipart), `Origin`, `X-CSRF-Token`, `Retry-After=899`, `Cache-Control: no-store` | `next.config.ts:15-20` | ✅ ⚠️ G1 |
 | FND-01 AC2 | Cliente `openapi-fetch` sobre os tipos gerados, `credentials: "same-origin"`; nenhuma tela chama `fetch` direto | `lib/api/client.test.ts:49-67` — `expect(seen[0].url).toBe(ORIGIN + path)` e `expect(seen[0].credentials).toBe("same-origin")` para os três contratos. Busca por `fetch(` em `app/`, `components/`, `features/`, `lib/`: única ocorrência de produção em `lib/api/client.ts:116` | `lib/api/client.ts:111-127` | ✅ |
 | FND-01 AC3 | Escritas levam `X-CSRF-Token` com o token da sessão | `lib/api/client.test.ts:72-108` — POST, PUT, PATCH e DELETE: `expect(seen[0].csrf).toBe(TOKEN)`; `:110-114` GET: `toBeNull()`; `lib/session/session-provider.test.tsx:139` e `:190` — token do login e de `/auth/me` | `lib/api/client.ts:66-71` | ✅ |
-| FND-01 AC4 | `problem+json` vira erro tipado com `status`, `code`, `errors[]` | `lib/api/client.test.ts:208-228` — `toBeInstanceOf(ApiError)` e `toMatchObject({ status: 422, code: "validation_failed", errors: [{ field: "nome", code: "required" }] })`; `lib/api/problem.test.ts:24-45` | `lib/api/client.ts:135-147`, `lib/api/problem.ts:59-68` | ✅ |
-| FND-01 AC5 | Aceite contra a API real: (a) cookie na origem do front, (b) escrita passa pelo `Origin`, (c) comprovante ≥ 9,5 MiB íntegro | Aceite manual. Smoke repetido neste ciclo (seção "Smoke"): (a) `Set-Cookie: tj_session=<redigido>; Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`, sem `Domain`; (b) `POST /financeiro/contas` → `201`, e com `Origin` externa → `403 origin_not_allowed`; (c) arquivo de 10.420.224 bytes (9,94 MiB) → `201`, SHA-256 do download igual. Pista do autor: `.specs/features/web/evidence/f1-rewrite.md:12-16` | `next.config.ts:15-20` | ✅ |
-| FND-01 AC6 | Se o AC5 falhar, F1 para e reporta | Condição de parada de processo, não acionada: os três itens do AC5 passaram (`evidence/f1-rewrite.md:18`, confirmado pelo smoke deste ciclo). `git diff --name-only develop -- api/` vazio | — | ✅ |
+| FND-01 AC4 | `problem+json` vira erro tipado com `status`, `code`, `errors[]` | `lib/api/client.test.ts:211-231` — `toBeInstanceOf(ApiError)` e `toMatchObject({ status: 422, code: "validation_failed", errors: [{ field: "nome", code: "required" }] })`; `lib/api/problem.test.ts:24-45` | `lib/api/client.ts:135-147`, `lib/api/problem.ts:59-68` | ✅ |
+| FND-01 AC5 | Aceite contra a API real: (a) cookie na origem do front, (b) escrita passa pelo `Origin`, (c) comprovante ≥ 9,5 MiB íntegro | Aceite manual. Smoke do ciclo 2 (seção "Smoke"): (a) `Set-Cookie: tj_session=<redigido>; Path=/; Max-Age=28800; HttpOnly; SameSite=Lax`, sem `Domain`; (b) `POST /financeiro/contas` → `201`, e com `Origin` externa → `403 origin_not_allowed`; (c) arquivo de 10.420.224 bytes (9,94 MiB) → `201`, SHA-256 do download igual. Pista do autor: `.specs/features/web/evidence/f1-rewrite.md:12-16` | `next.config.ts:15-20` | ✅ |
+| FND-01 AC6 | Se o AC5 falhar, F1 para e reporta | Condição de parada de processo, não acionada: os três itens do AC5 passaram (`evidence/f1-rewrite.md:18`, confirmado pelo smoke do ciclo 2). `git diff --name-only develop -- api/` vazio | — | ✅ |
 | FND-02 AC1 | Kit em `components/ui/` com campo, rótulo, grupo com erro, seleção, área de texto, caixa de seleção, diálogo, confirmação, tabela, menu, esqueleto, alerta, toast | `components/ui/field.test.tsx:29-37` (campo e rótulo), `:81-95` (área de texto), `:97-112` (caixa de seleção), `:114-135` (seleção); `components/ui/overlays.test.tsx:41-61` (diálogo), `:63-92` (confirmação), `:114-130` (menu); `components/ui/display.test.tsx:19-42` (tabela), `:44-56` (alerta), `:58-65` (esqueleto), `:67-78` (toast) | `components/ui/*.tsx` (17 componentes) | ✅ |
 | FND-02 AC2 | Erro associado por `aria-describedby` e campo com `aria-invalid` | `components/ui/field.test.tsx:39-53` — `expect(input.getAttribute("aria-invalid")).toBe("true")` e `expect(describedByText(input)).toContain("Informe um e-mail válido.")`; idem `:82-94`, `:98-111`, `:115-134` | `components/ui/field.tsx` | ✅ |
 | FND-02 AC3 | Dependência nova para o kit: F4 para e reporta, sem tocar `package.json` | Condição de parada, não acionada: `git log ee1b497..b57ee9e -- web/package.json web/pnpm-lock.yaml` lista só `57cfbad` (F1) e a atualização de segurança `6382fe1`/`8bf79ec` | — | ✅ |
@@ -69,9 +98,9 @@ Cada linha traz o resultado definido pela spec, o teste que o afirma e o código
 | FND-03 AC3 | `429 login_blocked` informa o bloqueio e o tempo de `Retry-After` | `login-form.test.tsx:104-112` — `Retry-After: 900` → texto contém "15 minutos"; `lib/session/retry-after.test.ts:8-20` | `login-form.tsx:29-33`, `lib/session/session-provider.tsx:169-173`, `lib/session/retry-after.ts:19-34` | ✅ ⚠️ G4 |
 | FND-03 AC4 | `must_change_password` leva a `/conta/senha` e nenhuma outra tela aparece | `login-form.test.tsx:79-85` — `["/conta/senha"]` mesmo com `next`; `app/(app)/layout.test.tsx:64-70` — redireciona e `queryByText("conteúdo protegido")` nulo | `login-form.tsx:62`, `app/(app)/layout.tsx:23-34` | ✅ |
 | FND-03 AC5 | Sair chama `POST /auth/logout`, limpa cache e contexto e leva a `/entrar` | `lib/session/session-provider.test.tsx:196-225` — `navigations()` `["/entrar"]`, CSRF enviado, `status` `anonymous`, `getQueryData` indefinido e nenhuma consulta com dado; `components/app/app-shell.test.tsx:110-123` | `lib/session/session-provider.tsx:125-129`, `:181-199` | ✅ |
-| FND-03 AC6 | `401` limpa tudo e leva a `/entrar` com aviso e `next` | `session-provider.test.tsx:259-279` — `pathname` `/entrar`, `next` = `/financeiro/contas?tipo=RECEITA`, `sessao` = `encerrada`, cache limpo; `login-form.test.tsx:165-168` — aviso "sessão foi encerrada"; `lib/api/client.test.ts:131-137`. Todas essas afirmações usam `code = session_expired`; a variante `unauthenticated` não é discriminada (mutantes S06 e S06c sobrevivem) | `lib/api/client.ts:80-81`, `session-provider.tsx:141-148` | ❌ GAP parcial (L3) |
-| FND-03 AC7 | `403 password_change_required` leva a `/conta/senha` | `session-provider.test.tsx:355-367` — `navigations()` `["/conta/senha"]`; `client.test.ts:148-154` | `client.ts:82-83`, `session-provider.tsx:149-151` | ✅ |
-| FND-03 AC8 | `403 csrf_invalid` rebusca `/auth/me`, pede para repetir, não repete sozinho | `session-provider.test.tsx:372-396` — `me.count` vai a 2, texto "A sessão foi atualizada. Repita a ação, por favor.", `writes` = 1 | `session-provider.tsx:152-156` | ✅ |
+| FND-03 AC6 | `401` (`unauthenticated` ou `session_expired`) limpa o cache e o contexto e leva a `/entrar`, com aviso de sessão encerrada e o caminho atual em `next` | `session-provider.test.tsx:260-283` — `it.each(["session_expired", "unauthenticated"])`; para cada código: `navigations()` com 1 item (`:275`), `pathname` `/entrar` (`:277`), `next` = `/financeiro/contas?tipo=RECEITA` (`:278`), `sessao` = `encerrada` (`:279`), `status` `anonymous` (`:280`), `getQueryData(["estoque", "produtos"])` indefinido (`:281`). `lib/api/client.test.ts:131-140` — `it.each` com os dois códigos: `onUnauthenticated` chamado 1 vez (`:136`), os outros dois callbacks não chamados. `login-form.test.tsx:165-168` — aviso "sessão foi encerrada" com `sessao=encerrada`. Reconferido no ciclo 3; mutantes L3a a L3d mortos | `lib/api/client.ts:80-81`, `session-provider.tsx:141-148` | ✅ para o primeiro `401`, com os dois códigos (L3 fechada); ❌ GAP parcial (L4): um segundo `401` na mesma página, depois de um redirecionamento anterior, não é exercitado |
+| FND-03 AC7 | `403 password_change_required` leva a `/conta/senha` | `session-provider.test.tsx:358-372` — `navigations()` `["/conta/senha"]`; `client.test.ts:151-157` | `client.ts:82-83`, `session-provider.tsx:149-151` | ✅ |
+| FND-03 AC8 | `403 csrf_invalid` rebusca `/auth/me`, pede para repetir, não repete sozinho | `session-provider.test.tsx:375-401` — `me.count` vai a 2, texto "A sessão foi atualizada. Repita a ação, por favor.", `writes` = 1 | `session-provider.tsx:152-156` | ✅ |
 | FND-03 AC9 | Token CSRF e contexto só em memória | `session-provider.test.tsx:159-176` — `localStorage.length` 0, `sessionStorage.length` 0, `document.cookie` inalterado | `session-provider.tsx:126`, `:175` (só `QueryClient`) | ✅ |
 | FND-03 AC10 | Link "Esqueci minha senha" para `/recuperar-acesso` | `login-form.test.tsx:158-162` — `href` = `/recuperar-acesso` | `login-form.tsx:128-133` | ✅ |
 | FND-04 AC1 | Sem sessão: `/entrar` com `next`, sem conteúdo | `app/(app)/layout.test.tsx:42-51` — `pathname` `/entrar`, `next` = caminho pedido, conteúdo ausente | `app/(app)/layout.tsx:26-28`, `session-provider.tsx:201-203` | ✅ |
@@ -95,7 +124,7 @@ Cada linha traz o resultado definido pela spec, o teste que o afirma e o código
 
 **Casos de borda (01)**
 
-- [x] Dois `401` quase juntos → um único redirecionamento: `session-provider.test.tsx:281-300` — `navigations()` com 1 item (`session-provider.tsx:110-118`).
+- [x] Dois `401` quase juntos → um único redirecionamento: `session-provider.test.tsx:285-304` — `navigations()` com 1 item (`session-provider.tsx:110-118` e `:144`).
 - [x] `next` de outra origem ignorado: `lib/session/routes.test.ts:29-46` (14 formas) e `login-form.test.tsx:65-74` — `["/inicio"]` (`routes.ts:27-37`).
 - [x] Pessoa autenticada em `/entrar` vai ao início: `login-form.test.tsx:177-182` — `["/inicio"]` mesmo com `next` na URL (`login-form.tsx:53-56`).
 
@@ -228,26 +257,53 @@ Cada linha traz o resultado definido pela spec, o teste que o afirma e o código
 | INT-01 AC3 | `/` leva a `/inicio` | `app/page.test.tsx:19-27` — `redirect` chamado com `"/inicio"`; smoke: `GET /` → `307 /inicio` | `app/page.tsx:7-9` | ✅ |
 | INT-01 AC4 | `/inicio`: um atalho por área visível; sem área, mensagem | `inicio/page.test.tsx:127-142` (atalhos e seções por perfil); `:147-155` — "Sua conta ainda não tem acesso a nenhum módulo." | `app/(app)/inicio/atalhos.tsx:15-34` | ✅ |
 | INT-01 AC5 | Raiz não consulta `/healthz` | `app/page.test.tsx:20`, `:26` — `fetch` não chamado | `app/page.tsx:1-9` | ✅ |
-| INT-02 AC1 | Guia com variáveis, ordem de subida, rewrite e gates | Leitura de `docs/development/web.md:13-41` (variáveis da API e do front), `:43-143` (banco, S3, administrador, API, front), `:155-166` (rewrite e limite), `:168-183` (gates). Stack deste ciclo montada pelo guia até o login | `docs/development/web.md` | ✅ |
+| INT-02 AC1 | Guia com variáveis, ordem de subida, rewrite e gates | Leitura de `docs/development/web.md:13-41` (variáveis da API e do front), `:43-143` (banco, S3, administrador, API, front), `:155-166` (rewrite e limite), `:168-183` (gates). Stack do ciclo 2 montada pelo guia até o login | `docs/development/web.md` | ✅ |
 | INT-02 AC2 | Comportamento de `API_URL` no build | `docs/development/web.md:39` (sem padrão; fixado no build). Conferido: `.next/routes-manifest.json` do build do gate contém `localhost:8080` e o `next start` o usou | `docs/development/web.md:39-41` | ✅ |
 | INT-02 AC3 | Sem segredo, senha, cookie ou dado pessoal | `docs/development/web.md:5`; busca por valor de cookie, chave `GK…`, token e e-mail pessoal sem ocorrência; só marcadores `<...>` e contas `*@local.test` | `docs/development/web.md` | ✅ |
 | INT-03 AC1 | Cada item com resultado, data e observação | `.specs/features/web/smoke.md:3` (data) e `:34-48` (12 itens com resultado e observação) | `.specs/features/web/smoke.md` | ✅ |
 | INT-03 AC2 | Checklist cobre os onze assuntos | `smoke.md:36-47`: login (1), troca obrigatória (2), recuperação (3), token inválido (4), criação e promoção (5), senha temporária (6), financeiro com comprovante (7), estoque com ajuste negativo (8), `CONSELHO_FISCAL` (9), sessão expirada (10), logout (11) | `smoke.md` | ✅ |
 | INT-03 AC3 | Declara que o token válido não é executável localmente | `smoke.md:12` e `:40` | `smoke.md` | ✅ |
-| INT-03 AC4 | Falha registrada, corrigida e repetida | Condição não acionada: `smoke.md:50` ("Nenhum item falhou"); o smoke repetido neste ciclo também não teve falha | `smoke.md` | ✅ |
+| INT-03 AC4 | Falha registrada, corrigida e repetida | Condição não acionada: `smoke.md:50` ("Nenhum item falhou"); o smoke do ciclo 2 também não teve falha | `smoke.md` | ✅ |
 | INT-03 AC5 | Sem senha, token, cookie ou dado pessoal | `smoke.md:14`; mesma busca de INT-02 AC3, sem ocorrência | `smoke.md` | ✅ |
 
 **Caso de borda (06)**
 
 - [x] Módulo sem item visível some da navegação: `components/app/nav.test.ts:26-28`; `inicio/page.test.tsx:118` (`ASSOCIADO`: só "Início") (`components/app/nav.ts:35-36`).
 
-**Status**: ❌ Gap presente — 128 de 129 ACs e 13 de 13 casos de borda com evidência discriminante; FND-03 AC6 com evidência parcial (L3); ⚠️ 4 gaps de precisão da spec sinalizados (seção própria).
+**Status**: ❌ Gap presente — 128 de 129 ACs e 13 de 13 casos de borda com evidência discriminante completa; FND-03 AC6 com evidência parcial (L3 fechada; L4 nova); ⚠️ 4 gaps de precisão da spec sinalizados (seção própria).
 
 ---
 
-## Fechamento das lacunas dos ciclos 0 e 1
+## Fechamento de L3 (FND-03 AC6)
 
-Cada item foi recriado no código de produção, no worktree temporário, e observado neste ciclo. Conferência final com o relatório do ciclo 1 (lido só depois de fechada a evidência acima): as lacunas G1 a G6 dele correspondem aos mutantes O01 a O09 desta tabela, todos mortos agora; a lacuna L3 deste ciclo não constava nos ciclos anteriores.
+**O AC**: "WHEN qualquer chamada autenticada recebe `401` (`unauthenticated` ou `session_expired`) THEN o sistema SHALL limpar o cache e o contexto de sessão e levar a pessoa a `/entrar`, com aviso de sessão encerrada e o caminho atual em `next`." (`.specs/features/web/spec/01-fundacao.md:82`)
+
+**A lacuna do ciclo 2**: os testes de redirecionamento só respondiam `401 session_expired`; ignorar `401 unauthenticated` no cliente ou no provedor passava em todos os testes.
+
+**O que li e observei neste ciclo:**
+
+- **Código** (inalterado). O cliente chama `onUnauthenticated` para qualquer `401`, exceto no `POST /auth/login`, sem olhar o `code` (`lib/api/client.ts:80-81`). O provedor, quando há sessão conhecida e não há logout em curso, navega uma única vez para `loginPath({ next: currentPath(), sessionEnded: true })` e esquece a sessão (`lib/session/session-provider.tsx:141-148`); esquecer a sessão grava `null` no contexto, remove as outras consultas e limpa as mutações (`:125-129`). `loginPath` põe `next` e `sessao=encerrada` na URL (`lib/session/routes.ts:49-55`), e `/entrar` mostra o aviso quando recebe `sessao=encerrada` (`app/(public)/entrar/login-form.tsx:40`, `:88-92`).
+- **Teste do cliente**: `lib/api/client.test.ts:131-140` é `it.each(["session_expired", "unauthenticated"])`. Para cada código responde `401` com aquele `code` (`:134`) e afirma `onUnauthenticated` chamado exatamente 1 vez (`:136`), sem `onPasswordChangeRequired` (`:137`) nem `onCsrfInvalid` (`:138`).
+- **Teste do provedor**: `lib/session/session-provider.test.tsx:260-283` é `it.each` com os mesmos dois códigos. Parte de `/financeiro/contas?tipo=RECEITA` com sessão autenticada e uma consulta de outra área no cache (`:263-268`), responde `401` com o código do caso (`:270`) e afirma: um único redirecionamento (`:275`), `pathname` `/entrar` (`:277`), `next` = `/financeiro/contas?tipo=RECEITA` (`:278`), `sessao` = `encerrada` (`:279`), contexto `anonymous` (`:280`) e cache da outra consulta removido (`:281`).
+- **Aviso na tela**: `app/(public)/entrar/login-form.test.tsx:165-168` afirma o texto "sessão foi encerrada" com `sessao=encerrada` na URL, e `:170-173` afirma a ausência sem o parâmetro.
+- **Sensor**: os quatro mutantes morrem, cada um pelo caso do código que ele ignora, por falha de afirmação (não por prazo esgotado):
+
+| # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro pertinente; +N = outros que também falharam) |
+| --- | --- | --- | --- | --- |
+| L3a | cliente ignora 401 com code unauthenticated | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 unauthenticated numa chamada autenticada chama onUnauthenticated (+1) |
+| L3b | provedor ignora 401 com code unauthenticated | `lib/session/session-provider.tsx:141` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada 401 unauthenticated limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next |
+| L3c | controle: cliente ignora 401 com code session_expired | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 session_expired numa chamada autenticada chama onUnauthenticated (+2) |
+| L3d | controle: provedor ignora 401 com code session_expired | `lib/session/session-provider.tsx:141` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada 401 session_expired limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next (+1) |
+
+Com L3a o teste do provedor para `unauthenticated` também falha (o provedor nunca é avisado); com L3c falham os dois testes de `session_expired` e o teste do laço de consultas. Os casos do outro código continuam passando em cada mutante, ou seja, cada caso discrimina o seu próprio código.
+
+**Estado de L3**: fechada. Critério "Done when" do ciclo 2 atendido: S06 e S06c (aqui L3a e L3b) morrem, S06b (aqui L3c) continua morrendo, gates `EXIT=0`. A lacuna L4, achada neste ciclo no mesmo AC, é outra: está em "Lacunas por severidade".
+
+---
+
+## Fechamento das lacunas dos ciclos 0 e 1 (evidência do ciclo 2)
+
+Seção herdada do ciclo 2, não repetida agora: cada item foi recriado pelo verificador do ciclo 2 no código de produção (`b57ee9e`, idêntico ao deste ciclo) e observado por ele. Do que está aqui, este ciclo repetiu só o gate Audit (L1), na seção "Gate Check".
 
 | Lacuna | O que foi feito | O que foi observado | Estado |
 | --- | --- | --- | --- |
@@ -267,9 +323,88 @@ Cada item foi recriado no código de produção, no worktree temporário, e obse
 
 ## Discrimination Sensor
 
-Worktree temporário `C:\Users\Michels\Desktop\tjw\vsensor3` (`git worktree add --detach … b57ee9e`), `pnpm install --frozen-lockfile`, `API_URL=http://localhost:8080`. Uma falha de comportamento por vez no código de produção, `pnpm test` completo (845 testes), leitura dos testes que falharam, `git checkout -- .` e conferência de `git status --porcelain` vazio depois de cada mutante. Total: 118 mutantes. Nenhuma morte foi por timeout (0 ocorrências de "timed out" nos logs); a única falha sem relação com o mutante está registrada em "Lacunas por severidade", como observação.
+### Sensor deste ciclo
 
-### Dez falhas obrigatórias (INT-04 AC3), L2 e O01 a O09
+Worktree temporário `C:\Users\Michels\Desktop\tjw\vsensor4` (`git worktree add --detach … 1270f86`), `pnpm install --frozen-lockfile`, `API_URL=http://localhost:8080`. Execução sem mutação: 847 de 847 testes passam. Depois, uma falha de comportamento por vez no código de produção, `pnpm test` completo (847 testes) com saída em JSON, leitura dos testes que falharam e das mensagens de falha, `git checkout -- .` e `git status --porcelain` vazio depois de cada mutante. Um mutante só conta como morto quando ao menos um teste pertinente falha por afirmação; falhas por prazo esgotado do teste (`Test timed out`) não foram aceitas como prova.
+
+#### Mutantes de L3
+
+| # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro pertinente; +N = outros que também falharam) |
+| --- | --- | --- | --- | --- |
+| L3a | cliente ignora 401 com code unauthenticated | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 unauthenticated numa chamada autenticada chama onUnauthenticated (+1) |
+| L3b | provedor ignora 401 com code unauthenticated | `lib/session/session-provider.tsx:141` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada 401 unauthenticated limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next |
+| L3c | controle: cliente ignora 401 com code session_expired | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 session_expired numa chamada autenticada chama onUnauthenticated (+2) |
+| L3d | controle: provedor ignora 401 com code session_expired | `lib/session/session-provider.tsx:141` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada 401 session_expired limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next (+1) |
+
+#### Dez falhas obrigatórias (INT-04 AC3)
+
+Numeração da spec: 1 `X-CSRF-Token`; 2 `401`; 3 ação sem permissão; 4 `next` externo; 5 dinheiro com casas decimais; 6 motivo vazio; 7 confirmação pulada; 8 origem reservada; 9 senha temporária no cache; 10 token mantido na URL. As variantes (a, b, c) atacam o mesmo requisito em pontos diferentes do código.
+
+| # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro pertinente; +N = outros que também falharam) |
+| --- | --- | --- | --- | --- |
+| M01 | remove X-CSRF-Token das escritas | `lib/api/client.ts:69` | ✅ Morto | `lib/api/client.test.ts` — X-CSRF-Token vai em POST com o token da sessão atual (+30) |
+| M02a | provedor nao redireciona em 401 (so esquece a sessao) | `lib/session/session-provider.tsx:145` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada 401 session_expired limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next (+3) |
+| M02b | cliente nunca chama onUnauthenticated em 401 | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 session_expired numa chamada autenticada chama onUnauthenticated (+5) |
+| M03 | RequirePermission modo action exibe sem a permissao | `components/app/require-permission.tsx:26` | ✅ Morto | `components/app/require-permission.test.tsx` — modo ação sem a permissão, não renderiza nada (+46) |
+| M04 | safeNext aceita next externo | `lib/session/routes.ts:45` | ✅ Morto | `lib/session/routes.test.ts` — safeNext recusa outra origem sem esquema e usa a página inicial (+19) |
+| M05a | lancamento envia valor bruto em reais com casas decimais | `features/financeiro/lancamentos/lancamento-form.tsx:135` | ✅ Morto | `features/financeiro/lancamentos/lancamento-detail.test.tsx` — edição edita um lançamento CRIADA com PUT, valores em centavos e CSRF (+3) |
+| M05b | parseBRL devolve reais com casas decimais | `lib/money.ts:45` | ✅ Morto | `lib/money.test.ts` — parseBRL (mesmos vetores do Go) lê 1.234,56 como 123456 (+22) |
+| M06a | cancelamento aceita motivo vazio (ConfirmDialog e guarda do cancelamento) | `components/app/confirm-dialog.tsx:80`, `features/financeiro/lancamentos/lancamento-detail.tsx:208`, `features/financeiro/lancamentos/lancamento-detail.tsx:211` | ✅ Morto | `components/app/confirm-dialog.test.tsx` — motivo obrigatório desabilitado com motivo vazio (+4) |
+| M06b | ajuste de estoque confirma com motivo vazio | `features/estoque/ajustes/ajuste-dialog.tsx:43` | ✅ Morto | `features/estoque/ajustes/ajuste-dialog.test.tsx` — confirmação desabilitada motivo vazio: desabilitada e a API não é chamada (+1) |
+| M06c | dialogo do cancelamento deixa de exigir motivo (reason optional; guarda mantida) | `features/financeiro/lancamentos/lancamento-detail.tsx:204` | ✅ Morto | `features/financeiro/lancamentos/workflow.test.tsx` — cancelar motivo vazio mantém a confirmação desabilitada e não chama a API (+4) |
+| M07a | desativar conta sem confirmacao | `features/financeiro/contas/contas-page.tsx:49` | ✅ Morto | `features/financeiro/contas/contas-page.test.tsx` — desativar conta só chama a API depois de confirmar e mostra a conta como inativa (+2) |
+| M07b | receber/pagar sem confirmacao (botao chama a API direto) | `features/financeiro/lancamentos/lancamento-detail.tsx:174-190` | ✅ Morto | `features/financeiro/lancamentos/workflow.test.tsx` — receber confirma, chama /receive com CSRF, mostra Recebida e invalida o saldo (+3) |
+| M07c | desativar usuario sem confirmacao (dialogo confirma sozinho ao abrir) | `features/identity/usuarios/dialogs/status-dialogs.tsx:32-34` | ✅ Morto | `features/identity/usuarios/dialogs/status-dialogs.test.tsx` — desativar pede confirmação avisando do fim das sessões e, em 204, mostra inativo |
+| M08a | movimentacao manual envia origem reservada VENDA | `features/estoque/movimentacoes/payload.ts:21` | ✅ Morto | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx` — registro de movimentações entrada de 10, saída de 4, devolução da saída; corpo sempre com INVENTARIO (+4) |
+| M08b | dialogo de movimentacao oferece as origens num seletor | `features/estoque/movimentacoes/movimentacao-dialog.tsx:128` | ✅ Morto | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx` — registro de movimentações entrada de 10, saída de 4, devolução da saída; corpo sempre com INVENTARIO |
+| M09a | senha temporaria gravada no QueryClient (setQueryData) | `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:3`, `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:42`, `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:63` | ✅ Morto | `features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx` — geração e descarte mostra a senha uma vez, copia, e ao fechar some do DOM, do cache, do armazenamento e do log |
+| M09b | senha temporaria obtida por useMutation (cache de mutacoes) | `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:3`, `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:42`, `features/identity/usuarios/dialogs/temporary-password-dialog.tsx:63` | ✅ Morto | `features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx` — geração e descarte mostra a senha uma vez, copia, e ao fechar some do DOM, do cache, do armazenamento e do log |
+| M10 | token de recuperacao mantido na URL (sem replaceState) | `features/identity/acesso/reset-password-form.tsx:51` | ✅ Morto | `features/identity/acesso/reset-password-form.test.tsx` — abrir o link com token remove o fragmento da barra de endereço sem recarregar e mostra o formulário (+5) |
+
+#### Mutantes próprios (`lib/api/client.ts` e `lib/session/**`)
+
+A área em volta dos testes corrigidos: tratamento de `401` e `403` no cliente, trava de redirecionamento único, logout, `next` e token CSRF.
+
+| # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro pertinente; +N = outros que também falharam) |
+| --- | --- | --- | --- | --- |
+| V01 | 401 do POST /auth/login tambem chama onUnauthenticated (excecao removida) | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 401 em POST /auth/login não chama onUnauthenticated |
+| V02 | cliente nao reconhece 403 csrf_invalid | `lib/api/client.ts:84` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 403 csrf_invalid chama onCsrfInvalid (+1) |
+| V03 | cliente nao reconhece 403 password_change_required | `lib/api/client.ts:82` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 403 password_change_required chama onPasswordChangeRequired (+1) |
+| V04 | trava de redirecionamento unico removida (navigateOnce sempre navega) | `lib/session/session-provider.tsx:112` | ✅ Morto | `lib/session/session-provider.test.tsx` — redirectToLogin leva a /entrar com o caminho atual em next, uma única vez |
+| V05 | dois 401: trava removida e checagem de sessao conhecida removida | `lib/session/session-provider.tsx:112`, `lib/session/session-provider.tsx:144` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada dois 401 quase ao mesmo tempo produzem um único redirecionamento (+21) |
+| V06 | 401 sem sessao conhecida tambem redireciona (checagem hasSession removida) | `lib/session/session-provider.tsx:144` | ✅ Morto | `lib/session/session-provider.test.tsx` — SessionProvider: estado da sessão fica anônimo sem sessão e não redireciona sozinho (sem laço em /entrar) (+18) |
+| V07 | trava de redirecionamento nunca e liberada ao mudar de caminho | `lib/session/session-provider.tsx:106-108` | ❌ Sobreviveu — relevante, lacuna L4 | — (847 de 847 testes passam) |
+| V08 | 401 durante o logout tratado como sessao encerrada (loggingOut ignorado) | `lib/session/session-provider.tsx:144` | ✅ Morto | `lib/session/session-provider.test.tsx` — logout com a sessão já expirada no servidor (401), também limpa e leva a /entrar |
+| V09 | logout com 401 do servidor tratado como falha | `lib/session/session-provider.tsx:186` | ✅ Morto | `lib/session/session-provider.test.tsx` — logout com a sessão já expirada no servidor (401), também limpa e leva a /entrar |
+| V10 | csrf_invalid rebusca a sessao mas nao pede para repetir (sem aviso) | `lib/session/session-provider.tsx:155` | ✅ Morto | `lib/session/session-provider.test.tsx` — 403 csrf_invalid rebusca /auth/me, pede para repetir e não repete a escrita |
+| V11 | next com barra invertida aceito como interno | `lib/session/routes.ts:30` | ✅ Morto | `lib/session/routes.test.ts` — safeNext recusa barra invertida no meio e usa a página inicial |
+| V12 | next iniciado por // aceito como interno (so a checagem de prefixo) | `lib/session/routes.ts:30` | ⚠️ Sobreviveu — equivalente (ver abaixo) | — (847 de 847 testes passam) |
+| V13 | 401 em /auth/me vira erro em vez de sessao anonima | `lib/session/session-provider.tsx:80` | ✅ Morto | `app/(app)/layout.test.tsx` — sem sessão leva a /entrar com o caminho pedido em next, sem mostrar o conteúdo (+5) |
+| V14 | token CSRF lido uma unica vez (congelado no primeiro uso) | `lib/api/client.ts:68` | ✅ Morto | `lib/api/client.test.ts` — X-CSRF-Token segue sem o cabeçalho quando ainda não há token (+2) |
+| V15 | aviso de sessao encerrada tambem no redirecionamento do portao (redirectToLogin) | `lib/session/session-provider.tsx:202` | ✅ Morto | `lib/session/session-provider.test.tsx` — redirectToLogin leva a /entrar com o caminho atual em next, uma única vez |
+
+**Sobreviventes deste ciclo**
+
+- **V07 — relevante (lacuna L4)** (`lib/session/session-provider.tsx:106-108`): o efeito que libera a trava de redirecionamento quando o caminho muda deixa de liberá-la. Os 847 testes passam. Não é equivalente: num teste descartável, escrito só no worktree temporário e apagado em seguida (sessão autenticada → `401` → redirecionamento → caminho `/entrar` → novo login pelo provedor → caminho `/financeiro/contas` → segundo `401`), o código original produz o segundo redirecionamento (`navigations()` com 2 itens, o segundo para `/entrar`) e o mutante não (`expected [ Array(1) ] to have a length of 2 but got 1`); a pessoa fica numa tela autenticada, com a sessão ainda marcada como presente. Detalhes em "Lacunas por severidade".
+- **V12 — equivalente** (`lib/session/routes.ts:30`): removida só a checagem `value.startsWith("//")`. Todo valor começado por `//` continua recusado pela checagem seguinte, que resolve o valor como URL e compara a origem (`lib/session/routes.ts:33`); `lib/session/routes.test.ts:29-46` afirma `/inicio` para `//exemplo.com` e `///exemplo.com` e continua passando. A checagem de prefixo é defesa redundante; nenhum resultado observável muda. O par dela na mesma linha, a barra invertida, não é redundante e morre (V11).
+
+**Observações sobre as mortes**
+
+- Nenhuma morte foi por prazo esgotado: em todos os mutantes mortos o teste citado falha por afirmação ou por elemento não encontrado.
+- M06c morre porque, com o motivo opcional, o rótulo do campo ganha "(opcional)" e o teste não acha "Motivo do cancelamento"; a regra em si (confirmar desabilitado com motivo vazio) é morta por afirmação direta em M06a, tanto em `components/app/confirm-dialog.test.tsx` quanto em `features/financeiro/lancamentos/workflow.test.tsx`.
+- V04 (trava removida) morre só no teste de `redirectToLogin`; o teste dos dois `401` simultâneos continua passando com ele, porque o segundo `401` já encontra a sessão esquecida (`lib/session/session-provider.tsx:144`). O caso de borda dos dois `401` é discriminado por V05 (trava e checagem removidas juntas), que morre em `lib/session/session-provider.test.tsx:285-304`.
+- V05 a V15 foram executados duas vezes: na primeira, por erro meu de operação, dois processos do sensor rodaram ao mesmo tempo no mesmo worktree, e descartei esses resultados; os da tabela são da segunda execução, com um único processo e a árvore conferida limpa antes e depois de cada mutante. De V06 a V15 os resultados das duas execuções coincidiram; o de V05 na primeira execução ficou inválido (execução interrompida).
+
+**Sensor depth**: P0-full na área de sessão e autenticação (escopo focado); as dez falhas obrigatórias cobrem dinheiro, permissões e dados sensíveis
+**Result**: 35 de 37 mortos; 1 sobrevivente equivalente (V12); 1 sobrevivente relevante (V07, lacuna L4) — FAIL ❌
+
+**Isolamento**: `git status --porcelain` vazio em `tjw\verify4` antes do sensor e depois dele (fora os arquivos deste relatório), e vazio em `C:\Users\Michels\Desktop\torcida-jovem`. O worktree temporário foi removido ao fim.
+
+### Sensor do ciclo 2 (herdado, não repetido)
+
+O verificador do ciclo 2 rodou 118 mutantes sobre `b57ee9e` (845 testes): 111 mortos, 5 sobreviventes equivalentes ou fora da spec e 2 sobreviventes relevantes (S06 e S06c, a lacuna L3). As tabelas dele seguem abaixo como registro; o código de produção é o mesmo, e a suíte atual contém todos os testes daquela mais os dois casos novos. Os dois sobreviventes relevantes foram repetidos neste ciclo e agora morrem (L3a e L3b).
+
+#### Ciclo 2: dez falhas obrigatórias (INT-04 AC3), L2 e O01 a O09
 
 | # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro; +N = outros que também falharam) |
 | --- | --- | --- | --- | --- |
@@ -308,9 +443,9 @@ Worktree temporário `C:\Users\Michels\Desktop\tjw\vsensor3` (`git worktree add 
 | O08 | rota /financeiro/lancamentos protegida por financeiro:conta:read | `app/(app)/financeiro/lancamentos/page.tsx:13` | ✅ Morto | `features/financeiro/lancamentos/lancamentos-page.test.tsx` — permissões > sem lancamento:read, só com as leituras vizinhas: Sem acesso e nenhuma consulta (+2) |
 | O09 | rota /financeiro/lancamentos/[id] protegida por financeiro:conta:read | `app/(app)/financeiro/lancamentos/[id]/page.tsx:14` | ✅ Morto | `features/financeiro/lancamentos/lancamento-detail.test.tsx` — permissões > sem lancamento:read, só com as leituras vizinhas: Sem acesso e nenhuma consulta (+2) |
 
-### Mutantes próprios do verificador
+#### Ciclo 2: mutantes próprios do verificador
 
-Escolhidos onde havia suspeita de teste fraco, com ênfase em frentes não corrigidas neste ciclo (plano de contas e saldo, senha, shell e navegação, `/inicio`) e em ordenações e filtros.
+Escolhidos onde havia suspeita de teste fraco, com ênfase em frentes não corrigidas no ciclo 2 (plano de contas e saldo, senha, shell e navegação, `/inicio`) e em ordenações e filtros.
 
 | # | Falha injetada | Arquivo:linha | Resultado | Teste que matou (primeiro; +N = outros que também falharam) |
 | --- | --- | --- | --- | --- |
@@ -376,7 +511,7 @@ Escolhidos onde havia suspeita de teste fraco, com ênfase em frentes não corri
 | S03 | botao do menu recolhivel visivel em qualquer largura (sem md:hidden) | `components/app/app-shell.tsx:45` | ⚠️ Sobreviveu — visual, G2 (ver abaixo) | — |
 | S04 | guarda redundante do cancelamento removida (if (!reason) return) | `features/financeiro/lancamentos/lancamento-detail.tsx:208`, `features/financeiro/lancamentos/lancamento-detail.tsx:210` | ⚠️ Sobreviveu — equivalente (ver abaixo) | — |
 | S05 | RequirePermission interno do Devolver removido (redundante com useCan) | `features/estoque/movimentacoes/movimentacoes-panel.tsx:65` | ⚠️ Sobreviveu — equivalente (ver abaixo) | — |
-| S06 | 401 de session_expired tratado, unauthenticated ignorado | `lib/api/client.ts:81` | ❌ Sobreviveu — relevante, lacuna L3 | — |
+| S06 | 401 de session_expired tratado, unauthenticated ignorado | `lib/api/client.ts:81` | Sobreviveu no ciclo 2 (lacuna L3); repetido no ciclo 3 como L3a: ✅ morto | — |
 | S07 | devolução não rebusca a lista de lançamentos | `features/financeiro/lancamentos/hooks.ts:133` | ✅ Morto | `features/financeiro/lancamentos/workflow.test.tsx` — devolução > envia devolucao_de_id da receita, conta de despesa, valores e forma, com CSRF |
 | S08 | `payload_too_large` sem mensagem própria no envio de comprovante | `features/financeiro/comprovantes/errors.ts:16` | ✅ Morto | `features/financeiro/comprovantes/comprovantes-panel.test.tsx` — erros do envio > 413 payload_too_large |
 | S09 | detalhe do lancamento nao mostra autor do cancelamento | `features/financeiro/lancamentos/lancamento-detail.tsx:122` | ✅ Morto | `features/financeiro/lancamentos/lancamento-detail.test.tsx` — detalhe > cancelado: mostra motivo, autor e data do cancelamento |
@@ -384,7 +519,7 @@ Escolhidos onde havia suspeita de teste fraco, com ênfase em frentes não corri
 | S11 | reativacao sem aviso de que papeis nao sao restaurados | `features/identity/usuarios/dialogs/status-dialogs.tsx:68` | ✅ Morto | `features/identity/usuarios/dialogs/status-dialogs.test.tsx` — reativar > em 204, mostra ativo e avisa que papéis e vínculo não são restaurados |
 | S12 | criacao de usuario sem aviso da troca no primeiro acesso | `features/identity/usuarios/dialogs/create-user-dialog.tsx:84` | ✅ Morto | `features/identity/usuarios/dialogs/create-user-dialog.test.tsx` — criação com sucesso > envia nome, e-mail e senha, avisa da troca no primeiro acesso e mostra a pessoa na lista |
 | S06b | 401 de unauthenticated tratado, session_expired ignorado | `lib/api/client.ts:81` | ✅ Morto | `lib/api/client.test.ts` — callbacks de 401 e 403 > 401 numa chamada autenticada chama onUnauthenticated (+2) |
-| S06c | sessao so reage a 401 com code session_expired (filtro no provedor) | `lib/session/session-provider.tsx:141` | ❌ Sobreviveu — relevante, lacuna L3 | — |
+| S06c | sessao so reage a 401 com code session_expired (filtro no provedor) | `lib/session/session-provider.tsx:141` | Sobreviveu no ciclo 2 (lacuna L3); repetido no ciclo 3 como L3b: ✅ morto | — |
 | S13 | 401 leva a /entrar sem o aviso de sessao encerrada | `lib/session/session-provider.tsx:145` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada > limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next |
 | S14 | 401 leva a /entrar sem next | `lib/session/session-provider.tsx:145` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada > limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next |
 | S15 | 401 redireciona mas nao limpa o cache das outras consultas | `lib/session/session-provider.tsx:145` | ✅ Morto | `lib/session/session-provider.test.tsx` — 401 numa chamada autenticada > limpa cache e contexto e leva a /entrar com aviso e o caminho atual em next |
@@ -399,24 +534,57 @@ Escolhidos onde havia suspeita de teste fraco, com ênfase em frentes não corri
 | S24 | filtro de status dos lancamentos ignorado | `features/financeiro/lancamentos/filters.ts:38` | ✅ Morto | `features/financeiro/lancamentos/filters.test.ts` — filtros > por status CRIADA (+6) |
 | S25 | desativar conta nao rebusca a lista | `features/financeiro/contas/hooks.ts:58` | ✅ Morto | `features/financeiro/contas/contas-page.test.tsx` — desativar conta > só chama a API depois de confirmar e mostra a conta como inativa |
 
-### Sobreviventes
+---
 
-**Relevantes (lacuna L3)**
+## Mutantes equivalentes ou fora da spec (ciclo 2, mantidos como justificados)
 
-- **S06** (`lib/api/client.ts:81`): o cliente deixa de avisar a sessão quando o `401` traz `code = unauthenticated`; só `session_expired` continua levando a `/entrar`. Os 845 testes passam.
-- **S06c** (`lib/session/session-provider.tsx:141`): o mesmo filtro, posto no provedor de sessão. Os 845 testes passam.
-- Controle: **S06b**, o filtro inverso (ignorar `session_expired`), morre em três testes. Ou seja, os testes discriminam um dos dois códigos que FND-03 AC6 nomeia, e não o outro.
+Sobreviveram no ciclo 2 e não são lacuna, porque não mudam comportamento observável definido pela spec. Os cinco mutantes não foram reexecutados neste ciclo; as justificativas são as do verificador do ciclo 2 e ficam mantidas porque o código que elas citam não mudou.
 
-**Equivalentes ou fora da spec** — justificados na seção "Mutantes equivalentes".
-
-**Sensor depth**: P0-full (autenticação, sessão, dinheiro, permissões)
-**Result**: 111 de 118 mortos; 5 sobreviventes equivalentes ou fora da spec; 2 sobreviventes relevantes (uma lacuna, L3) — FAIL ❌
-
-**Isolamento**: `git status --porcelain` vazio em `tjw\verify3` antes do sensor e depois dele (fora os arquivos deste relatório), e vazio em `C:\Users\Michels\Desktop\torcida-jovem`. O worktree temporário foi removido ao fim.
+- **S01 — contas consultadas sem `financeiro:conta:read`** (`features/financeiro/lancamentos/hooks.ts:47`): com o mutante, a tela de lançamentos faz um `GET /financeiro/contas` a mais, que a API recusa; a tela mostra o identificador curto da conta nos dois casos (`hooks.ts:57`). FND-04 AC4 trata da rota da própria área (`/financeiro/contas`, coberta em `app/(app)/financeiro/contas/page.test.tsx:40-48`); nenhuma spec define o que a tela de lançamentos faz com as contas quando falta essa leitura. Fora da spec. Sugestão sem peso no veredito: um teste que afirme `contas.count` 0 com só `financeiro:lancamento:read`.
+- **S02 — `X-CSRF-Token` também em `HEAD` e `OPTIONS`** (`lib/api/client.ts:15`): FND-01 AC3 exige o cabeçalho nas escritas e é afirmado para POST, PUT, PATCH e DELETE, e a ausência em GET. O contrato não tem operação `HEAD` nem `OPTIONS`, então nenhuma tela as emite. Equivalente.
+- **S03 — botão do menu sem `md:hidden`** (`components/app/app-shell.tsx:45`): só muda em que largura o botão aparece, o que o jsdom não avalia. É o gap de precisão G2 e a pendência visual.
+- **S04 — guarda `if (!reason) return` do cancelamento removida** (`features/financeiro/lancamentos/lancamento-detail.tsx:208`): redundante com o `ConfirmDialog`, que mantém o botão desabilitado e retorna cedo sem motivo (`components/app/confirm-dialog.tsx:80`, `:88`). Quando a regra do diálogo cai (M06a, M06c), os testes matam. Equivalente.
+- **S05 — `RequirePermission` interno do "Devolver" trocado por uma permissão que a tela sempre tem** (`features/estoque/movimentacoes/movimentacoes-panel.tsx:65`): redundante com o `useCan` da linha `:23`, que já remove a coluna inteira. Quando os dois pontos ou qualquer um deles passa a `adjust` (O07a, O07b, O07c), os testes matam. Equivalente.
 
 ---
 
-## Smoke repetido contra a stack real
+## Validação das citações herdadas
+
+**Arquivos de teste alterados pela correção.** Todas as citações a `lib/api/client.test.ts` e `lib/session/session-provider.test.tsx` foram reconferidas contra o arquivo em `1270f86`. Oito mudaram de linha e foram corrigidas nas tabelas acima:
+
+| Citação no ciclo 2 | Citação correta em `1270f86` | Onde |
+| --- | --- | --- |
+| `lib/api/client.test.ts:208-228` | `lib/api/client.test.ts:211-231` | FND-01 AC4 |
+| `lib/api/client.test.ts:131-137` | `lib/api/client.test.ts:131-140` | FND-03 AC6 |
+| `lib/api/client.test.ts:148-154` | `lib/api/client.test.ts:151-157` | FND-03 AC7 |
+| `lib/api/client.test.ts:176-181` | `lib/api/client.test.ts:179-184` | texto da lacuna L3 do ciclo 2 (callbacks desregistrados) |
+| `lib/session/session-provider.test.tsx:259-279` | `lib/session/session-provider.test.tsx:260-283` | FND-03 AC6 |
+| `lib/session/session-provider.test.tsx:281-300` | `lib/session/session-provider.test.tsx:285-304` | caso de borda dos dois `401` |
+| `lib/session/session-provider.test.tsx:355-367` | `lib/session/session-provider.test.tsx:358-372` | FND-03 AC7 |
+| `lib/session/session-provider.test.tsx:372-396` | `lib/session/session-provider.test.tsx:375-401` | FND-03 AC8 |
+
+Sem mudança (trechos anteriores às linhas alteradas): `lib/api/client.test.ts:49-67`, `:72-108`, `:110-114`; `lib/session/session-provider.test.tsx:78-99`, `:139`, `:159-176`, `:190`, `:196-225`.
+
+**Demais citações, por script.** Um script extraiu toda citação `arquivo:linha` deste relatório (inclusive as formas abreviadas `:linha` e só com o nome do arquivo, resolvidas pelo contexto da mesma linha da tabela) e conferiu, contra `git ls-files` em `1270f86`, que o arquivo existe e que a linha (ou o fim do intervalo) está dentro do arquivo. Resultado: 857 citações em 138 arquivos, 0 arquivo inexistente, 0 linha fora do arquivo.
+
+**Amostra manual.** Além de FND-03 (lido por inteiro), abri 32 trechos citados, espalhados pelas seis specs, e comparei o que o teste na linha citada afirma com o texto do AC na spec:
+
+| Spec | Trechos conferidos |
+| --- | --- |
+| 01 | FND-01 AC2, AC3, AC4 (`lib/api/client.test.ts`); FND-02 AC2 (`components/ui/field.test.tsx:39-53`); FND-04 AC1, AC2 (`app/(app)/layout.test.tsx:42-51`, `:27-38`); FND-04 AC3 (`lib/session/session-provider.test.tsx:78-99`); FND-05 AC4 (`components/app/money-field.test.tsx:35-45`); FND-05 AC6 (`components/app/confirm-dialog.test.tsx:74-87`, `:89-96`); FND-05 AC7 (`components/app/format.test.ts:8-19`, `:23-26`); FND-06 AC3 (`lib/api/problem.test.ts:70-85`) |
+| 02 | ACS-01 AC2 (`features/identity/acesso/change-password-form.test.tsx:89-102`); ACS-01 AC5 (`:184-204`); ACS-02 AC2 (`features/identity/acesso/request-reset-form.test.tsx:54-62`); ACS-03 AC1 (`features/identity/acesso/reset-password-form.test.tsx:78-86`); ACS-03 AC4 (`:151-163`); ACS-03 AC6 (`:65-74`) |
+| 03 | USR-01 AC2 (`features/identity/usuarios/users-page.test.tsx:98-113`); USR-02 AC2 e AC3 (`features/identity/usuarios/dialogs/create-user-dialog.test.tsx:98-128`); USR-03 AC1 e AC3 (`features/identity/usuarios/dialogs/status-dialogs.test.tsx:73-93`); caso de borda da própria linha (`:54-68`); USR-04 AC2 (`features/identity/usuarios/dialogs/admin-dialogs.test.tsx:108-127`); USR-05 AC2 (`features/identity/usuarios/dialogs/temporary-password-dialog.test.tsx:121-145`) |
+| 04 | FWB-01 AC2 e AC3 (`features/financeiro/contas/contas-page.test.tsx:188-210`); FWB-02 AC1 (`features/financeiro/saldo/saldo-page.test.tsx:40-50`); FWB-03 AC2 (`features/financeiro/lancamentos/lancamentos-page.test.tsx:167-196`); FWB-04 AC4 (`features/financeiro/lancamentos/workflow.test.tsx:139-151`); FWB-05 AC3 (`features/financeiro/comprovantes/comprovantes-panel.test.tsx:160-163`, `:174-181`, `:183-199`); FWB-05 AC5 (`:257-272`) |
+| 05 | EWB-01 AC3 (`features/estoque/produtos/produtos-page.test.tsx:139-155`); EWB-02 AC2, AC3, AC4 e AC6 (`features/estoque/movimentacoes/movimentacoes-panel.test.tsx:130-136`, `:161-183`); caso de borda do "Devolver" (`:112-119`); EWB-03 AC2 (`features/estoque/ajustes/ajuste-dialog.test.tsx:94-109`); EWB-04 AC2 (`features/estoque/produto-detail.test.tsx:74-80`) |
+| 06 | INT-01 AC1 (`components/app/nav-items.test.ts:14-26`); INT-01 AC3 e AC5 (`app/page.test.tsx:19-27`); INT-01 AC4 (`app/(app)/inicio/page.test.tsx:147-155`); INT-02 AC2 (`docs/development/web.md:39-41`); INT-03 AC1 e AC2 (`.specs/features/web/smoke.md:34-48`); INT-03 AC3 (`.specs/features/web/smoke.md:12`, `:40`) |
+
+Em todos os trechos a linha citada contém o teste descrito e a afirmação bate com o resultado definido pelo AC. Nenhuma citação errada e nenhum AC sem evidência discriminante apareceram na amostra, então a conferência não foi ampliada.
+
+---
+
+## Smoke contra a stack real (ciclo 2, não repetido)
+
+Seção herdada do ciclo 2: o smoke foi executado por aquele verificador sobre `b57ee9e`, cujo código de produção é idêntico ao de `1270f86`. Por decisão do mantenedor não foi repetido neste ciclo, e nenhuma stack foi montada agora.
 
 Stack montada pelo guia `docs/development/web.md`, a partir do worktree de verificação: `docker compose -p tjv3 up -d db`, migrações 1 a 9 antes da API, Garage avulso `dxflrs/garage:v2.4.1` na porta 3900 com chaves geradas na hora, `bootstrap-admin --role PRESIDENTE`, binário de `./cmd/api`, `next start -p 3000` sobre o build do gate (`API_URL=http://localhost:8080`). Docker Engine 28.3.2.
 
@@ -444,7 +612,7 @@ Total: 101 verificações (93 na primeira execução, 8 na complementar), 0 falh
 
 ## Gate Check
 
-Worktree `C:\Users\Michels\Desktop\tjw\verify3`, `web/`, `API_URL=http://localhost:8080`, código de saída real por `cmd /v:on /c "<cmd> & echo EXIT=!ERRORLEVEL!"`.
+Worktree `C:\Users\Michels\Desktop\tjw\verify4` em `1270f86`, `web/`, `API_URL=http://localhost:8080`, código de saída real por `cmd /v:on /c "<cmd> & echo EXIT=!ERRORLEVEL!"`.
 
 | Gate | Comando | Resultado |
 | --- | --- | --- |
@@ -452,25 +620,27 @@ Worktree `C:\Users\Michels\Desktop\tjw\verify3`, `web/`, `API_URL=http://localho
 | Web | `pnpm lint` | `EXIT=0` |
 | Web | `pnpm exec next typegen` | `EXIT=0` |
 | Web | `pnpm exec tsc --noEmit` | `EXIT=0` |
-| Web | `pnpm test` | `EXIT=0` — 68 arquivos, 845 testes passaram, 0 falhou, 0 pulado |
-| Web | `pnpm build` | `EXIT=0` — 15 rotas |
-| Audit | `pnpm audit --audit-level high` | `EXIT=0` — "1 high (1 ignored)" |
-| Audit (apoio) | `pnpm why source-map-js` | `EXIT=0` — só `1.2.2` |
-| Contract | `pnpm lint:api` | `EXIT=0` — quatro contratos válidos |
+| Web | `pnpm test` | `EXIT=0` — 68 arquivos, 847 testes passaram, 0 falhou, 0 pulado |
+| Web | `pnpm build` | `EXIT=0` — build concluído, rotas geradas |
+| Audit | `pnpm audit --audit-level high` | `EXIT=0` — "1 high (1 ignored)"; única exceção: `GHSA-vfj7-8cjw-p6xm` (`pnpm-workspace.yaml:10-12`) |
+| Contract | `pnpm lint:api` | `EXIT=0` |
 | Contract | `pnpm gen:api:check` | `EXIT=0` |
 | Backend intacto | `git diff --name-only develop -- api/` | vazio |
-| State | `validate_state.py --root <worktree> .specs/features/web` | `EXIT=1`, com um único erro: "validation.md verdict is FAIL". É o esperado enquanto L3 estiver aberta; o relatório em si é aceito (presente, com veredito e citações) |
+| State | `validate_state.py --root <worktree> .specs/features/web` | `EXIT=1`, com um único erro: "validation.md verdict is FAIL". É o esperado enquanto L4 estiver aberta; o relatório em si é aceito (presente, com veredito e citações) |
 
 - **Test count before feature** (`develop`): 2 arquivos de teste em `web/`
-- **Test count after feature** (`b57ee9e`): 68 arquivos, 845 testes
+- **Test count no ciclo 2** (`b57ee9e`): 68 arquivos, 845 testes
+- **Test count after feature** (`1270f86`): 68 arquivos, 847 testes (+2: os dois casos `unauthenticated` da correção de L3)
 - **Skipped tests**: nenhum (`it.skip`, `it.only`, `it.todo` sem ocorrência)
 - **Failures**: nenhuma
 - **`// SPEC_DEVIATION`**: nenhuma ocorrência em `web/`
-- **Fora de `web/`, `docs/` e `.specs/` no intervalo**: só `.github/workflows/ci.yml` (fornece `API_URL` a `next typegen` e `next build`, como previsto em `STATE.md`, "Configuração de CI necessária para o build")
+- **Fora de `web/`, `docs/` e `.specs/` no intervalo**: só `.github/workflows/ci.yml`
 
 ---
 
-## Code Quality
+## Code Quality (ciclo 2, não repetido)
+
+Avaliação herdada do ciclo 2; o código de produção não mudou desde então.
 
 | Princípio | Status |
 | --- | --- |
@@ -489,24 +659,30 @@ Worktree `C:\Users\Michels\Desktop\tjw\verify3`, `web/`, `API_URL=http://localho
 
 ### Média
 
-**L3 — FND-03 AC6: a variante `401 unauthenticated` não tem teste discriminante** (nova neste ciclo)
+**L4 — FND-03 AC6: nenhum teste exercita um segundo `401` depois de um redirecionamento anterior na mesma página** (nova neste ciclo)
 
-- **AC**: "WHEN qualquer chamada autenticada recebe `401` (`unauthenticated` ou `session_expired`) THEN o sistema SHALL limpar o cache e o contexto de sessão e levar a pessoa a `/entrar`, com aviso de sessão encerrada e o caminho atual em `next`."
-- **O que os testes afirmam hoje**: o redirecionamento só com `session_expired` (`lib/session/session-provider.test.tsx:259-279`, resposta em `:267`; `lib/api/client.test.ts:131-137`, resposta em `:132`). O código `unauthenticated` aparece em `session-provider.test.tsx:289`, mas junto de um `session_expired` simultâneo (`:288`), que sozinho já produz o único redirecionamento esperado; e em `client.test.ts:176-181`, onde se afirma que o callback **não** é chamado (callbacks desregistrados).
-- **Evidência**: mutantes S06 e S06c sobrevivem (845 de 845 testes passam com `401 unauthenticated` ignorado).
-- **Por que é relevante**: `401 unauthenticated` é o que a API real devolve quando o cookie some no meio do uso (observado no smoke deste ciclo: sem cookie → `401 unauthenticated`; item 10 de `smoke.md`). Uma regressão que deixe a pessoa numa tela autenticada sem sessão passaria em todos os gates.
-- **O código de produção está correto**: `lib/api/client.ts:80-81` e `lib/session/session-provider.tsx:141-148` reagem a qualquer `401`, sem olhar o `code`. A lacuna é só de teste.
-- **Unidade dona provável**: F2 (`lib/session/session-provider.test.tsx`) e F1 (`lib/api/client.test.ts`).
-- **Correção sugerida**: parametrizar os dois testes pelos dois códigos. Em `session-provider.test.tsx`, `it.each(["session_expired", "unauthenticated"])` no teste de `:259`, mantendo as afirmações de `pathname`, `next`, `sessao=encerrada`, sessão anônima e cache limpo. Em `client.test.ts`, `it.each` no teste de `:131`, afirmando `onUnauthenticated` chamado uma vez para cada código.
-- **Done when**: S06 e S06c morrem; S06b continua morrendo; gates `EXIT=0`.
+- **AC**: "WHEN qualquer chamada autenticada recebe `401` (`unauthenticated` ou `session_expired`) THEN o sistema SHALL limpar o cache e o contexto de sessão e levar a pessoa a `/entrar`, com aviso de sessão encerrada e o caminho atual em `next`." O caso de borda pede um único redirecionamento para dois `401` quase simultâneos.
+- **Como o código atende**: `navigateOnce` usa a trava `redirecting` para navegar uma única vez (`lib/session/session-provider.tsx:110-118`), e um efeito libera a trava quando o caminho muda (`:106-108`). O provedor fica montado no layout raiz (`app/layout.tsx`, `AppProviders`), então a trava vive enquanto a página não for recarregada. Sem a liberação, depois do primeiro redirecionamento (por `401`, pelo portão de rota sem sessão ou por `403 password_change_required`) nenhum `401` posterior leva a `/entrar` nem limpa a sessão, até um logout ou uma recarga.
+- **O que os testes afirmam hoje**: o primeiro `401` (`lib/session/session-provider.test.tsx:260-283`), os dois `401` simultâneos (`:285-304`), a ausência de laço (`:306-325`) e a chamada dupla de `redirectToLogin` (`:328-355`). Nenhum teste muda o caminho depois de um redirecionamento e provoca outro `401`.
+- **Evidência**: mutante V07 sobrevive (847 de 847 testes passam com a liberação da trava removida). O teste descartável descrito na seção do sensor passa no código original e falha no mutante.
+- **Por que é relevante**: o cenário é o caminho comum, não um canto. Quem abre uma rota protegida sem sessão é levado a `/entrar` pelo portão (a trava é ativada), entra, e horas depois a sessão expira: é exatamente o `401` que o AC6 descreve. Uma regressão na liberação da trava deixaria a pessoa numa tela autenticada sem sessão e passaria em todos os gates. É a mesma classe de risco que fez de L3 uma lacuna no ciclo 2.
+- **O código de produção está correto**: a lacuna é só de teste.
+- **Unidade dona provável**: F2 (`lib/session/session-provider.test.tsx`).
+- **Correção sugerida**: um teste no bloco "401 numa chamada autenticada": sessão autenticada em `/financeiro/contas`; `401` → afirmar 1 navegação; `setLocation("/entrar")` e `rerender`; novo login pelo `login` do provedor; `setLocation("/financeiro/contas")` e `rerender`; segundo `401` → afirmar `navigations()` com 2 itens, o segundo com `pathname` `/entrar`, e `status` `anonymous`. Uma variante cobre a trava ativada pelo portão (`redirectToLogin`) em vez do primeiro `401`.
+- **Done when**: V07 morre por esse teste; L3a a L3d, V04 e V05 continuam morrendo; gates `EXIT=0`.
 
 ### Alta, baixa
 
 Nenhuma.
 
-### Observação (não é lacuna)
+### Lacunas anteriores
 
-- Numa execução do sensor feita enquanto a stack do smoke compilava (Go e Docker em paralelo), o teste `features/financeiro/lancamentos/lancamento-detail.test.tsx:62` falhou uma vez por esgotar o prazo de 1 s do `findByRole`, num mutante que não toca aquele código (P01). Repetido sem carga, P01 morreu só pelo teste pertinente, e o teste passou nas outras 117 execuções do sensor e no gate. É sensibilidade a carga da máquina, não defeito do teste nem do código.
+L3 (ciclo 2) fechada neste ciclo. L1, L2 e O01 a O09 (ciclos 0 e 1) fechadas no ciclo 2.
+
+### Observações (não são lacunas)
+
+- `pnpm gen:api:check` imprime um aviso de validação de exemplo do contrato de identity ("can't resolve reference #/components/schemas/Accepted") e termina com `EXIT=0`. É aviso da ferramenta sobre `api/openapi/identity.yaml`, que não mudou neste trabalho.
+- `pnpm lint` levou cerca de dez minutos numa execução feita enquanto o diretório do worktree temporário (com `node_modules`) era apagado; terminou com `EXIT=0`. É contenção de disco da máquina, não do projeto.
 
 ---
 
@@ -514,20 +690,10 @@ Nenhuma.
 
 Não derrubam o veredito. São pontos em que a spec não fixa um valor que um teste de componente possa afirmar.
 
-- **G1 — FND-01 AC1 (preservação de cabeçalhos)**: o encaminhamento é feito pelo rewrite do Next, não por código do projeto. O teste de unidade afirma origem e destino; a preservação de método, corpo e cabeçalhos só é observável contra a stack real, e foi observada no smoke deste ciclo para todos os cabeçalhos citados no AC.
+- **G1 — FND-01 AC1 (preservação de cabeçalhos)**: o encaminhamento é feito pelo rewrite do Next, não por código do projeto. O teste de unidade afirma origem e destino; a preservação de método, corpo e cabeçalhos só é observável contra a stack real, e foi observada no smoke do ciclo 2 para todos os cabeçalhos citados no AC.
 - **G2 — FND-05 AC2 (ponto de quebra)**: "menor que o ponto de quebra de tablet" é resolvido por classes CSS (`md:hidden`, `hidden md:block`), que o jsdom não avalia. O teste afirma que o menu recolhível existe, tem os mesmos itens e fecha ao escolher; a troca de layout na largura certa é conferência visual (pendência humana).
 - **G3 — FND-06 AC5 ("oferecer tentar de novo")**: nas telas de consulta há botão "Tentar de novo" (`ErrorState`, `ApiErrorAlert`). Nos formulários, a indisponibilidade aparece como mensagem do formulário e a nova tentativa é o próprio botão de envio; a spec não diz se isso basta.
 - **G4 — textos sem redação fixa**: FND-03 AC3 e ACS-01 AC6 ("informar quanto tempo esperar"), USR-03 AC2/AC3 e USR-04 AC1 ("avisar que…") não fixam a frase. Os testes afirmam a frase implementada e o dado que a spec exige (o tempo de `Retry-After`, o aviso de sessões encerradas).
-
-## Mutantes equivalentes ou fora da spec (justificados)
-
-Sobreviveram e não são lacuna, porque não mudam comportamento observável definido pela spec.
-
-- **S01 — contas consultadas sem `financeiro:conta:read`** (`features/financeiro/lancamentos/hooks.ts:47`): com o mutante, a tela de lançamentos faz um `GET /financeiro/contas` a mais, que a API recusa; a tela mostra o identificador curto da conta nos dois casos (`hooks.ts:57`). FND-04 AC4 trata da rota da própria área (`/financeiro/contas`, coberta em `app/(app)/financeiro/contas/page.test.tsx:40-48`); nenhuma spec define o que a tela de lançamentos faz com as contas quando falta essa leitura. Fora da spec. Sugestão sem peso no veredito: um teste que afirme `contas.count` 0 com só `financeiro:lancamento:read`.
-- **S02 — `X-CSRF-Token` também em `HEAD` e `OPTIONS`** (`lib/api/client.ts:15`): FND-01 AC3 exige o cabeçalho nas escritas e é afirmado para POST, PUT, PATCH e DELETE, e a ausência em GET. O contrato não tem operação `HEAD` nem `OPTIONS`, então nenhuma tela as emite. Equivalente.
-- **S03 — botão do menu sem `md:hidden`** (`components/app/app-shell.tsx:45`): só muda em que largura o botão aparece, o que o jsdom não avalia. É o gap de precisão G2 e a pendência visual.
-- **S04 — guarda `if (!reason) return` do cancelamento removida** (`features/financeiro/lancamentos/lancamento-detail.tsx:208`): redundante com o `ConfirmDialog`, que mantém o botão desabilitado e retorna cedo sem motivo (`components/app/confirm-dialog.tsx:80`, `:88`). Quando a regra do diálogo cai (M06a, M06c), os testes matam. Equivalente.
-- **S05 — `RequirePermission` interno do "Devolver" trocado por uma permissão que a tela sempre tem** (`features/estoque/movimentacoes/movimentacoes-panel.tsx:65`): redundante com o `useCan` da linha `:23`, que já remove a coluna inteira. Quando os dois pontos ou qualquer um deles passa a `adjust` (O07a, O07b, O07c), os testes matam. Equivalente.
 
 ---
 
@@ -535,15 +701,18 @@ Sobreviveram e não são lacuna, porque não mudam comportamento observável def
 
 Só a falha real nova deste ciclo:
 
-- **L-012** (candidata; sinal `surviving_mutant`; fonte: S06, `web/lib/api/client.ts:81`, FND-03 AC6): "Quando um AC nomeia mais de um code da API para o mesmo comportamento, parametrize o teste por todos os codes nomeados".
+- **L-013** (candidata; sinal `surviving_mutant`; fonte: V07, `web/lib/session/session-provider.tsx:106`, FND-03 AC6): "Trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao, nao so de teste do bloqueio".
 
-Os gaps de precisão G1 a G4 e os mutantes equivalentes não geraram lição: não são falhas.
+O mutante equivalente V12, os gaps de precisão G1 a G4 e os mutantes equivalentes do ciclo 2 não geraram lição: não são falhas.
 
 ---
 
 ## Pendência humana
 
-- **Smoke visual no navegador**: os dez passos de `.specs/features/web/smoke.md`, "Roteiro para o mantenedor". Não é lacuna de teste nem bloqueia este veredito, mas ninguém viu as telas renderizadas nesta verificação.
+Não são lacunas de teste e não bloqueiam este veredito, mas ninguém as exercitou em nenhum ciclo de verificação:
+
+- **Smoke visual no navegador**: cliques, renderização, diálogos, redirecionamentos feitos pelo JavaScript, remoção do fragmento `#token=` da barra de endereço e menu recolhível em tela estreita. Não havia navegador automatizado (WEB-D-017). Roteiro em `.specs/features/web/smoke.md`, "Roteiro para o mantenedor".
+- **Redefinição de senha com token válido**: não executável localmente, porque o provedor de e-mail `log` não expõe o link (INT-03 AC3, `.specs/features/web/smoke.md:12`). O caminho está coberto só pelos testes com MSW de ACS-03.
 
 ---
 
@@ -553,8 +722,8 @@ Nenhuma alteração nas specs: com veredito FAIL, a coluna Status das seis tabel
 
 | Requirement | Status atual | Situação nesta verificação |
 | --- | --- | --- |
-| FND-03 | In Tasks | ❌ Needs Fix (teste): lacuna L3 no AC6 |
-| FND-01, FND-02, FND-04, FND-05, FND-06 | In Tasks | Sem lacuna; passam a Verified quando L3 fechar |
+| FND-03 | In Tasks | ❌ Needs Fix (teste): L3 fechada; lacuna L4 no AC6 |
+| FND-01, FND-02, FND-04, FND-05, FND-06 | In Tasks | Sem lacuna; passam a Verified quando L4 fechar |
 | ACS-01 a ACS-03 | In Tasks | Sem lacuna |
 | USR-01 a USR-05 | In Tasks | Sem lacuna |
 | FWB-01 a FWB-05 | In Tasks | Sem lacuna |
@@ -566,13 +735,13 @@ Nenhuma alteração nas specs: com veredito FAIL, a coluna Status das seis tabel
 
 ## Summary
 
-**Overall**: ❌ Not Ready — uma lacuna de teste (L3). O código de produção atende às specs em tudo o que foi verificado.
+**Overall**: ❌ Not Ready — L3 está fechada, mas o sensor achou uma lacuna de teste nova no mesmo AC (L4). O código de produção atende às specs em tudo o que foi verificado.
 
-**Spec-anchored check**: 128 de 129 ACs e 13 de 13 casos de borda com o resultado da spec afirmado em teste discriminante; FND-03 AC6 afirmado só para um dos dois códigos que nomeia (L3); 4 gaps de precisão sinalizados.
-**Sensor**: 111 de 118 mortos; 5 sobreviventes equivalentes ou fora da spec; 2 sobreviventes relevantes (uma lacuna, L3) — FAIL ❌
-**Gate**: 845 testes passaram, 0 falhou; todos os gates `EXIT=0`.
-**Smoke**: 101 verificações contra a stack real, 0 falha.
+**Spec-anchored check**: 128 de 129 ACs e 13 de 13 casos de borda com o resultado da spec afirmado em teste discriminante; FND-03 AC6 afirmado para os dois códigos no primeiro `401`, mas não para um `401` posterior na mesma página (L4); 4 gaps de precisão sinalizados.
+**Sensor**: 35 de 37 mutantes deste ciclo mortos; 1 sobrevivente equivalente (V12); 1 sobrevivente relevante (V07, lacuna L4) — FAIL ❌. Os dois sobreviventes relevantes do ciclo 2 agora morrem.
+**Gate**: 847 testes passaram, 0 falhou; todos os comandos de gate `EXIT=0`.
+**Smoke**: herdado do ciclo 2 (101 verificações contra a stack real, 0 falha); não repetido.
 
-**What works**: o caminho same-origin com cookie, `Origin` e CSRF; login, troca obrigatória, recuperação e logout; administração de usuários; ciclo completo do financeiro com comprovantes até o limite de 10.420.224 bytes; ciclo do estoque; visão somente leitura; navegação e página inicial por permissão.
+**What works**: o caminho same-origin com cookie, `Origin` e CSRF; login, troca obrigatória, recuperação e logout; sessão encerrada por `401` com qualquer um dos dois códigos; administração de usuários; ciclo completo do financeiro com comprovantes; ciclo do estoque; visão somente leitura; navegação e página inicial por permissão.
 
-**Next steps**: fechar L3 com a parametrização dos dois testes (F2 e F1), repetir S06, S06b e S06c e os gates, e então marcar T4 e a rastreabilidade. Este é o terceiro veredito FAIL: pela regra de INT-04 AC5 (no máximo 3 ciclos de correção), a decisão sobre um novo ciclo cabe ao mantenedor. O smoke visual no navegador continua pendente de execução humana.
+**Next steps**: a decisão é do mantenedor. Este é o quarto veredito negativo e o limite de 3 ciclos de correção de INT-04 AC5 já foi usado; o ciclo 3 era focado e mesmo assim achou L4. As opções são: (a) fechar L4 com um teste novo em `lib/session/session-provider.test.tsx` (correção só de teste, descrita em "Lacunas por severidade") e repetir V07 e os gates; ou (b) aceitar L4 como risco conhecido e registrar a decisão. O smoke visual no navegador e a redefinição com token válido continuam pendentes de execução humana.

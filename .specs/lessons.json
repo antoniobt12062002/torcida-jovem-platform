@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 13,
+  "next_id": 14,
   "lessons": [
     {
       "id": "L-001",
@@ -220,6 +220,24 @@
       ],
       "created": "2026-10-09T03:53:57Z",
       "last_seen": "2026-10-09T03:53:57Z"
+    },
+    {
+      "id": "L-013",
+      "key": "surviving_mutant::trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao nao so de teste do bloqueio",
+      "text": "Trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao, nao so de teste do bloqueio",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,session",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "V07 (web/lib/session/session-provider.tsx:106) / FND-03 AC6 (web,tests,session)"
+      ],
+      "created": "2026-10-09T22:06:16Z",
+      "last_seen": "2026-10-09T22:06:16Z"
     }
   ]
 }

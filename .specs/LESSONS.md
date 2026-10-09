@@ -86,6 +86,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: S06 (web/lib/api/client.ts:81) / FND-03 AC6 (web,tests,session)
 - last seen: 2026-10-09T03:53:57Z
 
+### L-013 - Trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao, nao so de teste do bloqueio
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web,tests,session` · harmful: 0
+- features: web
+- evidence: V07 (web/lib/session/session-provider.tsx:106) / FND-03 AC6 (web,tests,session)
+- last seen: 2026-10-09T22:06:16Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
