@@ -114,9 +114,9 @@ T3 → T4
 **Requirement**: INT-04
 
 **Done when**:
-- [ ] Evidência `arquivo:linha` para cada AC das sub-specs 01 a 05 e INT-01 a INT-03
-- [ ] As dez falhas mínimas do sensor mortas; árvore real igual à de antes do sensor
-- [ ] `validate_state.py web` passa com veredito PASS
+- [x] Evidência `arquivo:linha` para cada AC das sub-specs 01 a 05 e INT-01 a INT-03
+- [x] As dez falhas mínimas do sensor mortas; árvore real igual à de antes do sensor
+- [x] `validate_state.py web` passa com veredito PASS
 
 **Tests**: spec-anchored + sensor de discriminação
 **Gate**: Web + Audit + Contract + Backend intacto + State

@@ -152,12 +152,12 @@ O `web/` de hoje é o esqueleto do `create-next-app`: dois componentes de UI (`B
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FND-01 | FND-01: Acesso same-origin à API | Tasks | In Tasks |
-| FND-02 | FND-02: Kit de UI | Tasks | In Tasks |
-| FND-03 | FND-03: Sessão, login e logout | Tasks | In Tasks |
-| FND-04 | FND-04: Proteção de rotas e permissões | Tasks | In Tasks |
-| FND-05 | FND-05: Estrutura e componentes compartilhados | Tasks | In Tasks |
-| FND-06 | FND-06: Erros da API apresentados | Tasks | In Tasks |
+| FND-01 | FND-01: Acesso same-origin à API | Tasks | Verified |
+| FND-02 | FND-02: Kit de UI | Tasks | Verified |
+| FND-03 | FND-03: Sessão, login e logout | Tasks | Verified |
+| FND-04 | FND-04: Proteção de rotas e permissões | Tasks | Verified |
+| FND-05 | FND-05: Estrutura e componentes compartilhados | Tasks | Verified |
+| FND-06 | FND-06: Erros da API apresentados | Tasks | Verified |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
 
