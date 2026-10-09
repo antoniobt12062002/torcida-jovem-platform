@@ -303,6 +303,40 @@ describe("401 numa chamada autenticada", () => {
     expect(new URL(navigations()[0], window.location.origin).pathname).toBe("/entrar");
   });
 
+  it("a trava é liberada ao mudar de caminho: um 401 depois de entrar de novo redireciona outra vez", async () => {
+    setLocation("/financeiro/contas");
+    mockMe(authContext());
+    server.use(
+      http.get(apiUrl("/api/v1/financeiro/contas"), () => problem(401, "session_expired")),
+      http.post(apiUrl("/api/v1/auth/login"), () => HttpResponse.json(authContext())),
+    );
+    const { rerender } = renderWithSession(<Probe />);
+    await waitFor(() => expect(status()).toBe("authenticated"));
+
+    await act(async () => {
+      await api.financeiro.GET("/api/v1/financeiro/contas");
+    });
+    expect(navigations()).toHaveLength(1);
+    await waitFor(() => expect(status()).toBe("anonymous"));
+
+    // A pessoa chega a /entrar, entra de novo e volta à tela.
+    setLocation("/entrar");
+    rerender(<Probe />);
+    fireEvent.click(screen.getByRole("button", { name: "entrar" }));
+    await waitFor(() => expect(status()).toBe("authenticated"));
+    setLocation("/financeiro/contas");
+    rerender(<Probe />);
+
+    await act(async () => {
+      await api.financeiro.GET("/api/v1/financeiro/contas");
+    });
+    expect(navigations()).toHaveLength(2);
+    const url = new URL(navigations()[1], window.location.origin);
+    expect(url.pathname).toBe("/entrar");
+    expect(url.searchParams.get("next")).toBe("/financeiro/contas");
+    await waitFor(() => expect(status()).toBe("anonymous"));
+  });
+
   it("consultas da tela não ficam em laço depois do 401", async () => {
     setLocation("/financeiro/contas");
     mockMe(authContext());
