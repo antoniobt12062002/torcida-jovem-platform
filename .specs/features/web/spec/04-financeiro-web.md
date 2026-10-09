@@ -133,11 +133,11 @@ O `financeiro` V1 está em `develop` com 15 operações HTTP: plano de contas, l
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FWB-01 | FWB-01: Plano de contas | Tasks | In Tasks |
-| FWB-02 | FWB-02: Saldo | Tasks | In Tasks |
-| FWB-03 | FWB-03: Lançamentos | Tasks | In Tasks |
-| FWB-04 | FWB-04: Workflow, cancelamento e devolução | Tasks | In Tasks |
-| FWB-05 | FWB-05: Comprovantes | Tasks | In Tasks |
+| FWB-01 | FWB-01: Plano de contas | Tasks | Verified |
+| FWB-02 | FWB-02: Saldo | Tasks | Verified |
+| FWB-03 | FWB-03: Lançamentos | Tasks | Verified |
+| FWB-04 | FWB-04: Workflow, cancelamento e devolução | Tasks | Verified |
+| FWB-05 | FWB-05: Comprovantes | Tasks | Verified |
 
 **Coverage:** 5 total, 5 mapped to tasks, 0 unmapped.
 

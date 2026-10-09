@@ -92,9 +92,9 @@ A API já troca senha (`POST /auth/password`), pede recuperação por e-mail (`P
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ACS-01 | ACS-01: Trocar a própria senha | Tasks | In Tasks |
-| ACS-02 | ACS-02: Pedir recuperação | Tasks | In Tasks |
-| ACS-03 | ACS-03: Redefinir pelo link | Tasks | In Tasks |
+| ACS-01 | ACS-01: Trocar a própria senha | Tasks | Verified |
+| ACS-02 | ACS-02: Pedir recuperação | Tasks | Verified |
+| ACS-03 | ACS-03: Redefinir pelo link | Tasks | Verified |
 
 **Coverage:** 3 total, 3 mapped to tasks, 0 unmapped.
 

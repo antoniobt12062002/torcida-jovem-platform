@@ -107,10 +107,10 @@ As frentes de módulo (sub-specs 02 a 05) são feitas em paralelo e, por regra d
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| INT-01 | INT-01: Navegação global e página inicial | Tasks | In Tasks |
-| INT-02 | INT-02: Guia de desenvolvimento | Tasks | In Tasks |
-| INT-03 | INT-03: Smoke manual | Tasks | In Tasks |
-| INT-04 | INT-04: Verificação independente | Tasks | In Tasks |
+| INT-01 | INT-01: Navegação global e página inicial | Tasks | Verified |
+| INT-02 | INT-02: Guia de desenvolvimento | Tasks | Verified |
+| INT-03 | INT-03: Smoke manual | Tasks | Verified |
+| INT-04 | INT-04: Verificação independente | Tasks | Verified |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 

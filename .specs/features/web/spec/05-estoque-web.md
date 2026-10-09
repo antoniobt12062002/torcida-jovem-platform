@@ -107,10 +107,10 @@ O `estoque` V1 está em `develop` com 6 operações HTTP: produtos (SKU), movime
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| EWB-01 | EWB-01: Produtos e saldo | Tasks | In Tasks |
-| EWB-02 | EWB-02: Movimentações | Tasks | In Tasks |
-| EWB-03 | EWB-03: Ajuste | Tasks | In Tasks |
-| EWB-04 | EWB-04: Consulta somente leitura | Tasks | In Tasks |
+| EWB-01 | EWB-01: Produtos e saldo | Tasks | Verified |
+| EWB-02 | EWB-02: Movimentações | Tasks | Verified |
+| EWB-03 | EWB-03: Ajuste | Tasks | Verified |
+| EWB-04 | EWB-04: Consulta somente leitura | Tasks | Verified |
 
 **Coverage:** 4 total, 4 mapped to tasks, 0 unmapped.
 

@@ -122,11 +122,11 @@ A API cria usuários, promove a administrativo com papéis, ajusta papéis, reti
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| USR-01 | USR-01: Listar usuários | Tasks | In Tasks |
-| USR-02 | USR-02: Criar usuário | Tasks | In Tasks |
-| USR-03 | USR-03: Desativar e reativar | Tasks | In Tasks |
-| USR-04 | USR-04: Acesso administrativo e papéis | Tasks | In Tasks |
-| USR-05 | USR-05: Senha temporária | Tasks | In Tasks |
+| USR-01 | USR-01: Listar usuários | Tasks | Verified |
+| USR-02 | USR-02: Criar usuário | Tasks | Verified |
+| USR-03 | USR-03: Desativar e reativar | Tasks | Verified |
+| USR-04 | USR-04: Acesso administrativo e papéis | Tasks | Verified |
+| USR-05 | USR-05: Senha temporária | Tasks | Verified |
 
 **Coverage:** 5 total, 5 mapped to tasks, 0 unmapped.
 
