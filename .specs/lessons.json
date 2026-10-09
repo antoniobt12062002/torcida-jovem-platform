@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 13,
   "lessons": [
     {
       "id": "L-001",
@@ -202,6 +202,24 @@
       ],
       "created": "2026-10-08T22:28:11Z",
       "last_seen": "2026-10-08T22:28:11Z"
+    },
+    {
+      "id": "L-012",
+      "key": "surviving_mutant::quando um ac nomeia mais de um code da api para o mesmo comportamento parametrize o teste por todos os codes nomeados",
+      "text": "Quando um AC nomeia mais de um code da API para o mesmo comportamento, parametrize o teste por todos os codes nomeados",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,session",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S06 (web/lib/api/client.ts:81) / FND-03 AC6 (web,tests,session)"
+      ],
+      "created": "2026-10-09T03:53:57Z",
+      "last_seen": "2026-10-09T03:53:57Z"
     }
   ]
 }

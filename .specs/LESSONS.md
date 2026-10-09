@@ -80,6 +80,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: O01 (validation.md, ciclo 1) (web,tests,fixtures)
 - last seen: 2026-10-08T22:28:11Z
 
+### L-012 - Quando um AC nomeia mais de um code da API para o mesmo comportamento, parametrize o teste por todos os codes nomeados
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web,tests,session` · harmful: 0
+- features: web
+- evidence: S06 (web/lib/api/client.ts:81) / FND-03 AC6 (web,tests,session)
+- last seen: 2026-10-09T03:53:57Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
