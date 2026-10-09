@@ -45,7 +45,7 @@ Servidor Next  ── rewrite (next.config.ts) ──→ API Go (API_URL)/api/v1
 
 ### `next.config.ts` (F1)
 
-- `rewrites()` devolve `[{ source: "/api/v1/:path*", destination: `${API_URL}/api/v1/:path*` }]`.
+- `rewrites()` devolve uma única regra: `source` = `/api/v1/:path*` e `destination` = `${API_URL}/api/v1/:path*`.
 - Se `API_URL` não estiver definida, a configuração falha ao carregar, com mensagem clara (nunca um destino vazio).
 - Sem `proxy.ts`, sem `middleware.ts` (WEB-D-009).
 
