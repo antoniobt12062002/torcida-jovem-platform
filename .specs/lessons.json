@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 2,
+  "next_id": 14,
   "lessons": [
     {
       "id": "L-001",
@@ -22,6 +22,222 @@
       ],
       "created": "2026-09-27T18:13:59Z",
       "last_seen": "2026-09-27T18:13:59Z"
+    },
+    {
+      "id": "L-002",
+      "key": "gate_fail::rodar o gate de auditoria de dependencias no inicio de cada rodada de integracao e da verificacao porque um aviso novo reprova uma dependencia transitiva ja presente no lockfile sem nenhuma mudanca de codigo",
+      "text": "Rodar o gate de auditoria de dependencias no inicio de cada rodada de integracao e da verificacao, porque um aviso novo reprova uma dependencia transitiva ja presente no lockfile sem nenhuma mudanca de codigo",
+      "signal": "gate_fail",
+      "scope": "web/gates",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md Gate Check: pnpm audit --audit-level high EXIT=1 (GHSA-68fv-2mgg-jv7q, web/pnpm-lock.yaml:3307) (web/gates)"
+      ],
+      "created": "2026-10-08T16:21:07Z",
+      "last_seen": "2026-10-08T16:21:07Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::quando o criterio proibe guardar um valor sensivel ou efemero em cache o teste deve inspecionar o queryclient consultas e mutacoes em busca do valor nao so contar requisicoes",
+      "text": "Quando o criterio proibe guardar um valor sensivel ou efemero em cache, o teste deve inspecionar o QueryClient (consultas e mutacoes) em busca do valor, nao so contar requisicoes",
+      "signal": "surviving_mutant",
+      "scope": "web/tests",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutante O06; FWB-05 AC5; web/features/financeiro/comprovantes/comprovantes-panel.test.tsx:235 (web/tests)"
+      ],
+      "created": "2026-10-08T16:21:07Z",
+      "last_seen": "2026-10-08T16:21:07Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_precision_gap::criterio de layout responsivo deve citar o ponto de quebra exato e dizer como ele e verificado porque jsdom nao avalia media queries",
+      "text": "Criterio de layout responsivo deve citar o ponto de quebra exato e dizer como ele e verificado, porque jsdom nao avalia media queries",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-1; FND-05 AC2; web/components/app/app-shell.test.tsx:87 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:08Z",
+      "last_seen": "2026-10-08T16:21:08Z"
+    },
+    {
+      "id": "L-005",
+      "key": "spec_precision_gap::mensagem derivada de retry after deve ter o formato do tempo de espera definido na spec",
+      "text": "Mensagem derivada de Retry-After deve ter o formato do tempo de espera definido na spec",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-2; FND-03 AC3 e ACS-01 AC6; web/app/(public)/entrar/login-form.test.tsx:104 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:08Z",
+      "last_seen": "2026-10-08T16:21:08Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_precision_gap::criterio que exige motivo deve declarar o tamanho minimo que a api impoe naquele endpoint",
+      "text": "Criterio que exige motivo deve declarar o tamanho minimo que a API impoe naquele endpoint",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-3; USR-04 AC4; web/features/identity/usuarios/dialogs/admin-dialogs.test.tsx:248 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:08Z",
+      "last_seen": "2026-10-08T16:21:08Z"
+    },
+    {
+      "id": "L-007",
+      "key": "spec_precision_gap::criterio que pede confirmacao deve dizer se ela e um passo separado ou o proprio dialogo do formulario",
+      "text": "Criterio que pede confirmacao deve dizer se ela e um passo separado ou o proprio dialogo do formulario",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-4; EWB-03 AC3; web/features/estoque/ajustes/ajuste-dialog.test.tsx:58 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:08Z",
+      "last_seen": "2026-10-08T16:21:08Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::criterio sobre cabecalhos preservados por proxy ou rewrite deve apontar o item de smoke que confere cada cabecalho porque o teste da configuracao nao os exercita",
+      "text": "Criterio sobre cabecalhos preservados por proxy ou rewrite deve apontar o item de smoke que confere cada cabecalho, porque o teste da configuracao nao os exercita",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-5; FND-01 AC1; web/next.config.test.ts:13 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:10Z",
+      "last_seen": "2026-10-08T16:21:10Z"
+    },
+    {
+      "id": "L-009",
+      "key": "spec_precision_gap::criterio de registro de evidencia deve dizer se a data e por item ou por execucao",
+      "text": "Criterio de registro de evidencia deve dizer se a data e por item ou por execucao",
+      "signal": "spec_precision_gap",
+      "scope": "web/spec",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SP-6; INT-03 AC1; .specs/features/web/smoke.md:3 (web/spec)"
+      ],
+      "created": "2026-10-08T16:21:10Z",
+      "last_seen": "2026-10-08T16:21:10Z"
+    },
+    {
+      "id": "L-010",
+      "key": "surviving_mutant::teste de visibilidade por permissao isola a permissao da acao um caso so com ela e um caso com as outras escritas do modulo sem ela",
+      "text": "Teste de visibilidade por permissao isola a permissao da acao: um caso so com ela e um caso com as outras escritas do modulo sem ela",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,permissions",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "O02-O09 (validation.md, ciclo 1) (web,tests,permissions)"
+      ],
+      "created": "2026-10-08T22:28:11Z",
+      "last_seen": "2026-10-08T22:28:11Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenacao provavel",
+      "text": "Fixture de lista cuja ordem a spec define usa valores distintos e fora de ordem na chave de ordenacao provavel",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,fixtures",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "O01 (validation.md, ciclo 1) (web,tests,fixtures)"
+      ],
+      "created": "2026-10-08T22:28:11Z",
+      "last_seen": "2026-10-08T22:28:11Z"
+    },
+    {
+      "id": "L-012",
+      "key": "surviving_mutant::quando um ac nomeia mais de um code da api para o mesmo comportamento parametrize o teste por todos os codes nomeados",
+      "text": "Quando um AC nomeia mais de um code da API para o mesmo comportamento, parametrize o teste por todos os codes nomeados",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,session",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S06 (web/lib/api/client.ts:81) / FND-03 AC6 (web,tests,session)"
+      ],
+      "created": "2026-10-09T03:53:57Z",
+      "last_seen": "2026-10-09T03:53:57Z"
+    },
+    {
+      "id": "L-013",
+      "key": "surviving_mutant::trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao nao so de teste do bloqueio",
+      "text": "Trava ou flag que impede acao repetida precisa de teste que repete a acao depois da condicao de liberacao, nao so de teste do bloqueio",
+      "signal": "surviving_mutant",
+      "scope": "web,tests,session",
+      "status": "candidate",
+      "features": [
+        "web"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "V07 (web/lib/session/session-provider.tsx:106) / FND-03 AC6 (web,tests,session)"
+      ],
+      "created": "2026-10-09T22:06:16Z",
+      "last_seen": "2026-10-09T22:06:16Z"
     }
   ]
 }

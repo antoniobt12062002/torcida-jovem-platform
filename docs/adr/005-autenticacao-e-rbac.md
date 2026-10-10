@@ -66,6 +66,7 @@ Chosen option: **sessão no servidor com cookie `httpOnly`**, sem JWT neste mome
 ## Notas
 
 - 2026-09-26: `SameSite=Lax` foi confirmado pelo mantenedor. A configuração final (domínio do cookie e uso de proxy pelo Next) depende da estratégia de hospedagem, ainda não definida.
+- 2026-10-04: o uso de proxy pelo Next foi decidido na [ADR-010](010-acesso-do-navegador-a-api-por-rewrite-same-origin.md): rewrite same-origin de `/api/v1/*`, sem mudança no cookie nem no `SameSite=Lax`. O domínio do cookie continua dependendo da hospedagem.
 - 2026-09-26: a sessão administrativa tem teto absoluto de 8 horas. A política de senha usa mínimo de 10 caracteres para papéis administrativos e 8 para associados. Detalhes em `.specs/features/fundacao-core/spec.md`.
 
 ## Links
