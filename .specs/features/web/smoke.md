@@ -7,6 +7,8 @@
 
 ## Leia antes
 
+**Atualização de 2026-10-09:** a interação visual descrita abaixo como pendente foi exercitada depois, num navegador real, e está registrada em `smoke-visual.md`. Ela encontrou um defeito funcional (`/financeiro/contas` não abria no build de produção), corrigido no commit `5514b38`.
+
 > **A interação visual no navegador não foi exercitada.** O agente da INT não tinha navegador automatizado (Playwright está fora da V1, WEB-D-017, e nenhuma ferramenta foi instalada). Cliques, renderização das telas, mensagens exibidas, diálogos de confirmação e redirecionamentos feitos pelo JavaScript **não** foram vistos por ninguém nesta execução. Esses comportamentos estão cobertos pelos testes de componente com MSW de cada sub-spec, mas a confirmação na tela fica **pendente de execução humana**, pelo roteiro da seção "Roteiro para o mantenedor".
 >
 > **Redefinição de senha com token válido: não executável localmente** (INT-03 AC3). O provedor de e-mail `log` registra só o domínio do destinatário e o assunto (`"e-mail simulado (provedor log)"`, `recipient_domain`, `subject`); o link com o token nunca aparece. O pedido de recuperação e o token inválido foram executados (itens 3 e 4). A redefinição com token válido fica coberta pelos testes com MSW de ACS-03 (`web/features/identity/acesso/`, `web/app/(public)/redefinir-senha/page.test.tsx`).
