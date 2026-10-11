@@ -22,5 +22,5 @@ Apenas a versão mais recente publicada em `main` recebe correções de seguran�
 
 - O repositório é público: **nunca** versionar segredos, chaves, tokens, `.env` ou dados pessoais. Segredos ficam em GitHub Secrets por ambiente.
 - Dados pessoais de associados seguem a LGPD (Lei 13.709/2018); o portal público não expõe dados pessoais nem documentos.
-- Atualizações de dependências são acompanhadas pelo Dependabot. Verificações de vulnerabilidade no CI estão planejadas.
+- Atualizações de dependências são acompanhadas pelo Dependabot. O CI verifica vulnerabilidades conhecidas como etapa bloqueante nas PRs que alteram `api/` (`govulncheck`) ou `web/` (`pnpm audit --audit-level high`), e em toda execução manual do workflow; a política e a única exceção em vigor estão em [`docs/development/tooling.md`](docs/development/tooling.md) (SEC-001).
 - Autenticação, sessões e autorização seguem o [ADR-005](docs/adr/005-autenticacao-e-rbac.md); dados financeiros seguem o [ADR-004](docs/adr/004-auditoria-e-imutabilidade-financeira.md).

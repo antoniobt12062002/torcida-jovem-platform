@@ -52,9 +52,9 @@ Achados adicionais:
 | `vitest` | 5.0.2 | `web/package.json` | [guia de Vitest do Next.js 16.3.6](https://nextjs.org/docs/app/guides/testing/vitest) e npm | 2026-09-26 | Requer Node ^22.12. `pnpm test` roda `vitest run` (sem watch) |
 | `jsdom` | 29.1.1 | `web/package.json` | npm (campo `engines`) | 2026-09-26 | Não usa a 30.x porque ela exige Node >= 22.22.2; a 29 aceita ^22.13 |
 | `@testing-library/react` e `@testing-library/dom` | 16.3.3 e 10.4.2 | `web/package.json` | Guia do Next.js e npm | 2026-09-26 | React 19 suportado pelos peers |
-| `@vitejs/plugin-react` | 6.1.1 | `web/package.json` | Guia do Next.js e npm | 2026-09-26 | Peer `vite` ^8 (instalado automaticamente) |
+| `@vitejs/plugin-react` | 6.1.2 | `web/package.json` | Guia do Next.js e npm | 2026-09-26 | Peer `vite` ^8 (instalado automaticamente). Atualizado de 6.1.1 pela PR #64 (Dependabot), em 2026-10-11 |
 | `vite-tsconfig-paths` | 6.1.1 | `web/package.json` | Guia do Next.js e npm | 2026-09-26 | Faz o alias `@/` funcionar nos testes |
-| `@types/node` | ^22.20.4 | `web/package.json` | Peer do vitest | 2026-09-26 | Alinhado ao Node 22 do `.nvmrc` (antes ^20) |
+| `@types/node` | ^22.20.5 | `web/package.json` | Peer do vitest | 2026-09-26 | Alinhado ao Node 22 do `.nvmrc` (antes ^20). Atualizado de ^22.20.4 pela PR #64 (Dependabot), em 2026-10-11 |
 
 ## Verificação de vulnerabilidades no CI (SEC-001)
 
@@ -67,18 +67,20 @@ O job `api` roda `go tool govulncheck ./...` (dependência de ferramenta do `go.
 
 **Exceção do `pnpm audit`: `GHSA-vfj7-8cjw-p6xm`** (`AD-016` em `.specs/STATE.md`)
 
-A advisory está configurada em `web/pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`). O pnpm só descarta uma advisory cujo `github_advisory_id` seja **exatamente** esse. Outra advisory de `braces`, ou qualquer `high`/`critical` de outro pacote, continua derrubando o job. O CI segue com `pnpm audit --audit-level high`, e a saída do audit continua mostrando a vulnerabilidade como `(1 ignored)`.
+A advisory está configurada em `web/pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`). O pnpm só descarta uma advisory cujo `github_advisory_id` seja **exatamente** esse: a exceção não ignora o pacote `braces` de modo genérico. Outra advisory de `braces`, ou qualquer `high`/`critical` de outro pacote, continua derrubando o job. O CI segue com `pnpm audit --audit-level high`, e a saída em texto do audit continua mostrando a vulnerabilidade como `1 high (1 ignored)`.
 
 | Campo | Conteúdo |
 |---|---|
 | Advisory | `GHSA-vfj7-8cjw-p6xm` (high: negação de serviço por esgotamento de pilha com padrões profundamente aninhados) |
 | CVE | `CVE-2026-93687` |
-| Dependência | `braces@3.0.3` (faixa vulnerável: `<= 3.0.3`) |
-| Cadeia | `eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces` (só ferramenta de lint, em tempo de desenvolvimento) |
-| Motivo | Vulnerabilidade pré-existente no `develop`, sem versão corrigida (`first_patched_version: null`). Atualizar não resolve: até `@next/eslint-plugin-next@16.3.8` a cadeia continua fixada em `fast-glob@3.3.1`. |
-| Data | 2026-10-04 |
-| Remoção | Remover a exceção quando `braces` tiver versão corrigida ou quando `@next/eslint-plugin-next` deixar de trazer a cadeia vulnerável |
-| Verificação | `pnpm audit --json` (a advisory continua listada e é ignorada só por id) e `pnpm why braces` (confirma que a cadeia ainda é a única origem) |
+| Dependência | `braces@3.0.3`, a única versão de `braces` resolvida no `web/pnpm-lock.yaml` (faixa vulnerável: `<= 3.0.3`) |
+| Cadeias | Duas, que se encontram em `micromatch@4.0.8 → braces@3.0.3`: (1) `eslint-config-next@16.4.0 → @next/eslint-plugin-next@16.4.0 → fast-glob@3.3.1 → micromatch@4.0.8 → braces@3.0.3` (`devDependencies`, ferramenta de lint); (2) `shadcn@4.21.4 → @shadcn/registry@0.1.3 → fast-glob@3.3.3 → micromatch@4.0.8 → braces@3.0.3`, também alcançada por `shadcn@4.21.4 → ts-morph@26.0.0 → @ts-morph/common@0.27.0 → fast-glob@3.3.3` (`dependencies`) |
+| Alcance | O `shadcn` está em `dependencies` porque o `web/app/globals.css` importa `shadcn/tailwind.css`; nenhum código da aplicação importa o pacote em JavaScript, e `braces`, `micromatch` e `fast-glob` não aparecem no build de produção (`web/.next`, conferido em 2026-10-11). Na prática, `braces` roda só nas ferramentas (ESLint e CLI do `shadcn`). O alerta do Dependabot classifica a dependência como `runtime`, por causa da declaração em `dependencies`. |
+| Motivo | Vulnerabilidade pré-existente no `develop`, sem versão corrigida: a advisory tem `first_patched_version` vazio e a versão mais recente publicada de `braces` é a 3.0.3 (conferido em 2026-10-11). Atualizar não resolve: em `@next/eslint-plugin-next@16.4.0` a cadeia do ESLint continua fixada em `fast-glob@3.3.1`, e `shadcn@4.21.4` traz `fast-glob@3.3.3`; as duas versões de `fast-glob` dependem de `micromatch@4.0.8 → braces@3.0.3`. |
+| Data | 2026-10-04 (cadeias e alcance revistos em 2026-10-11) |
+| Remoção | Remover a exceção quando ocorrer qualquer uma destas condições: (1) `braces` tiver versão corrigida disponível e adotável; (2) as dependências deixarem de introduzir a versão vulnerável; (3) **todas** as cadeias que hoje levam a `braces@3.0.3` forem eliminadas ou substituídas por versões não vulneráveis. Basta uma condição; a remoção não acontece sozinha. |
+| Revisão | Manual e periódica, enquanto a exceção existir: ela não tem validade automática (o pnpm não expira exceções). Na revisão, conferir os itens de "Verificação" e se alguma condição de "Remoção" já foi atingida. |
+| Verificação | `pnpm audit --audit-level high` (saída em texto: `1 high (1 ignored)`); `pnpm audit --json` (com a exceção, a advisory **não** aparece em `advisories` e só entra na contagem `metadata.vulnerabilities.high`); `pnpm why braces` (lista as cadeias atuais, que precisam ser comparadas com a linha "Cadeias"); a versão resolvida no `web/pnpm-lock.yaml` (`braces@`) e os dados da advisory (`gh api /advisories/GHSA-vfj7-8cjw-p6xm`: faixa vulnerável e `first_patched_version`) |
 
 **Escopo:** cobre as dependências dos dois módulos (`api` e `web`). CodeQL fica fora desta rodada (decisão registrada em `.specs/STATE.md`): exige configuração de queries, tratamento de falsos positivos e o custo do SARIF/security dashboard; reavaliar quando os módulos de domínio (financeiro, associados, loja) justificarem o investimento.
 
