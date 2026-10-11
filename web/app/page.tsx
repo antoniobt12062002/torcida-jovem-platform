@@ -1,26 +1,9 @@
-import { Badge } from "@/components/ui/badge";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+import { routes } from "@/lib/session/routes";
 
-async function apiOnline(): Promise<boolean> {
-  try {
-    const res = await fetch(`${process.env.API_URL ?? "http://localhost:8080"}/healthz`, {
-      cache: "no-store",
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-export default async function Home() {
-  const online = await apiOnline();
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-3xl font-bold">TJ Platform</h1>
-      <Badge variant={online ? "default" : "destructive"}>
-        {online ? "API online" : "API indisponível"}
-      </Badge>
-    </main>
-  );
+// A raiz leva à página inicial autenticada (INT-01 AC3). Sem sessão, o portão
+// de app/(app)/layout.tsx leva a /entrar.
+export default function Home(): never {
+  redirect(routes.inicio);
 }

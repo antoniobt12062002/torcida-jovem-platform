@@ -144,11 +144,17 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      # O rewrite de /api/v1/* (ADR-010) é resolvido ao carregar o next.config.ts;
+      # typegen e build exigem API_URL. Valor só para validar o build no CI.
       - run: pnpm exec next typegen
+        env:
+          API_URL: http://localhost:8080
       - run: pnpm exec tsc --noEmit
       - name: Testes do front (Vitest)
         run: pnpm test
       - run: pnpm build
+        env:
+          API_URL: http://localhost:8080
       - name: Vulnerabilidades conhecidas nas dependências (crítica/alta falham o job)
         run: pnpm audit --audit-level high
 
