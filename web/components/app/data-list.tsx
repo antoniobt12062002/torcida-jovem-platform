@@ -22,7 +22,7 @@ export type Column<T> = {
   numeric?: boolean;
   /** 1 e 2 aparecem sempre na tabela; 3 só a partir de 1024 px (o dado continua no detalhe). */
   priority: 1 | 2 | 3;
-  /** Tratamento de texto longo na tabela. Padrão: quebra de linha. */
+  /** Tratamento de texto longo na tabela. Padrão: quebra de linha; coluna numérica não quebra. */
   wrap?: "nowrap" | "truncate" | "wrap";
   /**
    * Papel no item empilhado: título, campo-chave (entram os três primeiros) ou
@@ -67,6 +67,12 @@ function actionsOf<T>(row: T, { rowLabel, primaryAction, moreActions }: LayoutPr
   return <RowActions rowLabel={rowLabel(row)} primary={primaryAction?.(row)} actions={moreActions?.(row)} />;
 }
 
+// Um valor numérico não quebra no meio, a menos que a coluna peça.
+function cellWrap<T>({ wrap, numeric }: Column<T>) {
+  if (wrap === "wrap") return undefined;
+  return wrap ?? (numeric ? "nowrap" : undefined);
+}
+
 function DataTable<T>(props: LayoutProps<T>) {
   const { label, columns, rows, rowKey, primaryAction, moreActions, className } = props;
   const hasActions = !!primaryAction || !!moreActions;
@@ -93,7 +99,7 @@ function DataTable<T>(props: LayoutProps<T>) {
               <TableCell
                 key={column.id}
                 numeric={column.numeric}
-                wrap={column.wrap === "wrap" ? undefined : column.wrap}
+                wrap={cellWrap(column)}
                 className={cn(column.priority === 3 && LOW_PRIORITY)}
               >
                 {column.cell(row)}

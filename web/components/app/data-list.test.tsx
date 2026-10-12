@@ -126,6 +126,8 @@ describe("tabela", () => {
     const cell = screen.getByText("R$ 198,50");
     expect(classes(cell)).toEqual(expect.arrayContaining(["text-right", "tabular-nums"]));
     expect(classes(screen.getByRole("columnheader", { name: "Conta" }))).not.toContain("text-right");
+    // O valor não quebra no meio.
+    expect(classes(cell)).toContain("whitespace-nowrap");
   });
 
   it("a coluna declara o tratamento de texto longo", () => {

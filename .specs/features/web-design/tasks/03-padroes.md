@@ -301,14 +301,14 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `ShellFrame` sem sessão (entradas, caminho atual, nome, menu); `AppShell` vira adaptador com a mesma interface de hoje; link "Pular para o conteúdo"; marca "Torcida Jovem" com escudo; tokens do shell escuro; item ativo com `aria-current`, peso e barra; navegação fixa a partir de 1024 px e gaveta abaixo; "Trocar senha" como link; `NavItem` ganha `icon` e `description` opcionais; `AccessLayout` em duas colunas no desktop e coluna única abaixo de 1024, sem "Desde 2013".
 
 **Done when**:
-- [ ] O primeiro elemento focável é o link de pular, que leva o foco a `main#conteudo`
-- [ ] A marca exibida é "Torcida Jovem" e o texto "TJ Platform" não aparece no shell (teste atualizado, citando WDS-D-020)
-- [ ] A navegação fixa usa o ponto de quebra de 1024 px (classes `lg`), e o botão de menu existe abaixo dele (teste atualizado, citando WDS-D-019)
-- [ ] Item ativo tem `aria-current="page"`; "Trocar senha" é link e "Sair" é botão
-- [ ] Com `must_change_password`, só "Sair" aparece (FND-05 AC8)
-- [ ] `AppShell` mantém a interface `items` e `children`; `app/(app)/layout.tsx` compila sem alteração
-- [ ] `AccessLayout` mostra escudo e nome e nenhum texto "Desde 2013"
-- [ ] Gates passam
+- [x] O primeiro elemento focável é o link de pular, que leva o foco a `main#conteudo`
+- [x] A marca exibida é "Torcida Jovem" e o texto "TJ Platform" não aparece no shell (teste atualizado, citando WDS-D-020)
+- [x] A navegação fixa usa o ponto de quebra de 1024 px (classes `lg`), e o botão de menu existe abaixo dele (teste atualizado, citando WDS-D-019)
+- [x] Item ativo tem `aria-current="page"`; "Trocar senha" é link e "Sair" é botão
+- [x] Com `must_change_password`, só "Sair" aparece (FND-05 AC8)
+- [x] `AppShell` mantém a interface `items` e `children`; `app/(app)/layout.tsx` compila sem alteração
+- [x] `AccessLayout` mostra escudo e nome e nenhum texto "Desde 2013"
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: shell e layout de acesso conferidos no espécime; a revalidação completa de FND-05 AC2 no navegador é de DS-S (`tasks/04-shell-e-acesso.md`, T5)

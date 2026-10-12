@@ -95,16 +95,65 @@ describe("menu recolhível", () => {
     fireEvent.click(within(sheet).getByRole("link", { name: "Contas" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
+
+  // WDS-D-019: o ponto de quebra da navegação fixa passou de 768 (md) para
+  // 1024 px (lg); abaixo dele vale o botão de menu.
+  it("a navegação fixa e o botão de menu trocam em 1024 px (lg)", async () => {
+    await renderShell(["financeiro.contas.read"]);
+    const rail = screen.getByRole("navigation", { name: "Navegação principal" }).closest("[data-slot=shell-nav]");
+    const railClasses = rail?.getAttribute("class")?.split(/\s+/) ?? [];
+    expect(railClasses).toEqual(expect.arrayContaining(["hidden", "lg:block"]));
+    expect(railClasses.filter((name) => name.startsWith("md:"))).toEqual([]);
+    const buttonClasses = screen.getByRole("button", { name: "Abrir menu" }).className.split(/\s+/);
+    expect(buttonClasses).toContain("lg:hidden");
+    expect(buttonClasses.filter((name) => name.startsWith("md:"))).toEqual([]);
+  });
+});
+
+// WDS-D-020: no shell a marca é "Torcida Jovem", com o escudo; "TJ Platform"
+// fica só no título do documento.
+describe("marca", () => {
+  it("exibe o escudo e Torcida Jovem, com link para o início, e não exibe TJ Platform", async () => {
+    const { container } = await renderShell([]);
+    const brand = within(screen.getByRole("banner")).getByRole("link", { name: "Torcida Jovem" });
+    expect(brand.getAttribute("href")).toBe("/inicio");
+    expect(within(brand).getByRole("img", { name: "Torcida Jovem" })).toBeTruthy();
+    expect(container.textContent).not.toContain("TJ Platform");
+  });
+});
+
+// DSS-01 AC5.
+describe("link de pular", () => {
+  it("é o primeiro link da página e leva o foco ao conteúdo", async () => {
+    await renderShell([]);
+    const skip = screen.getAllByRole("link")[0];
+    expect(skip.textContent).toBe("Pular para o conteúdo");
+    fireEvent.click(skip);
+    expect(document.activeElement?.textContent).toBe("conteúdo da tela");
+  });
 });
 
 // FND-05 AC1: menu da pessoa.
 describe("menu da pessoa", () => {
-  it("oferece Trocar senha, que leva a /conta/senha", async () => {
+  // DSS-01 AC7: "Trocar senha" navega, então é um link para /conta/senha (antes
+  // era um item com `onClick` e `router.push`); "Sair" é um botão.
+  it("oferece Trocar senha, que é um link para /conta/senha, e Sair, que é um botão", async () => {
     await renderShell([]);
     const menu = await openAccountMenu();
     expect(within(menu).getAllByRole("menuitem").map((i) => i.textContent)).toEqual(["Trocar senha", "Sair"]);
-    fireEvent.click(within(menu).getByRole("menuitem", { name: "Trocar senha" }));
-    await waitFor(() => expect(navigations()).toEqual(["/conta/senha"]));
+    const changePassword = within(menu).getByRole("menuitem", { name: "Trocar senha" });
+    expect(changePassword.tagName).toBe("A");
+    expect(changePassword.getAttribute("href")).toBe("/conta/senha");
+    expect(within(menu).getByRole("menuitem", { name: "Sair" }).tagName).toBe("BUTTON");
+    // Abrir o menu não navega: quem navega é o link.
+    expect(navigations()).toEqual([]);
+  });
+
+  it("mostra o nome completo e o e-mail da pessoa no topo do menu", async () => {
+    await renderShell([]);
+    const menu = await openAccountMenu();
+    expect(within(menu).getByText("Pessoa Teste")).toBeTruthy();
+    expect(within(menu).getByText("pessoa.teste@example.com")).toBeTruthy();
   });
 
   it("Sair chama POST /auth/logout e leva a /entrar", async () => {

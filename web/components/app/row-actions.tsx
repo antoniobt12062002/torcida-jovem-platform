@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
+import { cn } from "@/lib/utils";
 
 // Ações de linha (DSP-05 AC10 e AC11): uma ação visível e as demais num menu.
 // Todo nome acessível começa pelo texto visível e termina identificando a
@@ -59,7 +60,7 @@ export function RowActionButton({ label, rowLabel, icon: Icon, onClick, href, di
   const name = rowActionName(label, rowLabel);
   if (href !== undefined && !disabled) {
     return (
-      <Link href={href} aria-label={name} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+      <Link href={href} aria-label={name} className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
         {content}
       </Link>
     );
