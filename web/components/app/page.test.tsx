@@ -51,6 +51,33 @@ describe("BrandMark", () => {
   });
 });
 
+// Revisão da rodada 4: HTML válido com o nome e carregamento acima da dobra.
+describe("BrandMark: estrutura e carregamento", () => {
+  it("com o nome, nenhum parágrafo fica dentro de elemento inline", () => {
+    const { container } = render(<BrandMark withName />);
+    const root = container.querySelector("[data-slot=brand-mark]") as HTMLElement;
+    expect(root.tagName).toBe("DIV");
+    expect(root.className.split(/\s+/)).toContain("inline-flex");
+    for (const block of container.querySelectorAll("p, div")) {
+      expect(block.closest("span"), block.outerHTML).toBeNull();
+    }
+  });
+
+  it("com priority, o escudo carrega sem espera e com prioridade alta", () => {
+    const { container } = render(<BrandMark priority />);
+    const image = container.querySelector("img");
+    expect(image?.getAttribute("loading")).toBe("eager");
+    expect(image?.getAttribute("fetchpriority")).toBe("high");
+  });
+
+  it("sem priority, o escudo segue o carregamento sob demanda", () => {
+    const { container } = render(<BrandMark />);
+    const image = container.querySelector("img");
+    expect(image?.getAttribute("loading")).toBe("lazy");
+    expect(image?.getAttribute("fetchpriority")).toBeNull();
+  });
+});
+
 // DSP-01 AC1: três larguras nomeadas. DSF-04 AC7: alvo do link de pular.
 describe("PageContainer", () => {
   it("é o main da página e o alvo do link de pular", () => {

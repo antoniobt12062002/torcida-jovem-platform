@@ -163,6 +163,13 @@ describe("identidade", () => {
     expect(within(brand).getByText("Torcida Jovem")).toBeTruthy();
   });
 
+  it("o link da marca tem alvo de 44 px em toque e o escudo carrega com prioridade", () => {
+    render(<Shell />);
+    const brand = within(screen.getByRole("banner")).getByRole("link", { name: "Torcida Jovem" });
+    expect(classes(brand)).toEqual(expect.arrayContaining(["min-h-touch", "items-center"]));
+    expect(within(brand).getByRole("img").getAttribute("loading")).toBe("eager");
+  });
+
   it("o nome ao lado do escudo some abaixo de 400 px e não é lido duas vezes", () => {
     render(<Shell />);
     const name = within(screen.getByRole("banner")).getByText("Torcida Jovem");

@@ -95,7 +95,7 @@ export function ShellFrame({ entries, currentPath, userName, userEmail, userMenu
 
   const brand = (
     <>
-      <BrandMark size={32} />
+      <BrandMark size={32} priority />
       <DisplayTitle aria-hidden className="hidden text-xl leading-6 min-[400px]:block">
         {BRAND_NAME}
       </DisplayTitle>
@@ -152,7 +152,7 @@ export function ShellFrame({ entries, currentPath, userName, userEmail, userMenu
           {showNav ? (
             <Link
               href={routes.inicio}
-              className="flex items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              className="flex min-h-touch touch-manipulation items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             >
               {brand}
             </Link>

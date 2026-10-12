@@ -56,7 +56,16 @@ export type ConfirmDialogProps = {
   pending?: boolean;
   /** Mensagem da falha da ação confirmada, mostrada dentro do diálogo. */
   error?: ReactNode;
+  /**
+   * Rótulo do botão de confirmar enquanto a ação está em andamento, terminado
+   * em "…" (DSC-02 AC4). Padrão: "Confirmando…". O padrão não repete
+   * `confirmLabel` com reticências, porque "Cancelar lançamento…" se leria como
+   * um passo que ainda abre outra tela.
+   */
+  pendingLabel?: `${string}…`;
 };
+
+const DEFAULT_PENDING_LABEL = "Confirmando…";
 
 export function ConfirmDialog({
   title,
@@ -74,6 +83,7 @@ export function ConfirmDialog({
   trigger,
   pending = false,
   error,
+  pendingLabel = DEFAULT_PENDING_LABEL,
 }: ConfirmDialogProps) {
   const reasonId = useId();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -154,6 +164,8 @@ export function ConfirmDialog({
           <AlertDialogAction
             variant={destructive ? "destructive" : "primary"}
             disabled={!canConfirm}
+            loading={busy}
+            loadingLabel={pendingLabel}
             onClick={() => void confirm()}
           >
             {confirmLabel}

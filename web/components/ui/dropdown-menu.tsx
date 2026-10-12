@@ -72,10 +72,16 @@ function DropdownMenuLabel({
   )
 }
 
+// Item com foco ou realce de teclado: fundo de realce e anel interno de 2 px no
+// token `ring` (contraste de pelo menos 3:1, DSC-01 AC2). O Base UI marca o item
+// realçado com `data-highlighted`; o anel interno não é cortado pelo menu.
+const ITEM_FOCUS =
+  "focus:bg-accent focus:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-highlighted:ring-2 data-highlighted:ring-ring data-highlighted:ring-inset"
+
 // Altura pelo token de controle (36 px; 44 px em toque). O item destrutivo vai
 // por último, depois de um separador.
 const dropdownMenuItemClasses =
-  "group/dropdown-menu-item relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive-subtle data-[variant=destructive]:focus:text-destructive-emphasis"
+  `group/dropdown-menu-item relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none ${ITEM_FOCUS} data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive-subtle data-[variant=destructive]:focus:text-destructive-emphasis data-[variant=destructive]:data-highlighted:bg-destructive-subtle data-[variant=destructive]:data-highlighted:text-destructive-emphasis`
 
 function DropdownMenuItem({
   className,
@@ -138,7 +144,7 @@ function DropdownMenuSubTrigger({
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
       className={cn(
-        "relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground",
+        `relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none ${ITEM_FOCUS} data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground`,
         className
       )}
       {...props}
@@ -184,7 +190,7 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       data-inset={inset}
       className={cn(
-        "relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pr-8",
+        `relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none ${ITEM_FOCUS} data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pr-8`,
         className
       )}
       checked={checked}
@@ -226,7 +232,7 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       data-inset={inset}
       className={cn(
-        "relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pr-8",
+        `relative flex min-h-control-md cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-hidden select-none ${ITEM_FOCUS} data-inset:pl-8 data-disabled:pointer-events-none data-disabled:text-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pr-8`,
         className
       )}
       {...props}

@@ -28,13 +28,26 @@ export type BrandMarkProps = {
   withName?: boolean;
   /** Posição do nome: ao lado (`row`, padrão) ou abaixo do escudo (`column`). */
   direction?: "row" | "column";
+  /**
+   * Escudo acima da dobra (tela de acesso, cabeçalho): carrega sem espera e com
+   * prioridade alta. No Next 16 a prop `priority` do `Image` está obsoleta; a
+   * documentação indica `loading="eager"` com `fetchPriority="high"`.
+   */
+  priority?: boolean;
   className?: string;
 };
 
-export function BrandMark({ size = 32, withName = false, direction = "row", className }: BrandMarkProps) {
+export function BrandMark({
+  size = 32,
+  withName = false,
+  direction = "row",
+  priority = false,
+  className,
+}: BrandMarkProps) {
   const { clearance, name } = SIZES[size];
+  // `div`, não `span`: com o nome, a raiz contém um parágrafo (`DisplayTitle`).
   return (
-    <span
+    <div
       data-slot="brand-mark"
       className={cn("inline-flex items-center", direction === "column" && "flex-col", className)}
     >
@@ -46,10 +59,12 @@ export function BrandMark({ size = 32, withName = false, direction = "row", clas
           width={size}
           height={size}
           unoptimized
+          loading={priority ? "eager" : undefined}
+          fetchPriority={priority ? "high" : undefined}
           className="aspect-square shrink-0"
         />
       </span>
       {withName ? <DisplayTitle className={name}>{BRAND_NAME}</DisplayTitle> : null}
-    </span>
+    </div>
   );
 }

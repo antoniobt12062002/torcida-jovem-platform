@@ -25,12 +25,18 @@ import {
 } from "@/components/ui/dialog"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLinkItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Sheet,
   SheetContent,
@@ -498,5 +504,99 @@ describe("DropdownMenu: foco, Esc e itens", () => {
       expect(classes(item), item.textContent ?? "").toContain("min-h-control-md")
     }
     expect(classes(menu)).toContain("shadow-elevation-1")
+  })
+})
+
+// Revisão da rodada 4 (DSC-01 AC2): o item realçado por teclado tem indicador
+// de foco de 2 px no token `ring`, não só o fundo de realce.
+const ITEM_FOCUS_RING = [
+  "focus-visible:ring-2",
+  "focus-visible:ring-ring",
+  "focus-visible:ring-inset",
+  "data-highlighted:ring-2",
+  "data-highlighted:ring-ring",
+  "data-highlighted:ring-inset",
+]
+const ITEM_HIGHLIGHT_BG = ["focus:bg-accent", "data-highlighted:bg-accent"]
+
+describe("DropdownMenu: indicador de foco do item", () => {
+  it("o item realçado pelas setas recebe data-highlighted e tem anel de 2 px no token ring, além do fundo", async () => {
+    render(<ActionsMenu />)
+    fireEvent.click(screen.getByRole("button", { name: "Ações de Ana" }))
+    const menu = await screen.findByRole("menu")
+    await waitFor(() => expect(menu.contains(document.activeElement)).toBe(true))
+    fireEvent.keyDown(document.activeElement as Element, { key: "ArrowDown" })
+    await waitFor(() => expect(document.activeElement?.getAttribute("role")).toBe("menuitem"))
+    const highlighted = document.activeElement as Element
+    await waitFor(() => expect(highlighted.hasAttribute("data-highlighted")).toBe(true))
+    expect(classes(highlighted)).toEqual(expect.arrayContaining([...ITEM_FOCUS_RING, ...ITEM_HIGHLIGHT_BG]))
+  })
+
+  it("item, link, caixa de seleção, opção de rádio e abertura de submenu têm o mesmo indicador", async () => {
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button />}>Opções</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Editar</DropdownMenuItem>
+          <DropdownMenuLinkItem href="/x">Abrir</DropdownMenuLinkItem>
+          <DropdownMenuCheckboxItem checked>Arquivados</DropdownMenuCheckboxItem>
+          <DropdownMenuRadioGroup value="a">
+            <DropdownMenuRadioItem value="a">Ordem A</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Mais</DropdownMenuSubTrigger>
+          </DropdownMenuSub>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Opções" }))
+    const menu = await screen.findByRole("menu")
+    const items = [
+      ...within(menu).getAllByRole("menuitem"),
+      within(menu).getByRole("menuitemcheckbox"),
+      within(menu).getByRole("menuitemradio"),
+    ]
+    expect(items).toHaveLength(5)
+    for (const item of items) {
+      expect(classes(item), item.textContent ?? "").toEqual(
+        expect.arrayContaining([...ITEM_FOCUS_RING, ...ITEM_HIGHLIGHT_BG])
+      )
+    }
+  })
+
+  it("o item destrutivo realçado mantém o tom de erro", async () => {
+    render(<ActionsMenu />)
+    fireEvent.click(screen.getByRole("button", { name: "Ações de Ana" }))
+    const item = await screen.findByRole("menuitem", { name: "Desativar" })
+    expect(classes(item)).toEqual(
+      expect.arrayContaining([
+        "data-[variant=destructive]:data-highlighted:bg-destructive-subtle",
+        "data-[variant=destructive]:data-highlighted:text-destructive-emphasis",
+        ...ITEM_FOCUS_RING,
+      ])
+    )
+  })
+})
+
+describe("Select: indicador de foco da opção", () => {
+  it("a opção tem anel de 2 px no token ring quando realçada, além do fundo", async () => {
+    render(
+      <Select items={[{ value: "a", label: "Receita" }, { value: "b", label: "Despesa" }]} defaultOpen>
+        <SelectTrigger aria-label="Tipo">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="a">Receita</SelectItem>
+          <SelectItem value="b">Despesa</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+    const options = await screen.findAllByRole("option")
+    expect(options).toHaveLength(2)
+    for (const option of options) {
+      expect(classes(option), option.textContent ?? "").toEqual(
+        expect.arrayContaining([...ITEM_FOCUS_RING, ...ITEM_HIGHLIGHT_BG])
+      )
+    }
   })
 })

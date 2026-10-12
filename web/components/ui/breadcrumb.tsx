@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils"
 
 type BreadcrumbItem = { label: string; href?: string }
 
+// Todo link da trilha tem a altura mínima de alvo do token (DSC-01 AC4-5).
 const LINK =
-  "rounded-sm underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
+  "inline-flex min-h-control-sm touch-manipulation items-center rounded-sm underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
 
 // Caminho até a página atual. O último item é a página atual, sem link. Abaixo
 // de 768 px mostra só o item anterior, como "voltar".
@@ -29,10 +30,7 @@ function Breadcrumb({
         <Link
           data-slot="breadcrumb-back"
           href={previous.href}
-          className={cn(
-            LINK,
-            "inline-flex min-h-control-sm touch-manipulation items-center gap-2 md:hidden"
-          )}
+          className={cn(LINK, "gap-2 md:hidden")}
         >
           <ArrowLeftIcon aria-hidden="true" className="size-4 shrink-0" />
           {previous.label}

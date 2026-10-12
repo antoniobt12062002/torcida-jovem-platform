@@ -261,6 +261,18 @@ describe("Breadcrumb", () => {
     expect(classes(within(nav).getByRole("list"))).toEqual(expect.arrayContaining(["hidden", "md:flex"]))
   })
 
+  it("os links da trilha completa têm a altura mínima de alvo, como o voltar (DSC-01 AC4-5)", () => {
+    render(<Breadcrumb items={ITEMS} />)
+    const list = within(screen.getByRole("navigation")).getByRole("list")
+    const links = within(list).getAllByRole("link")
+    expect(links).toHaveLength(2)
+    for (const link of links) {
+      expect(classes(link), link.textContent ?? "").toEqual(
+        expect.arrayContaining(["inline-flex", "min-h-control-sm", "items-center"])
+      )
+    }
+  })
+
   it("com um único item não há para onde voltar", () => {
     render(<Breadcrumb items={[{ label: "Início" }]} />)
     const nav = screen.getByRole("navigation")

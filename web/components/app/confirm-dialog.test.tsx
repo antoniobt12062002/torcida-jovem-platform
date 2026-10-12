@@ -163,9 +163,64 @@ describe("falha na ação confirmada", () => {
   });
 });
 
+// DSC-02 AC4: com a ação em andamento, confirmar fica desabilitado, expõe
+// `aria-busy` e mostra um rótulo de progresso terminado em "…".
+describe("ação em andamento", () => {
+  it("com pending, confirmar fica ocupado e mostra Confirmando…", async () => {
+    render(<ConfirmDialog open pending title="Desativar conta?" confirmLabel="Desativar conta" onConfirm={() => {}} />);
+    const dialog = await screen.findByRole("alertdialog");
+    const button = within(dialog).getByRole("button", { name: "Confirmando…" }) as HTMLButtonElement;
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.disabled).toBe(true);
+    expect(within(dialog).queryByRole("button", { name: "Desativar conta" })).toBeNull();
+  });
+
+  it("aceita um rótulo de progresso próprio", async () => {
+    render(
+      <ConfirmDialog
+        open
+        pending
+        title="Cancelar lançamento?"
+        confirmLabel="Cancelar lançamento"
+        pendingLabel="Cancelando lançamento…"
+        onConfirm={() => {}}
+      />,
+    );
+    const button = await screen.findByRole("button", { name: "Cancelando lançamento…" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("enquanto a Promise de onConfirm não termina, confirmar fica ocupado; depois volta ao rótulo", async () => {
+    let finish: (value?: unknown) => void = () => {};
+    const onConfirm = vi.fn(() => new Promise((_resolve, reject) => (finish = () => reject(new Error("falhou")))));
+    render(<ConfirmDialog open title="Desativar conta?" confirmLabel="Desativar conta" onConfirm={onConfirm} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Desativar conta" }));
+    const busy = await screen.findByRole("button", { name: "Confirmando…" });
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    expect((busy as HTMLButtonElement).disabled).toBe(true);
+    finish();
+    const idle = await screen.findByRole("button", { name: "Desativar conta" });
+    expect(idle.hasAttribute("aria-busy")).toBe(false);
+  });
+
+  it("sem ação em andamento, confirmar não expõe aria-busy", async () => {
+    render(<ConfirmDialog open title="Desativar conta?" confirmLabel="Desativar conta" onConfirm={() => {}} />);
+    const button = await screen.findByRole("button", { name: "Desativar conta" });
+    expect(button.hasAttribute("aria-busy")).toBe(false);
+  });
+});
+
 // DSP-03 AC3: o rótulo de confirmar é sempre informado por quem chama.
 // Conferido pelo `tsc` (gate Web), sem execução.
 export function recusadoPeloCompilador() {
   // @ts-expect-error `confirmLabel` é obrigatório: não existe "Confirmar" genérico.
   return <ConfirmDialog title="Desativar conta?" onConfirm={() => {}} />;
+}
+
+// DSC-02 AC4: o rótulo de progresso termina em "…". Conferido pelo `tsc`.
+export function rotuloDeProgressoSemReticencias() {
+  return (
+    // @ts-expect-error `pendingLabel` precisa terminar em "…".
+    <ConfirmDialog title="Desativar conta?" confirmLabel="Desativar conta" pendingLabel="Desativando" onConfirm={() => {}} />
+  );
 }
