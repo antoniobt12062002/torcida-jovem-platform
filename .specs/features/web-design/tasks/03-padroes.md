@@ -146,10 +146,10 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `BrandMark` (tamanhos 32, 40, 64 e 96; com ou sem nome; `alt` conforme o caso; largura e altura declaradas); `PageContainer` com `main#conteudo` e as três larguras; `PageHeader` com um único `h1`, filete de marca, descrição, trilha, ações e `meta`.
 
 **Done when**:
-- [ ] `BrandMark` com nome tem `alt=""`; sem nome, `alt="Torcida Jovem"`; sempre com `width` e `height`
-- [ ] `PageHeader` renderiza exatamente um `h1` e marca a trilha como navegação
-- [ ] `PageContainer` aceita só as três larguras nomeadas e expõe o alvo do link de pular
-- [ ] Gates passam
+- [x] `BrandMark` com nome tem `alt=""`; sem nome, `alt="Torcida Jovem"`; sempre com `width` e `height`
+- [x] `PageHeader` renderiza exatamente um `h1` e marca a trilha como navegação
+- [x] `PageContainer` aceita só as três larguras nomeadas e expõe o alvo do link de pular
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
