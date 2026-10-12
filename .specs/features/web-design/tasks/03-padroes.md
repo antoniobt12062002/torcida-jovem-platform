@@ -95,11 +95,11 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `useQueryState(key, codec, { history })` e os codificadores `string`, `oneOf` e `isoDate`. Escrita por `history.replaceState` ou `pushState`; valor padrão remove o parâmetro; escrita adiada em 300 ms quando pedida (busca).
 
 **Done when**:
-- [ ] Alterar o valor atualiza a query string; voltar ao padrão remove o parâmetro e preserva os demais
-- [ ] Abrir com o parâmetro presente restaura o valor; valor inválido cai no padrão, sem erro
-- [ ] `history: "replace"` não cria entrada de histórico; `"push"` cria uma
-- [ ] Com espera, várias mudanças seguidas geram uma única escrita
-- [ ] Gates passam
+- [x] Alterar o valor atualiza a query string; voltar ao padrão remove o parâmetro e preserva os demais
+- [x] Abrir com o parâmetro presente restaura o valor; valor inválido cai no padrão, sem erro
+- [x] `history: "replace"` não cria entrada de histórico; `"push"` cria uma
+- [x] Com espera, várias mudanças seguidas geram uma única escrita
+- [x] Gates passam
 
 **Tests**: unit
 **Verificação visual**: não se aplica
