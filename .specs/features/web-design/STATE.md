@@ -135,6 +135,9 @@ Doze unidades: DS-F, DS-T, DS-K, DS-L, DS-A, DS-E, DS-S, DS-ID, DS-FA, DS-FB, DS
 ### WDS-D-029 — Graphify como ferramenta auxiliar (2026-10-11)
 Usado para análise estrutural e planejamento da execução paralela, pelo executável local 0.9.86, com atualização manual pelo coordenador. Não é autoridade: specs e `STATE.md` prevalecem, seus resultados não viram requisito, e nenhuma decisão de paralelização depende só do grafo. Documentação operacional em `docs/development/ai-environment.md`; não há `AD` global para ele.
 
+### WDS-D-030 — Ajuste de dois neutros na rodada 1 (2026-10-11)
+Correção de implementação dentro da margem do design (valores finais dos neutros a critério do autor): o texto secundário passa de `#6B6E72` a `#64676B` e a borda de campo de `#8A8D91` a `#808387`. Motivo: sobre a superfície de hover (`accent`), os valores originais davam 4,37:1 em texto e 2,84:1 em borda, abaixo dos limites de DSF-02. Com os novos: texto 5,68 sobre branco, 5,26 sobre `muted`, 4,85 sobre `accent`; borda 3,81, 3,53 e 3,25. A paleta oficial não muda. Os pares entraram no teste de contraste.
+
 ---
 
 ## Relação com decisões anteriores
@@ -159,7 +162,7 @@ Registrado em 2026-10-11 (WDS-D-023): nota de revisão em `.specs/features/web/S
 | Asset | Situação | Tratamento |
 | --- | --- | --- |
 | Escudo colorido (`web/public/brand/torcida-jovem-logo.svg`) | Existe, ainda não versionado. Prancheta A4 (`viewBox 0 0 595.28 841.89`) com margens vazias; textos em curvas. | Versionar com o enquadramento corrigido (DSF-05). |
-| Escudo reduzido para favicon | Não existe | O favicon usa o escudo existente redimensionado (WDS-D-021). Asset oficial reduzido fica como dependência para ciclo posterior, se a legibilidade em 16 px não servir. |
+| Escudo reduzido para favicon | Não existe | **Necessário (constatado na rodada 1, 2026-10-11):** o escudo redimensionado é usado como ícone (WDS-D-021), mas em 16 px fica ilegível: só se reconhece o disco preto e vermelho; letreiro e ilustração viram mancha. Fica registrada a necessidade de um asset oficial reduzido para ciclo posterior. Nenhuma versão simplificada foi criada. |
 | Escudo monocromático | Não existe | Dependência de design. Não é usado até existir. |
 | Escudo em versão negativa | Não existe | Dependência de design. O escudo atual tem fundo preto próprio e funciona sobre o shell escuro e sobre fundo claro. |
 | A FERA (mascote) | Não existe | Dependência de design. Não aparece em nenhuma tela até existir asset oficial. |
@@ -248,7 +251,8 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
-- **Fase**: Execute, rodadas 1 a 5 autorizadas em 2026-10-11. Base documental commitada na branch `feature/web-design` (a partir da `develop` em `cebbdf2`).
-- **Próximo passo**: rodada 1 (DS-F), depois 2 (DS-K ∥ DS-T), 3 (DS-L), 4 (DS-A) e 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
+- **Fase**: Execute. **Rodada 1 (DS-F) concluída e integrada** na `feature/web-design` em 2026-10-11, com todos os gates verdes (74 arquivos de teste, 969 testes; base 69 e 851).
+- **Próximo passo**: rodada 2 (DS-K ∥ DS-T), depois 3 (DS-L), 4 (DS-A) e 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
 - **Bloqueios**: rodadas 6 e 7 dependem da aprovação visual do espécime. Sem push, PR ou merge na `develop`.
-- **Fora do versionamento**: `.claude/` (skills e ambiente virtual do Graphify) e `graphify-out/`.
+- **Observação de ambiente**: num worktree novo no Windows (`core.autocrlf=true`), os `web/lib/api/*.d.ts` saem em CRLF e `pnpm gen:api:check` falha; resolve-se com `git -c core.autocrlf=false checkout -- web/lib/api` logo depois de criar o worktree. Corrigir de vez exige `.gitattributes`, fora do escopo deste ciclo.
+- **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.

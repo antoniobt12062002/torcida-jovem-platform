@@ -64,7 +64,7 @@ Não verificado: se o subconjunto servido pelo `next/font` preserva o `tnum`. Co
 | `--tj-red` | `#D81E28` | Paleta oficial |
 | `--tj-white` | `#FFFFFF` | Paleta oficial |
 | `--tj-steel` | `#A7A9AC` | Paleta oficial |
-| `--tj-neutral-50` … `-950` | `#F6F6F7`, `#ECEDEE`, `#DCDDDF`, `#C4C6C8`, `#A7A9AC`, `#8A8D91`, `#6B6E72`, `#4A4D50`, `#2A2C2E`, `#1C1C1E`, `#111111` | Derivados do aço (400 é o próprio aço; 950 é o preto) |
+| `--tj-neutral-50` … `-950` | `#F6F6F7`, `#ECEDEE`, `#DCDDDF`, `#C4C6C8`, `#A7A9AC`, `#808387`, `#64676B`, `#4A4D50`, `#2A2C2E`, `#1C1C1E`, `#111111` | Derivados do aço (400 é o próprio aço; 950 é o preto) |
 | `--tj-red-50`, `-700`, `-800` | `#FDECEC`, `#B3141D`, `#8F0F17` | Derivados do vermelho, só para erro |
 | `--tj-green-50`, `-700`, `-800` | `#E8F5EC`, `#15803D`, `#166534` | Estado de sucesso (WDS-D-018) |
 | `--tj-amber-50`, `-700`, `-800` | `#FDF3E3`, `#B45309`, `#92400E` | Estado de aviso (WDS-D-018) |
@@ -93,7 +93,7 @@ Contrastes calculados pela fórmula WCAG; o teste de contraste (abaixo) é a aut
 | `sidebar` | `--tj-ink` | Shell: cabeçalho e navegação |
 | `sidebar-accent` | `--tj-neutral-800` | Hover de item do shell |
 | `border` | `--tj-neutral-200` | Divisórias e contornos decorativos |
-| `input` | `--tj-neutral-500` | Borda de campo (3,33 sobre branco) |
+| `input` | `--tj-neutral-500` | Borda de campo (3,81 sobre branco; 3,53 sobre `muted`; 3,25 sobre `accent`) |
 | `border-strong` | `--tj-ink` | Régua sob o cabeçalho de tabela e sob o título de seção |
 | `sidebar-border` | `--tj-neutral-800` | Divisórias do shell |
 | `overlay` | `--tj-ink` a 50% | Véu atrás de diálogo e gaveta |
@@ -103,8 +103,8 @@ Contrastes calculados pela fórmula WCAG; o teste de contraste (abaixo) é a aut
 | Token | Valor | Uso | Contraste |
 | --- | --- | --- | --- |
 | `foreground` (e `card-`, `popover-`, `accent-`, `secondary-foreground`) | `--tj-ink` | Texto principal | 18,88 sobre branco; 17,48 sobre `muted` |
-| `muted-foreground` | `--tj-neutral-600` | Texto secundário, ajuda, metadado | 5,12 sobre branco; 4,74 sobre `muted` |
-| `disabled-foreground` | `--tj-neutral-600` | Rótulo de controle desabilitado | 4,37 sobre `disabled` (isento pela WCAG, mantido legível) |
+| `muted-foreground` | `--tj-neutral-600` | Texto secundário, ajuda, metadado | 5,68 sobre branco; 5,26 sobre `muted`; 4,85 sobre `accent` |
+| `disabled-foreground` | `--tj-neutral-600` | Rótulo de controle desabilitado | 4,85 sobre `disabled` |
 | `sidebar-foreground` | `--tj-white` | Texto do shell | 18,88 |
 | `sidebar-muted-foreground` | `--tj-steel` | Rótulo de grupo e texto secundário do shell | 8,02 sobre preto; 5,95 sobre `sidebar-accent` |
 

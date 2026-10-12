@@ -175,7 +175,7 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 - [x] O teste confirma `viewBox` quadrado e PNG de 180 por 180 px
 - [x] Renderizado, o escudo aparece inteiro, sem corte, em 32, 64 e 96 px
 - [x] Nenhuma referência aos cinco SVGs de exemplo no código; `favicon.ico` padrão removido
-- [ ] IF o escudo ficar ilegível em 16 px THEN a necessidade de asset oficial reduzido é registrada em `STATE.md`, sem criar versão simplificada
+- [x] IF o escudo ficar ilegível em 16 px THEN a necessidade de asset oficial reduzido é registrada em `STATE.md`, sem criar versão simplificada
 - [x] Gates passam, incluindo Audit (fim da unidade DS-F)
 
 **Tests**: unit

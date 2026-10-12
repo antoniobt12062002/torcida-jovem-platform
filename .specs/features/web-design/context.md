@@ -104,7 +104,7 @@ Três camadas, todas na folha de estilos global (`web/app/globals.css`), no form
 | Grupo | Valores |
 | --- | --- |
 | Marca | `ink #111111`, `red #D81E28`, `white #FFFFFF`, `steel #A7A9AC` |
-| Neutros (derivados do aço) | 50 `#F6F6F7`, 100 `#ECEDEE`, 200 `#DCDDDF`, 300 `#C4C6C8`, 400 `#A7A9AC`, 500 `#8A8D91`, 600 `#6B6E72`, 700 `#4A4D50`, 800 `#2A2C2E`, 900 `#1C1C1E`, 950 `#111111` |
+| Neutros (derivados do aço) | 50 `#F6F6F7`, 100 `#ECEDEE`, 200 `#DCDDDF`, 300 `#C4C6C8`, 400 `#A7A9AC`, 500 `#808387`, 600 `#64676B`, 700 `#4A4D50`, 800 `#2A2C2E`, 900 `#1C1C1E`, 950 `#111111` |
 | Vermelhos | 50 `#FDECEC`, 500 `#D81E28`, 700 `#B3141D` |
 | Estado | sucesso `#15803D`, aviso `#B45309` |
 
@@ -115,11 +115,11 @@ Três camadas, todas na folha de estilos global (`web/app/globals.css`), no form
 | `background` | `#FFFFFF` | — |
 | `muted` (cabeçalho de tabela, barra de filtros) | `#F6F6F7` | — |
 | `foreground` | `#111111` | 18,88 sobre branco |
-| `muted-foreground` | `#6B6E72` | 5,12 sobre branco; 4,74 sobre `muted` |
+| `muted-foreground` | `#64676B` | 5,68 sobre branco; 5,26 sobre `muted`; 4,85 sobre `accent` |
 | `primary` / `primary-foreground` | `#111111` / `#FFFFFF` | 18,88 |
 | `brand` (acento) | `#D81E28` | 5,08 sobre branco |
 | `border` (decorativa) | `#DCDDDF` | não precisa de 3:1 |
-| `input` (borda de campo) | `#8A8D91` | 3,33 sobre branco |
+| `input` (borda de campo) | `#808387` | 3,81 sobre branco |
 | `ring` (foco) | `#111111` | 18,88 |
 | `destructive` | `#B3141D` | 6,92 sobre branco; 6,06 sobre `#FDECEC` |
 | `success` | `#15803D` | 5,02 sobre branco |

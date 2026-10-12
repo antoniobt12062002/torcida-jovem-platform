@@ -16,3 +16,6 @@ Thumbs.db
 
 # Graphify: grafo estrutural local, derivado do codigo (nao versionar)
 graphify-out/
+
+# Playwright MCP: capturas e snapshots locais (nao versionar)
+.playwright-mcp/
