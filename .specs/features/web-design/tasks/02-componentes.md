@@ -168,12 +168,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: altura e texto pelos tokens de controle; estados inválido, desabilitado e somente leitura; `NativeSelect` com aparência própria, seta e cores de fundo e de texto explícitas; `FieldLabel` com `optional`; `FieldError` com ícone; Checkbox com alvo único com o rótulo.
 
 **Done when**:
-- [ ] `getByLabelText` encontra Input, Textarea e NativeSelect dentro de `Field` (associação de rótulo confirmada; corrigida se falhar)
-- [ ] Campo com erro tem `aria-invalid`, `aria-describedby` e mensagem com ícone e texto
-- [ ] Input, Textarea e NativeSelect usam o mesmo token de altura e de borda
-- [ ] Rótulo com `optional` mostra "(opcional)"; clicar no rótulo do Checkbox alterna o controle
-- [ ] Os testes atuais de `field.test.tsx` continuam passando
-- [ ] Gates passam
+- [x] `getByLabelText` encontra Input, Textarea e NativeSelect dentro de `Field` (associação de rótulo confirmada; corrigida se falhar)
+- [x] Campo com erro tem `aria-invalid`, `aria-describedby` e mensagem com ícone e texto
+- [x] Input, Textarea e NativeSelect usam o mesmo token de altura e de borda
+- [x] Rótulo com `optional` mostra "(opcional)"; clicar no rótulo do Checkbox alterna o controle
+- [x] Os testes atuais de `field.test.tsx` continuam passando
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)

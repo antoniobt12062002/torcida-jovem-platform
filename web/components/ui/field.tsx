@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { Field as FieldPrimitive } from "@base-ui/react/field"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { CircleAlertIcon } from "lucide-react"
 
 import { Separator } from "@/components/ui/separator"
 
@@ -96,16 +97,32 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function FieldLabel({ className, ...props }: FieldPrimitive.Label.Props) {
+function FieldLabel({
+  className,
+  optional,
+  children,
+  ...props
+}: FieldPrimitive.Label.Props & {
+  /** Campo opcional: acrescenta "(opcional)". Campo obrigatório não leva marca. */
+  optional?: boolean
+}) {
   return (
     <FieldPrimitive.Label
       data-slot="field-label"
       className={cn(
-        "group/field-label peer/field-label flex w-fit items-center gap-2 text-sm leading-snug font-medium select-none group-data-[disabled=true]/field:opacity-50 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col *:data-[slot=field]:p-2.5",
+        "group/field-label peer/field-label flex w-fit items-center gap-2 text-sm leading-snug font-medium select-none group-data-[disabled=true]/field:opacity-50 has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-data-[slot=checkbox]:min-h-control-sm *:data-[slot=field]:p-2.5",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {optional ? (
+        <>
+          {/* O espaço separa as palavras no nome acessível. */}{" "}
+          <span className="font-normal text-muted-foreground">(opcional)</span>
+        </>
+      ) : null}
+    </FieldPrimitive.Label>
   )
 }
 function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
@@ -214,9 +231,13 @@ function FieldError({
       match
       role="alert"
       data-slot="field-error"
-      className={cn("text-sm font-normal text-destructive", className)}
+      className={cn(
+        "flex items-start gap-2 text-sm font-normal text-destructive",
+        className
+      )}
       {...props}
     >
+      <CircleAlertIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
       {content}
     </FieldPrimitive.Error>
   )
