@@ -138,6 +138,9 @@ Usado para análise estrutural e planejamento da execução paralela, pelo execu
 ### WDS-D-030 — Ajuste de dois neutros na rodada 1 (2026-10-11)
 Correção de implementação dentro da margem do design (valores finais dos neutros a critério do autor): o texto secundário passa de `#6B6E72` a `#64676B` e a borda de campo de `#8A8D91` a `#808387`. Motivo: sobre a superfície de hover (`accent`), os valores originais davam 4,37:1 em texto e 2,84:1 em borda, abaixo dos limites de DSF-02. Com os novos: texto 5,68 sobre branco, 5,26 sobre `muted`, 4,85 sobre `accent`; borda 3,81, 3,53 e 3,25. A paleta oficial não muda. Os pares entraram no teste de contraste.
 
+### WDS-D-031 — Direção estética aprovada no portão do espécime e DD-4 definitiva (2026-10-12)
+O mantenedor aprovou a direção visual do espécime: shell e sidebar pretos, escudo e tipografia condensada, vermelho pontual, Barlow Condensed nos títulos e Geist no conteúdo operacional, botões primários pretos, tabela no desktop e lista empilhada no celular, badges com significado textual, login em duas colunas no desktop e coluna única no celular, componentes, espaçamento e hierarquia. **DD-4 definitiva**: Barlow Condensed 700 nos saldos isolados de destaque; valores em tabelas, listas e formulários em Geist. Sem novas alterações estéticas além das correções pedidas. A liberação das rodadas 6 e 7 continua bloqueada até a correção do overflow em 1024 px, da barra de filtros e da conferência de toque, teclado e movimento reduzido no navegador.
+
 ---
 
 ## Relação com decisões anteriores

@@ -46,7 +46,7 @@ Nos dois casos os componentes ficam desacoplados dos hexadecimais, que é o obje
 
 ### DD-4 — Valor de destaque em Barlow Condensed
 
-**Aprovada condicionalmente à avaliação visual do espécime.** Se a leitura de números financeiros ficar prejudicada, o valor de destaque usa Geist.
+**Aprovada em definitivo no portão do espécime (WDS-D-031, 2026-10-12):** Barlow Condensed 700 com algarismos tabulares nos saldos isolados de destaque; tabelas, listas e formulários em Geist.
 
 O arquivo da Barlow Condensed Bold (repositório `google/fonts`) declara os recursos OpenType `tnum` e `pnum`, então algarismos tabulares existem. Proposta: só o valor de destaque isolado (saldo) usa Barlow Condensed 700 com `tabular-nums`. Toda tabela, lista, formulário e valor em linha usa Geist. Se, no espécime, o valor em Barlow Condensed não tiver boa leitura, ele passa a Geist 600, sem mudar componente (é um token de fonte do componente de valor).
 
