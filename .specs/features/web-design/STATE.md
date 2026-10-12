@@ -258,7 +258,21 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 | 2 | DS-T | `c82cc49`, `20f2609` | 76 / 1005 | Os 33 consumidores do mock de navegação passam sem alteração |
 | 2 | DS-K | `ae398cc`, `cbef5e2`, `c5fdf35`, `845a107`, `316eb3d`, `063b294`; integração `08c971d` | 79 / 1207 (com DS-T) | Alias de compatibilidade listados abaixo |
 
+| 3 | DS-L | `dd46c28`, `5bb3295` | 83 / 1285 | Estado na URL e consulta de mídia com teste de SSR e hidratação |
+| 4 | DS-A | `f74768f`, `82f6dc6`, `aa868d8`, `ea9f5e6`, `fb5500d`, `8577209`, `e9aeeb5`, `0dd89cd` | 93 / 1493 | Guarda de `components/app` sem exceções |
+| 4 | Correção do gate | `7476156`, `8c20dfd` | 93 / 1517 | Revisão `web-design-guidelines` reprovou 6 pontos (foco de item de menu e select, progresso na confirmação, HTML inválido na marca, alvos da trilha e da marca do shell); corrigidos com mais 5 melhorias de baixo risco |
+
 **Alias de compatibilidade a remover em DS-INT** (marcados no código com "Alias de compatibilidade: removido em DS-INT."): `button.tsx` (variantes `default` e `outline`; tamanhos `default`, `icon`, `icon-sm`), `badge.tsx` (`default`, `secondary`, `destructive`), `alert.tsx` (`default` e `destructive`), `table.tsx` (`scroll="legacy"` como padrão).
+
+**Conflitos com a `web-design-guidelines` registrados na rodada 4** (o projeto prevalece; reavaliar na rodada 7):
+
+- Áreas seguras: `viewport` sem `viewportFit: "cover"`, então o navegador mantém a página dentro da área segura e os `env(safe-area-inset-*)` valem zero; DSS-02 AC6 fica atendido por omissão. Ativar `cover` exigiria insets na gaveta esquerda, no topo do diálogo em tela cheia e no layout de acesso.
+- Placeholder `0,00` do campo de dinheiro sem "…": é o exemplo de formato de FND-05 AC4, mantido.
+- O toast anima `height` além de `transform` e `opacity`: é o empilhamento do Base UI.
+- Datas de calendário formatadas por expressão regular, sem `Intl`: de propósito, para não aplicar fuso a uma data sem hora.
+- O anel de foco dos itens de menu também aparece no hover do ponteiro, porque o Base UI marca `data-highlighted` nos dois casos.
+
+**Pendências registradas para a rodada 7** (melhorias B da revisão, não bloqueiam): `Button` em `loading` perde o foco do teclado; rótulo longo de botão não quebra em 320 px; `Checkbox` solto abaixo de 44 px; `Table` sem nome acessível obrigatório no tipo; `CardTitle` com nível fixo; link de pular ausente durante a troca obrigatória de senha; "Início" e módulos sem ícone; `RowActions` sem motivo para ação indisponível; campo de motivo sem `name`; foco do campo de dinheiro sem `focus-within`; escrita pendente da busca descartada ao sair da tela; `tap-highlight` e `touch-action` na camada base.
 
 **Desvios aceitos pelo coordenador na rodada 2, a rever em DS-INT ou no espécime:**
 
@@ -270,8 +284,8 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
-- **Fase**: Execute. **Rodadas 1 e 2 concluídas e integradas** na `feature/web-design`, com todos os gates verdes (79 arquivos de teste, 1207 testes; base 69 e 851).
-- **Próximo passo**: rodada 3 (DS-L), 4 (DS-A) e 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
+- **Fase**: Execute. **Rodadas 1 a 4 concluídas e integradas** na `feature/web-design`, com todos os gates verdes (93 arquivos de teste, 1517 testes; base 69 e 851) e a revisão `web-design-guidelines` da rodada 4 corrigida.
+- **Próximo passo**: rodada 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
 - **Bloqueios**: rodadas 6 e 7 dependem da aprovação visual do espécime. Sem push, PR ou merge na `develop`.
 - **Observação de ambiente**: num worktree novo no Windows (`core.autocrlf=true`), os `web/lib/api/*.d.ts` saem em CRLF e `pnpm gen:api:check` falha; resolve-se com `git -c core.autocrlf=false checkout -- web/lib/api` logo depois de criar o worktree. Corrigir de vez exige `.gitattributes`, fora do escopo deste ciclo.
 - **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.
