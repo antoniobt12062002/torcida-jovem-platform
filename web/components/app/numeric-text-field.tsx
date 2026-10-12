@@ -4,6 +4,7 @@ import { type ReactNode, type Ref, useState } from "react";
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 // Base comum dos campos de dinheiro e quantidade: guarda o texto digitado,
 // entrega ao formulário só o inteiro lido (ou null) e mostra o erro de
@@ -73,9 +74,17 @@ export function NumericTextField({
   return (
     <Field invalid={!!message} className={className}>
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex items-center gap-2">
-        {prefix ? <span className="text-sm text-muted-foreground">{prefix}</span> : null}
+      <div className="flex items-stretch">
+        {prefix ? (
+          <span
+            data-slot="field-prefix"
+            className="inline-flex shrink-0 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-control [&]:text-muted-foreground"
+          >
+            {prefix}
+          </span>
+        ) : null}
         <Input
+          className={cn("tabular-nums", prefix ? "rounded-l-none" : undefined)}
           ref={ref}
           id={id}
           name={name}

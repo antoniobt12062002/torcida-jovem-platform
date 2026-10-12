@@ -197,10 +197,10 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `FormLayout` com alerta de erro no topo que recebe foco, e rodapé de ações responsivo; os três campos numéricos passam a compor `Field`. `numeric-text-field.tsx` ganha o teste próprio que faltava.
 
 **Done when**:
-- [ ] Os testes atuais de `money-field.test.tsx` e `quantity-field.test.tsx` passam sem alteração de asserção
-- [ ] `FormLayout` mostra o erro de formulário como alerta e leva o foco a ele
-- [ ] `numeric-text-field` tem teste de rótulo, erro e modo de entrada
-- [ ] Gates passam
+- [x] Os testes atuais de `money-field.test.tsx` e `quantity-field.test.tsx` passam sem alteração de asserção
+- [x] `FormLayout` mostra o erro de formulário como alerta e leva o foco a ele
+- [x] `numeric-text-field` tem teste de rótulo, erro e modo de entrada
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
