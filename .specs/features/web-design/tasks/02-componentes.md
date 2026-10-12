@@ -116,10 +116,10 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: `mockViewport({ width, coarse })` instala um `matchMedia` controlado e devolve a função de restauração; por padrão o jsdom continua sem `matchMedia`, o que os hooks tratam como desktop. `test/msw/fixtures.ts`, `test/msw/server.ts`, `test/render.tsx` e `lib/session/test-utils.tsx` **não mudam** nesta task: pertencem a DS-T e ficam congelados.
 
 **Done when**:
-- [ ] `mockViewport` responde a consultas de largura mínima e de `pointer: coarse`, e notifica ouvintes quando a largura muda
-- [ ] O estado é restaurado entre testes, sem vazar para outros arquivos
-- [ ] Nenhum teste existente muda; a contagem de testes só cresce
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-T)
+- [x] `mockViewport` responde a consultas de largura mínima e de `pointer: coarse`, e notifica ouvintes quando a largura muda
+- [x] O estado é restaurado entre testes, sem vazar para outros arquivos
+- [x] Nenhum teste existente muda; a contagem de testes só cresce
+- [x] Gates passam, incluindo Audit (fim da unidade DS-T)
 
 **Tests**: unit
 **Verificação visual**: não se aplica
