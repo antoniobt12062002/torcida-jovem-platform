@@ -248,13 +248,13 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `DataList` com colunas tipadas (`priority`, `numeric`, `wrap`, `inList`), `rowLabel`, `primaryAction`, `moreActions` e `layout` (`auto`, `table`, `list`). Uma única árvore renderizada: tabela a partir de 768 px (prioridade 3 oculta por CSS até 1024) ou lista `<ul>` abaixo disso. `RowActions` com menu "Ações de {rowLabel}".
 
 **Done when**:
-- [ ] Sem `matchMedia` (padrão dos testes), renderiza tabela com cabeçalhos de coluna e nome acessível
-- [ ] Com `mockViewport` estreito, renderiza lista com título, até três campos, status e ações, e nenhuma tabela
-- [ ] Coluna de prioridade 3 tem a classe que a oculta abaixo de 1024 px; coluna de prioridade 1 nunca é ocultada
-- [ ] `layout="table"` mantém a tabela em qualquer largura
-- [ ] Toda ação de linha tem nome acessível que contém o texto visível e identifica a linha; nomes são únicos entre linhas
-- [ ] Renderização no servidor igual à primeira renderização do cliente (sem aviso de hidratação)
-- [ ] Gates passam
+- [x] Sem `matchMedia` (padrão dos testes), renderiza tabela com cabeçalhos de coluna e nome acessível
+- [x] Com `mockViewport` estreito, renderiza lista com título, até três campos, status e ações, e nenhuma tabela
+- [x] Coluna de prioridade 3 tem a classe que a oculta abaixo de 1024 px; coluna de prioridade 1 nunca é ocultada
+- [x] `layout="table"` mantém a tabela em qualquer largura
+- [x] Toda ação de linha tem nome acessível que contém o texto visível e identifica a linha; nomes são únicos entre linhas
+- [x] Renderização no servidor igual à primeira renderização do cliente (sem aviso de hidratação)
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: os três comportamentos conferidos no espécime em 390, 768, 820, 1024 e 1440 px
