@@ -340,11 +340,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: prévia do saldo com algarismos tabulares; aviso de saldo negativo como alerta de aviso, com ícone e texto, sem bloquear; botão desabilitado sem quantidade ou motivo, como hoje. A guarda cobre os diretórios de DS-ES.
 
 **Done when**:
-- [ ] Os testes existentes do ajuste passam sem alteração de asserção de comportamento
-- [ ] O aviso de saldo negativo não depende só de cor
-- [ ] Conta só com leitura (`CONSELHO_FISCAL`) não vê ação de escrita em nenhuma tela de estoque
-- [ ] A guarda passa nos diretórios de DS-ES
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-ES)
+- [x] Os testes existentes do ajuste passam sem alteração de asserção de comportamento
+- [x] O aviso de saldo negativo não depende só de cor
+- [x] Conta só com leitura (`CONSELHO_FISCAL`) não vê ação de escrita em nenhuma tela de estoque
+- [x] A guarda passa nos diretórios de DS-ES
+- [x] Gates passam, incluindo Audit (fim da unidade DS-ES)
 
 **Tests**: component com MSW
 **Verificação visual**: diálogo de ajuste com e sem aviso, em 390 e 1440 px
