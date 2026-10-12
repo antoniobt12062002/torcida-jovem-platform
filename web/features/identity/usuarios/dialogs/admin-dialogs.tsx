@@ -2,19 +2,13 @@
 
 import { useId, useState } from "react";
 
-import { ApiErrorAlert } from "@/components/app/api-error";
+import { apiErrorMessage } from "@/components/app/api-error";
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
+import { FormLayout } from "@/components/app/form-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
@@ -24,7 +18,7 @@ import { usersCatalog } from "../errors";
 import { type User, useGrantAdmin, useRevokeAdmin, useSetRoles } from "../hooks";
 import { ADMIN_ROLES, type Role, roleLabel } from "../roles";
 import { isReasonValid, REASON_HINT } from "./reason";
-import { reportFailure } from "./status-dialogs";
+import { subjectOf, useConfirmFailure } from "./status-dialogs";
 
 // Acesso administrativo e papéis (USR-04): promover, editar papéis e retirar
 // o acesso. A API decide a escalada de privilégio; o front mostra o resultado.
@@ -121,26 +115,36 @@ export function GrantAdminDialog({ user, open, onOpenChange }: AdminDialogProps)
             As sessões da pessoa serão encerradas e ela terá de trocar a senha no próximo acesso.
           </DialogDescription>
         </DialogHeader>
-        {error ? <ApiErrorAlert error={error} catalog={usersCatalog} /> : null}
-        <RoleCheckboxes selected={roles} onChange={setRoles} disabled={pending} />
-        <Field>
-          <FieldLabel htmlFor={reasonId}>Motivo</FieldLabel>
-          <Textarea
-            id={reasonId}
-            value={reason}
-            disabled={pending}
-            onValueChange={(value) => setReason(String(value))}
-          />
-          <FieldDescription>{REASON_HINT}</FieldDescription>
-        </Field>
-        <DialogFooter>
-          <Button variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button disabled={!canSubmit} onClick={() => void submit()}>
-            Promover
-          </Button>
-        </DialogFooter>
+        <FormLayout
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+          error={error ? apiErrorMessage(error, usersCatalog) : undefined}
+          footer={
+            <>
+              <Button type="button" variant="secondary" disabled={pending} onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={!canSubmit} loading={pending} loadingLabel="Promovendo…">
+                Promover
+              </Button>
+            </>
+          }
+        >
+          <RoleCheckboxes selected={roles} onChange={setRoles} disabled={pending} />
+          <Field>
+            <FieldLabel htmlFor={reasonId}>Motivo</FieldLabel>
+            <Textarea
+              id={reasonId}
+              value={reason}
+              disabled={pending}
+              onValueChange={(value) => setReason(String(value))}
+            />
+            <FieldDescription>{REASON_HINT}</FieldDescription>
+          </Field>
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );
@@ -180,32 +184,43 @@ export function SetRolesDialog({ user, open, onOpenChange }: AdminDialogProps) {
           <DialogTitle>Editar papéis de {user.name}</DialogTitle>
           <DialogDescription>O papel Associado é sempre mantido.</DialogDescription>
         </DialogHeader>
-        {error ? <ApiErrorAlert error={error} catalog={usersCatalog} /> : null}
-        <RoleCheckboxes
-          selected={roles}
-          disabled={pending}
-          onChange={(next) => {
-            setRoles(next);
-            setConfirmingEmpty(false);
+        <FormLayout
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save();
           }}
-        />
-        {confirmingEmpty ? (
-          <Alert>
-            <AlertDescription>{MESSAGE_DORMANT}</AlertDescription>
-          </Alert>
-        ) : null}
-        <DialogFooter>
-          <Button
-            variant="outline"
+          error={error ? apiErrorMessage(error, usersCatalog) : undefined}
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={pending}
+                onClick={() => (confirmingEmpty ? setConfirmingEmpty(false) : onOpenChange(false))}
+              >
+                {confirmingEmpty ? "Voltar" : "Cancelar"}
+              </Button>
+              <Button type="submit" loading={pending} loadingLabel="Salvando…">
+                {confirmingEmpty ? "Salvar sem papéis" : "Salvar papéis"}
+              </Button>
+            </>
+          }
+        >
+          <RoleCheckboxes
+            selected={roles}
             disabled={pending}
-            onClick={() => (confirmingEmpty ? setConfirmingEmpty(false) : onOpenChange(false))}
-          >
-            {confirmingEmpty ? "Voltar" : "Cancelar"}
-          </Button>
-          <Button disabled={pending} onClick={() => void save()}>
-            {confirmingEmpty ? "Salvar sem papéis" : "Salvar papéis"}
-          </Button>
-        </DialogFooter>
+            onChange={(next) => {
+              setRoles(next);
+              setConfirmingEmpty(false);
+            }}
+          />
+          {confirmingEmpty ? (
+            <Alert variant="warning">
+              <AlertDescription>{MESSAGE_DORMANT}</AlertDescription>
+            </Alert>
+          ) : null}
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );
@@ -213,21 +228,22 @@ export function SetRolesDialog({ user, open, onOpenChange }: AdminDialogProps) {
 
 export function RevokeAdminDialog({ user, open, onOpenChange }: AdminDialogProps) {
   const mutation = useRevokeAdmin();
+  const { error, attempt } = useConfirmFailure();
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
       title={`Retirar o acesso administrativo de ${user.name}?`}
-      description="A pessoa fica só com o papel Associado e as sessões dela serão encerradas. O histórico do vínculo é preservado."
+      subject={subjectOf(user)}
+      consequence="A pessoa fica só com o papel Associado e as sessões dela serão encerradas."
+      description="O histórico do vínculo é preservado."
       confirmLabel="Retirar acesso"
+      pendingLabel="Retirando…"
       destructive
       reason="required"
+      error={error}
       onConfirm={async (reason) => {
-        try {
-          await mutation.mutateAsync({ id: user.id, body: { reason: reason ?? "" } });
-        } catch (cause) {
-          reportFailure(cause);
-        }
+        await attempt(() => mutation.mutateAsync({ id: user.id, body: { reason: reason ?? "" } }));
         toast.success(MESSAGE_REVOKED);
       }}
     />

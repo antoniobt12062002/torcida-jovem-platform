@@ -5,7 +5,7 @@ import { resetNavigation } from "@/lib/session/navigation-mock";
 import { mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext, ids, user } from "@/test/msw/fixtures";
 
-import { mockListUsers, openRowMenu } from "./test-helpers";
+import { menuItemName, mockListUsers, openRowMenu } from "./test-helpers";
 import { UsersPage } from "./users-page";
 
 vi.mock("next/navigation", async () =>
@@ -168,19 +168,19 @@ describe("usuário com vínculo: Editar papéis e Retirar acesso", () => {
   it("identity:role:assign libera só Editar papéis", async () => {
     await renderPage([READ, "identity:role:assign"]);
     expect(await openRowMenu("Hana Tesoureira")).toEqual([SET_ROLES]);
-    expect(screen.queryByRole("menuitem", { name: REVOKE })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: menuItemName(REVOKE, "Hana Tesoureira") })).toBeNull();
   });
 
   it("identity:admin:revoke libera só Retirar acesso administrativo", async () => {
     await renderPage([READ, "identity:admin:revoke"]);
     expect(await openRowMenu("Hana Tesoureira")).toEqual([REVOKE]);
-    expect(screen.queryByRole("menuitem", { name: SET_ROLES })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: menuItemName(SET_ROLES, "Hana Tesoureira") })).toBeNull();
   });
 
   it("escolher Editar papéis abre o diálogo de papéis da pessoa", async () => {
     await renderPage([READ, "identity:role:assign"]);
     await openRowMenu("Hana Tesoureira");
-    fireEvent.click(screen.getByRole("menuitem", { name: SET_ROLES }));
+    fireEvent.click(screen.getByRole("menuitem", { name: menuItemName(SET_ROLES, "Hana Tesoureira") }));
     expect(
       await screen.findByRole("dialog", { name: "Editar papéis de Hana Tesoureira" }),
     ).toBeTruthy();

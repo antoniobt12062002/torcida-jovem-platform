@@ -108,12 +108,12 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: página em largura larga com `Suspense`; filtros `situacao` e `papel` na URL, ainda enviados à API como `active` e `role`; colunas por prioridade (nome e situação; e-mail e papéis; acesso administrativo); menu "Ações de {nome}"; "Mostrar mais" pelo cursor; estados vazio, sem resultado e erro; ícone e descrição em `nav.ts`; os dois `<select>` avulsos saem.
 
 **Done when**:
-- [ ] Os testes existentes da tela passam; mudam só as leituras de filtro, agora pela URL (DSP-05 AC2)
-- [ ] Mudar um filtro atualiza a URL; abrir a URL com filtro restaura a consulta; valor inválido é ignorado
-- [ ] Com `mockViewport` estreito, a tela mostra lista empilhada com todas as ações acessíveis
-- [ ] O menu de cada usuário tem nome acessível que identifica o usuário; a própria linha continua sem ações
-- [ ] Nenhum `<select>` fora do kit e nenhum contêiner ou título montado à mão
-- [ ] Gates passam
+- [x] Os testes existentes da tela passam; mudam só as leituras de filtro, agora pela URL (DSP-05 AC2)
+- [x] Mudar um filtro atualiza a URL; abrir a URL com filtro restaura a consulta; valor inválido é ignorado
+- [x] Com `mockViewport` estreito, a tela mostra lista empilhada com todas as ações acessíveis
+- [x] O menu de cada usuário tem nome acessível que identifica o usuário; a própria linha continua sem ações
+- [x] Nenhum `<select>` fora do kit e nenhum contêiner ou título montado à mão
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: tela em 390, 768, 820, 1024 e 1440 px, comparada com o espécime
@@ -135,11 +135,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: formulários em coluna única com `FormLayout`; confirmações nomeiam o usuário e a consequência; botões que abrem ação destrutiva passam a `secondary`, e só o botão final da confirmação é `destructive`; `spellCheck={false}` no e-mail; diálogos em tela cheia abaixo de 640 px. A guarda cobre os diretórios de DS-ID.
 
 **Done when**:
-- [ ] Os testes existentes dos diálogos passam sem alteração de asserção de comportamento (validações, e-mail duplicado, não escalada, senha temporária)
-- [ ] Cada confirmação mostra o nome do usuário, a consequência e um botão com o verbo da ação
-- [ ] Nenhum uso de alias de variante de botão resta nos arquivos de DS-ID
-- [ ] A guarda passa nos diretórios de DS-ID
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-ID)
+- [x] Os testes existentes dos diálogos passam sem alteração de asserção de comportamento (validações, e-mail duplicado, não escalada, senha temporária)
+- [x] Cada confirmação mostra o nome do usuário, a consequência e um botão com o verbo da ação
+- [x] Nenhum uso de alias de variante de botão resta nos arquivos de DS-ID
+- [x] A guarda passa nos diretórios de DS-ID
+- [x] Gates passam, incluindo Audit (fim da unidade DS-ID)
 
 **Tests**: component com MSW
 **Verificação visual**: os quatro diálogos em 390 e 1440 px
