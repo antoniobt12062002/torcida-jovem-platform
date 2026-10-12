@@ -161,10 +161,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: árvore com recuo por nível em qualquer largura (não usa `DataList`); status ativo e inativo com ícone e texto; estado vazio com orientação e ação "Nova conta" para quem pode; confirmação de desativar com o nome da conta e a consequência; ícones e descrições em `nav.ts`.
 
 **Done when**:
-- [ ] Os testes existentes de contas passam sem alteração de asserção de comportamento (tipo fixado pelo pai, desativação, árvore)
-- [ ] A hierarquia continua legível em 320 px, por recuo, sem rolagem horizontal
-- [ ] Conta inativa é distinguível sem depender de cor
-- [ ] Gates passam
+- [x] Os testes existentes de contas passam sem alteração de asserção de comportamento (tipo fixado pelo pai, desativação, árvore)
+- [x] A hierarquia continua legível em 320 px, por recuo, sem rolagem horizontal
+- [x] Conta inativa é distinguível sem depender de cor
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: tela vazia e com árvore em 390, 768, 820, 1024 e 1440 px

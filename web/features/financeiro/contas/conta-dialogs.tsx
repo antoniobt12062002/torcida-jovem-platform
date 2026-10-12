@@ -1,19 +1,19 @@
 "use client";
 
+import { CircleAlertIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FormLayout } from "@/components/app/form-layout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
@@ -22,7 +22,8 @@ import { applyProblemToForm } from "@/lib/forms/apply-problem";
 import { contasFormCatalog, tipoContaLabel } from "./errors";
 import { type Conta, useCreateConta, useRenameConta } from "./hooks";
 
-// Diálogos de criar conta (raiz ou subconta) e de renomear (FWB-01 AC2-4, AC6).
+// Diálogos de criar conta (raiz ou subconta) e de renomear (FWB-01 AC2-4, AC6),
+// no padrão de formulário (DSP-04): erro sem campo no topo, ações no rodapé.
 
 const NOME_MAX = 200;
 const TIPOS = ["RECEITA", "DESPESA"] as const;
@@ -34,15 +35,6 @@ const nomeRules = {
 
 function toApiError(cause: unknown) {
   return isApiError(cause) ? cause : networkError(cause);
-}
-
-function RootError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <Alert variant="destructive">
-      <AlertDescription>{message}</AlertDescription>
-    </Alert>
-  );
 }
 
 type CreateValues = { nome: string; tipo: Conta["tipo"] | "" };
@@ -87,24 +79,37 @@ export function CreateContaDialog({ parent, onClose }: CreateContaDialogProps) {
             <DialogDescription>A subconta tem sempre o mesmo tipo da conta pai.</DialogDescription>
           ) : null}
         </DialogHeader>
-        <form className="flex flex-col gap-4" noValidate onSubmit={(event) => void handleSubmit(onValid)(event)}>
-          <RootError message={errors.root?.message} />
-
+        <FormLayout
+          noValidate
+          onSubmit={(event) => void handleSubmit(onValid)(event)}
+          error={errors.root?.message}
+          footer={
+            <>
+              <DialogClose render={<Button type="button" variant="secondary" disabled={isSubmitting} />}>
+                Cancelar
+              </DialogClose>
+              <Button type="submit" loading={isSubmitting} loadingLabel="Criando…">
+                Criar conta
+              </Button>
+            </>
+          }
+        >
           <Field invalid={!!errors.nome}>
             <FieldLabel>Nome</FieldLabel>
             <Input autoComplete="off" {...register("nome", nomeRules)} />
             <FieldError>{errors.nome?.message}</FieldError>
           </Field>
 
-          <fieldset className="flex flex-col gap-2" aria-describedby={errors.tipo ? "conta-tipo-erro" : undefined}>
-            <legend className="mb-1 text-sm font-medium">Tipo</legend>
-            <div className="flex gap-4">
+          <FieldSet className="gap-2" aria-describedby={errors.tipo ? "conta-tipo-erro" : undefined}>
+            <FieldLegend variant="label">Tipo</FieldLegend>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               {TIPOS.map((tipo) => (
-                <label key={tipo} className="flex items-center gap-2 text-sm">
+                <label key={tipo} className="flex min-h-control-sm items-center gap-2 text-sm">
                   <input
                     type="radio"
                     value={tipo}
                     disabled={!!parent}
+                    className="size-4 accent-primary"
                     {...register("tipo", { required: parent ? false : "Escolha o tipo." })}
                   />
                   {tipoContaLabel[tipo]}
@@ -112,21 +117,14 @@ export function CreateContaDialog({ parent, onClose }: CreateContaDialogProps) {
               ))}
             </div>
             {errors.tipo ? (
-              <p id="conta-tipo-erro" role="alert" className="text-sm text-destructive">
+              // Mesmo desenho de FieldError, que só funciona dentro de um Field de controle único.
+              <p id="conta-tipo-erro" role="alert" className="flex items-start gap-2 text-sm text-destructive">
+                <CircleAlertIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                 {errors.tipo.message}
               </p>
             ) : null}
-          </fieldset>
-
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>
-              Cancelar
-            </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Criando…" : "Criar conta"}
-            </Button>
-          </DialogFooter>
-        </form>
+          </FieldSet>
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );
@@ -163,24 +161,27 @@ export function RenameContaDialog({ conta, onClose }: { conta: Conta; onClose: (
             Só contas que nunca foram usadas em um lançamento podem ser renomeadas.
           </DialogDescription>
         </DialogHeader>
-        <form className="flex flex-col gap-4" noValidate onSubmit={(event) => void handleSubmit(onValid)(event)}>
-          <RootError message={errors.root?.message} />
-
+        <FormLayout
+          noValidate
+          onSubmit={(event) => void handleSubmit(onValid)(event)}
+          error={errors.root?.message}
+          footer={
+            <>
+              <DialogClose render={<Button type="button" variant="secondary" disabled={isSubmitting} />}>
+                Cancelar
+              </DialogClose>
+              <Button type="submit" loading={isSubmitting} loadingLabel="Salvando…">
+                Salvar
+              </Button>
+            </>
+          }
+        >
           <Field invalid={!!errors.nome}>
             <FieldLabel>Nome</FieldLabel>
             <Input autoComplete="off" {...register("nome", nomeRules)} />
             <FieldError>{errors.nome?.message}</FieldError>
           </Field>
-
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>
-              Cancelar
-            </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando…" : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );
