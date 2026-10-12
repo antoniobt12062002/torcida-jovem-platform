@@ -111,11 +111,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: `error.tsx` dentro do shell, com "Tentar de novo" e "Voltar ao início"; `not-found.tsx` no layout de acesso; `global-error.tsx` com documento próprio, escudo e "Tentar de novo". O nome da função de nova tentativa é o da documentação instalada. Se `global-error` não aceitar importar a folha global, usa um bloco mínimo de estilos locais com os valores dos tokens, declarado como exceção na guarda.
 
 **Done when**:
-- [ ] Cada página tem um `h1` em português e leva o foco a ele ao montar
-- [ ] Nenhuma exibe `error.message`, pilha ou `digest` (teste com um erro de exemplo)
-- [ ] "Tentar de novo" chama a função de nova tentativa recebida
-- [ ] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell
-- [ ] Gates passam
+- [x] Cada página tem um `h1` em português e leva o foco a ele ao montar
+- [x] Nenhuma exibe `error.message`, pilha ou `digest` (teste com um erro de exemplo)
+- [x] "Tentar de novo" chama a função de nova tentativa recebida
+- [ ] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell — **parcial**: endereço inexistente conferido em `next start` (404, título e foco no `h1`, 390 e 1440 px); a exceção dentro do shell exige sessão real e fica para a conferência do coordenador
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: as três páginas num build de produção, em 390 e 1440 px
