@@ -135,11 +135,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: formulários em coluna única com `FormLayout`; confirmações nomeiam o usuário e a consequência; botões que abrem ação destrutiva passam a `secondary`, e só o botão final da confirmação é `destructive`; `spellCheck={false}` no e-mail; diálogos em tela cheia abaixo de 640 px. A guarda cobre os diretórios de DS-ID.
 
 **Done when**:
-- [ ] Os testes existentes dos diálogos passam sem alteração de asserção de comportamento (validações, e-mail duplicado, não escalada, senha temporária)
-- [ ] Cada confirmação mostra o nome do usuário, a consequência e um botão com o verbo da ação
-- [ ] Nenhum uso de alias de variante de botão resta nos arquivos de DS-ID
-- [ ] A guarda passa nos diretórios de DS-ID
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-ID)
+- [x] Os testes existentes dos diálogos passam sem alteração de asserção de comportamento (validações, e-mail duplicado, não escalada, senha temporária)
+- [x] Cada confirmação mostra o nome do usuário, a consequência e um botão com o verbo da ação
+- [x] Nenhum uso de alias de variante de botão resta nos arquivos de DS-ID
+- [x] A guarda passa nos diretórios de DS-ID
+- [x] Gates passam, incluindo Audit (fim da unidade DS-ID)
 
 **Tests**: component com MSW
 **Verificação visual**: os quatro diálogos em 390 e 1440 px

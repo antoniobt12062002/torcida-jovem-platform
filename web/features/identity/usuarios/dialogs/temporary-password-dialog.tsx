@@ -2,7 +2,8 @@
 
 import { useId, useState } from "react";
 
-import { ApiErrorAlert } from "@/components/app/api-error";
+import { apiErrorMessage } from "@/components/app/api-error";
+import { FormLayout } from "@/components/app/form-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,8 +93,24 @@ export function TemporaryPasswordDialog({
         </DialogHeader>
 
         {password === null ? (
-          <>
-            {error ? <ApiErrorAlert error={error} catalog={usersCatalog} /> : null}
+          <FormLayout
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void generate();
+            }}
+            error={error ? apiErrorMessage(error, usersCatalog) : undefined}
+            footer={
+              <>
+                <Button type="button" variant="secondary" disabled={pending} onClick={close}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={!canSubmit} loading={pending} loadingLabel="Gerando…">
+                  Gerar senha temporária
+                </Button>
+              </>
+            }
+          >
             <Field>
               <FieldLabel htmlFor={reasonId}>Motivo</FieldLabel>
               <Textarea
@@ -104,18 +121,10 @@ export function TemporaryPasswordDialog({
               />
               <FieldDescription>{REASON_HINT}</FieldDescription>
             </Field>
-            <DialogFooter>
-              <Button variant="outline" disabled={pending} onClick={close}>
-                Cancelar
-              </Button>
-              <Button disabled={!canSubmit} onClick={() => void generate()}>
-                Gerar senha temporária
-              </Button>
-            </DialogFooter>
-          </>
+          </FormLayout>
         ) : (
           <>
-            <Alert>
+            <Alert variant="warning">
               <AlertDescription>{MESSAGE_SHOWN_ONCE}</AlertDescription>
             </Alert>
             <div className="flex items-center gap-2">
@@ -124,7 +133,7 @@ export function TemporaryPasswordDialog({
               >
                 {password}
               </code>
-              <Button variant="outline" onClick={() => void copy()}>
+              <Button variant="secondary" onClick={() => void copy()}>
                 Copiar
               </Button>
             </div>

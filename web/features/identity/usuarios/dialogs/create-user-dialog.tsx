@@ -2,16 +2,9 @@
 
 import { useForm } from "react-hook-form";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FormLayout } from "@/components/app/form-layout";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
@@ -100,16 +93,21 @@ export function CreateUserDialog({
             A pessoa entra só com o papel Associado e terá de trocar a senha no primeiro acesso.
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-4"
+        <FormLayout
           noValidate
           onSubmit={(event) => void handleSubmit(onValid)(event)}
+          error={errors.root?.message}
+          footer={
+            <>
+              <Button type="button" variant="secondary" disabled={isSubmitting} onClick={close}>
+                Cancelar
+              </Button>
+              <Button type="submit" loading={isSubmitting} loadingLabel="Criando…">
+                Criar usuário
+              </Button>
+            </>
+          }
         >
-          {errors.root ? (
-            <Alert variant="destructive">
-              <AlertDescription>{errors.root.message}</AlertDescription>
-            </Alert>
-          ) : null}
 
           <Field invalid={!!errors.name}>
             <FieldLabel>Nome</FieldLabel>
@@ -119,7 +117,12 @@ export function CreateUserDialog({
 
           <Field invalid={!!errors.email}>
             <FieldLabel>E-mail</FieldLabel>
-            <Input type="email" autoComplete="off" {...register("email", { required: "Informe o e-mail." })} />
+            <Input
+              type="email"
+              autoComplete="off"
+              spellCheck={false}
+              {...register("email", { required: "Informe o e-mail." })}
+            />
             <FieldError>{errors.email?.message}</FieldError>
           </Field>
 
@@ -133,16 +136,7 @@ export function CreateUserDialog({
             <FieldDescription>Mínimo de 8 caracteres.</FieldDescription>
             <FieldError>{errors.password?.message}</FieldError>
           </Field>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" disabled={isSubmitting} onClick={close}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Criando…" : "Criar usuário"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );
