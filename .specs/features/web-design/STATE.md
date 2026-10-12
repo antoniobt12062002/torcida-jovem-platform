@@ -292,8 +292,7 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
-- **Fase**: Execute. **Rodadas 1 a 5 concluídas e integradas** na `feature/web-design` (97 arquivos de teste, 1612 testes, todos os gates verdes). **Portão do espécime aberto**: aguardando a aprovação visual do mantenedor e a decisão de DD-4.
-- **Evidência**: `evidence/especime.md` e capturas em `evidence/especime/`.
-- **Divergência a corrigir antes da rodada 6**: barra de filtros empilhada a partir de 1024 px (`components/app/filter-bar.tsx`).
+- **Fase**: Execute. Rodadas 1 a 5 concluídas; correções do portão do espécime feitas (`6414cd9`, `74dd8fe`, `d99df70` e a correção do alvo da marca), com toque, teclado e movimento reduzido conferidos no navegador. **Portão aberto de novo**, aguardando o mantenedor.
+- **Testes**: 97 arquivos, 1620 testes; todos os gates verdes.
 - **Bloqueios**: rodadas 6 e 7 não começam sem aprovação explícita. Sem push, PR ou merge na `develop`.
 - **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.
