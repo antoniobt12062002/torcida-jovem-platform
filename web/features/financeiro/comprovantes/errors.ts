@@ -1,10 +1,10 @@
 import type { ErrorCatalog } from "@/lib/api/problem";
 
-import { formatBytes, MAX_UPLOAD_BYTES } from "./limits";
+import { formatLimit, MAX_UPLOAD_BYTES } from "./limits";
 
 // Mensagens dos erros de comprovantes (FWB-05 AC3, AC4 e AC6).
 
-export const MESSAGE_ARQUIVO_ACIMA_DO_LIMITE = `O arquivo excede o limite permitido de ${formatBytes(MAX_UPLOAD_BYTES)}. Escolha um arquivo menor.`;
+export const MESSAGE_ARQUIVO_ACIMA_DO_LIMITE = `O arquivo excede o limite permitido de ${formatLimit(MAX_UPLOAD_BYTES)}. Escolha um arquivo menor.`;
 export const MESSAGE_API_ACIMA_DO_LIMITE = "O arquivo excede o limite permitido. Escolha um arquivo menor.";
 export const MESSAGE_EXTENSAO = "Extensão de arquivo não permitida. Use PDF, JPG, JPEG, PNG ou WEBP.";
 export const MESSAGE_TIPO = "Tipo de arquivo não permitido. Use PDF, JPG, JPEG, PNG ou WEBP.";

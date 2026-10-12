@@ -13,11 +13,13 @@ import {
 } from "@/features/financeiro/lancamentos/test-helpers";
 import { resetNavigation } from "@/lib/session/navigation-mock";
 import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
+import { mockViewport } from "@/test/media";
 import { authContext, type Comprovante, comprovante, ids, lancamento, problem } from "@/test/msw/fixtures";
 import { server } from "@/test/msw/server";
 
 import { ComprovantesPanel } from "./comprovantes-panel";
-import { MAX_UPLOAD_BYTES } from "./limits";
+import { MESSAGE_ARQUIVO_ACIMA_DO_LIMITE } from "./errors";
+import { formatLimit, MAX_UPLOAD_BYTES } from "./limits";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -58,8 +60,10 @@ async function renderPanel(items: Comprovante[] | (() => Comprovante[]) = [ANTIG
   return list;
 }
 
+// As linhas de dados da tabela "Comprovantes" (DataList), sem a do cabeçalho.
 function rows() {
-  return screen.queryAllByTestId("comprovante-row");
+  const table = screen.queryByRole("table", { name: "Comprovantes" });
+  return table ? within(table).getAllByRole("row").slice(1) : [];
 }
 
 type Upload = { contentType: string | null; csrf: string | null; field: boolean; size: number; content: string };
@@ -189,7 +193,9 @@ describe("limite de tamanho", () => {
     try {
       choose(fileOfSize(10_420_225));
       expect(
-        await screen.findByText("O arquivo excede o limite permitido de 9,9 MB. Escolha um arquivo menor."),
+        // DSP-07 AC6: o texto do limite passa de "9,9 MB" a "9 MB" (megabytes
+        // inteiros, para baixo); o limite em bytes não muda.
+        await screen.findByText("O arquivo excede o limite permitido de 9 MB. Escolha um arquivo menor."),
       ).toBeTruthy();
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(requests).toEqual([]);
@@ -361,5 +367,55 @@ describe("permissões", () => {
     expect(screen.queryByRole("heading", { name: "Comprovantes" })).toBeNull();
     expect(screen.queryByLabelText("Anexar comprovante")).toBeNull();
     expect(list.count).toBe(0);
+  });
+});
+
+// DSP-07 AC4 e AC6: limite em megabytes inteiros, para baixo, com espaço não separável.
+describe("texto do limite", () => {
+  it("arredonda para baixo em megabytes inteiros", () => {
+    expect(formatLimit(MAX_UPLOAD_BYTES)).toBe("9 MB");
+    expect(formatLimit(10 * 1024 * 1024)).toBe("10 MB");
+    expect(formatLimit(10 * 1024 * 1024 - 1)).toBe("9 MB");
+  });
+
+  it("a dica do campo e a mensagem de erro dizem até 9 MB", async () => {
+    await renderPanel();
+    const description = document.querySelector('[data-slot="field-description"]');
+    expect(description?.textContent).toBe("PDF, JPG, JPEG, PNG ou WEBP, até 9 MB.");
+    expect(MESSAGE_ARQUIVO_ACIMA_DO_LIMITE).toBe("O arquivo excede o limite permitido de 9 MB. Escolha um arquivo menor.");
+  });
+});
+
+// DSP-02 e T7: vazio com orientação e, para quem pode anexar, a ação.
+describe("estado vazio", () => {
+  it("quem pode anexar recebe a ação de escolher o arquivo", async () => {
+    await renderPanel([]);
+    const empty = await screen.findByRole("heading", { level: 3, name: "Nenhum comprovante anexado." });
+    expect(empty).toBeTruthy();
+    expect(screen.getByText("Recibos e notas deste lançamento aparecem aqui.")).toBeTruthy();
+    const click = vi.spyOn(fileInput(), "click").mockImplementation(() => {});
+    fireEvent.click(screen.getByRole("button", { name: "Escolher arquivo" }));
+    expect(click).toHaveBeenCalledTimes(1);
+  });
+
+  it("só leitura não vê a ação", async () => {
+    await renderPanel([], PERMISSOES_LEITURA);
+    expect(await screen.findByText("Nenhum comprovante anexado.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Escolher arquivo" })).toBeNull();
+  });
+});
+
+// DSP-05 AC7 e AC10: em tela estreita, itens empilhados; "Baixar" nomeia o arquivo.
+describe("tela estreita", () => {
+  it("cada comprovante vira um item com nome, campos e Baixar", async () => {
+    mockViewport({ width: 390 });
+    await renderPanel([ANTIGO]);
+    const list = await screen.findByRole("list", { name: "Comprovantes" });
+    const [item] = within(list).getAllByRole("listitem");
+    expect(item.querySelector('[data-slot="data-list-title"]')?.textContent).toBe("recibo-agosto.pdf");
+    const fields = Array.from(item.querySelectorAll('[data-slot="data-list-field"]')).map((f) => f.textContent);
+    await waitFor(() => expect(fields.length).toBe(3));
+    expect(fields[0]).toBe("Tipo: PDF");
+    expect(within(item).getByRole("button", { name: "Baixar recibo-agosto.pdf" })).toBeTruthy();
   });
 });

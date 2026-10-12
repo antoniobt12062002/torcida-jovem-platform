@@ -211,12 +211,12 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: filtros `tipo`, `status`, `conta`, `de` e `ate` na URL; colunas por prioridade (data, conta, valor líquido, status; tipo e forma de pagamento; valor bruto e taxa); mapa de status em `labels.ts` com tom e ícone (`CANCELADA` neutra); link de detalhe com nome que identifica o lançamento; "Mostrar mais" em lotes de 50; página em largura larga com `Suspense`.
 
 **Done when**:
-- [ ] Os testes existentes da listagem passam; mudam só o nome acessível do link de detalhe (DSP-05 AC10) e a leitura dos filtros pela URL (DSP-05 AC2)
-- [ ] `CRIADA`, `RECEBIDA`, `PAGA` e `CANCELADA` têm rótulo e ícone distintos entre si
-- [ ] Um filtro restaurado da URL que aponta para conta inexistente é ignorado
-- [ ] Com 51 lançamentos aparecem 50 e "Mostrar mais"; com 50, o controle não aparece; o filtro considera todos os registros
-- [ ] Com `mockViewport` estreito, cada item mostra data, tipo, conta, valor líquido e status
-- [ ] Gates passam
+- [x] Os testes existentes da listagem passam; mudam só o nome acessível do link de detalhe (DSP-05 AC10) e a leitura dos filtros pela URL (DSP-05 AC2)
+- [x] `CRIADA`, `RECEBIDA`, `PAGA` e `CANCELADA` têm rótulo e ícone distintos entre si
+- [x] Um filtro restaurado da URL que aponta para conta inexistente é ignorado
+- [x] Com 51 lançamentos aparecem 50 e "Mostrar mais"; com 50, o controle não aparece; o filtro considera todos os registros
+- [x] Com `mockViewport` estreito, cada item mostra data, tipo, conta, valor líquido e status
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: listagem vazia, filtrada e cheia em 390, 768, 820, 1024 e 1440 px
@@ -238,10 +238,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: formulário em `FormLayout` com `NativeSelect` do kit; `select-field.tsx` e o filtro de data com rótulo manual são removidos; detalhe com trilha, status no cabeçalho, valores com `MoneyValue` (receita com "+", despesa com "−"), identificador como tipo e código curto; ações de workflow com confirmação que nomeia o lançamento e a consequência; cancelamento continua exigindo motivo.
 
 **Done when**:
-- [ ] Os testes existentes de formulário, detalhe e workflow passam sem alteração de asserção de comportamento (prévia do líquido, dinheiro inválido, devolução só com contas de despesa ativas, motivo obrigatório)
-- [ ] `select-field.tsx` não existe mais e nenhum `<select>` avulso resta em DS-FB
-- [ ] Confirmar recebimento, pagamento, devolução e cancelamento mostram o registro e a consequência, com o verbo da ação no botão
-- [ ] Gates passam
+- [x] Os testes existentes de formulário, detalhe e workflow passam sem alteração de asserção de comportamento (prévia do líquido, dinheiro inválido, devolução só com contas de despesa ativas, motivo obrigatório)
+- [x] `select-field.tsx` não existe mais e nenhum `<select>` avulso resta em DS-FB
+- [x] Confirmar recebimento, pagamento, devolução e cancelamento mostram o registro e a consequência, com o verbo da ação no botão
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: formulário e detalhe (criado, recebido, cancelado) em 390, 820 e 1440 px
@@ -263,11 +263,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: lista de comprovantes no padrão de listagem; estado vazio com orientação e ação para quem pode anexar; o limite exibido passa a megabytes inteiros arredondados para baixo ("até 9 MB"); o limite real em bytes não muda. A guarda cobre os diretórios de DS-FB.
 
 **Done when**:
-- [ ] Os testes existentes passam; muda só o texto do limite, citando DSP-07 AC6
-- [ ] `MAX` em bytes de `limits.ts` continua igual (teste confirma o valor)
-- [ ] Baixar continua pedindo a URL assinada só no clique
-- [ ] A guarda passa nos diretórios de DS-FB
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-FB)
+- [x] Os testes existentes passam; muda só o texto do limite, citando DSP-07 AC6
+- [x] `MAX` em bytes de `limits.ts` continua igual (teste confirma o valor)
+- [x] Baixar continua pedindo a URL assinada só no clique
+- [x] A guarda passa nos diretórios de DS-FB
+- [x] Gates passam, incluindo Audit (fim da unidade DS-FB)
 
 **Tests**: component com MSW
 **Verificação visual**: painel vazio e com anexos em 390 e 1440 px

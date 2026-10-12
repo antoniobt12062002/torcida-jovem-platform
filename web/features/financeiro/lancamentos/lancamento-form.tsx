@@ -1,23 +1,26 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { MESSAGE_FORBIDDEN } from "@/components/app/api-error";
+import { FormLayout } from "@/components/app/form-layout";
 import { MoneyField } from "@/components/app/money-field";
-import { toast } from "@/components/ui/toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MoneyValue } from "@/components/app/money-value";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { NativeSelect } from "@/components/ui/native-select";
+import { toast } from "@/components/ui/toast";
 import { type ErrorCatalog, isApiError, messageFor, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
-import { formatBRL } from "@/lib/money";
 
 import { FIELD_BY_CODE, lancamentosCatalog } from "./errors";
 import { contasParaLancamento } from "./filters";
@@ -30,7 +33,6 @@ import {
   type TipoConta,
   TIPOS,
 } from "./labels";
-import { SelectField } from "./select-field";
 
 // Formulário de valores de um lançamento (criar, editar e devolver), num
 // diálogo. Valores em centavos inteiros (MoneyField); o líquido é só prévia,
@@ -72,7 +74,8 @@ export type LancamentoFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
+  /** O registro e o efeito do envio, por exemplo a receita que a devolução referencia. */
+  description?: ReactNode;
   defaultValues: LancamentoFormValues;
   /** Com `false`, o tipo fica fixo (edição e devolução). */
   tipoEditable: boolean;
@@ -87,7 +90,7 @@ export type LancamentoFormDialogProps = {
 export function LancamentoFormDialog({ open, onOpenChange, title, description, ...props }: LancamentoFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
@@ -125,7 +128,7 @@ function LancamentoForm({
   const tipo = useWatch({ control, name: "tipo" });
   const bruto = useWatch({ control, name: "valor_bruto_cents" });
   const taxa = useWatch({ control, name: "taxa_cents" });
-  const contaOptions = contasParaLancamento(contas.data?.items, tipo).map((c) => ({ value: c.id, label: c.nome }));
+  const contaOptions = contasParaLancamento(contas.data?.items, tipo);
 
   async function onValid(values: LancamentoFormValues) {
     try {
@@ -153,28 +156,44 @@ function LancamentoForm({
   }
 
   return (
-    <form className="flex flex-col gap-4" noValidate onSubmit={(event) => void handleSubmit(onValid)(event)}>
-      {errors.root ? (
-        <Alert variant="destructive">
-          <AlertDescription>{errors.root.message}</AlertDescription>
-        </Alert>
-      ) : null}
-
+    <FormLayout
+      noValidate
+      onSubmit={(event) => void handleSubmit(onValid)(event)}
+      error={errors.root?.message}
+      footer={
+        <>
+          <DialogClose render={<Button variant="secondary" type="button" />}>Cancelar</DialogClose>
+          <Button type="submit" loading={isSubmitting} loadingLabel="Salvando…">
+            {submitLabel}
+          </Button>
+        </>
+      }
+    >
       {tipoEditable ? (
         <Controller
           name="tipo"
           control={control}
-          render={({ field }) => (
-            <SelectField
-              label="Tipo"
-              {...field}
-              onChange={(value) => {
-                field.onChange(value);
-                setValue("conta_id", "");
-              }}
-              options={TIPOS.map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-              error={errors.tipo?.message}
-            />
+          render={({ field, fieldState }) => (
+            <Field invalid={!!fieldState.error}>
+              <FieldLabel>Tipo</FieldLabel>
+              <NativeSelect
+                ref={field.ref}
+                name={field.name}
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={(event) => {
+                  field.onChange(event.target.value);
+                  setValue("conta_id", "");
+                }}
+              >
+                {TIPOS.map((t) => (
+                  <option key={t} value={t}>
+                    {TIPO_LABEL[t]}
+                  </option>
+                ))}
+              </NativeSelect>
+              {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+            </Field>
           )}
         />
       ) : (
@@ -189,13 +208,24 @@ function LancamentoForm({
         control={control}
         rules={{ required: "Escolha a conta." }}
         render={({ field, fieldState }) => (
-          <SelectField
-            label="Conta"
-            {...field}
-            placeholder="Selecione a conta"
-            options={contaOptions}
-            error={fieldState.error?.message}
-          />
+          <Field invalid={!!fieldState.error}>
+            <FieldLabel>Conta</FieldLabel>
+            <NativeSelect
+              ref={field.ref}
+              name={field.name}
+              value={field.value}
+              onBlur={field.onBlur}
+              onChange={(event) => field.onChange(event.target.value)}
+            >
+              <option value="">Selecione a conta</option>
+              {contaOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </NativeSelect>
+            {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+          </Field>
         )}
       />
 
@@ -220,7 +250,7 @@ function LancamentoForm({
       <p className="text-sm" aria-live="polite">
         <span className="text-muted-foreground">Valor líquido (prévia): </span>
         <span data-testid="previa-liquido">
-          {bruto !== null && taxa !== null ? formatBRL(bruto - taxa) : "—"}
+          {bruto !== null && taxa !== null ? <MoneyValue cents={bruto - taxa} /> : "—"}
         </span>
       </p>
 
@@ -229,21 +259,26 @@ function LancamentoForm({
         control={control}
         rules={{ required: "Escolha a forma de pagamento." }}
         render={({ field, fieldState }) => (
-          <SelectField
-            label="Forma de pagamento"
-            {...field}
-            placeholder="Selecione a forma de pagamento"
-            options={FORMAS_PAGAMENTO.map((f) => ({ value: f, label: FORMA_PAGAMENTO_LABEL[f] }))}
-            error={fieldState.error?.message}
-          />
+          <Field invalid={!!fieldState.error}>
+            <FieldLabel>Forma de pagamento</FieldLabel>
+            <NativeSelect
+              ref={field.ref}
+              name={field.name}
+              value={field.value}
+              onBlur={field.onBlur}
+              onChange={(event) => field.onChange(event.target.value)}
+            >
+              <option value="">Selecione a forma de pagamento</option>
+              {FORMAS_PAGAMENTO.map((f) => (
+                <option key={f} value={f}>
+                  {FORMA_PAGAMENTO_LABEL[f]}
+                </option>
+              ))}
+            </NativeSelect>
+            {fieldState.error ? <FieldError>{fieldState.error.message}</FieldError> : null}
+          </Field>
         )}
       />
-
-      <DialogFooter>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando…" : submitLabel}
-        </Button>
-      </DialogFooter>
-    </form>
+    </FormLayout>
   );
 }
