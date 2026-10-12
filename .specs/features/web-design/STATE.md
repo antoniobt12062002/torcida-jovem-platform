@@ -144,6 +144,9 @@ O mantenedor aprovou a direção visual do espécime: shell e sidebar pretos, es
 ### WDS-D-032 — Prioridade de colunas e barra de filtros pela largura do conteúdo (2026-10-12)
 Correção pedida no portão do espécime: com a navegação fixa (a partir de 1024 px), a área de conteúdo em 1024 px tem cerca de 705 px úteis, e a listagem decidia pela largura da tela, gerando rolagem horizontal do documento. A listagem passa a ser um contêiner de consulta: as colunas de prioridade 3 só aparecem com tela de 1024 px ou mais **e** área de conteúdo de pelo menos 56rem (896 px), e um invólucro contém qualquer sobra. A barra de filtros passa a distribuir os campos pela largura do próprio contêiner (uma, duas ou várias colunas). O ponto de quebra da navegação não muda. DSP-05 AC5 foi ajustado para refletir isso.
 
+### WDS-D-033 — Espécime aprovado e portão da rodada 5 encerrado (2026-10-12)
+O mantenedor aprovou formalmente o espécime depois das correções de WDS-D-032 e autorizou a execução autônoma das rodadas 6 e 7 até a verificação independente, sem push, PR, deploy ou merge na `develop`.
+
 ---
 
 ## Relação com decisões anteriores
@@ -217,7 +220,7 @@ Registrado em 2026-10-11 (WDS-D-023): nota de revisão em `.specs/features/web/S
 | E-2 | Commit da base documental na branch `feature/web-design` | Autorizado em 2026-10-11; sem push e sem PR |
 | E-3 | Worktrees por unidade, subagentes e Playwright MCP (só ambiente local e dados de teste) | Aprovados em 2026-10-11 |
 | E-4 | Rodadas 1 a 5 | Autorizadas, com commits locais nas branches das unidades e integração local na `feature/web-design` com gates verdes |
-| E-5 | Rodadas 6 e 7 | **Bloqueadas** até a aprovação visual do espécime |
+| E-5 | Rodadas 6 e 7 | **Autorizadas em 2026-10-12** após a aprovação formal do espécime; rodada 7 só com todos os gates da rodada 6 verdes |
 | E-6 | Merge na `develop`, push e PR | Não autorizados |
 
 ## Mapa das unidades de execução
