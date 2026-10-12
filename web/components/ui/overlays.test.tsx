@@ -466,7 +466,6 @@ describe("DropdownMenu: foco, Esc e itens", () => {
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button />}>Conta</DropdownMenuTrigger>
         <DropdownMenuContent>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- substituto de `next/link` no teste */}
           <DropdownMenuLinkItem render={<a href="/conta/senha" data-testid="link-da-aplicacao" />}>
             Trocar senha
           </DropdownMenuLinkItem>

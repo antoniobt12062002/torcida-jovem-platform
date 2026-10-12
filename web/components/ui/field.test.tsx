@@ -472,3 +472,66 @@ describe("Checkbox: alvo único com o rótulo", () => {
     )
   })
 })
+
+describe("Select rico: tokens e teclado", () => {
+  function Categoria({ size }: { size?: "sm" | "default" }) {
+    return (
+      <Select
+        items={[
+          { value: "a", label: "Mensalidade" },
+          { value: "b", label: "Bilheteria" },
+        ]}
+      >
+        <SelectTrigger aria-label="Categoria" size={size}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="a">Mensalidade</SelectItem>
+          <SelectItem value="b">Bilheteria</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+  }
+
+  it("o gatilho tem a borda, a altura e o foco dos demais campos", () => {
+    render(<Categoria />)
+    const trigger = screen.getByRole("combobox", { name: "Categoria" })
+    expect(classes(trigger)).toEqual(
+      expect.arrayContaining([
+        "border-input",
+        "rounded-md",
+        "bg-background",
+        "data-[size=default]:h-control-md",
+        "focus-visible:ring-2",
+        "focus-visible:ring-ring",
+        "focus-visible:ring-offset-2",
+        "focus-visible:ring-offset-ring-offset",
+        "aria-invalid:border-destructive",
+      ])
+    )
+    expect(classes(trigger).filter((name) => /focus-visible:.*(destructive|brand)/.test(name))).toEqual([])
+  })
+
+  it("o tamanho compacto usa o token de altura compacto", () => {
+    render(<Categoria size="sm" />)
+    const trigger = screen.getByRole("combobox", { name: "Categoria" })
+    expect(trigger.getAttribute("data-size")).toBe("sm")
+    expect(classes(trigger)).toContain("data-[size=sm]:h-control-sm")
+  })
+
+  it("abre pelo teclado e lista as opções, com a altura do token de controle", async () => {
+    render(<Categoria />)
+    const trigger = screen.getByRole("combobox", { name: "Categoria" })
+    trigger.focus()
+    expect(document.activeElement).toBe(trigger)
+    fireEvent.keyDown(trigger, { key: "ArrowDown" })
+    const options = await screen.findAllByRole("option")
+    expect(options.map((option) => option.textContent)).toEqual(["Mensalidade", "Bilheteria"])
+    for (const option of options) {
+      expect(classes(option)).toContain("min-h-control-md")
+    }
+    expect(classes(screen.getByRole("listbox").closest("[data-slot=select-content]") as Element)).toContain(
+      "shadow-elevation-1"
+    )
+  })
+})

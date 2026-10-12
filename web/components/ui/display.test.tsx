@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -402,5 +403,19 @@ describe("Toast: duração", () => {
       vi.advanceTimersByTime(20000)
     })
     expect(shown()).toBe(true)
+  })
+})
+
+describe("Separator", () => {
+  it("é um separador horizontal por padrão, na cor de divisória", () => {
+    render(<Separator />)
+    const separator = screen.getByRole("separator")
+    expect(separator.getAttribute("aria-orientation")).toBe("horizontal")
+    expect(classes(separator)).toEqual(expect.arrayContaining(["bg-border", "data-horizontal:h-px"]))
+  })
+
+  it("aceita a orientação vertical", () => {
+    render(<Separator orientation="vertical" />)
+    expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical")
   })
 })

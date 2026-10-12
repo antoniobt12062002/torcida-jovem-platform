@@ -274,11 +274,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: remoção das classes `dark:` e dos valores arbitrários restantes em todo o kit; `Select` rico e `Separator` nos tokens; teste de guarda que aplica todas as regras a `components/ui`, com exceção declarada só para `typography.tsx` (fonte de identidade e caixa alta).
 
 **Done when**:
-- [ ] A guarda passa em todo `components/ui`, com a lista de exceções explícita e justificada
-- [ ] Todo arquivo de componente do kit é referenciado por pelo menos um teste
-- [ ] A lista de testes alterados nesta unidade, com a decisão que motiva cada um, consta no relatório da unidade
-- [ ] Todos os testes existentes de `features/` e `app/` passam sem alteração
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-K)
+- [x] A guarda passa em todo `components/ui`, com a lista de exceções explícita e justificada
+- [x] Todo arquivo de componente do kit é referenciado por pelo menos um teste
+- [x] A lista de testes alterados nesta unidade, com a decisão que motiva cada um, consta no relatório da unidade
+- [x] Todos os testes existentes de `features/` e `app/` passam sem alteração
+- [x] Gates passam, incluindo Audit (fim da unidade DS-K)
 
 **Tests**: unit + component
 **Verificação visual**: uma tela autenticada e `/entrar` abertas com `pnpm dev`, sem quebra de layout (estado intermediário esperado)
