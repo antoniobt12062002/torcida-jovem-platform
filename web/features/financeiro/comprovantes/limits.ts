@@ -17,6 +17,17 @@ export function formatBytes(bytes: number): string {
   return `${oneDecimal.format(Math.floor((bytes / (1024 * 1024)) * 10) / 10)} MB`;
 }
 
+const MIB = 1024 * 1024;
+
+/**
+ * Limite exibido ao usuário (DSP-07 AC4 e AC6): megabytes inteiros,
+ * arredondados para baixo, com espaço não separável ("9 MB" para o limite
+ * atual). Só o texto: o limite aplicado continua sendo MAX_UPLOAD_BYTES.
+ */
+export function formatLimit(bytes: number): string {
+  return `${Math.floor(bytes / MIB)} MB`;
+}
+
 /** O arquivo pode ser enviado? Até MAX_UPLOAD_BYTES, inclusive. */
 export function withinUploadLimit(size: number): boolean {
   return size <= MAX_UPLOAD_BYTES;

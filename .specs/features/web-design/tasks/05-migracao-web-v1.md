@@ -263,11 +263,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: lista de comprovantes no padrão de listagem; estado vazio com orientação e ação para quem pode anexar; o limite exibido passa a megabytes inteiros arredondados para baixo ("até 9 MB"); o limite real em bytes não muda. A guarda cobre os diretórios de DS-FB.
 
 **Done when**:
-- [ ] Os testes existentes passam; muda só o texto do limite, citando DSP-07 AC6
-- [ ] `MAX` em bytes de `limits.ts` continua igual (teste confirma o valor)
-- [ ] Baixar continua pedindo a URL assinada só no clique
-- [ ] A guarda passa nos diretórios de DS-FB
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-FB)
+- [x] Os testes existentes passam; muda só o texto do limite, citando DSP-07 AC6
+- [x] `MAX` em bytes de `limits.ts` continua igual (teste confirma o valor)
+- [x] Baixar continua pedindo a URL assinada só no clique
+- [x] A guarda passa nos diretórios de DS-FB
+- [x] Gates passam, incluindo Audit (fim da unidade DS-FB)
 
 **Tests**: component com MSW
 **Verificação visual**: painel vazio e com anexos em 390 e 1440 px
