@@ -87,9 +87,9 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: os dois blocos `main` montados à mão (carregamento e erro de sessão) passam a usar os estados padrão dentro de `PageContainer`; a lógica do portão (redirecionamentos, troca obrigatória de senha) não muda.
 
 **Done when**:
-- [ ] Os testes existentes de `layout.test.tsx` e de `sem-acesso` passam sem alteração de asserção de comportamento
-- [ ] Carregamento e erro de sessão usam os componentes de estado, com uma única região principal
-- [ ] Gates passam
+- [x] Os testes existentes de `layout.test.tsx` e de `sem-acesso` passam sem alteração de asserção de comportamento
+- [x] Carregamento e erro de sessão usam os componentes de estado, com uma única região principal
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: carregamento, erro de sessão e "Sem acesso" em 390 e 1440 px
