@@ -149,6 +149,51 @@ describe("tabela", () => {
     }
   });
 
+  // A prioridade 3 depende também da largura do contêiner, não só da tela: ao
+  // lado da navegação fixa, em 1024 px, sobram cerca de 720 px para a tabela.
+  it("coluna de prioridade 3 também fica oculta quando o contêiner tem menos de 56rem", () => {
+    render(<Lista />);
+    for (const el of [
+      screen.getByRole("columnheader", { name: "Código" }),
+      screen.getByRole("columnheader", { name: "Responsável" }),
+      screen.getByText("fb6e3d8f"),
+      screen.getByText("Ana Souza"),
+    ]) {
+      expect(classes(el)).toContain("@max-4xl:hidden");
+    }
+  });
+
+  it("a tabela fica num contêiner de consulta que encolhe com a área de conteúdo", () => {
+    render(<Lista />);
+    const wrapper = screen.getByRole("table", { name: "Lançamentos" }).parentElement!;
+    expect(wrapper.getAttribute("data-slot")).toBe("data-list-table");
+    expect(classes(wrapper)).toEqual(expect.arrayContaining(["@container", "w-full", "min-w-0"]));
+  });
+
+  it("no layout automático, a tabela que não couber rola no próprio contêiner, nunca no documento", () => {
+    render(<Lista />);
+    const wrapper = screen.getByRole("table", { name: "Lançamentos" }).parentElement!;
+    expect(classes(wrapper)).toContain("overflow-x-auto");
+    // Não é uma região rolável nomeada: a rolagem é só uma salvaguarda.
+    expect(wrapper.getAttribute("role")).toBeNull();
+    expect(wrapper.getAttribute("tabindex")).toBeNull();
+  });
+
+  it("na tabela forçada, a rolagem fica com a região nomeada de quem usa", () => {
+    render(<Lista layout="table" />);
+    const wrapper = screen.getByRole("table", { name: "Lançamentos" }).parentElement!;
+    expect(classes(wrapper)).toEqual(expect.arrayContaining(["@container", "min-w-0"]));
+    expect(classes(wrapper)).not.toContain("overflow-x-auto");
+  });
+
+  it("a coluna de ações nunca recebe classe de ocultação", () => {
+    render(<Lista />);
+    const header = screen.getByRole("columnheader", { name: "Ações" });
+    expect(classes(header).filter((c) => c === "hidden" || c.endsWith(":hidden"))).toEqual([]);
+    const button = screen.getByRole("link", { name: "Detalhes lançamento Receita fb6e3d8f" });
+    expect(classes(button.closest("td")!).filter((c) => c === "hidden" || c.endsWith(":hidden"))).toEqual([]);
+  });
+
   it("colunas de prioridade 1 e 2 nunca são ocultadas", () => {
     render(<Lista />);
     for (const name of ["Descrição", "Status", "Valor", "Conta", "Data", "Tipo"]) {

@@ -11,7 +11,9 @@ import { type RowAction, RowActions } from "./row-actions";
 // Listagem responsiva (DSP-05 AC5 a AC11; DD-2, WDS-D-026). Uma definição de
 // colunas serve a dois layouts, e só um deles é renderizado por vez: tabela a
 // partir de 768 px, lista empilhada abaixo disso. A escolha entre os dois é a
-// única consulta de mídia em JavaScript; a prioridade de colunas é só CSS.
+// única consulta de mídia em JavaScript; a prioridade de colunas é só CSS e
+// considera a largura do próprio contêiner (container query), não só a da
+// tela: ao lado da navegação fixa sobra bem menos que a largura da janela.
 // No servidor e na primeira renderização da hidratação vale a tabela.
 
 export type Column<T> = {
@@ -20,7 +22,10 @@ export type Column<T> = {
   cell: (row: T) => ReactNode;
   /** À direita, com algarismos tabulares. No item empilhado, é o valor em destaque. */
   numeric?: boolean;
-  /** 1 e 2 aparecem sempre na tabela; 3 só a partir de 1024 px (o dado continua no detalhe). */
+  /**
+   * 1 e 2 aparecem sempre na tabela; 3 só com tela de 1024 px ou mais e
+   * contêiner de 56rem ou mais (o dado continua no detalhe).
+   */
   priority: 1 | 2 | 3;
   /** Tratamento de texto longo na tabela. Padrão: quebra de linha; coluna numérica não quebra. */
   wrap?: "nowrap" | "truncate" | "wrap";
@@ -52,13 +57,15 @@ export type DataListProps<T> = {
 
 const MAX_FIELDS = 3;
 
-// Prioridade 3: fora da tabela entre 768 e 1023 px.
-const LOW_PRIORITY = "hidden lg:table-cell";
+// Prioridade 3: fora da tabela abaixo de 1024 px de tela e também quando o
+// contêiner da tabela tem menos de 56rem (896 px), como ao lado da navegação
+// fixa entre 1024 e ~1200 px.
+const LOW_PRIORITY = "hidden lg:table-cell @max-4xl:hidden";
 
 export function DataList<T>({ layout = "auto", ...props }: DataListProps<T>) {
   const narrow = useIsNarrow();
   const asList = layout === "list" || (layout === "auto" && narrow);
-  return asList ? <StackedList {...props} /> : <DataTable {...props} />;
+  return asList ? <StackedList {...props} /> : <DataTable {...props} contained={layout === "auto"} />;
 }
 
 type LayoutProps<T> = Omit<DataListProps<T>, "layout">;
@@ -73,43 +80,49 @@ function cellWrap<T>({ wrap, numeric }: Column<T>) {
   return wrap ?? (numeric ? "nowrap" : undefined);
 }
 
-function DataTable<T>(props: LayoutProps<T>) {
+// O invólucro é o contêiner das consultas de prioridade. No layout automático
+// ele também contém a tabela: se um dado excepcional não couber, a tabela rola
+// dentro dele, nunca o documento. Na tabela forçada, a rolagem é da região
+// nomeada de quem usa (DSP-05 AC9).
+function DataTable<T>({ contained, ...props }: LayoutProps<T> & { contained: boolean }) {
   const { label, columns, rows, rowKey, primaryAction, moreActions, className } = props;
   const hasActions = !!primaryAction || !!moreActions;
   return (
-    <Table scroll="none" aria-label={label} className={className}>
-      <TableHeader>
-        <TableRow>
-          {columns.map((column) => (
-            <TableHead key={column.id} numeric={column.numeric} className={cn(column.priority === 3 && LOW_PRIORITY)}>
-              {column.header}
-            </TableHead>
-          ))}
-          {hasActions ? (
-            <TableHead>
-              <span className="sr-only">Ações</span>
-            </TableHead>
-          ) : null}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={rowKey(row)}>
+    <div data-slot="data-list-table" className={cn("@container w-full min-w-0", contained && "overflow-x-auto")}>
+      <Table scroll="none" aria-label={label} className={className}>
+        <TableHeader>
+          <TableRow>
             {columns.map((column) => (
-              <TableCell
-                key={column.id}
-                numeric={column.numeric}
-                wrap={cellWrap(column)}
-                className={cn(column.priority === 3 && LOW_PRIORITY)}
-              >
-                {column.cell(row)}
-              </TableCell>
+              <TableHead key={column.id} numeric={column.numeric} className={cn(column.priority === 3 && LOW_PRIORITY)}>
+                {column.header}
+              </TableHead>
             ))}
-            {hasActions ? <TableCell wrap="nowrap">{actionsOf(row, props)}</TableCell> : null}
+            {hasActions ? (
+              <TableHead>
+                <span className="sr-only">Ações</span>
+              </TableHead>
+            ) : null}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={rowKey(row)}>
+              {columns.map((column) => (
+                <TableCell
+                  key={column.id}
+                  numeric={column.numeric}
+                  wrap={cellWrap(column)}
+                  className={cn(column.priority === 3 && LOW_PRIORITY)}
+                >
+                  {column.cell(row)}
+                </TableCell>
+              ))}
+              {hasActions ? <TableCell wrap="nowrap">{actionsOf(row, props)}</TableCell> : null}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
