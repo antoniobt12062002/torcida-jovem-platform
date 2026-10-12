@@ -276,10 +276,10 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `FilterBar` com `activeCount`, `resultCount`, `resultNoun` e `onClear`; em tela estreita, a busca fica visível e os demais filtros vão para uma gaveta inferior aberta por "Filtros (n)". O estado dos filtros vem de quem usa (o componente não conhece a URL).
 
 **Done when**:
-- [ ] "Limpar filtros" só aparece com filtro ativo e chama `onClear`
-- [ ] A contagem de resultados fica em região viva e respeita singular e plural
-- [ ] Com `mockViewport` estreito, os filtros ficam na gaveta e o botão mostra a quantidade de filtros ativos
-- [ ] Gates passam
+- [x] "Limpar filtros" só aparece com filtro ativo e chama `onClear`
+- [x] A contagem de resultados fica em região viva e respeita singular e plural
+- [x] Com `mockViewport` estreito, os filtros ficam na gaveta e o botão mostra a quantidade de filtros ativos
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
