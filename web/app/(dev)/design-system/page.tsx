@@ -4,11 +4,19 @@ import { PageContainer } from "@/components/app/page-container";
 import { PageHeader } from "@/components/app/page-header";
 import { buttonVariants } from "@/components/ui/button";
 
+import { ActionsSection } from "./actions-section";
 import { BrandSection } from "./brand-section";
 import { ColorsSection } from "./colors-section";
 import { notFoundInProduction } from "./dev-only";
+import { FeedbackSection } from "./feedback-section";
+import { FieldsSection } from "./fields-section";
+import { ListingSection } from "./listing-section";
+import { OverlaysSection } from "./overlays-section";
+import { ScreenStatesSection } from "./screen-states-section";
 import { SECTIONS } from "./sections";
+import { AccessSection, ExamplePageSection, ShellSection } from "./shell-section";
 import { SpaceSection } from "./space-section";
+import { StatusSection } from "./status-section";
 import { paletteOf, readTokenSheet } from "./tokens";
 import { TypographySection } from "./typography-section";
 
@@ -51,6 +59,16 @@ export default function DesignSystemPage() {
       <ColorsSection palette={palette} />
       <TypographySection />
       <SpaceSection declarations={sheet.declarations} />
+      <ActionsSection />
+      <FieldsSection />
+      <StatusSection />
+      <ListingSection />
+      <ScreenStatesSection />
+      <FeedbackSection />
+      <OverlaysSection />
+      <ShellSection />
+      <AccessSection />
+      <ExamplePageSection />
     </PageContainer>
   );
 }

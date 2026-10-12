@@ -223,11 +223,11 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: seções Ações, Campos, Status e valores, Tabela e lista, Estados de tela, Feedback, Sobreposições, Shell e Página de exemplo, como no design. Cada componente interativo em repouso, foco, desabilitado, inválido e em andamento, quando o estado existir. Saldo em Barlow Condensed e em Geist lado a lado, para a decisão de DD-4. Radio, Switch, Tabs e Tooltip não aparecem.
 
 **Done when**:
-- [ ] Todos os componentes do inventário marcados como "usado na V1" aparecem, com seus estados
-- [ ] A listagem de exemplo aparece como tabela completa, com colunas por prioridade e como lista empilhada; uma tabela pequena continua tabela
-- [ ] O shell aparece com navegação, item ativo e menu da pessoa, com dados de exemplo e sem sessão
-- [ ] O teste confirma a presença de cada seção e a ausência dos quatro componentes adiados
-- [ ] Gates passam
+- [x] Todos os componentes do inventário marcados como "usado na V1" aparecem, com seus estados
+- [x] A listagem de exemplo aparece como tabela completa, com colunas por prioridade e como lista empilhada; uma tabela pequena continua tabela
+- [x] O shell aparece com navegação, item ativo e menu da pessoa, com dados de exemplo e sem sessão
+- [x] O teste confirma a presença de cada seção e a ausência dos quatro componentes adiados
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: todas as seções conferidas em 390, 768, 820, 1024 e 1440 px
