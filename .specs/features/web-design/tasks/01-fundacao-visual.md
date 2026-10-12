@@ -145,11 +145,11 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: `Barlow_Condensed` com pesos 600 e 700, subconjunto `latin`, `display: "swap"`, variável `--font-barlow-condensed`; `export const viewport` com `themeColor: "#111111"` e `colorScheme: "light"`; `lang`, título e descrição mantidos. `AppProviders` não muda.
 
 **Done when**:
-- [ ] O teste confirma que o layout declara as três variáveis de fonte e que a folha global as liga a `--font-sans`, `--font-mono` e `--font-display`
-- [ ] `pnpm build` passa e nenhuma dependência entra em `package.json`
-- [ ] No navegador, a fonte computada de um parágrafo é Geist (pendência D-01 resolvida), e não a fonte padrão
-- [ ] O título continua no formato "Página | TJ Platform"
-- [ ] Gates passam
+- [x] O teste confirma que o layout declara as três variáveis de fonte e que a folha global as liga a `--font-sans`, `--font-mono` e `--font-display`
+- [x] `pnpm build` passa e nenhuma dependência entra em `package.json`
+- [x] No navegador, a fonte computada de um parágrafo é Geist (pendência D-01 resolvida), e não a fonte padrão
+- [x] O título continua no formato "Página | TJ Platform"
+- [x] Gates passam
 
 **Tests**: unit + build
 **Verificação visual**: fonte computada de corpo e de um título de teste, conferida no navegador e registrada no relatório da task
