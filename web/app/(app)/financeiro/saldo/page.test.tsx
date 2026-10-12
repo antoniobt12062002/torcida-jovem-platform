@@ -45,4 +45,16 @@ describe("/financeiro/saldo", () => {
     expect(calls.count).toBe(0);
     expect(screen.queryByRole("heading", { name: "Saldo" })).toBeNull();
   });
+
+  // DSP-01 AC1: largura estreita, no contêiner alvo do link de pular.
+  it("renderiza no contêiner estreito, com o único h1", async () => {
+    mockSaldo();
+    mockMe(authContext({ permissions: ["financeiro:saldo:read"] }));
+    renderWithSession(<FinanceiroSaldoPage />);
+    await screen.findByText("R$ 42,00");
+    const main = screen.getByRole("main");
+    expect(main.id).toBe("conteudo");
+    expect(main.className).toContain("max-w-content-narrow");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
 });

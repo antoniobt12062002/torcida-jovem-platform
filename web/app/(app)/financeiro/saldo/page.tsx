@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PageContainer } from "@/components/app/page-container";
 import { RequirePermission } from "@/components/app/require-permission";
 import { SaldoPage } from "@/features/financeiro/saldo/saldo-page";
 
@@ -9,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function FinanceiroSaldoPage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8">
+    <PageContainer width="narrow">
       <RequirePermission permission="financeiro:saldo:read" mode="page">
         <SaldoPage />
       </RequirePermission>
-    </main>
+    </PageContainer>
   );
 }

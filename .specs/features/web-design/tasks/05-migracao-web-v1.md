@@ -186,10 +186,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: valor com `MoneyValue` na fonte decidida no portão (DD-4); texto explicativo mantido; saldo negativo com sinal, ícone e texto. A guarda cobre os diretórios de DS-FA.
 
 **Done when**:
-- [ ] Os testes existentes de saldo passam sem alteração de asserção de comportamento
-- [ ] Saldo negativo de exemplo mostra sinal e ícone, e é anunciado como negativo
-- [ ] A guarda passa nos diretórios de DS-FA
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-FA)
+- [x] Os testes existentes de saldo passam sem alteração de asserção de comportamento
+- [x] Saldo negativo de exemplo mostra sinal e ícone, e é anunciado como negativo
+- [x] A guarda passa nos diretórios de DS-FA
+- [x] Gates passam, incluindo Audit (fim da unidade DS-FA)
 
 **Tests**: component com MSW
 **Verificação visual**: saldo positivo e negativo em 390 e 1440 px

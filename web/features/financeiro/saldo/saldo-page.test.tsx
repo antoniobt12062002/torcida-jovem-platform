@@ -7,7 +7,7 @@ import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext, problem, saldoFinanceiro } from "@/test/msw/fixtures";
 import { server } from "@/test/msw/server";
 
-import { SaldoPage } from "./saldo-page";
+import { AVISO_NEGATIVO, SaldoPage } from "./saldo-page";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -40,7 +40,8 @@ describe("valor do saldo", () => {
   it.each([
     ["positivo", 123456, "R$ 1.234,56"],
     ["zero", 0, "R$ 0,00"],
-    ["negativo", -98765, "-R$ 987,65"],
+    // DSC-06 AC2 (design 02): o negativo usa o sinal de menos "−" (U+2212) do MoneyValue.
+    ["negativo", -98765, "−R$ 987,65"],
   ])("%s: chama GET /saldo e mostra saldo_cents com formatBRL", async (_caso, cents, texto) => {
     const calls = mockSaldo(() => HttpResponse.json(saldoFinanceiro(cents)));
     renderPage();
@@ -73,4 +74,54 @@ it("falha ao carregar mostra o erro e tenta de novo", async () => {
   fail = false;
   fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
   expect(await screen.findByText("R$ 1,00")).toBeTruthy();
+});
+
+// DSM-03 AC1 e AC2, DSC-06 AC1 a AC3, DD-4: valor de destaque padronizado.
+describe("saldo no Design System", () => {
+  function valor() {
+    const el = document.querySelector("[data-slot=money-value]") as HTMLElement | null;
+    if (!el) throw new Error("MoneyValue não encontrado");
+    return el;
+  }
+
+  it("tem um único h1, no cabeçalho de página", async () => {
+    mockSaldo(() => HttpResponse.json(saldoFinanceiro(500)));
+    renderPage();
+    await screen.findByText("R$ 5,00");
+    expect(document.querySelector("[data-slot=page-header]")).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Saldo"]);
+  });
+
+  it("positivo: valor de saldo em destaque, sem ícone nem aviso de negativo", async () => {
+    mockSaldo(() => HttpResponse.json(saldoFinanceiro(123456)));
+    renderPage();
+    await screen.findByText("R$ 1.234,56");
+    const el = valor();
+    expect(el.getAttribute("data-variant")).toBe("balance");
+    expect(el.className).toContain("font-money-display");
+    expect(el.className).toContain("tabular-nums");
+    expect(el.querySelector("svg")).toBeNull();
+    expect(screen.queryByText("saldo negativo")).toBeNull();
+    expect(screen.queryByText(AVISO_NEGATIVO)).toBeNull();
+    expect(screen.getByRole("region", { name: "Saldo atual" }).contains(el)).toBe(true);
+  });
+
+  it("negativo: sinal, ícone e texto, e é anunciado como negativo", async () => {
+    mockSaldo(() => HttpResponse.json(saldoFinanceiro(-98765)));
+    renderPage();
+    await screen.findByText("−R$ 987,65");
+    const el = valor();
+    expect(el.querySelector("svg[aria-hidden=true]")).toBeTruthy();
+    expect(el.textContent).toBe("−R$ 987,65saldo negativo");
+    expect(screen.getByText("saldo negativo").className).toContain("sr-only");
+    expect(screen.getByText(AVISO_NEGATIVO)).toBeTruthy();
+  });
+
+  it("carregando mostra o esqueleto de valor com o rótulo", async () => {
+    mockSaldo(() => HttpResponse.json(saldoFinanceiro(100)));
+    renderPage();
+    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(screen.getByText("Carregando saldo…")).toBeTruthy();
+    await screen.findByText("R$ 1,00");
+  });
 });

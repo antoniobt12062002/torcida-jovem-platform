@@ -1,45 +1,44 @@
 "use client";
 
+import { MoneyValue } from "@/components/app/money-value";
+import { PageHeader } from "@/components/app/page-header";
 import { ErrorState, LoadingState } from "@/components/app/states";
-import { formatBRL } from "@/lib/money";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 import { useSaldo } from "./hooks";
 
-// Saldo atual do financeiro (FWB-02): valor da API, formatado, e explicação
-// de como ele é calculado. Nenhum cálculo é feito no front.
+// Saldo atual do financeiro (FWB-02): valor da API e explicação de como ele é
+// calculado. Nenhum cálculo é feito no front. O valor é o saldo isolado de
+// destaque (DD-4, WDS-D-031): `MoneyValue` `balance` em `display`, que no
+// negativo mostra o sinal de menos, o ícone e o texto "saldo negativo".
 
 export const PERMISSION_SALDO_READ = "financeiro:saldo:read";
+
+export const EXPLICACAO =
+  "O saldo é a soma dos lançamentos recebidos menos a soma dos lançamentos pagos, pelo status atual de cada lançamento.";
+
+export const AVISO_NEGATIVO = "Os lançamentos pagos superam os recebidos.";
 
 export function SaldoPage() {
   const query = useSaldo();
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Saldo</h1>
+    <>
+      <PageHeader title="Saldo" />
 
       {query.isPending ? (
-        <LoadingState label="Carregando saldo…" />
+        <LoadingState label="Carregando saldo…" shape="value" />
       ) : query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : (
-        <section aria-label="Saldo atual" className="flex flex-col gap-2 rounded-lg border p-6">
+        <Card aria-label="Saldo atual" role="region" className="gap-2">
           <p className="text-sm text-muted-foreground">Saldo atual</p>
-          <p
-            className={cn(
-              "text-3xl font-semibold tabular-nums",
-              query.data.saldo_cents < 0 && "text-destructive",
-            )}
-          >
-            {formatBRL(query.data.saldo_cents)}
-          </p>
-        </section>
+          <MoneyValue cents={query.data.saldo_cents} variant="balance" size="display" className="self-start" />
+          {query.data.saldo_cents < 0 ? <p className="text-sm text-destructive">{AVISO_NEGATIVO}</p> : null}
+        </Card>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        O saldo é a soma dos lançamentos recebidos menos a soma dos lançamentos pagos, pelo status atual de
-        cada lançamento.
-      </p>
-    </div>
+      <p className="text-sm text-muted-foreground">{EXPLICACAO}</p>
+    </>
   );
 }
