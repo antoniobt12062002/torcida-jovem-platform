@@ -195,11 +195,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: Badge e Alert com os tons `neutral`, `success`, `warning` e `error`, ícone e sem `transition-all`; alias `destructive` (tom de erro) e `default`, `secondary`, `outline` do Badge mantidos; Toast com ícone por tom, `toast.warning`, durações de 5 e 8 segundos, botão de fechar com alvo adequado e posição pela área segura; Skeleton com as formas de linha, linha de tabela e bloco.
 
 **Done when**:
-- [ ] Cada tom de Badge e de Alert tem teste de texto e de ícone; nenhum depende só de cor
-- [ ] `toast.success`, `toast.error` e `toast.show` mantêm a assinatura; `toast.warning` existe
-- [ ] O toast é anunciado por região viva e pode ser dispensado pelo teclado
-- [ ] `lib/session` e as features que usam `toast` e `Alert` compilam e passam sem alteração
-- [ ] Gates passam
+- [x] Cada tom de Badge e de Alert tem teste de texto e de ícone; nenhum depende só de cor
+- [x] `toast.success`, `toast.error` e `toast.show` mantêm a assinatura; `toast.warning` existe
+- [x] O toast é anunciado por região viva e pode ser dispensado pelo teclado
+- [x] `lib/session` e as features que usam `toast` e `Alert` compilam e passam sem alteração
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
