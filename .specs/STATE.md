@@ -140,6 +140,14 @@
 - **Date**: 2026-10-04
 - **Status**: active
 
+### AD-018
+- **Decision**: A Web usa um Design System próprio, definido na feature `web-design`: tokens em camadas (primitivos, semânticos e de componente) na folha de estilos global, paleta oficial da Torcida Jovem (`#111111`, `#D81E28`, `#FFFFFF`, `#A7A9AC`), Barlow Condensed para títulos e Geist para texto funcional, tema único com moldura escura e conteúdo claro. Telas e componentes não usam cor literal nem utilitário de paleta crua; toda tela nova usa o kit (`web/components/ui`), os componentes compostos (`web/components/app`) e os padrões compartilhados. Nenhuma dependência nova foi adotada.
+- **Reason**: A Web V1 foi construída antes da identidade visual; sem uma fundação única, cada tela decide cor, tamanho e largura por conta própria, e a acessibilidade vira revisão posterior em vez de requisito.
+- **Trade-off**: Uma guarda automatizada passa a recusar valores soltos; um tema escuro futuro é possível redefinindo só os tokens semânticos, mas não existe agora; verde e âmbar entram só como cores de estado, fora da paleta oficial.
+- **Scope**: `web/`. Ver `.specs/features/web-design/` (decisões locais `WDS-D-NNN`). Complementa AD-002 (stack) sem alterá-la.
+- **Date**: 2026-10-11
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/financeiro/` — coordenação própria em `financeiro/STATE.md`
