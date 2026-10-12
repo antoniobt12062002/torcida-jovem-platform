@@ -121,10 +121,10 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `useMediaQuery(query)` com `useSyncExternalStore` e retrato de servidor fixo; `useIsNarrow()` (abaixo de 768) e `useIsCoarsePointer()`; constantes 768 e 1024. Sem `matchMedia` disponível, o resultado é o de desktop.
 
 **Done when**:
-- [ ] Renderizado no servidor (`renderToString`), o hook devolve o valor de desktop; hidratado com `mockViewport` estreito, atualiza sem aviso de hidratação
-- [ ] Sem `matchMedia`, devolve desktop
-- [ ] Mudar a largura com `mockViewport` atualiza o componente
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-L)
+- [x] Renderizado no servidor (`renderToString`), o hook devolve o valor de desktop; hidratado com `mockViewport` estreito, atualiza sem aviso de hidratação
+- [x] Sem `matchMedia`, devolve desktop
+- [x] Mudar a largura com `mockViewport` atualiza o componente
+- [x] Gates passam, incluindo Audit (fim da unidade DS-L)
 
 **Tests**: unit
 **Verificação visual**: não se aplica
