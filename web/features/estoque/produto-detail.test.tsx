@@ -162,3 +162,37 @@ describe("isolamento das permissões de leitura", () => {
     expect(movs.calls).toBe(0);
   });
 });
+
+// DSM-04 AC1 e AC6, DSP-01: cabeçalho com trilha e saldo negativo por ícone e texto.
+describe("cabeçalho e saldo no design system", () => {
+  it("um único h1 com o nome e trilha de volta para Produtos", async () => {
+    renderDetail([PERM.produtoRead]);
+    await screen.findByRole("heading", { name: "Camisa oficial" });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Camisa oficial"]);
+    const trilha = screen.getByRole("navigation", { name: "Trilha de navegação" });
+    expect(trilha.querySelector('a[href="/estoque/produtos"]')?.textContent).toContain("Produtos");
+  });
+
+  it("saldo e movimentações são seções h2", async () => {
+    renderDetail(READ_ONLY, 2);
+    await screen.findByTestId("saldo-valor");
+    expect(screen.getByRole("heading", { level: 2, name: "Saldo" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Movimentações" })).toBeTruthy();
+  });
+
+  it("saldo negativo tem ícone e texto, além da cor, e algarismos tabulares", async () => {
+    renderDetail([PERM.produtoRead, PERM.saldoRead], -3);
+    const saldo = await screen.findByTestId("saldo-valor");
+    expect(saldo.className).toContain("tabular-nums");
+    const badge = screen.getByText("Saldo negativo");
+    expect(badge.getAttribute("data-tone")).toBe("error");
+    expect(badge.querySelector("svg[aria-hidden='true']")).toBeTruthy();
+  });
+
+  it("produto fora da lista mantém o cabeçalho com a trilha", async () => {
+    renderDetail(READ_ONLY, 0, "00000000-0000-4000-8000-000000000999");
+    expect(await screen.findByText("Produto não encontrado.")).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("navigation", { name: "Trilha de navegação" })).toBeTruthy();
+  });
+});

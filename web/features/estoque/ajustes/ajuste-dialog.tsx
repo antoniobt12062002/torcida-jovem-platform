@@ -1,5 +1,6 @@
 "use client";
 
+import { SlidersHorizontalIcon } from "lucide-react";
 import { useState } from "react";
 
 import { apiErrorMessage } from "@/components/app/api-error";
@@ -28,6 +29,8 @@ import { useAjustarEstoque } from "./hooks";
 // Ajuste de estoque (EWB-03): quantidade com sinal e diferente de zero, motivo
 // obrigatório e prévia do saldo resultante. Saldo negativo é avisado, sem
 // impedir: a API aceita (ADR-007). Nada é enviado antes de confirmar.
+// O aviso é um alerta de aviso, com ícone e texto (DSM-04 AC6). Abaixo de
+// 640 px o diálogo ocupa a tela, com as ações presas à base (DSM-04 AC5).
 
 export type AjusteDialogProps = { produto: Produto; saldoAtual: number };
 
@@ -72,7 +75,10 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>Ajustar estoque</DialogTrigger>
+      <DialogTrigger render={<Button variant="secondary" />}>
+        <SlidersHorizontalIcon aria-hidden />
+        Ajustar estoque
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ajustar estoque</DialogTitle>
@@ -83,7 +89,7 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
 
         <div className="flex flex-col gap-4">
           {error ? (
-            <Alert variant="destructive">
+            <Alert variant="error">
               <AlertDescription>{apiErrorMessage(error, estoqueCatalog)}</AlertDescription>
             </Alert>
           ) : null}
@@ -121,7 +127,7 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
           </dl>
 
           {resultante !== null && resultante < 0 ? (
-            <Alert>
+            <Alert variant="warning" data-testid="ajuste-aviso-negativo">
               <AlertDescription>
                 O saldo ficará negativo. O ajuste é permitido; confira a quantidade antes de confirmar.
               </AlertDescription>
@@ -130,10 +136,16 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" disabled={pending} onClick={() => changeOpen(false)}>
+          <Button type="button" variant="secondary" disabled={pending} onClick={() => changeOpen(false)}>
             Cancelar
           </Button>
-          <Button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
+          <Button
+            type="button"
+            disabled={!canConfirm}
+            loading={pending}
+            loadingLabel="Confirmando…"
+            onClick={() => void confirm()}
+          >
             Confirmar ajuste
           </Button>
         </DialogFooter>

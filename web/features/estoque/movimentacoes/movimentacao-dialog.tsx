@@ -1,11 +1,13 @@
 "use client";
 
+import { ArrowDownToLineIcon, ArrowUpFromLineIcon, type LucideIcon, Undo2Icon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { apiErrorMessage } from "@/components/app/api-error";
 import { formatDateTime } from "@/components/app/format";
 import { QuantityField } from "@/components/app/quantity-field";
+import { rowActionName } from "@/components/app/row-actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,7 @@ import { ORIGEM_MANUAL } from "./payload";
 
 // Entrada, saída e devolução manuais (EWB-02 AC2-5). A origem é sempre
 // Inventário, mostrada como texto e nunca oferecida como escolha (WEB-D-007).
+// Abaixo de 640 px o diálogo ocupa a tela, com as ações presas à base.
 
 export type MovimentacaoDialogProps =
   | { produto: Produto; tipo: "ENTRADA" | "SAIDA"; referencia?: undefined }
@@ -38,6 +41,20 @@ const TEXTS = {
   SAIDA: { trigger: "Registrar saída", title: "Registrar saída" },
   DEVOLUCAO: { trigger: "Devolver", title: "Registrar devolução" },
 } as const;
+
+const ICONS: Record<MovimentacaoDialogProps["tipo"], LucideIcon> = {
+  ENTRADA: ArrowDownToLineIcon,
+  SAIDA: ArrowUpFromLineIcon,
+  DEVOLUCAO: Undo2Icon,
+};
+
+/**
+ * Identifica uma movimentação em texto ("saída de 4 UN em 04/10/2026 09:00"):
+ * nome das ações da linha no histórico (DSP-05 AC10) e descrição da devolução.
+ */
+export function movimentacaoLabel(mov: Movimentacao, unidade: string): string {
+  return `${tipoLabels[mov.tipo].toLowerCase()} de ${Math.abs(mov.quantidade)} ${unidade} em ${formatDateTime(mov.criado_em)}`;
+}
 
 type Values = { quantidade: number | null };
 
@@ -82,9 +99,22 @@ export function MovimentacaoDialog(props: MovimentacaoDialogProps) {
     reset({ quantidade: null });
   }
 
+  const Icon = ICONS[tipo];
+  const trigger =
+    props.tipo === "DEVOLUCAO" ? (
+      <Button
+        variant="secondary"
+        size="sm"
+        aria-label={rowActionName(texts.trigger, movimentacaoLabel(props.referencia, produto.unidade_medida))}
+      />
+    ) : (
+      <Button variant={tipo === "ENTRADA" ? "primary" : "secondary"} />
+    );
+
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogTrigger render={<Button variant={tipo === "DEVOLUCAO" ? "outline" : "default"} size={tipo === "DEVOLUCAO" ? "sm" : "default"} />}>
+      <DialogTrigger render={trigger}>
+        <Icon aria-hidden />
         {texts.trigger}
       </DialogTrigger>
       <DialogContent>
@@ -92,17 +122,17 @@ export function MovimentacaoDialog(props: MovimentacaoDialogProps) {
           <DialogTitle>{texts.title}</DialogTitle>
           <DialogDescription>
             {props.tipo === "DEVOLUCAO"
-              ? `Devolução da ${tipoLabels[props.referencia.tipo].toLowerCase()} de ${Math.abs(props.referencia.quantidade)} ${produto.unidade_medida} em ${formatDateTime(props.referencia.criado_em)}.`
+              ? `Devolução da ${movimentacaoLabel(props.referencia, produto.unidade_medida)}.`
               : produto.nome}
           </DialogDescription>
         </DialogHeader>
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-1 flex-col gap-4"
           noValidate
           onSubmit={(event) => void handleSubmit(onValid)(event)}
         >
           {errors.root ? (
-            <Alert variant="destructive">
+            <Alert variant="error">
               <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           ) : null}
@@ -123,17 +153,17 @@ export function MovimentacaoDialog(props: MovimentacaoDialogProps) {
             )}
           />
 
-          <div className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Origem</span>
-            <span>{origemLabels[ORIGEM_MANUAL]}</span>
-          </div>
+          <dl className="flex flex-col gap-1 text-sm">
+            <dt className="font-medium">Origem</dt>
+            <dd>{origemLabels[ORIGEM_MANUAL]}</dd>
+          </dl>
 
           <DialogFooter>
-            <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => changeOpen(false)}>
+            <Button type="button" variant="secondary" disabled={isSubmitting} onClick={() => changeOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Registrando…" : "Registrar"}
+            <Button type="submit" loading={isSubmitting} loadingLabel="Registrando…">
+              Registrar
             </Button>
           </DialogFooter>
         </form>

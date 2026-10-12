@@ -8,6 +8,7 @@ import { authContext, movimentacao, problem, produto } from "@/test/msw/fixtures
 import { server } from "@/test/msw/server";
 
 import { ProdutoDetail } from "../produto-detail";
+import { ProdutosPage } from "../produtos/produtos-page";
 import { ALL, allExcept, mockEstoque, mockProdutos, PERM, READ_ONLY } from "../test-helpers";
 
 vi.mock("next/navigation", async () =>
@@ -174,5 +175,54 @@ describe("isolamento de estoque:movimentacao:adjust", () => {
     renderDetail([...READ_ONLY, permission], 4);
     await screen.findByTestId("saldo-valor");
     expect(screen.queryByRole("button", { name: "Ajustar estoque" })).toBeNull();
+  });
+});
+
+// DSM-04 AC6, DSP-03 AC6: o aviso de saldo negativo é um alerta de aviso, com
+// ícone e texto, e não bloqueia a confirmação.
+describe("aviso de saldo negativo", () => {
+  it("é um alerta no tom de aviso, com ícone e texto, sem desabilitar a confirmação", async () => {
+    renderDetail(ALL, 1);
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("1 UN"));
+    const dialog = await openAjuste();
+    fill(dialog, "-3", "Contagem");
+    const aviso = within(dialog).getByRole("alert");
+    expect(aviso.textContent).toContain(WARNING);
+    expect(aviso.getAttribute("data-testid")).toBe("ajuste-aviso-negativo");
+    expect(aviso.className).toContain("bg-warning-subtle");
+    expect(aviso.querySelector("svg")).toBeTruthy();
+    expect(within(dialog).getByTestId("ajuste-saldo-resultante").className).toContain("tabular-nums");
+    expect(within(dialog).getByTestId("ajuste-saldo-atual").className).toContain("tabular-nums");
+    expect(confirmButton(dialog).disabled).toBe(false);
+  });
+
+  it("as ações ficam no rodapé do diálogo, que ocupa a tela abaixo de 640 px", async () => {
+    renderDetail(ALL, 0);
+    const dialog = await openAjuste();
+    const footer = dialog.querySelector('[data-slot="dialog-footer"]');
+    expect(footer?.contains(confirmButton(dialog))).toBe(true);
+    expect(footer?.textContent).toContain("Cancelar");
+  });
+});
+
+// EWB-04 AC1, T10: somente leitura (CONSELHO_FISCAL) sem ação de escrita em
+// nenhuma tela do estoque.
+describe("somente leitura em todas as telas do estoque", () => {
+  const ESCRITAS = [/^Novo produto$/, /^Registrar entrada$/, /^Registrar saída$/, /^Devolver/, /^Ajustar estoque$/];
+
+  it("na lista de produtos, nenhuma ação de escrita", async () => {
+    mockMe(authContext({ permissions: READ_ONLY }));
+    mockProdutos([camisa]);
+    renderWithSession(<ProdutosPage />);
+    await screen.findByText(camisa.nome);
+    for (const name of ESCRITAS) expect(screen.queryByRole("button", { name })).toBeNull();
+  });
+
+  it("no detalhe, com saldo e histórico, nenhuma ação de escrita", async () => {
+    renderDetail(READ_ONLY, 5);
+    await screen.findByTestId("saldo-valor");
+    await screen.findByRole("table", { name: "Movimentações" });
+    for (const name of ESCRITAS) expect(screen.queryByRole("button", { name })).toBeNull();
+    expect(screen.queryAllByRole("button").map((b) => b.textContent)).toEqual([]);
   });
 });

@@ -289,11 +289,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: busca `busca` na URL, com escrita adiada; colunas por prioridade (código, nome, situação; unidade); estado vazio com ação "Novo produto" para quem pode; diálogo de criação em `FormLayout`; ícone e descrição em `nav.ts`; página com `Suspense`.
 
 **Done when**:
-- [ ] Os testes existentes passam; mudam só as leituras do termo de busca, pela URL (DSP-05 AC2)
-- [ ] Digitar na busca atualiza a URL sem uma entrada de histórico por tecla
-- [ ] Código duplicado continua aparecendo no campo
-- [ ] Com `mockViewport` estreito, a tela mostra lista empilhada
-- [ ] Gates passam
+- [x] Os testes existentes passam; mudam só as leituras do termo de busca, pela URL (DSP-05 AC2)
+- [x] Digitar na busca atualiza a URL sem uma entrada de histórico por tecla
+- [x] Código duplicado continua aparecendo no campo
+- [x] Com `mockViewport` estreito, a tela mostra lista empilhada
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: listagem vazia, com busca e cheia em 390, 768, 820, 1024 e 1440 px
@@ -315,10 +315,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: saldo em destaque com algarismos tabulares e indicação de saldo negativo por ícone e texto; histórico com colunas por prioridade (tipo, quantidade, data; origem, responsável; motivo, devolução de) e lista empilhada no celular; "Devolver" com nome acessível que identifica a movimentação; diálogo em tela cheia abaixo de 640 px, com as ações fixas na base.
 
 **Done when**:
-- [ ] Os testes existentes passam; muda só o nome acessível do botão "Devolver" (DSP-05 AC10), que continua contendo o texto visível
-- [ ] Quantidade decimal continua recusada; origem continua fixa em "Inventário"; saída acima do saldo continua mostrando a mensagem atual
-- [ ] Com `mockViewport` estreito, cada movimentação mostra tipo, quantidade, data e responsável, com o motivo limitado a três linhas
-- [ ] Gates passam
+- [x] Os testes existentes passam; muda só o nome acessível do botão "Devolver" (DSP-05 AC10), que continua contendo o texto visível
+- [x] Quantidade decimal continua recusada; origem continua fixa em "Inventário"; saída acima do saldo continua mostrando a mensagem atual
+- [x] Com `mockViewport` estreito, cada movimentação mostra tipo, quantidade, data e responsável, com o motivo limitado a três linhas
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: detalhe com histórico e diálogo de movimentação em 390 px com emulação de toque, e em 1440 px
@@ -340,11 +340,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: prévia do saldo com algarismos tabulares; aviso de saldo negativo como alerta de aviso, com ícone e texto, sem bloquear; botão desabilitado sem quantidade ou motivo, como hoje. A guarda cobre os diretórios de DS-ES.
 
 **Done when**:
-- [ ] Os testes existentes do ajuste passam sem alteração de asserção de comportamento
-- [ ] O aviso de saldo negativo não depende só de cor
-- [ ] Conta só com leitura (`CONSELHO_FISCAL`) não vê ação de escrita em nenhuma tela de estoque
-- [ ] A guarda passa nos diretórios de DS-ES
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-ES)
+- [x] Os testes existentes do ajuste passam sem alteração de asserção de comportamento
+- [x] O aviso de saldo negativo não depende só de cor
+- [x] Conta só com leitura (`CONSELHO_FISCAL`) não vê ação de escrita em nenhuma tela de estoque
+- [x] A guarda passa nos diretórios de DS-ES
+- [x] Gates passam, incluindo Audit (fim da unidade DS-ES)
 
 **Tests**: component com MSW
 **Verificação visual**: diálogo de ajuste com e sem aviso, em 390 e 1440 px
