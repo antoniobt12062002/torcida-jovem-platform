@@ -221,11 +221,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: Dialog em tela cheia abaixo de 640 px, com rodapé fixo ao contêiner e área segura; `overscroll-behavior: contain`; sombra de nível 2 sobre o véu; Sheet com os lados `left` e `bottom`; item de menu com altura pelos tokens, variante destrutiva e possibilidade de ser link; botão de fechar como `IconButton`.
 
 **Done when**:
-- [ ] Abrir leva o foco para dentro; fechar devolve o foco ao gatilho; Esc fecha (testes para Dialog, AlertDialog, Sheet e menu)
-- [ ] Clique fora fecha o Dialog e não fecha o AlertDialog
-- [ ] Item de menu que navega é renderizado como link
-- [ ] Os testes atuais de `overlays.test.tsx` continuam passando
-- [ ] Gates passam
+- [x] Abrir leva o foco para dentro; fechar devolve o foco ao gatilho; Esc fecha (testes para Dialog, AlertDialog, Sheet e menu)
+- [x] Clique fora fecha o Dialog e não fecha o AlertDialog
+- [x] Item de menu que navega é renderizado como link
+- [x] Os testes atuais de `overlays.test.tsx` continuam passando
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: diálogo em 390 px e gaveta inferior conferidos no espécime (rodada 5)
