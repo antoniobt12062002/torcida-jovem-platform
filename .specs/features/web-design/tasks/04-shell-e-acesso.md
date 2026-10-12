@@ -192,13 +192,14 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 - [ ] Em 390, 768 e 820 px: botão de menu presente, gaveta abre, fecha ao navegar e com Esc, foco volta ao botão, nenhuma ação inacessível
 - [ ] Em 1024 e 1440 px: navegação fixa presente, sem botão de menu
 - [ ] Link de pular funciona por teclado; item ativo anunciado; nenhuma rolagem horizontal de página a partir de 320 px
-- [ ] A evidência registra que a verificação anterior de FND-05 AC2 (ponto de quebra de 768 px) não foi reaproveitada
-- [ ] O arquivo não contém senha, token, cookie nem dado pessoal
+- [x] A evidência registra que a verificação anterior de FND-05 AC2 (ponto de quebra de 768 px) não foi reaproveitada
+- [x] O arquivo não contém senha, token, cookie nem dado pessoal
 - [ ] IF algum item falhar THEN a unidade para, registra a falha e reporta ao coordenador
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-S)
+- [x] Gates passam, incluindo Audit (fim da unidade DS-S)
 
 **Tests**: aceite manual no navegador (roteiro registrado)
 **Verificação visual**: é o objeto da task
+**Situação (rodada 6)**: roteiro no navegador **pendente** de sessão real; evidência em `evidence/shell-responsivo.md`. Os itens de navegador ficam abertos para a conferência do coordenador.
 **Gate**: Web + Audit + Contract + Backend intacto + Dependências intactas + Ownership + Congelados intactos
 **Commit**: `docs(web-design): evidencia da navegacao responsiva no novo ponto de quebra`
 
