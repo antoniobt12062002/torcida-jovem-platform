@@ -163,11 +163,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: `inicioNavItem` ganha ícone e descrição; a ordem e a composição de `navItems` não mudam; `/inicio` usa `PageHeader` e uma grade de cartões que são links, com ícone, nome e descrição quando o módulo a fornecer; sem indicadores. A guarda da unidade cobre `app/(public)/`, `app/(app)/layout.tsx`, `inicio/`, `sem-acesso/`, `conta/`, as páginas de erro e `features/identity/acesso/`.
 
 **Done when**:
-- [ ] Os testes existentes de `nav-items` e de `inicio` passam sem alteração de asserção de comportamento
-- [ ] Os atalhos são links, respeitam as permissões e ficam em uma coluna abaixo de 768 px (classe conferida em teste)
-- [ ] Conta sem nenhuma área vê o estado vazio com a explicação
-- [ ] A guarda passa nos diretórios de DS-S, sem contêiner nem título montados à mão
-- [ ] Gates passam
+- [x] Os testes existentes de `nav-items` e de `inicio` passam sem alteração de asserção de comportamento
+- [x] Os atalhos são links, respeitam as permissões e ficam em uma coluna abaixo de 768 px (classe conferida em teste)
+- [x] Conta sem nenhuma área vê o estado vazio com a explicação
+- [x] A guarda passa nos diretórios de DS-S, sem contêiner nem título montados à mão
+- [x] Gates passam
 
 **Tests**: component + unit
 **Verificação visual**: `/inicio` com duas contas de permissões diferentes, em 390, 820 e 1440 px
