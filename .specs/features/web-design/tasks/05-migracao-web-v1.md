@@ -211,12 +211,12 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: filtros `tipo`, `status`, `conta`, `de` e `ate` na URL; colunas por prioridade (data, conta, valor líquido, status; tipo e forma de pagamento; valor bruto e taxa); mapa de status em `labels.ts` com tom e ícone (`CANCELADA` neutra); link de detalhe com nome que identifica o lançamento; "Mostrar mais" em lotes de 50; página em largura larga com `Suspense`.
 
 **Done when**:
-- [ ] Os testes existentes da listagem passam; mudam só o nome acessível do link de detalhe (DSP-05 AC10) e a leitura dos filtros pela URL (DSP-05 AC2)
-- [ ] `CRIADA`, `RECEBIDA`, `PAGA` e `CANCELADA` têm rótulo e ícone distintos entre si
-- [ ] Um filtro restaurado da URL que aponta para conta inexistente é ignorado
-- [ ] Com 51 lançamentos aparecem 50 e "Mostrar mais"; com 50, o controle não aparece; o filtro considera todos os registros
-- [ ] Com `mockViewport` estreito, cada item mostra data, tipo, conta, valor líquido e status
-- [ ] Gates passam
+- [x] Os testes existentes da listagem passam; mudam só o nome acessível do link de detalhe (DSP-05 AC10) e a leitura dos filtros pela URL (DSP-05 AC2)
+- [x] `CRIADA`, `RECEBIDA`, `PAGA` e `CANCELADA` têm rótulo e ícone distintos entre si
+- [x] Um filtro restaurado da URL que aponta para conta inexistente é ignorado
+- [x] Com 51 lançamentos aparecem 50 e "Mostrar mais"; com 50, o controle não aparece; o filtro considera todos os registros
+- [x] Com `mockViewport` estreito, cada item mostra data, tipo, conta, valor líquido e status
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: listagem vazia, filtrada e cheia em 390, 768, 820, 1024 e 1440 px
