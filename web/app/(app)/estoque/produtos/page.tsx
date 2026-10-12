@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
+import { PageContainer } from "@/components/app/page-container";
+import { LoadingState } from "@/components/app/states";
 import { ProdutosPage } from "@/features/estoque/produtos/produtos-page";
 
 export const metadata: Metadata = {
   title: "Produtos",
 };
 
+// A busca fica na URL (`useSearchParams`), por isso a lista fica dentro de `Suspense`.
 export default function EstoqueProdutosPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8">
-      <ProdutosPage />
-    </main>
+    <PageContainer>
+      <Suspense fallback={<LoadingState shape="table" />}>
+        <ProdutosPage />
+      </Suspense>
+    </PageContainer>
   );
 }

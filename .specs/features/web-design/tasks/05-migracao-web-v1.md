@@ -289,11 +289,11 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: busca `busca` na URL, com escrita adiada; colunas por prioridade (código, nome, situação; unidade); estado vazio com ação "Novo produto" para quem pode; diálogo de criação em `FormLayout`; ícone e descrição em `nav.ts`; página com `Suspense`.
 
 **Done when**:
-- [ ] Os testes existentes passam; mudam só as leituras do termo de busca, pela URL (DSP-05 AC2)
-- [ ] Digitar na busca atualiza a URL sem uma entrada de histórico por tecla
-- [ ] Código duplicado continua aparecendo no campo
-- [ ] Com `mockViewport` estreito, a tela mostra lista empilhada
-- [ ] Gates passam
+- [x] Os testes existentes passam; mudam só as leituras do termo de busca, pela URL (DSP-05 AC2)
+- [x] Digitar na busca atualiza a URL sem uma entrada de histórico por tecla
+- [x] Código duplicado continua aparecendo no campo
+- [x] Com `mockViewport` estreito, a tela mostra lista empilhada
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: listagem vazia, com busca e cheia em 390, 768, 820, 1024 e 1440 px
