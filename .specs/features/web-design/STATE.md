@@ -249,10 +249,29 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ---
 
+## Registro de execução
+
+| Rodada | Unidade | Commits | Testes ao fim (arquivos / testes) | Observações |
+| --- | --- | --- | --- | --- |
+| Base | — | `7c30c6a` | 69 / 851 | Base documental |
+| 1 | DS-F | `ea86873`, `2a7a4ec`, `ca30de7`, `772b97e`, `a726389` | 74 / 969 | Ajuste de neutros (WDS-D-030); escudo ilegível em 16 px |
+| 2 | DS-T | `c82cc49`, `20f2609` | 76 / 1005 | Os 33 consumidores do mock de navegação passam sem alteração |
+| 2 | DS-K | `ae398cc`, `cbef5e2`, `c5fdf35`, `845a107`, `316eb3d`, `063b294`; integração `08c971d` | 79 / 1207 (com DS-T) | Alias de compatibilidade listados abaixo |
+
+**Alias de compatibilidade a remover em DS-INT** (marcados no código com "Alias de compatibilidade: removido em DS-INT."): `button.tsx` (variantes `default` e `outline`; tamanhos `default`, `icon`, `icon-sm`), `badge.tsx` (`default`, `secondary`, `destructive`), `alert.tsx` (`default` e `destructive`), `table.tsx` (`scroll="legacy"` como padrão).
+
+**Desvios aceitos pelo coordenador na rodada 2, a rever em DS-INT ou no espécime:**
+
+- O toast de erro é anunciado como `polite`, não `assertive`: no Base UI a prioridade alta duplica o texto do aviso e quebraria 9 testes existentes de `features/` e `lib/session`, que estão congelados. Reavaliar em DS-INT, junto com esses testes.
+- O `AlertDialog` continua centralizado abaixo de 640 px (DSC-04 AC4 cita só o `Dialog`).
+- Espaçamento de letras dos títulos usa a escala padrão (`tracking-normal` e `tracking-wider`), não 0,01em e 0,06em.
+- Área segura do dispositivo aplicada por estilo em linha em toast, rodapé de diálogo e gaveta inferior; não é verificável em jsdom e fica para a conferência no navegador.
+- `Sheet` aceita só os lados `left` e `bottom`.
+
 ## Handoff
 
-- **Fase**: Execute. **Rodada 1 (DS-F) concluída e integrada** na `feature/web-design` em 2026-10-11, com todos os gates verdes (74 arquivos de teste, 969 testes; base 69 e 851).
-- **Próximo passo**: rodada 2 (DS-K ∥ DS-T), depois 3 (DS-L), 4 (DS-A) e 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
+- **Fase**: Execute. **Rodadas 1 e 2 concluídas e integradas** na `feature/web-design`, com todos os gates verdes (79 arquivos de teste, 1207 testes; base 69 e 851).
+- **Próximo passo**: rodada 3 (DS-L), 4 (DS-A) e 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
 - **Bloqueios**: rodadas 6 e 7 dependem da aprovação visual do espécime. Sem push, PR ou merge na `develop`.
 - **Observação de ambiente**: num worktree novo no Windows (`core.autocrlf=true`), os `web/lib/api/*.d.ts` saem em CRLF e `pnpm gen:api:check` falha; resolve-se com `git -c core.autocrlf=false checkout -- web/lib/api` logo depois de criar o worktree. Corrigir de vez exige `.gitattributes`, fora do escopo deste ciclo.
 - **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.
