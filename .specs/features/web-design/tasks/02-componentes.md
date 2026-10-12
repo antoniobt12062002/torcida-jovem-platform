@@ -141,12 +141,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: variantes `primary`, `secondary`, `ghost`, `destructive` (sólida) e `link`; tamanhos `sm`, `md` e `lg` pelos tokens de altura; propriedade `loading` com `loadingLabel`, `aria-busy` e ícone; foco por anel de 2 px; `touch-action: manipulation`; transição só de cor. Alias mantidos: `default` (igual a `primary`), `outline` (igual a `secondary`), tamanhos `icon` e `icon-sm`. Saem `xs`, `icon-xs` e a variante `secondary` antiga de preenchimento cinza (sem uso fora do kit).
 
 **Done when**:
-- [ ] Cada variante e tamanho tem teste de papel, nome e estado desabilitado
-- [ ] `loading` desabilita, expõe `aria-busy` e mostra o rótulo de progresso
-- [ ] `IconButton` sem `label` não compila (teste de tipo) e expõe o `label` como nome acessível
-- [ ] Os alias `default`, `outline`, `icon` e `icon-sm` continuam renderizando; teste cobre cada um
-- [ ] Nenhum arquivo fora de `components/ui` precisou mudar para compilar
-- [ ] Gates passam
+- [x] Cada variante e tamanho tem teste de papel, nome e estado desabilitado
+- [x] `loading` desabilita, expõe `aria-busy` e mostra o rótulo de progresso
+- [x] `IconButton` sem `label` não compila (teste de tipo) e expõe o `label` como nome acessível
+- [x] Os alias `default`, `outline`, `icon` e `icon-sm` continuam renderizando; teste cobre cada um
+- [x] Nenhum arquivo fora de `components/ui` precisou mudar para compilar
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)

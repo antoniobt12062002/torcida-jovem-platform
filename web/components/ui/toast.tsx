@@ -65,7 +65,7 @@ function ToastList() {
         </div>
         <ToastPrimitive.Close
           aria-label="Fechar aviso"
-          render={<Button variant="ghost" size="icon-xs" />}
+          render={<Button variant="ghost" size="icon-sm" />}
         >
           <XIcon />
         </ToastPrimitive.Close>
