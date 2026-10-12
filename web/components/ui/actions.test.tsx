@@ -76,6 +76,15 @@ describe("Button: variantes", () => {
   })
 })
 
+// Revisão da rodada 4: o hover do link não reduz o contraste do texto.
+describe("Button: hover do link", () => {
+  it("engrossa o sublinhado e não clareia o texto", () => {
+    const link = buttonVariants({ variant: "link" }).split(/\s+/)
+    expect(link).toContain("hover:decoration-2")
+    expect(link.filter((name) => name.startsWith("hover:text-") && name !== "hover:text-foreground")).toEqual([])
+  })
+})
+
 describe("Button: tamanhos", () => {
   it.each(SIZES)("%s usa o token de altura %s", (size, token) => {
     render(<Button size={size}>Salvar</Button>)

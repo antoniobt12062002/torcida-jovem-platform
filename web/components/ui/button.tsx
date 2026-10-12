@@ -19,7 +19,8 @@ const buttonVariants = cva(
           "text-foreground hover:bg-accent active:bg-border aria-expanded:bg-accent disabled:text-disabled-foreground",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive-emphasis active:bg-destructive-emphasis/90 disabled:bg-disabled disabled:text-disabled-foreground",
-        link: "text-foreground underline underline-offset-4 hover:text-muted-foreground disabled:text-disabled-foreground",
+        // Hover engrossa o sublinhado: clarear o texto reduziria o contraste.
+        link: "text-foreground underline underline-offset-4 hover:decoration-2 disabled:text-disabled-foreground",
         // Alias de compatibilidade: removido em DS-INT.
         default: PRIMARY,
         // Alias de compatibilidade: removido em DS-INT.

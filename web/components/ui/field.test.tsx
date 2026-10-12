@@ -7,6 +7,7 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
+  FieldTitle,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -533,5 +534,48 @@ describe("Select rico: tokens e teclado", () => {
     expect(classes(screen.getByRole("listbox").closest("[data-slot=select-content]") as Element)).toContain(
       "shadow-elevation-1"
     )
+  })
+})
+
+// Revisão da rodada 4: o Base UI 1.8 marca o estado por presença do atributo
+// (`data-invalid=""`, `data-disabled=""`), não por `="true"`. Os seletores do
+// kit precisam casar com o atributo emitido.
+describe("Field: estados pelo atributo do Base UI", () => {
+  it("com erro, o Field recebe data-invalid e o tom de erro casa com ele", () => {
+    render(
+      <Field invalid>
+        <FieldLabel>Valor</FieldLabel>
+        <Input />
+      </Field>
+    )
+    const field = screen.getByLabelText("Valor").closest("[data-slot=field]") as HTMLElement
+    expect(field.getAttribute("data-invalid")).toBe("")
+    expect(classes(field)).toContain("data-invalid:text-destructive")
+    expect(classes(field).filter((name) => name.includes("=true]"))).toEqual([])
+  })
+
+  it("desabilitado, o Field recebe data-disabled e o rótulo e o título usam o tom de desabilitado", () => {
+    render(
+      <Field disabled>
+        <FieldLabel>Valor</FieldLabel>
+        <FieldTitle>Título</FieldTitle>
+        <Input />
+      </Field>
+    )
+    const field = screen.getByLabelText("Valor").closest("[data-slot=field]") as HTMLElement
+    expect(field.getAttribute("data-disabled")).toBe("")
+    for (const el of [screen.getByText("Valor"), screen.getByText("Título")]) {
+      expect(classes(el)).toContain("group-data-disabled/field:text-disabled-foreground")
+      expect(classes(el).filter((name) => name.includes("=true]"))).toEqual([])
+    }
+  })
+
+  it("o Label avulso usa o seletor de presença para o grupo desabilitado", () => {
+    render(<Label>Busca</Label>)
+    const label = screen.getByText("Busca")
+    expect(classes(label)).toEqual(
+      expect.arrayContaining(["group-data-disabled:pointer-events-none", "group-data-disabled:text-disabled-foreground"])
+    )
+    expect(classes(label).filter((name) => name.includes("=true]"))).toEqual([])
   })
 })

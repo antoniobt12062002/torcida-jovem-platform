@@ -85,7 +85,8 @@ function ToastList() {
             className={cn("mt-0.5 size-4 shrink-0", tone.color)}
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <ToastPrimitive.Title className="font-medium" />
+            {/* `div`, não `h2`: o aviso não entra na estrutura de títulos da página. */}
+            <ToastPrimitive.Title className="font-medium" render={<div />} />
             <ToastPrimitive.Description className="text-muted-foreground" />
           </div>
           <ToastPrimitive.Close

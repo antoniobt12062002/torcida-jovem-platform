@@ -2,12 +2,14 @@
 
 import { ChevronDownIcon, MenuIcon, XIcon } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, type MouseEvent, type ReactNode, useRef, useState } from "react";
+import { type CSSProperties, type MouseEvent, type ReactNode, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -108,7 +110,7 @@ export function ShellFrame({ entries, currentPath, userName, userEmail, userMenu
         <a
           href={`#${SKIP_TARGET_ID}`}
           onClick={skipToContent}
-          className="fixed top-0 left-0 z-50 flex h-control-lg -translate-y-full items-center rounded-br-md bg-background px-4 text-sm font-medium text-foreground underline underline-offset-4 outline-none focus:translate-y-0 focus-visible:ring-2 focus-visible:ring-ring"
+          className="fixed top-0 left-0 z-50 flex h-control-lg -translate-y-full items-center rounded-br-md bg-background px-4 text-sm font-medium text-foreground underline underline-offset-4 outline-none focus:translate-y-0 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           Pular para o conteúdo
         </a>
@@ -167,14 +169,17 @@ export function ShellFrame({ entries, currentPath, userName, userEmail, userMenu
                 <ChevronDownIcon aria-hidden />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-auto min-w-56">
-                <div className="flex flex-col px-2 py-1.5">
-                  <span className="text-sm font-semibold wrap-break-word">{userName}</span>
-                  {userEmail ? (
-                    <span className="text-xs wrap-break-word text-muted-foreground">{userEmail}</span>
-                  ) : null}
-                </div>
-                <DropdownMenuSeparator />
-                {userMenu}
+                {/* Nome e e-mail rotulam o grupo dos itens: estrutura válida dentro de `role="menu"`. */}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="flex flex-col px-2 py-1.5 font-normal text-popover-foreground">
+                    <span className="text-sm font-semibold wrap-break-word">{userName}</span>
+                    {userEmail ? (
+                      <span className="text-xs wrap-break-word text-muted-foreground">{userEmail}</span>
+                    ) : null}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {userMenu}
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -211,13 +216,17 @@ function NavList({
   currentPath: string;
   onNavigate?: () => void;
 }) {
+  // A gaveta e a navegação fixa existem juntas: cada lista tem o próprio prefixo.
+  const idPrefix = useId();
   return (
     <nav aria-label={label} className="flex flex-col gap-6 p-3">
-      {entries.map((entry) =>
+      {entries.map((entry, index) =>
         isNavSection(entry) ? (
           <div key={`secao:${entry.label}`} className="flex flex-col gap-1">
-            <Eyebrow className="px-3 py-1 text-sidebar-muted-foreground">{entry.label}</Eyebrow>
-            <ul className="flex flex-col gap-0.5">
+            <Eyebrow id={`${idPrefix}-grupo-${index}`} className="px-3 py-1 text-sidebar-muted-foreground">
+              {entry.label}
+            </Eyebrow>
+            <ul aria-labelledby={`${idPrefix}-grupo-${index}`} className="flex flex-col gap-0.5">
               {entry.items.map((item) => (
                 <li key={item.href}>
                   <NavLink item={item} currentPath={currentPath} onNavigate={onNavigate} />

@@ -49,7 +49,7 @@ export function NoAccess() {
       </p>
       <Link
         href={routes.inicio}
-        className="inline-flex min-h-control-sm touch-manipulation items-center rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
+        className="inline-flex min-h-control-sm touch-manipulation items-center rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
       >
         Voltar ao início
       </Link>

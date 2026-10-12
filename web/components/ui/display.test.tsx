@@ -419,3 +419,18 @@ describe("Separator", () => {
     expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical")
   })
 })
+
+// Revisão da rodada 4: o título do aviso não entra na estrutura de títulos.
+describe("Toast: título fora da estrutura de títulos", () => {
+  it("o título do aviso é um div, sem h2 nem papel de título", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Salvo com sucesso", { description: "Lançamento criado.", timeout: 0 })
+    })
+    const title = await screen.findByText("Salvo com sucesso")
+    expect(title.tagName).toBe("DIV")
+    const region = screen.getByRole("region", { name: "Avisos" })
+    expect(region.querySelector("h1, h2, h3, h4, h5, h6")).toBeNull()
+    expect(within(region).queryByRole("heading")).toBeNull()
+  })
+})

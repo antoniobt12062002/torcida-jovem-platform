@@ -135,6 +135,14 @@ describe("NoAccess", () => {
     expect(screen.getByRole("link", { name: "Voltar ao início" }).getAttribute("href")).toBe("/inicio");
   });
 
+  it("o hover do link de volta não reduz o contraste do texto", () => {
+    render(<NoAccess />);
+    const link = screen.getByRole("link", { name: "Voltar ao início" });
+    const names = (link.getAttribute("class") ?? "").split(/\s+/);
+    expect(names).toContain("hover:decoration-2");
+    expect(names.filter((name) => name.startsWith("hover:text-") && name !== "hover:text-foreground")).toEqual([]);
+  });
+
   it("leva ícone decorativo, escondido de leitores de tela", () => {
     const { container } = render(<NoAccess />);
     expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");

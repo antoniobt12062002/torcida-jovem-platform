@@ -177,6 +177,12 @@ describe("lista empilhada", () => {
     expect(document.querySelector("table")).toBeNull();
   });
 
+  it("a lista declara role=list, para não perder o papel sem marcadores", () => {
+    mockViewport({ width: 390, coarse: true });
+    render(<Lista />);
+    expect(screen.getByRole("list", { name: "Lançamentos" }).getAttribute("role")).toBe("list");
+  });
+
   it("cada item tem título, até três campos, status, valor e ações", () => {
     mockViewport({ width: 390 });
     render(<Lista />);

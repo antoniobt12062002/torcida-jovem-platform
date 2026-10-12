@@ -99,6 +99,13 @@ describe("link de pular para o conteúdo", () => {
     );
   });
 
+  it("o anel de foco usa o token do shell, visível sobre o cabeçalho escuro", () => {
+    render(<Shell />);
+    expect(classes(screen.getByRole("link", { name: "Pular para o conteúdo" }))).toEqual(
+      expect.arrayContaining(["focus-visible:ring-2", "focus-visible:ring-sidebar-ring"]),
+    );
+  });
+
   it("leva o foco a main#conteudo", () => {
     render(<Shell />);
     fireEvent.click(screen.getByRole("link", { name: "Pular para o conteúdo" }));
@@ -219,6 +226,25 @@ describe("navegação", () => {
     const group = within(nav()).getByText("Financeiro");
     expect(group.getAttribute("data-slot")).toBe("eyebrow");
     expect(classes(group)).toContain("text-sidebar-muted-foreground");
+  });
+
+  it("a lista de cada grupo é nomeada pelo rótulo do grupo", () => {
+    render(<Shell />);
+    const list = within(nav()).getByRole("list", { name: "Financeiro" });
+    const label = document.getElementById(list.getAttribute("aria-labelledby") ?? "");
+    expect(label?.getAttribute("data-slot")).toBe("eyebrow");
+    expect(within(list).getAllByRole("link").map((link) => link.textContent)).toEqual(["Lançamentos", "Contas"]);
+  });
+
+  it("na gaveta, a lista do grupo também é nomeada, sem repetir os ids da navegação fixa", async () => {
+    render(<Shell />);
+    // Com a gaveta aberta (modal), o resto da página sai da árvore acessível.
+    const railLabel = within(nav()).getByRole("list", { name: "Financeiro" }).getAttribute("aria-labelledby");
+    fireEvent.click(menuButton());
+    const drawer = await screen.findByRole("navigation", { name: "Menu" });
+    const drawerList = within(drawer).getByRole("list", { name: "Financeiro" });
+    expect(drawerList.getAttribute("aria-labelledby")).not.toBe(railLabel);
+    expect(document.querySelectorAll(`[id="${drawerList.getAttribute("aria-labelledby")}"]`)).toHaveLength(1);
   });
 
   it("cada item tem ícone decorativo e texto; item sem ícone renderiza só o texto", () => {
@@ -384,6 +410,21 @@ describe("menu da pessoa", () => {
     expect(items.map((item) => item.textContent)).toEqual(["Trocar senha", "Sair"]);
     expect(name.closest("[role=menuitem]")).toBeNull();
     expect(name.compareDocumentPosition(items[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("nome e e-mail são o rótulo de um grupo do menu, não um bloco solto", async () => {
+    render(<Shell />);
+    fireEvent.click(screen.getByRole("button", { name: "Maria Aparecida da Silva Sauro" }));
+    const menu = await screen.findByRole("menu");
+    const group = within(menu).getByRole("group");
+    const label = document.getElementById(group.getAttribute("aria-labelledby") ?? "");
+    expect(label?.getAttribute("data-slot")).toBe("dropdown-menu-label");
+    expect(label?.textContent).toContain("Maria Aparecida da Silva Sauro");
+    expect(label?.textContent).toContain("maria@example.com");
+    expect(within(group).getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Trocar senha", "Sair"]);
+    for (const child of menu.children) {
+      expect(["group", "separator", "menuitem"], child.outerHTML).toContain(child.getAttribute("role"));
+    }
   });
 
   it("sem e-mail, mostra só o nome", async () => {

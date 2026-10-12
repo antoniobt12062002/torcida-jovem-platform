@@ -131,7 +131,8 @@ function StackedList<T>(props: LayoutProps<T>) {
   const { title, meta, fields, value } = listRoles(columns);
   const hasActions = !!primaryAction || !!moreActions;
   return (
-    <ul aria-label={label} data-slot="data-list" className={cn("flex flex-col divide-y border-y", className)}>
+    // `role="list"` explícito: o Safari tira o papel de lista quando `list-style` é `none`.
+    <ul role="list" aria-label={label} data-slot="data-list" className={cn("flex flex-col divide-y border-y", className)}>
       {rows.map((row) => (
         <li key={rowKey(row)} className="flex flex-col gap-1 py-3">
           <div className="flex items-start justify-between gap-3">
