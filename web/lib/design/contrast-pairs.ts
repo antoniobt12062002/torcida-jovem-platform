@@ -15,10 +15,8 @@ export type ContrastPair = {
 /** WCAG 2.2 AA: 4,5:1 em texto; 3:1 em gráfico, foco e borda de campo. */
 export const CONTRAST_MINIMUM: Record<ContrastKind, number> = { text: 4.5, graphic: 3 };
 
-/** Tokens de texto sem par exigido, com o motivo. */
-export const CONTRAST_EXEMPT: Record<string, string> = {
-  "disabled-foreground": "Controle desabilitado é isento pela WCAG 2.2 (1.4.3); mantido legível.",
-};
+/** Tokens de texto sem par exigido, com o motivo. Hoje nenhum. */
+export const CONTRAST_EXEMPT: Record<string, string> = {};
 
 export const CONTRAST_PAIRS: readonly ContrastPair[] = [
   // content sobre surface
@@ -30,6 +28,9 @@ export const CONTRAST_PAIRS: readonly ContrastPair[] = [
   { foreground: "secondary-foreground", background: "secondary", kind: "text", use: "Preenchimento discreto" },
   { foreground: "muted-foreground", background: "background", kind: "text", use: "Texto secundário" },
   { foreground: "muted-foreground", background: "muted", kind: "text", use: "Texto secundário sobre fundo discreto" },
+  { foreground: "muted-foreground", background: "accent", kind: "text", use: "Texto secundário em linha e item em hover" },
+  // Isento pela WCAG 2.2 (1.4.3), mas o tema mantém o mínimo de texto.
+  { foreground: "disabled-foreground", background: "disabled", kind: "text", use: "Rótulo de controle desabilitado" },
 
   // shell
   { foreground: "sidebar-foreground", background: "sidebar", kind: "text", use: "Texto do shell" },
@@ -62,6 +63,8 @@ export const CONTRAST_PAIRS: readonly ContrastPair[] = [
 
   // bordas e foco
   { foreground: "input", background: "background", kind: "graphic", use: "Borda de campo" },
+  { foreground: "input", background: "muted", kind: "graphic", use: "Borda de campo sobre fundo discreto" },
+  { foreground: "input", background: "accent", kind: "graphic", use: "Borda de campo sobre superfície de hover" },
   { foreground: "destructive", background: "background", kind: "graphic", use: "Borda de campo inválido" },
   { foreground: "border-strong", background: "background", kind: "graphic", use: "Régua de tabela e de título de seção" },
   { foreground: "ring", background: "ring-offset", kind: "graphic", use: "Foco no conteúdo" },

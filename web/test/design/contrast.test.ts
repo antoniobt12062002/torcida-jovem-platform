@@ -44,7 +44,12 @@ describe("contraste dos pares semânticos", () => {
     expect(textTokens.length).toBeGreaterThan(10);
     const covered = new Set(CONTRAST_PAIRS.filter((pair) => pair.kind === "text").map((pair) => pair.foreground));
     expect(textTokens.filter((name) => !covered.has(name) && !(name in CONTRAST_EXEMPT))).toEqual([]);
-    expect(Object.keys(CONTRAST_EXEMPT)).toEqual(["disabled-foreground"]);
+    expect(Object.keys(CONTRAST_EXEMPT)).toEqual([]);
+  });
+
+  it("o texto secundário e o de controle desabilitado têm par sobre as superfícies de hover", () => {
+    const text = CONTRAST_PAIRS.filter((pair) => pair.kind === "text").map((pair) => `${pair.foreground}/${pair.background}`);
+    expect(text).toEqual(expect.arrayContaining(["muted-foreground/accent", "disabled-foreground/disabled"]));
   });
 
   it("borda de campo, foco e indicadores de estado têm par de gráfico", () => {
@@ -54,6 +59,8 @@ describe("contraste dos pares semânticos", () => {
     expect(graphic).toEqual(
       expect.arrayContaining([
         "input/background",
+        "input/muted",
+        "input/accent",
         "ring/ring-offset",
         "sidebar-ring/sidebar",
         "sidebar-primary/sidebar",
