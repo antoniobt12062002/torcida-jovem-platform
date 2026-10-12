@@ -262,6 +262,8 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 | 4 | DS-A | `f74768f`, `82f6dc6`, `aa868d8`, `ea9f5e6`, `fb5500d`, `8577209`, `e9aeeb5`, `0dd89cd` | 93 / 1493 | Guarda de `components/app` sem exceções |
 | 4 | Correção do gate | `7476156`, `8c20dfd` | 93 / 1517 | Revisão `web-design-guidelines` reprovou 6 pontos (foco de item de menu e select, progresso na confirmação, HTML inválido na marca, alvos da trilha e da marca do shell); corrigidos com mais 5 melhorias de baixo risco |
 
+| 5 | DS-E | `7f72ba6`, `d529b4f`; evidência neste commit | 97 / 1612 | Espécime em `/design-system`, 404 em produção; aguardando aprovação visual |
+
 **Alias de compatibilidade a remover em DS-INT** (marcados no código com "Alias de compatibilidade: removido em DS-INT."): `button.tsx` (variantes `default` e `outline`; tamanhos `default`, `icon`, `icon-sm`), `badge.tsx` (`default`, `secondary`, `destructive`), `alert.tsx` (`default` e `destructive`), `table.tsx` (`scroll="legacy"` como padrão).
 
 **Conflitos com a `web-design-guidelines` registrados na rodada 4** (o projeto prevalece; reavaliar na rodada 7):
@@ -284,8 +286,8 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
-- **Fase**: Execute. **Rodadas 1 a 4 concluídas e integradas** na `feature/web-design`, com todos os gates verdes (93 arquivos de teste, 1517 testes; base 69 e 851) e a revisão `web-design-guidelines` da rodada 4 corrigida.
-- **Próximo passo**: rodada 5 (DS-E). Ao fim da rodada 5, **parar** e apresentar o espécime.
-- **Bloqueios**: rodadas 6 e 7 dependem da aprovação visual do espécime. Sem push, PR ou merge na `develop`.
-- **Observação de ambiente**: num worktree novo no Windows (`core.autocrlf=true`), os `web/lib/api/*.d.ts` saem em CRLF e `pnpm gen:api:check` falha; resolve-se com `git -c core.autocrlf=false checkout -- web/lib/api` logo depois de criar o worktree. Corrigir de vez exige `.gitattributes`, fora do escopo deste ciclo.
+- **Fase**: Execute. **Rodadas 1 a 5 concluídas e integradas** na `feature/web-design` (97 arquivos de teste, 1612 testes, todos os gates verdes). **Portão do espécime aberto**: aguardando a aprovação visual do mantenedor e a decisão de DD-4.
+- **Evidência**: `evidence/especime.md` e capturas em `evidence/especime/`.
+- **Divergência a corrigir antes da rodada 6**: barra de filtros empilhada a partir de 1024 px (`components/app/filter-bar.tsx`).
+- **Bloqueios**: rodadas 6 e 7 não começam sem aprovação explícita. Sem push, PR ou merge na `develop`.
 - **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.

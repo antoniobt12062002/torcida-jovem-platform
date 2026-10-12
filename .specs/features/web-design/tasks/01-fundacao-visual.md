@@ -262,10 +262,10 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 10. Marca: escudo íntegro, com respiro, sem distorção; nenhum elemento de marca inventado.
 
 **Done when**:
-- [ ] Os dez critérios conferidos num navegador real e registrados, sem senha, token ou dado pessoal
-- [ ] Divergências entre o espécime e o design listadas, cada uma com proposta de correção
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-E)
-- [ ] **A execução para.** A aprovação do mantenedor, com a decisão de DD-4, é registrada em `STATE.md` antes de qualquer task da rodada 6
+- [x] Os dez critérios conferidos num navegador real e registrados, sem senha, token ou dado pessoal
+- [x] Divergências entre o espécime e o design listadas, cada uma com proposta de correção
+- [x] Gates passam, incluindo Audit (fim da unidade DS-E)
+- [x] **A execução para.** A aprovação do mantenedor, com a decisão de DD-4, é registrada em `STATE.md` antes de qualquer task da rodada 6
 - [ ] IF o mantenedor pedir ajustes THEN eles viram tasks de correção na unidade dona do arquivo, e o portão é refeito
 
 **Tests**: aceite manual no navegador (roteiro registrado)
