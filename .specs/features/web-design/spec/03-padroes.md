@@ -125,7 +125,7 @@ Cada tela da Web V1 resolve por conta própria o que deveria ser padrão. Há se
 2. WHEN a pessoa altera filtro, busca, ordenação ou aba THEN a interface SHALL atualizar a query string da URL.
 3. WHEN a página é aberta com parâmetros na query string THEN a listagem SHALL restaurar filtro, busca, ordenação e aba a partir deles.
 4. IF um parâmetro da query string tem valor inválido THEN a listagem SHALL ignorá-lo e usar o valor padrão, sem erro.
-5. WHEN a largura da tela é de pelo menos 1024 px THEN a listagem SHALL mostrar a tabela completa.
+5. WHEN a largura da tela é de pelo menos 1024 px e a área de conteúdo tem pelo menos 896 px THEN a listagem SHALL mostrar a tabela completa; com a área de conteúdo menor, as colunas de prioridade 3 SHALL ser ocultadas, e o documento SHALL não rolar na horizontal.
 6. WHEN a largura da tela está entre 768 e 1023 px THEN a listagem SHALL mostrar as colunas de maior prioridade declarada, e os dados ocultos SHALL continuar acessíveis no detalhe do registro.
 7. WHEN a largura da tela é menor que 768 px THEN a listagem SHALL mostrar cada registro como item empilhado, com título, até três campos-chave, status e ações.
 8. WHERE a tabela tem até quatro colunas curtas e cabe em 320 px THE listagem SHALL manter a tabela também abaixo de 768 px.

@@ -141,6 +141,9 @@ Correção de implementação dentro da margem do design (valores finais dos neu
 ### WDS-D-031 — Direção estética aprovada no portão do espécime e DD-4 definitiva (2026-10-12)
 O mantenedor aprovou a direção visual do espécime: shell e sidebar pretos, escudo e tipografia condensada, vermelho pontual, Barlow Condensed nos títulos e Geist no conteúdo operacional, botões primários pretos, tabela no desktop e lista empilhada no celular, badges com significado textual, login em duas colunas no desktop e coluna única no celular, componentes, espaçamento e hierarquia. **DD-4 definitiva**: Barlow Condensed 700 nos saldos isolados de destaque; valores em tabelas, listas e formulários em Geist. Sem novas alterações estéticas além das correções pedidas. A liberação das rodadas 6 e 7 continua bloqueada até a correção do overflow em 1024 px, da barra de filtros e da conferência de toque, teclado e movimento reduzido no navegador.
 
+### WDS-D-032 — Prioridade de colunas e barra de filtros pela largura do conteúdo (2026-10-12)
+Correção pedida no portão do espécime: com a navegação fixa (a partir de 1024 px), a área de conteúdo em 1024 px tem cerca de 705 px úteis, e a listagem decidia pela largura da tela, gerando rolagem horizontal do documento. A listagem passa a ser um contêiner de consulta: as colunas de prioridade 3 só aparecem com tela de 1024 px ou mais **e** área de conteúdo de pelo menos 56rem (896 px), e um invólucro contém qualquer sobra. A barra de filtros passa a distribuir os campos pela largura do próprio contêiner (uma, duas ou várias colunas). O ponto de quebra da navegação não muda. DSP-05 AC5 foi ajustado para refletir isso.
+
 ---
 
 ## Relação com decisões anteriores
