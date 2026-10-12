@@ -5,9 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetNavigation } from "@/lib/session/navigation-mock";
 import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext, type Conta, conta, problem } from "@/test/msw/fixtures";
+import { mockViewport } from "@/test/media";
 import { server } from "@/test/msw/server";
 
-import { ContasPage } from "./contas-page";
+import { ContasPage, DEACTIVATE_CONSEQUENCE, DESCRIPTION, EMPTY_CAN_CREATE, EMPTY_READ_ONLY } from "./contas-page";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -392,5 +393,134 @@ describe("ações por permissão", () => {
     await renderLoaded();
     expect(screen.queryByRole("button", { name: "Desativar Rifas" })).toBeNull();
     expect(button("Renomear Rifas")).toBeTruthy();
+  });
+});
+
+// DSM-03 AC1 e AC7, DSP-01, DSP-02, DSP-03: a tela no Design System.
+describe("plano de contas no Design System", () => {
+  it("tem um único h1, no cabeçalho de página, com a descrição", async () => {
+    mockServer();
+    await renderLoaded([READ]);
+    const header = document.querySelector("[data-slot=page-header]") as HTMLElement;
+    expect(header).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Plano de contas"]);
+    expect(within(header).getByRole("heading", { level: 1, name: "Plano de contas" })).toBeTruthy();
+    expect(within(header).getByText(DESCRIPTION)).toBeTruthy();
+  });
+
+  it("\"Nova conta\" é a ação primária do cabeçalho para quem pode criar", async () => {
+    mockServer();
+    await renderLoaded([READ, CREATE]);
+    const header = document.querySelector("[data-slot=page-header]") as HTMLElement;
+    expect(within(header).getByRole("button", { name: "Nova conta" })).toBeTruthy();
+  });
+
+  // DSM-03 AC7: hierarquia por recuo, em qualquer largura, sem tabela nem lista empilhada.
+  it("mantém a hierarquia como listas aninhadas, sem tabela, também em tela estreita", async () => {
+    mockViewport({ width: 320, coarse: true });
+    mockServer([
+      conta({ id: ID_RECEITAS, tipo: "RECEITA", nome: "Receitas", parent_id: null }),
+      conta({ id: ID_MENSALIDADES, tipo: "RECEITA", nome: "Mensalidades", parent_id: ID_RECEITAS }),
+      conta({ id: ID_RIFAS, tipo: "RECEITA", nome: "Rifas", parent_id: ID_MENSALIDADES }),
+    ]);
+    await renderLoaded([READ]);
+
+    expect(screen.queryByRole("table")).toBeNull();
+    const tree = screen.getByRole("list", { name: "Plano de contas" });
+    // Raiz: um item; cada nível abaixo é uma lista dentro do item do pai.
+    expect(within(tree).getAllByRole("listitem")).toHaveLength(3);
+    const nivel1 = item("Receitas").querySelector(":scope > ul") as HTMLElement;
+    expect(nivel1).toBeTruthy();
+    expect(nivel1.getAttribute("data-slot")).toBe("conta-subtree");
+    expect(within(nivel1).getByText("Mensalidades")).toBeTruthy();
+    const nivel2 = item("Mensalidades").querySelector(":scope > ul") as HTMLElement;
+    expect(nivel2).toBeTruthy();
+    expect(within(nivel2).getByText("Rifas")).toBeTruthy();
+    expect(nivel2.closest("li")).toBe(item("Mensalidades"));
+  });
+
+  // DSC-05: inativa distinguível sem depender de cor (ícone e texto).
+  it("conta inativa tem status com ícone e texto diferentes da ativa", async () => {
+    mockServer();
+    await renderLoaded([READ]);
+    const ativo = within(row("Receitas")).getByText("Ativo");
+    const inativo = within(row("Rifas")).getByText("Inativo");
+    const iconAtivo = ativo.querySelector("svg[aria-hidden=true]");
+    const iconInativo = inativo.querySelector("svg[aria-hidden=true]");
+    expect(iconAtivo).toBeTruthy();
+    expect(iconInativo).toBeTruthy();
+    expect(iconInativo?.getAttribute("class")).not.toBe(iconAtivo?.getAttribute("class"));
+    expect(inativo.getAttribute("data-tone")).toBe("neutral");
+    expect(ativo.getAttribute("data-tone")).toBe("success");
+  });
+
+  it("ações de linha começam pelo texto visível e identificam a conta", async () => {
+    mockServer();
+    await renderLoaded();
+    const actions = within(row("Mensalidades")).getAllByRole("button");
+    expect(actions.map((b) => [b.textContent, b.getAttribute("aria-label")])).toEqual([
+      ["Nova subconta", "Nova subconta em Mensalidades"],
+      ["Renomear", "Renomear Mensalidades"],
+      ["Desativar", "Desativar Mensalidades"],
+    ]);
+  });
+
+  // DSP-02: estado vazio com orientação e ação para quem pode criar.
+  it("plano vazio, com permissão de criar: orientação e \"Nova conta\" no estado vazio", async () => {
+    mockServer([]);
+    await renderPage([READ, CREATE]);
+    const empty = (await screen.findByText("Nenhuma conta cadastrada.")).closest("[data-slot=empty-state]") as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(within(empty).getByText(EMPTY_CAN_CREATE)).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Nova conta" })).toEqual([
+      within(empty).getByRole("button", { name: "Nova conta" }),
+    ]);
+    fireEvent.click(within(empty).getByRole("button", { name: "Nova conta" }));
+    expect(await screen.findByRole("dialog", { name: "Nova conta" })).toBeTruthy();
+  });
+
+  it("plano vazio, só leitura: orientação sem ação de criar", async () => {
+    mockServer([]);
+    await renderPage([READ]);
+    const empty = (await screen.findByText("Nenhuma conta cadastrada.")).closest("[data-slot=empty-state]") as HTMLElement;
+    expect(within(empty).getByText(EMPTY_READ_ONLY)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Nova conta" })).toBeNull();
+  });
+
+  // DSP-03: confirmação com o nome do registro e a consequência; falha dentro do diálogo.
+  it("a confirmação de desativar nomeia a conta e diz a consequência", async () => {
+    mockServer();
+    await renderLoaded();
+    fireEvent.click(button("Desativar Mensalidades"));
+    const dialog = await screen.findByRole("alertdialog", { name: "Desativar a conta Mensalidades?" });
+    expect(within(dialog).getByText("Mensalidades", { selector: "strong" })).toBeTruthy();
+    expect(within(dialog).getByText(DEACTIVATE_CONSEQUENCE)).toBeTruthy();
+  });
+
+  it("falha ao desativar fica dentro do diálogo, que continua aberto", async () => {
+    mockServer();
+    server.use(http.post(apiUrl(`${CONTAS}/:id/deactivate`), () => problem(404, "conta_nao_encontrada")));
+    await renderLoaded();
+    fireEvent.click(button("Desativar Mensalidades"));
+    const dialog = await screen.findByRole("alertdialog", { name: "Desativar a conta Mensalidades?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Desativar" }));
+    expect(
+      await within(dialog).findByText("Conta não encontrada. Atualize a página e tente de novo."),
+    ).toBeTruthy();
+    expect(dialog.isConnected).toBe(true);
+  });
+
+  it("erro da API no formulário aparece no alerta do topo do diálogo", async () => {
+    mockServer();
+    server.use(http.post(apiUrl(CONTAS), () => problem(403, "forbidden")));
+    await renderLoaded();
+    fireEvent.click(button("Nova conta"));
+    const dialog = await screen.findByRole("dialog", { name: "Nova conta" });
+    type("Nome", "Bilheteria");
+    fireEvent.click(within(dialog).getByRole("radio", { name: "Receita" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Criar conta" }));
+    const alert = await within(dialog).findByText("Você não tem permissão para esta ação.");
+    expect(alert.closest("[data-slot=form-layout]")).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: "Cancelar" })).toBeTruthy();
   });
 });

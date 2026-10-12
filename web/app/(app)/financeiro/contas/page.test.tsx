@@ -46,4 +46,16 @@ describe("/financeiro/contas", () => {
     expect(calls.count).toBe(0);
     expect(screen.queryByRole("heading", { name: "Plano de contas" })).toBeNull();
   });
+
+  // DSP-01 AC1: a página fica no contêiner padrão, alvo do link de pular.
+  it("renderiza no contêiner de página, com o único h1", async () => {
+    mockContas();
+    mockMe(authContext({ permissions: ["financeiro:conta:read"] }));
+    renderWithSession(<FinanceiroContasPage />);
+    await screen.findByText("Mensalidades");
+    const main = screen.getByRole("main");
+    expect(main.id).toBe("conteudo");
+    expect(main.className).toContain("max-w-content-default");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
 });
