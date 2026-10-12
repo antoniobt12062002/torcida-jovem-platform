@@ -92,10 +92,10 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: `findRawValues(paths, options)` devolve arquivo, linha e regra violada. Regras: cor literal (hex, `rgb`, `hsl`, `oklch`); utilitário de paleta crua do Tailwind; valor arbitrário de cor, de tamanho de texto ou de espaço; `font-display` e `uppercase` fora dos arquivos permitidos; `transition-all`; classe `dark:`. A lista de exceções é explícita, com o motivo de cada uma.
 
 **Done when**:
-- [ ] Cada regra tem um exemplo que passa e um que falha, e a falha informa arquivo e linha
-- [ ] A função aceita a lista de caminhos como parâmetro, para cada unidade guardar só os seus
-- [ ] Nenhuma guarda é aplicada ainda ao código existente nesta task (as unidades donas fazem isso)
-- [ ] Gates Web, Contract, Backend intacto, Dependências intactas e Ownership passam
+- [x] Cada regra tem um exemplo que passa e um que falha, e a falha informa arquivo e linha
+- [x] A função aceita a lista de caminhos como parâmetro, para cada unidade guardar só os seus
+- [x] Nenhuma guarda é aplicada ainda ao código existente nesta task (as unidades donas fazem isso)
+- [x] Gates Web, Contract, Backend intacto, Dependências intactas e Ownership passam
 
 **Tests**: unit
 **Verificação visual**: não se aplica

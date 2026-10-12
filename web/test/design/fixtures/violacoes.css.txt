@@ -1,0 +1,6 @@
+.exemplo {
+  color: hsl(0 0% 7%);
+  background: oklch(0.5 0.2 27);
+  text-transform: uppercase;
+  transition: all 200ms;
+}
