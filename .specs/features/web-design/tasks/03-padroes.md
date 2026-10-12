@@ -330,10 +330,10 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: teste de guarda sobre `components/app`, com exceção declarada só para os arquivos do shell e de marca que usam a fonte de identidade.
 
 **Done when**:
-- [ ] A guarda passa em todo `components/app`, com exceções explícitas e justificadas
-- [ ] Todo arquivo de componente do diretório tem teste que o referencia
-- [ ] A lista de testes alterados na unidade, com a decisão que motiva cada um, consta no relatório da unidade
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-A)
+- [x] A guarda passa em todo `components/app`, com exceções explícitas e justificadas
+- [x] Todo arquivo de componente do diretório tem teste que o referencia
+- [x] A lista de testes alterados na unidade, com a decisão que motiva cada um, consta no relatório da unidade
+- [x] Gates passam, incluindo Audit (fim da unidade DS-A)
 
 **Tests**: unit + component
 **Verificação visual**: uma tela autenticada e `/entrar` abertas com `pnpm dev`, com o shell novo e sem quebra de layout
