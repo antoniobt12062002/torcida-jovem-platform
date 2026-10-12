@@ -198,10 +198,10 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: página que chama `notFound()` quando `NODE_ENV` é `production`; seções com âncoras; cada cor semântica mostrada com o par de contraste e a razão calculada a partir de `contrast-pairs.ts`; cada papel tipográfico com texto real em português, com acentos e caixa alta.
 
 **Done when**:
-- [ ] O teste confirma que a página responde como não encontrada com `NODE_ENV=production` e renderiza as seções fora de produção
-- [ ] A guarda de design aplicada a `app/(dev)/` passa: nenhum valor solto, nenhum estilo próprio
-- [ ] Nenhum componente novo foi criado fora de `components/ui` e `components/app`
-- [ ] Gates passam
+- [x] O teste confirma que a página responde como não encontrada com `NODE_ENV=production` e renderiza as seções fora de produção
+- [x] A guarda de design aplicada a `app/(dev)/` passa: nenhum valor solto, nenhum estilo próprio
+- [x] Nenhum componente novo foi criado fora de `components/ui` e `components/app`
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: seções de fundação conferidas em 390 e 1440 px
