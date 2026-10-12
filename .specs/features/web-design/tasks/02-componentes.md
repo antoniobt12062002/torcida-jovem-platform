@@ -91,10 +91,10 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: `useSearchParams` e `usePathname` do mock passam a assinar mudanças de histórico (`useSyncExternalStore`), de modo que um componente que escreve na URL é renderizado de novo com o valor novo. `setLocation` também notifica. Nada mais muda.
 
 **Done when**:
-- [ ] Um componente de teste que chama `replaceState` vê o novo `useSearchParams` na renderização seguinte; o mesmo para `pushState` e para `setLocation`
-- [ ] `resetNavigation` limpa assinaturas e chamadas registradas
-- [ ] Os 33 arquivos que importam o mock passam **sem nenhuma alteração**
-- [ ] Gates passam
+- [x] Um componente de teste que chama `replaceState` vê o novo `useSearchParams` na renderização seguinte; o mesmo para `pushState` e para `setLocation`
+- [x] `resetNavigation` limpa assinaturas e chamadas registradas
+- [x] Os 33 arquivos que importam o mock passam **sem nenhuma alteração**
+- [x] Gates passam
 
 **Tests**: unit
 **Verificação visual**: não se aplica
