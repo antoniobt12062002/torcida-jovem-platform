@@ -173,7 +173,7 @@ describe("identidade", () => {
   it("o link da marca tem alvo de 44 px em toque e o escudo carrega com prioridade", () => {
     render(<Shell />);
     const brand = within(screen.getByRole("banner")).getByRole("link", { name: "Torcida Jovem" });
-    expect(classes(brand)).toEqual(expect.arrayContaining(["min-h-touch", "items-center"]));
+    expect(classes(brand)).toEqual(expect.arrayContaining(["min-h-touch", "min-w-touch", "items-center"]));
     expect(within(brand).getByRole("img").getAttribute("loading")).toBe("eager");
   });
 

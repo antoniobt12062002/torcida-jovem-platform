@@ -154,7 +154,7 @@ export function ShellFrame({ entries, currentPath, userName, userEmail, userMenu
           {showNav ? (
             <Link
               href={routes.inicio}
-              className="flex min-h-touch touch-manipulation items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              className="flex min-h-touch min-w-touch touch-manipulation items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             >
               {brand}
             </Link>
