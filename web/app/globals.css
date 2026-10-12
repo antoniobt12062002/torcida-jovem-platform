@@ -2,119 +2,257 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Os arquivos de exemplo da guarda de design contêm classes proibidas de propósito. */
+@source not "../test/design/fixtures";
+
+/* Mantida de propósito: sem esta linha o Tailwind ativaria as classes da
+   variante `dark` do kit por `prefers-color-scheme`. Nenhum elemento recebe a classe `.dark`. */
 @custom-variant dark (&:is(.dark *));
 
+/* Expõe ao Tailwind os tokens semânticos e de componente. Os primitivos
+   (`--tj-*`) ficam de fora: nenhum utilitário consegue usá-los. */
 @theme inline {
+  /* Tipografia */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), ui-sans-serif, system-ui, sans-serif;
+  --font-money-display: var(--font-barlow-condensed), ui-sans-serif, system-ui, sans-serif;
+  --text-control: var(--control-font-size);
+
+  /* brand */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  /* surface */
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-popover: var(--popover);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-secondary: var(--secondary);
+  --color-disabled: var(--disabled);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-border-strong: var(--border-strong);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-overlay: var(--overlay);
+
+  /* content */
+  --color-foreground: var(--foreground);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+
+  /* action */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  /* state */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-emphasis: var(--destructive-emphasis);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-emphasis: var(--success-emphasis);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-emphasis: var(--warning-emphasis);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+
+  /* focus */
+  --color-ring: var(--ring);
+  --color-ring-offset: var(--ring-offset);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Raio: 4, 6 e 8 px. Os passos maiores do kit ficam em 8 px. */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.5rem;
+  --radius-4xl: 0.5rem;
+
+  /* Sombra: só em sobreposições. */
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2);
+
+  /* Movimento */
+  --transition-duration-fast: var(--duration-fast);
+  --transition-duration-base: var(--duration-base);
+  --transition-duration-slow: var(--duration-slow);
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Tokens de componente: alturas, larguras e margem de página. */
+  --spacing-control-sm: var(--control-height-sm);
+  --spacing-control-md: var(--control-height-md);
+  --spacing-control-lg: var(--control-height-lg);
+  --spacing-touch: var(--touch-target);
+  --spacing-table-head: var(--table-head-height);
+  --spacing-table-row: var(--table-row-height);
+  --spacing-shell-header: var(--shell-header-height);
+  --spacing-shell-nav: var(--shell-nav-width);
+  --spacing-gutter: var(--page-gutter);
+  --container-content-narrow: var(--content-narrow);
+  --container-content-default: var(--content-default);
+  --container-content-wide: var(--content-wide);
 }
 
+/* 1. Primitivos: a paleta oficial e as escalas derivadas. Só a camada
+   semântica lê estes valores. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --tj-ink: #111111;
+  --tj-red: #D81E28;
+  --tj-white: #FFFFFF;
+  --tj-steel: #A7A9AC;
+
+  --tj-neutral-50: #F6F6F7;
+  --tj-neutral-100: #ECEDEE;
+  --tj-neutral-200: #DCDDDF;
+  --tj-neutral-300: #C4C6C8;
+  --tj-neutral-400: #A7A9AC;
+  --tj-neutral-500: #8A8D91;
+  --tj-neutral-600: #6B6E72;
+  --tj-neutral-700: #4A4D50;
+  --tj-neutral-800: #2A2C2E;
+  --tj-neutral-900: #1C1C1E;
+  --tj-neutral-950: #111111;
+
+  --tj-red-50: #FDECEC;
+  --tj-red-700: #B3141D;
+  --tj-red-800: #8F0F17;
+
+  --tj-green-50: #E8F5EC;
+  --tj-green-700: #15803D;
+  --tj-green-800: #166534;
+
+  --tj-amber-50: #FDF3E3;
+  --tj-amber-700: #B45309;
+  --tj-amber-800: #92400E;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* 2. Semânticos: o tema. Um tema futuro é outro bloco que reatribui só estes
+   tokens; nenhum componente muda. */
+:root {
+  /* brand */
+  --brand: var(--tj-red);
+  --brand-foreground: var(--tj-white);
+
+  /* surface */
+  --background: var(--tj-white);
+  --card: var(--tj-white);
+  --popover: var(--tj-white);
+  --muted: var(--tj-neutral-50);
+  --accent: var(--tj-neutral-100);
+  --secondary: var(--tj-neutral-100);
+  --disabled: var(--tj-neutral-100);
+  --sidebar: var(--tj-ink);
+  --sidebar-accent: var(--tj-neutral-800);
+  --border: var(--tj-neutral-200);
+  --input: var(--tj-neutral-500);
+  --border-strong: var(--tj-ink);
+  --sidebar-border: var(--tj-neutral-800);
+  --overlay: color-mix(in srgb, var(--tj-ink) 50%, transparent);
+
+  /* content */
+  --foreground: var(--tj-ink);
+  --card-foreground: var(--tj-ink);
+  --popover-foreground: var(--tj-ink);
+  --accent-foreground: var(--tj-ink);
+  --secondary-foreground: var(--tj-ink);
+  --muted-foreground: var(--tj-neutral-600);
+  --disabled-foreground: var(--tj-neutral-600);
+  --sidebar-foreground: var(--tj-white);
+  --sidebar-accent-foreground: var(--tj-white);
+  --sidebar-muted-foreground: var(--tj-steel);
+
+  /* action */
+  --primary: var(--tj-ink);
+  --primary-foreground: var(--tj-white);
+  --primary-hover: var(--tj-neutral-800);
+  --sidebar-primary: var(--tj-red);
+  --sidebar-primary-foreground: var(--tj-white);
+
+  /* state */
+  --destructive: var(--tj-red-700);
+  --destructive-foreground: var(--tj-white);
+  --destructive-subtle: var(--tj-red-50);
+  --destructive-emphasis: var(--tj-red-800);
+  --success: var(--tj-green-700);
+  --success-subtle: var(--tj-green-50);
+  --success-emphasis: var(--tj-green-800);
+  --warning: var(--tj-amber-700);
+  --warning-subtle: var(--tj-amber-50);
+  --warning-emphasis: var(--tj-amber-800);
+  --info: var(--tj-neutral-700);
+  --info-subtle: var(--tj-neutral-100);
+
+  /* focus */
+  --ring: var(--tj-ink);
+  --ring-offset: var(--background);
+  --sidebar-ring: var(--tj-white);
+
+  /* Elevação: nível 1 em menu, popover e toast; nível 2 em diálogo e gaveta. */
+  --elevation-1: 0 4px 12px color-mix(in srgb, var(--tj-ink) 12%, transparent);
+  --elevation-2: 0 16px 40px color-mix(in srgb, var(--tj-ink) 20%, transparent);
+}
+
+/* 3. De componente: medidas compartilhadas pelos componentes. */
+:root {
+  --control-height-sm: 2rem;
+  --control-height-md: 2.25rem;
+  --control-height-lg: 2.75rem;
+  --control-font-size: 0.875rem;
+  --touch-target: 2.75rem;
+  --table-head-height: 2.5rem;
+  --table-row-height: 2.75rem;
+  --shell-header-height: 3.5rem;
+  --shell-nav-width: 15rem;
+  --content-narrow: 40rem;
+  --content-default: 70rem;
+  --content-wide: 90rem;
+  --page-gutter: 1rem;
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --page-gutter: 1.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --page-gutter: 2rem;
+  }
+}
+
+/* Alvo de toque resolvido no token: os componentes não ganham variante. */
+@media (pointer: coarse) {
+  :root {
+    --control-height-sm: 2.75rem;
+    --control-height-md: 2.75rem;
+    --control-font-size: 1rem;
+    --table-row-height: 3rem;
+  }
 }
 
 @layer base {
@@ -126,5 +264,17 @@
   }
   html {
     @apply font-sans;
+    color-scheme: light;
+  }
+
+  /* Cobre também as animações do tw-animate-css usadas pelo kit. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

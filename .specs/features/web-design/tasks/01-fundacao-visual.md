@@ -117,13 +117,13 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: primitivos `--tj-*` (não expostos ao Tailwind); semânticos por grupo (`brand`, `surface`, `content`, `action`, `state`, `focus`) com os nomes do kit mantidos e os novos (`brand`, `success`, `warning`, `info`, `disabled`, `border-strong`, `primary-hover`, variantes `-subtle` e `-emphasis`); tokens de componente (alturas de controle, tabela, shell, larguras de conteúdo, margem de página) com ajuste sob `pointer: coarse`; raios 4, 6 e 8; sombras de sobreposição; durações e curvas; regra global de `prefers-reduced-motion`; `color-scheme: light`; remoção do bloco `.dark` e dos tokens `--chart-*`; `@custom-variant dark` mantido; `--font-sans` apontando para `--font-geist-sans` e `--font-display` declarado.
 
 **Done when**:
-- [ ] Os quatro primitivos de marca têm exatamente `#111111`, `#D81E28`, `#FFFFFF` e `#A7A9AC`
-- [ ] O teste de contraste lê a folha global, resolve cada par de `contrast-pairs.ts` e exige 4,5:1 em texto e 3:1 em gráfico e borda de campo; todos os pares passam
-- [ ] O teste de tokens confirma: três camadas presentes; nenhum primitivo no `@theme`; todo semântico com valor; token de erro diferente do vermelho de marca; ausência de `.dark` e de `prefers-color-scheme`
-- [ ] O teste confirma a regra de `prefers-reduced-motion` e os tokens sob `pointer: coarse`
-- [ ] A guarda de T1 aplicada a `app/globals.css` só encontra as exceções declaradas (a própria folha de tokens)
-- [ ] Os testes existentes do projeto continuam passando sem alteração
-- [ ] Gates passam
+- [x] Os quatro primitivos de marca têm exatamente `#111111`, `#D81E28`, `#FFFFFF` e `#A7A9AC`
+- [x] O teste de contraste lê a folha global, resolve cada par de `contrast-pairs.ts` e exige 4,5:1 em texto e 3:1 em gráfico e borda de campo; todos os pares passam
+- [x] O teste de tokens confirma: três camadas presentes; nenhum primitivo no `@theme`; todo semântico com valor; token de erro diferente do vermelho de marca; ausência de `.dark` e de `prefers-color-scheme`
+- [x] O teste confirma a regra de `prefers-reduced-motion` e os tokens sob `pointer: coarse`
+- [x] A guarda de T1 aplicada a `app/globals.css` só encontra as exceções declaradas (a própria folha de tokens)
+- [x] Os testes existentes do projeto continuam passando sem alteração
+- [x] Gates passam
 
 **Tests**: unit (leitura do CSS)
 **Verificação visual**: abrir `/entrar` e uma tela autenticada com `pnpm dev` e confirmar paleta nova sem quebra de layout (registro simples no relatório da task)
