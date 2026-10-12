@@ -46,6 +46,24 @@ export function shortId(id: string): string {
   return id.slice(0, 8);
 }
 
+export type Identifier = {
+  /** Tipo do registro, em português: "Receita", "Produto". */
+  type: string;
+  /** Código curto, exibido em fonte monoespaçada. */
+  code: string;
+  /** Texto corrido ("Receita fb6e3d8f"), para nomes acessíveis e confirmações. */
+  label: string;
+};
+
+/**
+ * Apresentação de um registro sem número legível (DSP-07 AC7): o tipo seguido
+ * do código curto. A tela mostra `type` e, em fonte monoespaçada, `code`.
+ */
+export function formatIdentifier(type: string, id: string): Identifier {
+  const code = shortId(id);
+  return { type, code, label: `${type} ${code}` };
+}
+
 /** Autoria exibida: "você" para a pessoa da sessão, senão o identificador curto. */
 export function authorLabel(id: string, sessionUserId: string | null | undefined): string {
   return sessionUserId != null && id === sessionUserId ? "você" : shortId(id);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { authorLabel, formatDate, formatDateTime, shortId } from "./format";
+import { authorLabel, formatDate, formatDateTime, formatIdentifier, shortId } from "./format";
 
 // FND-05 AC7 (datas pt-BR no fuso de São Paulo) e WEB-D-014 (autoria).
 
@@ -41,5 +41,18 @@ describe("autoria", () => {
   it("authorLabel devolve o identificador curto para outra pessoa", () => {
     expect(authorLabel(other, me)).toBe("a1b2c3d4");
     expect(authorLabel(other, undefined)).toBe("a1b2c3d4");
+  });
+});
+
+// DSP-07 AC7: registro sem número legível aparece como o tipo e o código curto.
+describe("formatIdentifier", () => {
+  const id = "fb6e3d8f-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
+
+  it("devolve o tipo, o código curto e o texto corrido", () => {
+    expect(formatIdentifier("Receita", id)).toEqual({ type: "Receita", code: "fb6e3d8f", label: "Receita fb6e3d8f" });
+  });
+
+  it("o código é o mesmo identificador curto usado na autoria", () => {
+    expect(formatIdentifier("Despesa", id).code).toBe(shortId(id));
   });
 });

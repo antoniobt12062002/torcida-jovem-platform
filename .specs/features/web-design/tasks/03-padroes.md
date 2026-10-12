@@ -222,11 +222,11 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `StatusBadge` recebe `{ label, tone, icon }` e não importa tipos de módulo; a forma antiga (`status` como texto) continua aceita, com o mapa atual, até DS-INT. `MoneyValue` com as variantes `neutral`, `income`, `expense` e `balance` e o tamanho `display`. `RoleBadge` recebe o rótulo pronto. `format.ts` ganha a apresentação de identificador (tipo e código curto).
 
 **Done when**:
-- [ ] `components/app/status-badge.tsx` não importa de `lib/api/financeiro` nem de `features/`
-- [ ] Dois status distintos têm rótulo e ícone distintos; nenhum depende só de cor
-- [ ] `MoneyValue`: receita com "+", despesa com "−", saldo negativo com sinal, ícone e texto para leitor de tela; algarismos tabulares; valores `-1050`, `0` e `19850` cobertos
-- [ ] A forma antiga de `StatusBadge` continua funcionando; os testes das features passam sem alteração
-- [ ] Gates passam
+- [x] `components/app/status-badge.tsx` não importa de `lib/api/financeiro` nem de `features/`
+- [x] Dois status distintos têm rótulo e ícone distintos; nenhum depende só de cor
+- [x] `MoneyValue`: receita com "+", despesa com "−", saldo negativo com sinal, ícone e texto para leitor de tela; algarismos tabulares; valores `-1050`, `0` e `19850` cobertos
+- [x] A forma antiga de `StatusBadge` continua funcionando; os testes das features passam sem alteração
+- [x] Gates passam
 
 **Tests**: component + unit
 **Verificação visual**: conferida no espécime (rodada 5), incluindo a comparação de DD-4
