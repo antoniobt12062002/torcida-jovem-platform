@@ -247,12 +247,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: tabela com cabeçalho em `muted`, régua de 2 px, `scope="col"`, propriedade `numeric`, quebra por coluna e variante `scrollable`; modo legado de rolagem embutida mantido como padrão até DS-INT. `Card` sem sombra; `Breadcrumb` com `aria-current` e forma reduzida; `ShowMore` com contagem em região viva; `DisplayTitle`, `PageTitle`, `SectionTitle` e `Eyebrow` com `text-wrap: balance`.
 
 **Done when**:
-- [ ] Coluna `numeric` alinha à direita e usa algarismos tabulares
-- [ ] A tabela usada como hoje (sem propriedades novas) mantém a rolagem embutida; teste cobre o modo legado
-- [ ] `ShowMore` mostra "Mostrando X de Y" e anuncia a mudança; sem total, mostra só a quantidade visível
-- [ ] `Breadcrumb` marca o último item como página atual, sem link
-- [ ] Os componentes de título são o único lugar de `components/ui` com `font-display` e `uppercase`
-- [ ] Gates passam
+- [x] Coluna `numeric` alinha à direita e usa algarismos tabulares
+- [x] A tabela usada como hoje (sem propriedades novas) mantém a rolagem embutida; teste cobre o modo legado
+- [x] `ShowMore` mostra "Mostrando X de Y" e anuncia a mudança; sem total, mostra só a quantidade visível
+- [x] `Breadcrumb` marca o último item como página atual, sem link
+- [x] Os componentes de título são o único lugar de `components/ui` com `font-display` e `uppercase`
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
