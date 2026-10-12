@@ -315,10 +315,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: saldo em destaque com algarismos tabulares e indicação de saldo negativo por ícone e texto; histórico com colunas por prioridade (tipo, quantidade, data; origem, responsável; motivo, devolução de) e lista empilhada no celular; "Devolver" com nome acessível que identifica a movimentação; diálogo em tela cheia abaixo de 640 px, com as ações fixas na base.
 
 **Done when**:
-- [ ] Os testes existentes passam; muda só o nome acessível do botão "Devolver" (DSP-05 AC10), que continua contendo o texto visível
-- [ ] Quantidade decimal continua recusada; origem continua fixa em "Inventário"; saída acima do saldo continua mostrando a mensagem atual
-- [ ] Com `mockViewport` estreito, cada movimentação mostra tipo, quantidade, data e responsável, com o motivo limitado a três linhas
-- [ ] Gates passam
+- [x] Os testes existentes passam; muda só o nome acessível do botão "Devolver" (DSP-05 AC10), que continua contendo o texto visível
+- [x] Quantidade decimal continua recusada; origem continua fixa em "Inventário"; saída acima do saldo continua mostrando a mensagem atual
+- [x] Com `mockViewport` estreito, cada movimentação mostra tipo, quantidade, data e responsável, com o motivo limitado a três linhas
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: detalhe com histórico e diálogo de movimentação em 390 px com emulação de toque, e em 1440 px

@@ -98,3 +98,12 @@ it("/estoque/produtos fica no contêiner de página, alvo do link de pular", asy
   expect(main.id).toBe("conteudo");
   expect(main.className).not.toContain("max-w-5xl");
 });
+
+it("/estoque/produtos/[id] fica no contêiner de página", async () => {
+  const p = produto();
+  mockMe(authContext({ permissions: [PERM.produtoRead] }));
+  mockProdutos([p]);
+  renderWithSession(await EstoqueProdutoPage({ params: Promise.resolve({ id: p.id }), searchParams: Promise.resolve({}) }));
+  await screen.findByRole("heading", { name: "Camisa oficial" });
+  expect(screen.getByRole("main").id).toBe("conteudo");
+});
