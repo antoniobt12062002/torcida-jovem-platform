@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { delay, http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -96,5 +96,37 @@ describe("API indisponível ao consultar a sessão", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
     expect(await screen.findByText("conteúdo protegido")).toBeTruthy();
+  });
+});
+
+// DSP-02 AC1 e AC4, DSS-01 AC6: carregamento e erro de sessão usam os estados
+// padrão, dentro do contêiner de página, com uma única região principal.
+describe("estados do portão", () => {
+  it("o carregamento fica numa única região principal, que contém o estado de carregamento", () => {
+    setLocation("/financeiro/contas");
+    server.use(
+      http.get(apiUrl("/api/v1/auth/me"), async () => {
+        await delay("infinite");
+        return HttpResponse.json(authContext());
+      }),
+    );
+    renderGate();
+    const mains = screen.getAllByRole("main");
+    expect(mains).toHaveLength(1);
+    expect(mains[0].id).toBe("conteudo");
+    expect(within(mains[0]).getByRole("status").textContent).toContain("Carregando…");
+  });
+
+  it("o erro de sessão fica numa única região principal, com alerta de erro e Tentar de novo", async () => {
+    setLocation("/financeiro/contas");
+    server.use(http.get(apiUrl("/api/v1/auth/me"), () => problem(503, "service_unavailable")));
+    renderGate();
+    const alert = await screen.findByRole("alert");
+    const mains = screen.getAllByRole("main");
+    expect(mains).toHaveLength(1);
+    expect(mains[0].id).toBe("conteudo");
+    expect(mains[0].contains(alert)).toBe(true);
+    expect(alert.textContent).toMatch(/serviço está indisponível/);
+    expect(within(mains[0]).getByRole("button", { name: "Tentar de novo" })).toBeTruthy();
   });
 });

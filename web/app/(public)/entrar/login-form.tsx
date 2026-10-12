@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
+import { FormLayout } from "@/components/app/form-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PageTitle } from "@/components/ui/typography";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
 import { formatRetryAfter } from "@/lib/session/retry-after";
@@ -80,29 +82,35 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Entrar</h1>
+      <div className="flex flex-col gap-2">
+        <PageTitle>Entrar</PageTitle>
         <p className="text-sm text-muted-foreground">Use o e-mail e a senha da sua conta.</p>
       </div>
 
       {sessionEnded ? (
-        <Alert>
+        <Alert variant="neutral">
           <AlertDescription>Sua sessão foi encerrada. Entre de novo para continuar.</AlertDescription>
         </Alert>
       ) : null}
 
-      <form className="flex flex-col gap-4" noValidate onSubmit={(event) => void handleSubmit(onValid)(event)}>
-        {errors.root ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errors.root.message}</AlertDescription>
-          </Alert>
-        ) : null}
+      <FormLayout
+        noValidate
+        onSubmit={(event) => void handleSubmit(onValid)(event)}
+        error={errors.root?.message}
+        footer={
+          <Button type="submit" size="lg" className="w-full md:w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Entrando…" : "Entrar"}
+          </Button>
+        }
+      >
 
         <Field invalid={!!errors.email}>
           <FieldLabel>E-mail</FieldLabel>
           <Input
             type="email"
             autoComplete="username"
+            spellCheck={false}
+            autoCapitalize="none"
             {...register("email", {
               validate: (value) => value.trim() !== "" || "Informe o e-mail.",
             })}
@@ -120,17 +128,13 @@ export function LoginForm() {
           <FieldError>{errors.password?.message}</FieldError>
         </Field>
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Entrando…" : "Entrar"}
-        </Button>
-      </form>
+      </FormLayout>
 
-      <Link
-        href={routes.recuperarAcesso}
-        className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        Esqueci minha senha
-      </Link>
+      <div>
+        <Link href={routes.recuperarAcesso} className={buttonVariants({ variant: "link", size: "sm" })}>
+          Esqueci minha senha
+        </Link>
+      </div>
     </div>
   );
 }

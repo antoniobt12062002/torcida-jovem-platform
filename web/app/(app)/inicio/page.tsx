@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 
+import { PageContainer } from "@/components/app/page-container";
+
 import { Atalhos } from "./atalhos";
 
 export const metadata: Metadata = {
   title: "Início",
 };
 
-// Página inicial autenticada (INT-01 AC4): atalhos para as áreas que a pessoa
-// pode ver, gerados da mesma lista da navegação. Sem indicadores (fora da V1).
+// Página inicial autenticada (INT-01 AC4, DSS-06): atalhos para as áreas que
+// a pessoa pode ver, gerados da mesma lista da navegação. Sem indicadores,
+// gráficos nem dados de exemplo (WDS-D-010).
 export default function InicioPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
-      <h1 className="text-xl font-semibold">Início</h1>
+    <PageContainer>
       <Atalhos />
-    </main>
+    </PageContainer>
   );
 }

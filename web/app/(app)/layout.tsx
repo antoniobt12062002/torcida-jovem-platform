@@ -5,10 +5,8 @@ import { type ReactNode, useEffect } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { navItems } from "@/components/app/nav-items";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { messageFor } from "@/lib/api/problem";
+import { PageContainer } from "@/components/app/page-container";
+import { ErrorState, LoadingState } from "@/components/app/states";
 import { routes } from "@/lib/session/routes";
 import { useSession } from "@/lib/session/session-provider";
 
@@ -31,29 +29,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (mustChangePassword) router.replace(routes.contaSenha);
   }, [mustChangePassword, router]);
 
+  // Troca obrigatória em /conta/senha: a tela usa o layout de acesso, sem o
+  // shell, com "Sair" no canto (DSS-03; FND-05 AC8 mantido: nenhuma navegação).
+  if (status === "authenticated" && context?.must_change_password && pathname === routes.contaSenha) {
+    return children;
+  }
+
   if (status === "authenticated" && !mustChangePassword) return <AppShell items={navItems}>{children}</AppShell>;
 
+  // Sem o shell: o contêiner da página traz a única região principal (DSP-02, DSS-01 AC6).
   if (status === "loading" && error) {
     return (
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-4 py-12">
-        <Alert variant="destructive">
-          <AlertDescription>{messageFor(error)}</AlertDescription>
-        </Alert>
-        <Button variant="outline" onClick={refetch}>
-          Tentar de novo
-        </Button>
-      </main>
+      <PageContainer width="narrow">
+        <ErrorState error={error} onRetry={refetch} />
+      </PageContainer>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-3 px-4 py-12">
-      <div role="status" aria-live="polite" className="flex flex-col gap-3">
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-        <span className="sr-only">Carregando…</span>
-      </div>
-    </main>
+    <PageContainer width="narrow">
+      <LoadingState />
+    </PageContainer>
   );
 }

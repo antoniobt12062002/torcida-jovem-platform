@@ -87,9 +87,9 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: os dois blocos `main` montados à mão (carregamento e erro de sessão) passam a usar os estados padrão dentro de `PageContainer`; a lógica do portão (redirecionamentos, troca obrigatória de senha) não muda.
 
 **Done when**:
-- [ ] Os testes existentes de `layout.test.tsx` e de `sem-acesso` passam sem alteração de asserção de comportamento
-- [ ] Carregamento e erro de sessão usam os componentes de estado, com uma única região principal
-- [ ] Gates passam
+- [x] Os testes existentes de `layout.test.tsx` e de `sem-acesso` passam sem alteração de asserção de comportamento
+- [x] Carregamento e erro de sessão usam os componentes de estado, com uma única região principal
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: carregamento, erro de sessão e "Sem acesso" em 390 e 1440 px
@@ -111,11 +111,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: `error.tsx` dentro do shell, com "Tentar de novo" e "Voltar ao início"; `not-found.tsx` no layout de acesso; `global-error.tsx` com documento próprio, escudo e "Tentar de novo". O nome da função de nova tentativa é o da documentação instalada. Se `global-error` não aceitar importar a folha global, usa um bloco mínimo de estilos locais com os valores dos tokens, declarado como exceção na guarda.
 
 **Done when**:
-- [ ] Cada página tem um `h1` em português e leva o foco a ele ao montar
-- [ ] Nenhuma exibe `error.message`, pilha ou `digest` (teste com um erro de exemplo)
-- [ ] "Tentar de novo" chama a função de nova tentativa recebida
-- [ ] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell
-- [ ] Gates passam
+- [x] Cada página tem um `h1` em português e leva o foco a ele ao montar
+- [x] Nenhuma exibe `error.message`, pilha ou `digest` (teste com um erro de exemplo)
+- [x] "Tentar de novo" chama a função de nova tentativa recebida
+- [ ] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell — **parcial**: endereço inexistente conferido em `next start` (404, título e foco no `h1`, 390 e 1440 px); a exceção dentro do shell exige sessão real e fica para a conferência do coordenador
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: as três páginas num build de produção, em 390 e 1440 px
@@ -137,11 +137,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: layout público passa a `AccessLayout` (duas colunas no desktop, coluna única abaixo de 1024, marca "Torcida Jovem"); formulários em `FormLayout`, com botão primário em largura total; `spellCheck={false}` e `autoCapitalize="none"` nos campos de e-mail; durante a troca obrigatória, `/conta/senha` usa o layout de acesso; fora dela, é página comum de largura estreita.
 
 **Done when**:
-- [ ] Os testes existentes de login, recuperação, redefinição e troca de senha passam sem alteração de asserção de comportamento
-- [ ] O escudo e "Torcida Jovem" aparecem nas quatro telas; "TJ Platform" não aparece como marca
-- [ ] Campos de e-mail e senha mantêm `autocomplete` de autenticação; e-mail sem correção ortográfica
-- [ ] Enviar vazio leva o foco ao primeiro campo inválido
-- [ ] Gates passam
+- [x] Os testes existentes de login, recuperação, redefinição e troca de senha passam sem alteração de asserção de comportamento
+- [x] O escudo e "Torcida Jovem" aparecem nas quatro telas; "TJ Platform" não aparece como marca
+- [x] Campos de e-mail e senha mantêm `autocomplete` de autenticação; e-mail sem correção ortográfica
+- [x] Enviar vazio leva o foco ao primeiro campo inválido
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: as quatro telas em 390, 820 e 1440 px, comparadas com o espécime
@@ -163,11 +163,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: `inicioNavItem` ganha ícone e descrição; a ordem e a composição de `navItems` não mudam; `/inicio` usa `PageHeader` e uma grade de cartões que são links, com ícone, nome e descrição quando o módulo a fornecer; sem indicadores. A guarda da unidade cobre `app/(public)/`, `app/(app)/layout.tsx`, `inicio/`, `sem-acesso/`, `conta/`, as páginas de erro e `features/identity/acesso/`.
 
 **Done when**:
-- [ ] Os testes existentes de `nav-items` e de `inicio` passam sem alteração de asserção de comportamento
-- [ ] Os atalhos são links, respeitam as permissões e ficam em uma coluna abaixo de 768 px (classe conferida em teste)
-- [ ] Conta sem nenhuma área vê o estado vazio com a explicação
-- [ ] A guarda passa nos diretórios de DS-S, sem contêiner nem título montados à mão
-- [ ] Gates passam
+- [x] Os testes existentes de `nav-items` e de `inicio` passam sem alteração de asserção de comportamento
+- [x] Os atalhos são links, respeitam as permissões e ficam em uma coluna abaixo de 768 px (classe conferida em teste)
+- [x] Conta sem nenhuma área vê o estado vazio com a explicação
+- [x] A guarda passa nos diretórios de DS-S, sem contêiner nem título montados à mão
+- [x] Gates passam
 
 **Tests**: component + unit
 **Verificação visual**: `/inicio` com duas contas de permissões diferentes, em 390, 820 e 1440 px
@@ -192,13 +192,14 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 - [ ] Em 390, 768 e 820 px: botão de menu presente, gaveta abre, fecha ao navegar e com Esc, foco volta ao botão, nenhuma ação inacessível
 - [ ] Em 1024 e 1440 px: navegação fixa presente, sem botão de menu
 - [ ] Link de pular funciona por teclado; item ativo anunciado; nenhuma rolagem horizontal de página a partir de 320 px
-- [ ] A evidência registra que a verificação anterior de FND-05 AC2 (ponto de quebra de 768 px) não foi reaproveitada
-- [ ] O arquivo não contém senha, token, cookie nem dado pessoal
+- [x] A evidência registra que a verificação anterior de FND-05 AC2 (ponto de quebra de 768 px) não foi reaproveitada
+- [x] O arquivo não contém senha, token, cookie nem dado pessoal
 - [ ] IF algum item falhar THEN a unidade para, registra a falha e reporta ao coordenador
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-S)
+- [x] Gates passam, incluindo Audit (fim da unidade DS-S)
 
 **Tests**: aceite manual no navegador (roteiro registrado)
 **Verificação visual**: é o objeto da task
+**Situação (rodada 6)**: roteiro no navegador **pendente** de sessão real; evidência em `evidence/shell-responsivo.md`. Os itens de navegador ficam abertos para a conferência do coordenador.
 **Gate**: Web + Audit + Contract + Backend intacto + Dependências intactas + Ownership + Congelados intactos
 **Commit**: `docs(web-design): evidencia da navegacao responsiva no novo ponto de quebra`
 

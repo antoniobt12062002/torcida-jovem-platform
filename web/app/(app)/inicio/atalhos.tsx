@@ -4,29 +4,49 @@ import Link from "next/link";
 
 import { isNavSection, type NavItem, type NavSection, visibleItems } from "@/components/app/nav";
 import { navItems } from "@/components/app/nav-items";
-import { LoadingState } from "@/components/app/states";
+import { PageHeader } from "@/components/app/page-header";
+import { EmptyState, LoadingState } from "@/components/app/states";
+import { Card } from "@/components/ui/card";
+import { SectionTitle } from "@/components/ui/typography";
 import { useSession } from "@/lib/session/session-provider";
 
-// Um atalho por área visível na navegação, agrupado pelo módulo (INT-01 AC4).
+// Um atalho por área visível na navegação, agrupado pelo módulo (INT-01 AC4,
+// DSS-06). O cartão inteiro é o link; ícone e descrição vêm do item de
+// navegação definido pelo módulo e só aparecem quando ele os fornece.
+
+function primeiroNome(nome: string): string {
+  return nome.trim().split(/\s+/)[0] ?? "";
+}
+
 export function Atalhos() {
   const { context } = useSession();
-  if (!context) return <LoadingState />;
+  const nome = context ? primeiroNome(context.user.name) : "";
+
+  return (
+    <>
+      <PageHeader title="Início" description={nome ? `Olá, ${nome}.` : undefined} />
+      <Conteudo />
+    </>
+  );
+}
+
+function Conteudo() {
+  const { context } = useSession();
+  if (!context) return <LoadingState shape="list" />;
 
   const secoes = visibleItems(navItems, context.permissions).filter(isNavSection);
 
   if (secoes.length === 0) {
     return (
-      <div className="flex flex-col gap-1 rounded-lg border border-dashed px-4 py-10 text-center">
-        <p className="font-medium">Sua conta ainda não tem acesso a nenhum módulo.</p>
-        <p className="text-sm text-muted-foreground">
-          Se você precisa usar alguma área do sistema, fale com a administração.
-        </p>
-      </div>
+      <EmptyState
+        title="Sua conta ainda não tem acesso a nenhum módulo."
+        description="Se você precisa usar alguma área do sistema, fale com a administração."
+      />
     );
   }
 
   return (
-    <nav aria-label="Atalhos das áreas" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <nav aria-label="Atalhos das áreas" className="flex flex-col gap-8">
       {secoes.map((secao) => (
         <Secao key={secao.label} secao={secao} />
       ))}
@@ -36,11 +56,11 @@ export function Atalhos() {
 
 function Secao({ secao }: { secao: NavSection }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-medium text-muted-foreground uppercase">{secao.label}</h2>
-      <ul className="flex flex-col gap-2">
+    <section className="flex flex-col gap-4">
+      <SectionTitle>{secao.label}</SectionTitle>
+      <ul data-slot="atalhos-grade" className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {secao.items.map((item) => (
-          <li key={item.href}>
+          <li key={item.href} className="flex">
             <Atalho item={item} />
           </li>
         ))}
@@ -50,9 +70,20 @@ function Secao({ secao }: { secao: NavSection }) {
 }
 
 function Atalho({ item }: { item: NavItem }) {
+  const Icon = item.icon;
   return (
-    <Link href={item.href} className="block rounded-lg border px-4 py-3 text-sm font-medium hover:bg-muted">
-      {item.label}
-    </Link>
+    <Card className="relative w-full gap-2 transition-colors duration-fast hover:border-border-strong hover:bg-accent">
+      <div className="flex items-center gap-2">
+        {Icon ? <Icon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" /> : null}
+        {/* Link esticado: o cartão inteiro é clicável e o nome do link é só o nome da área. */}
+        <Link
+          href={item.href}
+          className="text-base font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-ring-offset"
+        >
+          {item.label}
+        </Link>
+      </div>
+      {item.description ? <p className="text-sm text-pretty text-muted-foreground">{item.description}</p> : null}
+    </Card>
   );
 }
