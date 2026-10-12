@@ -137,11 +137,11 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: layout público passa a `AccessLayout` (duas colunas no desktop, coluna única abaixo de 1024, marca "Torcida Jovem"); formulários em `FormLayout`, com botão primário em largura total; `spellCheck={false}` e `autoCapitalize="none"` nos campos de e-mail; durante a troca obrigatória, `/conta/senha` usa o layout de acesso; fora dela, é página comum de largura estreita.
 
 **Done when**:
-- [ ] Os testes existentes de login, recuperação, redefinição e troca de senha passam sem alteração de asserção de comportamento
-- [ ] O escudo e "Torcida Jovem" aparecem nas quatro telas; "TJ Platform" não aparece como marca
-- [ ] Campos de e-mail e senha mantêm `autocomplete` de autenticação; e-mail sem correção ortográfica
-- [ ] Enviar vazio leva o foco ao primeiro campo inválido
-- [ ] Gates passam
+- [x] Os testes existentes de login, recuperação, redefinição e troca de senha passam sem alteração de asserção de comportamento
+- [x] O escudo e "Torcida Jovem" aparecem nas quatro telas; "TJ Platform" não aparece como marca
+- [x] Campos de e-mail e senha mantêm `autocomplete` de autenticação; e-mail sem correção ortográfica
+- [x] Enviar vazio leva o foco ao primeiro campo inválido
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: as quatro telas em 390, 820 e 1440 px, comparadas com o espécime

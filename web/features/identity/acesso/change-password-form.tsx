@@ -4,6 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AccessLayout } from "@/components/app/access-layout";
+import { FormLayout } from "@/components/app/form-layout";
+import { PageContainer } from "@/components/app/page-container";
+import { PageHeader } from "@/components/app/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
@@ -23,7 +27,9 @@ import {
 } from "./errors";
 import { useChangePassword } from "./use-change-password";
 
-// Troca da própria senha (ACS-01), voluntária ou obrigatória.
+// Troca da própria senha (ACS-01), voluntária ou obrigatória. Na troca
+// obrigatória, a tela usa o layout de acesso, sem o shell, com "Sair" no canto
+// (DSS-03, FND-05 AC8); na voluntária, é uma página comum do shell, estreita.
 
 type ChangePasswordValues = {
   current_password: string;
@@ -87,38 +93,33 @@ export function ChangePasswordForm() {
   // O portão de (app) só mostra a página com sessão; o modo e a dica dependem do contexto.
   if (status !== "authenticated") return null;
 
-  return (
+  const content = (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Trocar senha</h1>
-        {mandatory ? (
-          <p className="text-sm text-muted-foreground">
-            Você precisa trocar a senha antes de continuar. É o primeiro acesso ou a senha foi
-            redefinida pela administração.
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Informe a senha atual e escolha uma nova. As suas outras sessões serão encerradas.
-          </p>
-        )}
-      </div>
+      <PageHeader
+        title="Trocar senha"
+        description={
+          mandatory
+            ? "Você precisa trocar a senha antes de continuar. É o primeiro acesso ou a senha foi redefinida pela administração."
+            : "Informe a senha atual e escolha uma nova. As suas outras sessões serão encerradas."
+        }
+      />
 
       {changed ? (
-        <Alert>
+        <Alert variant="success">
           <AlertDescription>Senha alterada com sucesso.</AlertDescription>
         </Alert>
       ) : null}
 
-      <form
-        className="flex flex-col gap-4"
+      <FormLayout
         noValidate
         onSubmit={(event) => void handleSubmit(onValid)(event)}
+        error={errors.root?.message}
+        footer={
+          <Button type="submit" size="lg" className="w-full md:w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Trocando…" : "Trocar senha"}
+          </Button>
+        }
       >
-        {errors.root ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errors.root.message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Field invalid={!!errors.current_password}>
           <FieldLabel>Senha atual</FieldLabel>
@@ -154,16 +155,23 @@ export function ChangePasswordForm() {
           <FieldError>{errors.confirm_password?.message}</FieldError>
         </Field>
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Trocando…" : "Trocar senha"}
-        </Button>
-      </form>
-
-      {mandatory ? (
-        <Button variant="outline" onClick={() => void logout()}>
-          Sair
-        </Button>
-      ) : null}
+      </FormLayout>
     </div>
   );
+
+  if (mandatory) {
+    return (
+      <AccessLayout
+        action={
+          <Button variant="secondary" onClick={() => void logout()}>
+            Sair
+          </Button>
+        }
+      >
+        {content}
+      </AccessLayout>
+    );
+  }
+
+  return <PageContainer width="narrow">{content}</PageContainer>;
 }

@@ -29,6 +29,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (mustChangePassword) router.replace(routes.contaSenha);
   }, [mustChangePassword, router]);
 
+  // Troca obrigatória em /conta/senha: a tela usa o layout de acesso, sem o
+  // shell, com "Sair" no canto (DSS-03; FND-05 AC8 mantido: nenhuma navegação).
+  if (status === "authenticated" && context?.must_change_password && pathname === routes.contaSenha) {
+    return children;
+  }
+
   if (status === "authenticated" && !mustChangePassword) return <AppShell items={navItems}>{children}</AppShell>;
 
   // Sem o shell: o contêiner da página traz a única região principal (DSP-02, DSS-01 AC6).

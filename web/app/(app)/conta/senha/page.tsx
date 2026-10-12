@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 };
 
 export default function ContaSenhaPage() {
-  // O formulário lê `next` da URL (useSearchParams): fica num limite de Suspense.
+  // O formulário lê `next` da URL (useSearchParams): fica num limite de
+  // Suspense. Ele escolhe o próprio contêiner: layout de acesso na troca
+  // obrigatória, página estreita do shell na voluntária.
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
-      <Suspense>
-        <ChangePasswordForm />
-      </Suspense>
-    </main>
+    <Suspense>
+      <ChangePasswordForm />
+    </Suspense>
   );
 }
