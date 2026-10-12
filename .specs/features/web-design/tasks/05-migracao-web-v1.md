@@ -238,10 +238,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: formulário em `FormLayout` com `NativeSelect` do kit; `select-field.tsx` e o filtro de data com rótulo manual são removidos; detalhe com trilha, status no cabeçalho, valores com `MoneyValue` (receita com "+", despesa com "−"), identificador como tipo e código curto; ações de workflow com confirmação que nomeia o lançamento e a consequência; cancelamento continua exigindo motivo.
 
 **Done when**:
-- [ ] Os testes existentes de formulário, detalhe e workflow passam sem alteração de asserção de comportamento (prévia do líquido, dinheiro inválido, devolução só com contas de despesa ativas, motivo obrigatório)
-- [ ] `select-field.tsx` não existe mais e nenhum `<select>` avulso resta em DS-FB
-- [ ] Confirmar recebimento, pagamento, devolução e cancelamento mostram o registro e a consequência, com o verbo da ação no botão
-- [ ] Gates passam
+- [x] Os testes existentes de formulário, detalhe e workflow passam sem alteração de asserção de comportamento (prévia do líquido, dinheiro inválido, devolução só com contas de despesa ativas, motivo obrigatório)
+- [x] `select-field.tsx` não existe mais e nenhum `<select>` avulso resta em DS-FB
+- [x] Confirmar recebimento, pagamento, devolução e cancelamento mostram o registro e a consequência, com o verbo da ação no botão
+- [x] Gates passam
 
 **Tests**: component com MSW
 **Verificação visual**: formulário e detalhe (criado, recebido, cancelado) em 390, 820 e 1440 px

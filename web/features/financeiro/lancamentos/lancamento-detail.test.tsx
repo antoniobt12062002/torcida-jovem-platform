@@ -1,9 +1,13 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetNavigation } from "@/lib/session/navigation-mock";
 import { mockMe, renderWithSession } from "@/lib/session/test-utils";
+import { WEB_ROOT } from "@/test/design/guard";
 import { authContext, ids, lancamento, problem } from "@/test/msw/fixtures";
 
 import FinanceiroLancamentoPage from "@/app/(app)/financeiro/lancamentos/[id]/page";
@@ -66,7 +70,8 @@ describe("detalhe", () => {
     expect(detailValue("Tipo")).toBe("Receita");
     expect(detailValue("Valor bruto")).toBe("R$ 100,00");
     expect(detailValue("Taxa")).toBe("R$ 2,50");
-    expect(detailValue("Valor líquido")).toBe("R$ 97,50");
+    // Valor líquido com o sentido do lançamento (DSC-06, T6): receita com "+".
+    expect(detailValue("Valor líquido")).toBe("+R$ 97,50");
     expect(detailValue("Forma de pagamento")).toBe("Cartão");
     expect(detailValue("Criado por")).toBe("você");
     expect(detailValue("Criado em")).toBe("04/10/2026 09:00");
@@ -225,5 +230,70 @@ describe("permissões", () => {
     expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
     expect(list.count).toBe(1);
     expect(comprovantes.count).toBe(0);
+  });
+});
+
+// DSM-03 AC1 e AC2, DSP-01 e DSP-07 AC7: trilha, status no cabeçalho, valores
+// com MoneyValue e identificador com o código em fonte monoespaçada.
+describe("apresentação", () => {
+  it("trilha volta à listagem e o status fica ao lado do título", async () => {
+    await renderDetail();
+    const heading = await screen.findByRole("heading", { level: 1, name: `Receita ${ID.slice(0, 8)}` });
+    const nav = screen.getByRole("navigation", { name: "Trilha de navegação" });
+    const crumbs = within(nav).getAllByRole("link", { name: "Lançamentos" });
+    for (const crumb of crumbs) expect(crumb.getAttribute("href")).toBe("/financeiro/lancamentos");
+    const badge = heading.parentElement?.querySelector<HTMLElement>('[data-slot="badge"]');
+    expect(badge?.textContent).toBe("Criada");
+    expect(badge?.querySelector("svg")).not.toBeNull();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+
+  it("despesa mostra o valor líquido com −; os valores usam MoneyValue", async () => {
+    await renderDetail([lancamento({ ...CRIADA, tipo: "DESPESA", conta_id: CONTA_DESPESA.id })]);
+    await waitFor(() => expect(detailValue("Valor líquido")).toBe("−R$ 97,50"));
+    const values = document.querySelectorAll('dd [data-slot="money-value"]');
+    expect(Array.from(values).map((v) => v.textContent)).toEqual(["R$ 100,00", "R$ 2,50", "−R$ 97,50"]);
+  });
+
+  it("cancelado não leva sinal: não move o saldo", async () => {
+    await renderDetail([lancamento({ ...CRIADA, status: "CANCELADA", motivo_cancelamento: "Duplicado" })]);
+    await waitFor(() => expect(detailValue("Valor líquido")).toBe("R$ 97,50"));
+  });
+
+  it("a devolução mostra o código da receita em fonte monoespaçada", async () => {
+    const receitaId = "00000000-0000-4000-8000-000000000299";
+    await renderDetail([lancamento({ ...CRIADA, tipo: "DESPESA", conta_id: CONTA_DESPESA.id, devolucao_de_id: receitaId })]);
+    const link = await screen.findByRole("link", { name: receitaId.slice(0, 8) });
+    expect(link.className).toContain("font-mono");
+  });
+
+  it("id fora da lista oferece a volta à listagem", async () => {
+    await renderDetail([CRIADA], PERMISSOES_TESOURARIA, "00000000-0000-4000-8000-000000000999");
+    const back = await screen.findByRole("link", { name: "Voltar para lançamentos" });
+    expect(back.getAttribute("href")).toBe("/financeiro/lancamentos");
+  });
+});
+
+// DSM-05 AC2 e AC3: nada de select-field nem de <select> avulso em DS-FB.
+describe("limpeza", () => {
+  const ROOTS = ["features/financeiro/lancamentos", "features/financeiro/comprovantes", "app/(app)/financeiro/lancamentos"];
+
+  function sources(dir: string): string[] {
+    return readdirSync(join(WEB_ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
+      const path = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) return sources(path);
+      return /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path] : [];
+    });
+  }
+
+  it("select-field.tsx não existe mais", () => {
+    expect(existsSync(join(WEB_ROOT, "features/financeiro/lancamentos/select-field.tsx"))).toBe(false);
+  });
+
+  it("nenhum <select> fora do NativeSelect do kit", () => {
+    const files = ROOTS.flatMap(sources);
+    expect(files.length).toBeGreaterThan(5);
+    const offenders = files.filter((file) => /<select[\s>]|select-field/.test(readFileSync(join(WEB_ROOT, file), "utf8")));
+    expect(offenders).toEqual([]);
   });
 });
