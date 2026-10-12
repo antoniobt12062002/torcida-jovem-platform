@@ -21,6 +21,13 @@ import { cn } from "@/lib/utils";
 // filtros ficam na barra; abaixo disso só a busca fica visível e os demais vão
 // para uma gaveta inferior. A contagem fica numa região viva, para o efeito do
 // filtro ser anunciado.
+//
+// Na barra, os campos se distribuem pela largura do próprio contêiner
+// (container query), e não pela da tela: a mesma barra serve à página inteira,
+// ao lado da navegação fixa ou numa região estreita. Contêiner estreito: um
+// campo por linha; a partir de 28rem, duas colunas com a busca na linha toda;
+// a partir de 48rem, colunas de pelo menos 11rem na mesma linha enquanto
+// couberem, com a busca ocupando duas.
 
 export type FilterBarProps = {
   /** Os filtros: `Field` com `NativeSelect` ou `Input` de data. */
@@ -53,7 +60,7 @@ export function FilterBar({
   const hasActive = activeCount > 0;
 
   return (
-    <div data-slot="filter-bar" className={cn("flex flex-col gap-2", className)}>
+    <div data-slot="filter-bar" className={cn("@container flex w-full min-w-0 flex-col gap-2", className)}>
       {narrow ? (
         <div role="group" aria-label={TITLE} className="flex flex-col gap-3 rounded-md bg-muted p-3">
           {search}
@@ -82,12 +89,16 @@ export function FilterBar({
         <div
           role="group"
           aria-label={TITLE}
-          className="grid grid-cols-3 items-end gap-3 rounded-md bg-muted p-3 lg:flex lg:flex-wrap"
+          className="grid grid-cols-1 items-end gap-3 rounded-md bg-muted p-3 *:min-w-0 @md:grid-cols-2 @3xl:grid-cols-[repeat(auto-fit,minmax(min(11rem,100%),1fr))]"
         >
-          {search}
+          {search ? (
+            <div data-slot="filter-bar-search" className="@md:col-span-2">
+              {search}
+            </div>
+          ) : null}
           {children}
           {hasActive ? (
-            <Button variant="ghost" onClick={onClear}>
+            <Button variant="ghost" className="justify-self-start" onClick={onClear}>
               {CLEAR}
             </Button>
           ) : null}

@@ -52,11 +52,40 @@ describe("barra em tela larga", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
-  it("entre 768 e 1023 px a barra é uma grade de três colunas; a partir de 1024, uma linha", () => {
+  // A distribuição dos campos segue a largura do próprio contêiner, não a da tela.
+  it("a barra é um contêiner de consulta e encolhe com a região onde está", () => {
+    const { container } = render(<Barra />);
+    const root = container.querySelector("[data-slot=filter-bar]")!;
+    expect(classes(root)).toEqual(expect.arrayContaining(["@container", "w-full", "min-w-0"]));
+  });
+
+  it("os campos se distribuem em grade pela largura do contêiner: uma, duas e várias colunas", () => {
     render(<Barra />);
-    expect(classes(screen.getByRole("group", { name: "Filtros" }))).toEqual(
-      expect.arrayContaining(["bg-muted", "grid", "grid-cols-3", "lg:flex"]),
+    const group = classes(screen.getByRole("group", { name: "Filtros" }));
+    expect(group).toEqual(
+      expect.arrayContaining([
+        "bg-muted",
+        "grid",
+        "grid-cols-1",
+        "@md:grid-cols-2",
+        "@3xl:grid-cols-[repeat(auto-fit,minmax(min(11rem,100%),1fr))]",
+        "*:min-w-0",
+      ]),
     );
+    // Nenhuma regra de distribuição pela largura da tela.
+    expect(group.filter((c) => /^(sm|md|lg|xl|2xl):/.test(c))).toEqual([]);
+  });
+
+  it("a busca ocupa a linha toda na grade de duas colunas e duas colunas na linha única", () => {
+    render(<Barra />);
+    const search = screen.getByRole("textbox", { name: "Busca" }).parentElement!;
+    expect(search.getAttribute("data-slot")).toBe("filter-bar-search");
+    expect(classes(search)).toContain("@md:col-span-2");
+  });
+
+  it("Limpar filtros fica alinhado ao início da célula, sem esticar", () => {
+    render(<Barra activeCount={1} />);
+    expect(classes(screen.getByRole("button", { name: "Limpar filtros" }))).toContain("justify-self-start");
   });
 
   it("sem busca, mostra só os filtros", () => {
