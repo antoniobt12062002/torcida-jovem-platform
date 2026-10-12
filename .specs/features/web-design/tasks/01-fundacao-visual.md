@@ -171,12 +171,12 @@ T1 a T4 (DS-F) são a rodada 1, num único agente. T5 a T7 (DS-E) são a rodada 
 **Mudanças previstas**: só o atributo `viewBox` do SVG muda, para um quadrado centrado no círculo (`0 118.275 591.17 591.17`, a confirmar renderizando o arquivo). `app/icon.svg` é cópia do mesmo SVG. `app/apple-icon.png` é a rasterização do mesmo SVG em 180 por 180 px, feita com o navegador já instalado na máquina, sem ferramenta nova e sem edição.
 
 **Done when**:
-- [ ] O teste compara, por hash, os atributos `d` e o bloco de estilos do SVG versionado com os do arquivo recebido, e falha com qualquer diferença de desenho
-- [ ] O teste confirma `viewBox` quadrado e PNG de 180 por 180 px
-- [ ] Renderizado, o escudo aparece inteiro, sem corte, em 32, 64 e 96 px
-- [ ] Nenhuma referência aos cinco SVGs de exemplo no código; `favicon.ico` padrão removido
+- [x] O teste compara, por hash, os atributos `d` e o bloco de estilos do SVG versionado com os do arquivo recebido, e falha com qualquer diferença de desenho
+- [x] O teste confirma `viewBox` quadrado e PNG de 180 por 180 px
+- [x] Renderizado, o escudo aparece inteiro, sem corte, em 32, 64 e 96 px
+- [x] Nenhuma referência aos cinco SVGs de exemplo no código; `favicon.ico` padrão removido
 - [ ] IF o escudo ficar ilegível em 16 px THEN a necessidade de asset oficial reduzido é registrada em `STATE.md`, sem criar versão simplificada
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-F)
+- [x] Gates passam, incluindo Audit (fim da unidade DS-F)
 
 **Tests**: unit
 **Verificação visual**: aba do navegador com o ícone novo; escudo renderizado nos três tamanhos
