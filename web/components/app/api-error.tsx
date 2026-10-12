@@ -29,11 +29,11 @@ export type ApiErrorAlertProps = {
 
 export function ApiErrorAlert({ error, catalog, onRetry, className }: ApiErrorAlertProps) {
   return (
-    <Alert variant="destructive" className={className}>
+    <Alert variant="error" className={className}>
       <AlertDescription className="flex flex-col items-start gap-2">
         <span>{apiErrorMessage(error, catalog)}</span>
         {onRetry && isUnavailable(error) ? (
-          <Button variant="outline" size="sm" onClick={onRetry}>
+          <Button variant="secondary" size="sm" onClick={onRetry}>
             Tentar de novo
           </Button>
         ) : null}

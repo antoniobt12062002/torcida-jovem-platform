@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Button } from "@/components/ui/button";
@@ -95,3 +96,76 @@ describe("motivo obrigatório", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 });
+
+// DSP-03 AC2: a confirmação nomeia o registro e descreve a consequência.
+describe("registro e consequência", () => {
+  it("mostra o registro afetado e a consequência, ligados ao diálogo como descrição", async () => {
+    render(
+      <ConfirmDialog
+        open
+        title="Cancelar lançamento?"
+        subject="Receita fb6e3d8f"
+        consequence="O lançamento deixa de contar no saldo. Esta ação não pode ser desfeita."
+        confirmLabel="Cancelar lançamento"
+        cancelLabel="Voltar"
+        onConfirm={() => {}}
+      />,
+    );
+    const dialog = await screen.findByRole("alertdialog", { name: "Cancelar lançamento?" });
+    expect(within(dialog).getByText("Receita fb6e3d8f")).toBeTruthy();
+    expect(within(dialog).getByText(/deixa de contar no saldo/)).toBeTruthy();
+    const description = document.getElementById(dialog.getAttribute("aria-describedby") ?? "");
+    expect(description?.textContent).toContain("Receita fb6e3d8f");
+    expect(description?.textContent).toContain("O lançamento deixa de contar no saldo.");
+  });
+});
+
+// DSP-03 AC5: a falha aparece dentro da confirmação, que continua aberta.
+describe("falha na ação confirmada", () => {
+  function Failing({ onConfirm }: { onConfirm: () => Promise<unknown> }) {
+    const [error, setError] = useState<string>();
+    return (
+      <ConfirmDialog
+        open
+        title="Desativar conta?"
+        confirmLabel="Desativar conta"
+        error={error}
+        onConfirm={async () => {
+          try {
+            await onConfirm();
+          } catch (cause) {
+            setError("A conta tem lançamentos em aberto.");
+            throw cause;
+          }
+        }}
+      />
+    );
+  }
+
+  it("sem erro, não há alerta no diálogo", async () => {
+    render(<ConfirmDialog open title="Desativar conta?" confirmLabel="Desativar conta" onConfirm={() => {}} />);
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+  });
+
+  it("mantém o diálogo aberto e mostra o erro dentro dele", async () => {
+    const onConfirm = vi.fn().mockRejectedValue(new Error("falhou"));
+    render(<Failing onConfirm={onConfirm} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Desativar conta" }));
+    const alert = await within(screen.getByRole("alertdialog")).findByRole("alert");
+    expect(alert.textContent).toContain("A conta tem lançamentos em aberto.");
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    // Pode tentar de novo: confirmar volta a ficar habilitado.
+    await waitFor(() =>
+      expect((screen.getByRole("button", { name: "Desativar conta" }) as HTMLButtonElement).disabled).toBe(false),
+    );
+  });
+});
+
+// DSP-03 AC3: o rótulo de confirmar é sempre informado por quem chama.
+// Conferido pelo `tsc` (gate Web), sem execução.
+export function recusadoPeloCompilador() {
+  // @ts-expect-error `confirmLabel` é obrigatório: não existe "Confirmar" genérico.
+  return <ConfirmDialog title="Desativar conta?" onConfirm={() => {}} />;
+}

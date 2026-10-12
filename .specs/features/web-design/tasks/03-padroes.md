@@ -171,11 +171,11 @@ T1 e T2 são a rodada 3 (DS-L). T3 a T10 são a rodada 4 (DS-A).
 **Mudanças previstas**: `LoadingState` com `shape`; `EmptyState` com `kind` (`empty`, `no-results`), ícone, orientação e ação; `ErrorState` com alerta de erro e "Tentar de novo"; `NoAccess` no layout padrão; `ConfirmDialog` com `subject`, `consequence` e `error`, e `confirmLabel` obrigatório. Propriedades atuais continuam aceitas.
 
 **Done when**:
-- [ ] Vazio e sem resultado são distinguíveis por título e ação ("Limpar filtros" no segundo)
-- [ ] `ConfirmDialog` mostra o registro e a consequência, mantém aberto e mostra o erro quando a ação falha, e mantém confirmar desabilitado com motivo vazio ou só espaços
-- [ ] As seis chamadas existentes de `ConfirmDialog` compilam sem alteração
-- [ ] A lógica de `RequirePermission` não muda; seus testes passam sem alteração de asserção
-- [ ] Gates passam
+- [x] Vazio e sem resultado são distinguíveis por título e ação ("Limpar filtros" no segundo)
+- [x] `ConfirmDialog` mostra o registro e a consequência, mantém aberto e mostra o erro quando a ação falha, e mantém confirmar desabilitado com motivo vazio ou só espaços
+- [x] As seis chamadas existentes de `ConfirmDialog` compilam sem alteração
+- [x] A lógica de `RequirePermission` não muda; seus testes passam sem alteração de asserção
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)

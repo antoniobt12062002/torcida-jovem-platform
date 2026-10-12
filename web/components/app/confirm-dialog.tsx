@@ -13,18 +13,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
-// Confirmação de ação irreversível ou sensível (FND-05 AC6). Nada é chamado
-// antes do clique em confirmar. Com motivo obrigatório, confirmar fica
-// desabilitado enquanto o motivo estiver vazio ou só com espaços.
+// Confirmação de ação irreversível ou sensível (FND-05 AC6, DSP-03). Nada é
+// chamado antes do clique em confirmar. Com motivo obrigatório, confirmar fica
+// desabilitado enquanto o motivo estiver vazio ou só com espaços. A confirmação
+// nomeia o registro (`subject`) e diz o efeito (`consequence`); se a ação
+// falhar, continua aberta e mostra o `error`.
 
 export type ConfirmDialogProps = {
   title: string;
+  /** Registro afetado, mostrado em destaque: "Receita fb6e3d8f", o nome da conta. */
+  subject?: ReactNode;
+  /** Frase sobre o efeito da ação. */
+  consequence?: ReactNode;
+  /** Texto livre da descrição, depois do registro e da consequência. */
   description?: ReactNode;
-  /** Texto do botão de confirmar. Padrão: "Confirmar". */
-  confirmLabel?: string;
+  /** Texto do botão de confirmar: repete o verbo da ação ("Cancelar lançamento"). */
+  confirmLabel: string;
   /** Texto do botão de cancelar. Padrão: "Cancelar". */
   cancelLabel?: string;
   /** Botão de confirmar com estilo destrutivo. */
@@ -46,12 +54,16 @@ export type ConfirmDialogProps = {
   trigger?: ReactElement;
   /** Ação em andamento controlada por fora (por exemplo `mutation.isPending`). */
   pending?: boolean;
+  /** Mensagem da falha da ação confirmada, mostrada dentro do diálogo. */
+  error?: ReactNode;
 };
 
 export function ConfirmDialog({
   title,
+  subject,
+  consequence,
   description,
-  confirmLabel = "Confirmar",
+  confirmLabel,
   cancelLabel = "Cancelar",
   destructive = false,
   reason,
@@ -61,6 +73,7 @@ export function ConfirmDialog({
   onOpenChange,
   trigger,
   pending = false,
+  error,
 }: ConfirmDialogProps) {
   const reasonId = useId();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -109,13 +122,18 @@ export function ConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
+          {subject || consequence || description ? (
+            <AlertDialogDescription className="flex flex-col gap-1">
+              {subject ? <strong className="font-semibold wrap-break-word text-foreground">{subject}</strong> : null}
+              {consequence ? <span>{consequence}</span> : null}
+              {description ? <span>{description}</span> : null}
+            </AlertDialogDescription>
+          ) : null}
         </AlertDialogHeader>
         {reason ? (
           <Field>
-            <FieldLabel htmlFor={reasonId}>
+            <FieldLabel htmlFor={reasonId} optional={reason === "optional"}>
               {reasonLabel}
-              {reason === "optional" ? <span className="text-muted-foreground">(opcional)</span> : null}
             </FieldLabel>
             <Textarea
               id={reasonId}
@@ -126,10 +144,15 @@ export function ConfirmDialog({
             />
           </Field>
         ) : null}
+        {error ? (
+          <Alert variant="error">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
-            variant={destructive ? "destructive" : "default"}
+            variant={destructive ? "destructive" : "primary"}
             disabled={!canConfirm}
             onClick={() => void confirm()}
           >
