@@ -141,12 +141,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: variantes `primary`, `secondary`, `ghost`, `destructive` (sólida) e `link`; tamanhos `sm`, `md` e `lg` pelos tokens de altura; propriedade `loading` com `loadingLabel`, `aria-busy` e ícone; foco por anel de 2 px; `touch-action: manipulation`; transição só de cor. Alias mantidos: `default` (igual a `primary`), `outline` (igual a `secondary`), tamanhos `icon` e `icon-sm`. Saem `xs`, `icon-xs` e a variante `secondary` antiga de preenchimento cinza (sem uso fora do kit).
 
 **Done when**:
-- [ ] Cada variante e tamanho tem teste de papel, nome e estado desabilitado
-- [ ] `loading` desabilita, expõe `aria-busy` e mostra o rótulo de progresso
-- [ ] `IconButton` sem `label` não compila (teste de tipo) e expõe o `label` como nome acessível
-- [ ] Os alias `default`, `outline`, `icon` e `icon-sm` continuam renderizando; teste cobre cada um
-- [ ] Nenhum arquivo fora de `components/ui` precisou mudar para compilar
-- [ ] Gates passam
+- [x] Cada variante e tamanho tem teste de papel, nome e estado desabilitado
+- [x] `loading` desabilita, expõe `aria-busy` e mostra o rótulo de progresso
+- [x] `IconButton` sem `label` não compila (teste de tipo) e expõe o `label` como nome acessível
+- [x] Os alias `default`, `outline`, `icon` e `icon-sm` continuam renderizando; teste cobre cada um
+- [x] Nenhum arquivo fora de `components/ui` precisou mudar para compilar
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
@@ -168,12 +168,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: altura e texto pelos tokens de controle; estados inválido, desabilitado e somente leitura; `NativeSelect` com aparência própria, seta e cores de fundo e de texto explícitas; `FieldLabel` com `optional`; `FieldError` com ícone; Checkbox com alvo único com o rótulo.
 
 **Done when**:
-- [ ] `getByLabelText` encontra Input, Textarea e NativeSelect dentro de `Field` (associação de rótulo confirmada; corrigida se falhar)
-- [ ] Campo com erro tem `aria-invalid`, `aria-describedby` e mensagem com ícone e texto
-- [ ] Input, Textarea e NativeSelect usam o mesmo token de altura e de borda
-- [ ] Rótulo com `optional` mostra "(opcional)"; clicar no rótulo do Checkbox alterna o controle
-- [ ] Os testes atuais de `field.test.tsx` continuam passando
-- [ ] Gates passam
+- [x] `getByLabelText` encontra Input, Textarea e NativeSelect dentro de `Field` (associação de rótulo confirmada; corrigida se falhar)
+- [x] Campo com erro tem `aria-invalid`, `aria-describedby` e mensagem com ícone e texto
+- [x] Input, Textarea e NativeSelect usam o mesmo token de altura e de borda
+- [x] Rótulo com `optional` mostra "(opcional)"; clicar no rótulo do Checkbox alterna o controle
+- [x] Os testes atuais de `field.test.tsx` continuam passando
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
@@ -195,11 +195,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: Badge e Alert com os tons `neutral`, `success`, `warning` e `error`, ícone e sem `transition-all`; alias `destructive` (tom de erro) e `default`, `secondary`, `outline` do Badge mantidos; Toast com ícone por tom, `toast.warning`, durações de 5 e 8 segundos, botão de fechar com alvo adequado e posição pela área segura; Skeleton com as formas de linha, linha de tabela e bloco.
 
 **Done when**:
-- [ ] Cada tom de Badge e de Alert tem teste de texto e de ícone; nenhum depende só de cor
-- [ ] `toast.success`, `toast.error` e `toast.show` mantêm a assinatura; `toast.warning` existe
-- [ ] O toast é anunciado por região viva e pode ser dispensado pelo teclado
-- [ ] `lib/session` e as features que usam `toast` e `Alert` compilam e passam sem alteração
-- [ ] Gates passam
+- [x] Cada tom de Badge e de Alert tem teste de texto e de ícone; nenhum depende só de cor
+- [x] `toast.success`, `toast.error` e `toast.show` mantêm a assinatura; `toast.warning` existe
+- [x] O toast é anunciado por região viva e pode ser dispensado pelo teclado
+- [x] `lib/session` e as features que usam `toast` e `Alert` compilam e passam sem alteração
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
@@ -221,11 +221,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: Dialog em tela cheia abaixo de 640 px, com rodapé fixo ao contêiner e área segura; `overscroll-behavior: contain`; sombra de nível 2 sobre o véu; Sheet com os lados `left` e `bottom`; item de menu com altura pelos tokens, variante destrutiva e possibilidade de ser link; botão de fechar como `IconButton`.
 
 **Done when**:
-- [ ] Abrir leva o foco para dentro; fechar devolve o foco ao gatilho; Esc fecha (testes para Dialog, AlertDialog, Sheet e menu)
-- [ ] Clique fora fecha o Dialog e não fecha o AlertDialog
-- [ ] Item de menu que navega é renderizado como link
-- [ ] Os testes atuais de `overlays.test.tsx` continuam passando
-- [ ] Gates passam
+- [x] Abrir leva o foco para dentro; fechar devolve o foco ao gatilho; Esc fecha (testes para Dialog, AlertDialog, Sheet e menu)
+- [x] Clique fora fecha o Dialog e não fecha o AlertDialog
+- [x] Item de menu que navega é renderizado como link
+- [x] Os testes atuais de `overlays.test.tsx` continuam passando
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: diálogo em 390 px e gaveta inferior conferidos no espécime (rodada 5)
@@ -247,12 +247,12 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: tabela com cabeçalho em `muted`, régua de 2 px, `scope="col"`, propriedade `numeric`, quebra por coluna e variante `scrollable`; modo legado de rolagem embutida mantido como padrão até DS-INT. `Card` sem sombra; `Breadcrumb` com `aria-current` e forma reduzida; `ShowMore` com contagem em região viva; `DisplayTitle`, `PageTitle`, `SectionTitle` e `Eyebrow` com `text-wrap: balance`.
 
 **Done when**:
-- [ ] Coluna `numeric` alinha à direita e usa algarismos tabulares
-- [ ] A tabela usada como hoje (sem propriedades novas) mantém a rolagem embutida; teste cobre o modo legado
-- [ ] `ShowMore` mostra "Mostrando X de Y" e anuncia a mudança; sem total, mostra só a quantidade visível
-- [ ] `Breadcrumb` marca o último item como página atual, sem link
-- [ ] Os componentes de título são o único lugar de `components/ui` com `font-display` e `uppercase`
-- [ ] Gates passam
+- [x] Coluna `numeric` alinha à direita e usa algarismos tabulares
+- [x] A tabela usada como hoje (sem propriedades novas) mantém a rolagem embutida; teste cobre o modo legado
+- [x] `ShowMore` mostra "Mostrando X de Y" e anuncia a mudança; sem total, mostra só a quantidade visível
+- [x] `Breadcrumb` marca o último item como página atual, sem link
+- [x] Os componentes de título são o único lugar de `components/ui` com `font-display` e `uppercase`
+- [x] Gates passam
 
 **Tests**: component
 **Verificação visual**: conferida no espécime (rodada 5)
@@ -274,11 +274,11 @@ Duas cadeias independentes: T1 e T2 (DS-T), T3 a T8 (DS-K). Cada cadeia é de um
 **Mudanças previstas**: remoção das classes `dark:` e dos valores arbitrários restantes em todo o kit; `Select` rico e `Separator` nos tokens; teste de guarda que aplica todas as regras a `components/ui`, com exceção declarada só para `typography.tsx` (fonte de identidade e caixa alta).
 
 **Done when**:
-- [ ] A guarda passa em todo `components/ui`, com a lista de exceções explícita e justificada
-- [ ] Todo arquivo de componente do kit é referenciado por pelo menos um teste
-- [ ] A lista de testes alterados nesta unidade, com a decisão que motiva cada um, consta no relatório da unidade
-- [ ] Todos os testes existentes de `features/` e `app/` passam sem alteração
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-K)
+- [x] A guarda passa em todo `components/ui`, com a lista de exceções explícita e justificada
+- [x] Todo arquivo de componente do kit é referenciado por pelo menos um teste
+- [x] A lista de testes alterados nesta unidade, com a decisão que motiva cada um, consta no relatório da unidade
+- [x] Todos os testes existentes de `features/` e `app/` passam sem alteração
+- [x] Gates passam, incluindo Audit (fim da unidade DS-K)
 
 **Tests**: unit + component
 **Verificação visual**: uma tela autenticada e `/entrar` abertas com `pnpm dev`, sem quebra de layout (estado intermediário esperado)
