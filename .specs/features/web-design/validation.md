@@ -91,11 +91,11 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | --- | --- | --- | --- |
 | 1-3 | texto ≥ 4,5:1; gráfico/borda/foco ≥ 3:1; teste calcula cada par | `test/design/contrast.test.ts:30,34,42,55`; sensor M01 morto (5 pares de `muted-foreground` abaixo de 4,5) | ✅ |
 | 4 | ação primária em preto | `tokens.test.ts:216`; `components/ui/actions.test.tsx:52` | ✅ |
-| 5-6 | vermelho só acento, nunca fundo de página/cartão/cabeçalho | Estático: `grep (bg|text|border…)-brand` em `app/components/features` só acha `components/ui/typography.tsx:31` (`after:bg-brand`, filete do `PageTitle`) e o espécime; item ativo usa `before:bg-sidebar-primary` (`components/app/shell-frame.test.tsx:268-270`) | ✅ |
+| 5-6 | vermelho só acento, nunca fundo de página/cartão/cabeçalho | Estático: `grep (bg\|text\|border…)-brand` em `app/components/features` só acha `components/ui/typography.tsx:31` (`after:bg-brand`, filete do `PageTitle`) e o espécime; item ativo usa `before:bg-sidebar-primary` (`components/app/shell-frame.test.tsx:268-270`) | ✅ |
 | 7 | erro ≠ vermelho de marca | `tokens.test.ts:216` | ✅ |
 | 8 | aço não é texto nem borda de campo | `tokens.test.ts:222` | ✅ |
 | 9 | vermelho não é texto < 24 px no shell | Estático: nenhum `text-brand`/`text-sidebar-primary` no código (grep acima) | ✅ |
-| 10 | verde/âmbar só estado | Estático: `text-/bg-/border-(success|warning)` só em `alert.tsx`, `badge.tsx`, `toast.tsx`, `money-value.tsx` | ✅ |
+| 10 | verde/âmbar só estado | Estático: `text-/bg-/border-(success\|warning)` só em `alert.tsx`, `badge.tsx`, `toast.tsx`, `money-value.tsx` | ✅ |
 
 ### DSF-03 Tipografia
 
@@ -272,7 +272,7 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | 4 | erro sem campo em alerta no topo | `form-layout.test.tsx:69,85`; `form-error-alert.test.tsx:26` | ✅ |
 | 5 | envio desabilita e mostra progresso | `form-layout.test.tsx:137` | ✅ |
 | 6 | todo campo declara `autocomplete` e tipo/modo | Telas: todos os campos de texto, seleção e quantidade declaram `autoComplete` (direto ou pelo `NumericTextField`, `numeric-text-field.tsx:100`); os três selects do lançamento em `lancamento-form.tsx:189,224,276`, conferidos no navegador (`autocomplete="off"`, `name` `tipo`, `conta_id`, `forma_pagamento`). Guardas `global.guard.test.ts:213` e `:221` (todo `NativeSelect` e `Textarea` com `name` e `autoComplete`, todo `QuantityField` com `name`); mutantes M18, M23 e M25 mortos. `input type="file"` (`comprovantes-panel.tsx:176`) fica fora de `autocomplete` pela especificação do HTML. Os `Input` e `MoneyField` do espécime não declaram `name`/`autoComplete` (achado F1 da revisão; a guarda não cobre `Input` nem `MoneyField`) | ✅ nas telas (F1 no espécime, ver DSM-06 AC2) |
-| 7 | e-mail e código sem correção ortográfica | `create-produto-dialog.tsx:116` (`spellCheck={false}`, `autoCapitalize="none"`); `global.guard.test.ts:253` (todo campo `type="email"` ou `register("email"|"codigo")` com `spellCheck={false}`); `access-screens.test.tsx:55,73`; sensor M17 morto | ✅ |
+| 7 | e-mail e código sem correção ortográfica | `create-produto-dialog.tsx:116` (`spellCheck={false}`, `autoCapitalize="none"`); `global.guard.test.ts:253` (todo campo `type="email"` ou `register("email"\|"codigo")` com `spellCheck={false}`); `access-screens.test.tsx:55,73`; sensor M17 morto | ✅ |
 | 8 | colar não bloqueado | Estático: nenhum `onPaste` em `app/components/features` | ✅ |
 | 9 | < 768 ações em largura total, principal por último | `form-layout.test.tsx:119` | ✅ |
 
@@ -434,7 +434,7 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | --- | --- | --- | --- |
 | 1 | sem contêiner, largura ou título próprios | `global.guard.test.ts:183,188,193,208` | ✅ |
 | 2 | sem `<select>` fora do kit | `global.guard.test.ts:177` | ✅ |
-| 3 | `select-field` e filtro de data substituídos | `git ls-files | grep select-field` vazio | ✅ |
+| 3 | `select-field` e filtro de data substituídos | `git ls-files \| grep select-field` vazio | ✅ |
 | 4 | guarda em todo o front | `global.guard.test.ts:163,168`; sensor M02 morto | ✅ |
 | 5 | sem variantes `dark:` | regra `dark-variant` (`guard.ts:87`) | ✅ |
 

@@ -449,7 +449,7 @@ Os 12 atendidos por decisão documentada são os mesmos 12 ⚠️ do `validation
 | --- | --- | --- | --- |
 | 1 | sem contêiner, largura ou título próprios | `global.guard.test.ts:183,188,193,208` | comprovado |
 | 2 | sem `<select>` fora do kit | `global.guard.test.ts:177` | comprovado |
-| 3 | `select-field` e filtro de data substituídos | `git ls-files | grep select-field` vazio | comprovado |
+| 3 | `select-field` e filtro de data substituídos | `git ls-files \| grep select-field` vazio | comprovado |
 | 4 | guarda em todo o front | `global.guard.test.ts:163,168`; mutante M02 morto | comprovado |
 | 5 | sem variantes `dark:` | regra `dark-variant` (`guard.ts:87`) | comprovado |
 

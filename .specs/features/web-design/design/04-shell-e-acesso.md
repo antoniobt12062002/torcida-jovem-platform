@@ -175,7 +175,7 @@ Convenções conferidas em `web/node_modules/next/dist/docs/01-app/03-api-refere
 | Item | Onde | Valor |
 | --- | --- | --- |
 | Idioma | `app/layout.tsx` | `lang="pt-BR"` (já existe) |
-| Título | `metadata.title` | `{ default: "TJ Platform", template: "%s | TJ Platform" }` (já existe; mantido por WDS-D-020) |
+| Título | `metadata.title` | `{ default: "TJ Platform", template: "%s \| TJ Platform" }` (já existe; mantido por WDS-D-020) |
 | Descrição | `metadata.description` | Mantida |
 | `theme-color` | `export const viewport` em `app/layout.tsx` | `#111111`, a cor do shell |
 | `color-scheme` | `viewport.colorScheme` e CSS | `light` |
