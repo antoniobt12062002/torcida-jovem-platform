@@ -472,6 +472,9 @@ describe("mostrar mais", () => {
     await renderPage(PERMISSOES_TESOURARIA, many(50));
     await waitFor(() => expect(rows()).toHaveLength(50));
     expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    // O bloco inteiro some, não só o botão: nem a contagem "Mostrando…" aparece.
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
   });
 
   it("o filtro considera todos os registros, não só os 50 visíveis", async () => {

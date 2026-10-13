@@ -362,6 +362,9 @@ describe("listagem responsiva", () => {
     await screen.findByText("Item 0");
     expect(rows()).toHaveLength(PRODUTOS_PAGE_SIZE);
     expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    // O bloco inteiro some, não só o botão: nem a contagem "Mostrando…" aparece.
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
   });
 });
 
