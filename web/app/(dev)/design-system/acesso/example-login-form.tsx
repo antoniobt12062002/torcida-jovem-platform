@@ -49,7 +49,7 @@ export function ExampleLoginForm() {
             autoComplete="off"
             spellCheck={false}
             autoCapitalize="none"
-            placeholder="pessoa@exemplo.com"
+            placeholder="pessoa@exemplo.com…"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />

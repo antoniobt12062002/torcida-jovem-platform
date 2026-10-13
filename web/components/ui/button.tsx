@@ -9,7 +9,7 @@ const SECONDARY =
   "border-input bg-background text-foreground hover:bg-accent active:bg-border aria-expanded:bg-accent disabled:bg-disabled disabled:text-disabled-foreground"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 touch-manipulation items-center justify-center rounded-md border border-transparent text-sm font-medium whitespace-nowrap transition-colors duration-fast outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset disabled:pointer-events-none disabled:cursor-default [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 touch-manipulation items-center justify-center rounded-md border border-transparent text-center text-sm font-medium transition-colors duration-fast outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset disabled:pointer-events-none disabled:cursor-default [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -23,9 +23,10 @@ const buttonVariants = cva(
         link: "text-foreground underline underline-offset-4 hover:decoration-2 disabled:text-disabled-foreground",
       },
       size: {
-        sm: "h-control-sm gap-1.5 px-3",
-        md: "h-control-md gap-2 px-4",
-        lg: "h-control-lg gap-2 px-5",
+        // Altura mínima: o rótulo longo quebra linha e o botão cresce.
+        sm: "min-h-control-sm gap-1.5 px-3 py-1",
+        md: "min-h-control-md gap-2 px-4 py-1.5",
+        lg: "min-h-control-lg gap-2 px-5 py-2",
       },
     },
     defaultVariants: {

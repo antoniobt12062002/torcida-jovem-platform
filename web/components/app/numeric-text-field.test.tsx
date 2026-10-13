@@ -66,6 +66,30 @@ describe("rótulo e modo de entrada", () => {
     expect(input().getAttribute("autocomplete")).toBe("off");
   });
 
+  // DSM-06 AC2 (web-design-guidelines, focus-within): prefixo e campo formam um
+  // controle só; o anel de foco de 2 px do kit fica no grupo, não só no campo.
+  it.each([["com prefixo", "kg"], ["sem prefixo", undefined]] as const)(
+    "%s, o grupo mostra o anel de foco com focus-within e o campo não duplica o anel",
+    (_, prefix) => {
+      render(<Harness prefix={prefix} />);
+      const group = input().parentElement as HTMLElement;
+      const names = group.className.split(/\s+/);
+      expect(group.getAttribute("data-slot")).toBe("field-group");
+      expect(names).toEqual(
+        expect.arrayContaining([
+          "rounded-md",
+          "focus-within:ring-2",
+          "focus-within:ring-ring",
+          "focus-within:ring-offset-2",
+          "focus-within:ring-offset-ring-offset",
+        ]),
+      );
+      const own = input().className.split(/\s+/);
+      expect(own).not.toContain("focus-visible:ring-2");
+      expect(own).toContain("focus-visible:ring-0");
+    },
+  );
+
   it("mostra o prefixo e a descrição junto do campo", () => {
     render(<Harness prefix="kg" description="Peso em quilos inteiros." />);
     expect(screen.getByText("kg")).toBeTruthy();

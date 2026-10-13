@@ -229,6 +229,15 @@ describe("guarda global de design", () => {
     expect(codigo[0].tag).toMatch(/\bautoCapitalize="none"/);
   });
 
+  it("todo placeholder literal termina em reticências (…)", () => {
+    const hits = sources.flatMap((file) =>
+      [...read(file).matchAll(/\bplaceholder="([^"]*)"/g)]
+        .filter((match) => !match[1].endsWith("…"))
+        .map((match) => `${file}: ${match[1]}`),
+    );
+    expect(hits).toEqual([]);
+  });
+
   it("nenhum uso de alias removido", () => {
     const hits = sources.flatMap((file) => {
       const source = read(file);

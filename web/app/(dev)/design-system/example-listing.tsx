@@ -55,7 +55,7 @@ export function ExampleListing({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
         search={
           <Field>
             <FieldLabel>Buscar</FieldLabel>
-            <Input type="search" value={busca} placeholder="Descrição" onChange={(event) => setBusca(event.target.value)} />
+            <Input type="search" value={busca} placeholder="Descrição…" onChange={(event) => setBusca(event.target.value)} />
           </Field>
         }
       >

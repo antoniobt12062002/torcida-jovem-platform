@@ -74,7 +74,11 @@ export function NumericTextField({
   return (
     <Field invalid={!!message} className={className}>
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex items-stretch">
+      {/* Prefixo e campo são um controle só: o anel de foco do kit fica no grupo. */}
+      <div
+        data-slot="field-group"
+        className="flex items-stretch rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-ring-offset"
+      >
         {prefix ? (
           <span
             data-slot="field-prefix"
@@ -84,7 +88,10 @@ export function NumericTextField({
           </span>
         ) : null}
         <Input
-          className={cn("tabular-nums", prefix ? "rounded-l-none" : undefined)}
+          className={cn(
+            "tabular-nums focus-visible:ring-0 focus-visible:ring-offset-0",
+            prefix ? "rounded-l-none" : undefined,
+          )}
           ref={ref}
           id={id}
           name={name}
