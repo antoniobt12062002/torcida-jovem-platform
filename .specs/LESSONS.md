@@ -92,6 +92,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: V07 (web/lib/session/session-provider.tsx:106) / FND-03 AC6 (web,tests,session)
 - last seen: 2026-10-09T22:06:16Z
 
+### L-014 - Cover form-field attribute rules (spellcheck, autocomplete, name) with a guard or per-field test, since component tests of the kit do not reach each screen's fields
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: DSP-04 AC7; web/features/estoque/produtos/create-produto-dialog.tsx:114 (web/features)
+- last seen: 2026-10-13T16:50:06Z
+
+### L-015 - Resolve every registered pending UI-guideline item before the final review, or record it as an explicit conflict; a pending note does not satisfy the guideline gate
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: web-design
+- evidence: DSM-06 AC2; validation.md web-design-guidelines section (web)
+- last seen: 2026-10-13T16:50:07Z
+
+### L-016 - For boundary rules on a composite control, assert the whole component is absent, not just its button
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web/components` · harmful: 0
+- features: web-design
+- evidence: M13; web/features/financeiro/lancamentos/lancamentos-page.test.tsx:471 (web/components)
+- last seen: 2026-10-13T16:50:07Z
+
+### L-017 - Cross-check spec ACs against the approved design values before Execute so spec and design do not contradict each other
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: web-design
+- evidence: DSF-04 AC8 vs DSC-04 AC4; DSF-03 AC4 vs design/01-fundacao-visual.md:192 (specs)
+- last seen: 2026-10-13T16:50:07Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
