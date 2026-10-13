@@ -148,6 +148,8 @@ export function ConfirmDialog({
             </FieldLabel>
             <Textarea
               id={reasonId}
+              name="motivo"
+              autoComplete="off"
               value={reasonText}
               required={reason === "required"}
               disabled={busy}

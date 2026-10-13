@@ -105,6 +105,8 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
           <Field>
             <FieldLabel>Motivo</FieldLabel>
             <Textarea
+              name="motivo"
+              autoComplete="off"
               value={motivo}
               required
               disabled={pending}
@@ -118,6 +120,7 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
             <dt className="text-muted-foreground">Saldo resultante</dt>
             <dd
               data-testid="ajuste-saldo-resultante"
+              aria-live="polite"
               className={cn("tabular-nums", resultante !== null && resultante < 0 && "font-semibold text-destructive")}
             >
               {resultante === null ? "—" : `${resultante} ${unidade}`}

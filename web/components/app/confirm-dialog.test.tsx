@@ -72,6 +72,14 @@ describe("motivo obrigatório", () => {
     return { onConfirm, onOpenChange, reason: screen.getByLabelText("Motivo") as HTMLTextAreaElement };
   }
 
+  // DSP-04 AC6: o campo de motivo declara nome e desliga o preenchimento automático.
+  it("o campo de motivo tem name e autocomplete desligado", async () => {
+    const { reason } = await renderWithReason();
+    expect(reason.tagName).toBe("TEXTAREA");
+    expect(reason.getAttribute("name")).toBe("motivo");
+    expect(reason.getAttribute("autocomplete")).toBe("off");
+  });
+
   it("desabilitado com motivo vazio", async () => {
     const { onConfirm } = await renderWithReason();
     expect(confirmButton().disabled).toBe(true);

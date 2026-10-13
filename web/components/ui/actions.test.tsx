@@ -9,9 +9,9 @@ afterEach(cleanup)
 
 const VARIANTS = ["primary", "secondary", "ghost", "destructive", "link"] as const
 const SIZES = [
-  ["sm", "h-control-sm"],
-  ["md", "h-control-md"],
-  ["lg", "h-control-lg"],
+  ["sm", "min-h-control-sm"],
+  ["md", "min-h-control-md"],
+  ["lg", "min-h-control-lg"],
 ] as const
 
 function classes(el: HTMLElement) {
@@ -91,6 +91,16 @@ describe("Button: tamanhos", () => {
     const button = screen.getByRole("button", { name: "Salvar" }) as HTMLButtonElement
     expect(classes(button)).toContain(token)
     expect(button.disabled).toBe(false)
+  })
+
+  // DSM-06 AC2 (web-design-guidelines, texto longo): o rótulo longo quebra
+  // linha; a altura do token vira mínima e o texto fica centralizado.
+  it.each(SIZES)("%s deixa o rótulo longo quebrar linha, com altura mínima %s", (size, token) => {
+    render(<Button size={size}>Gerar senha temporária para a pessoa selecionada</Button>)
+    const names = classes(screen.getByRole("button", { name: /^Gerar senha/ }))
+    expect(names).not.toContain("whitespace-nowrap")
+    expect(names).toEqual(expect.arrayContaining([token, "text-center", "items-center", "justify-center"]))
+    expect(names).not.toContain(token.replace(/^min-/, ""))
   })
 
   it.each(SIZES)("%s desabilitado continua com nome e fica desabilitado", (size) => {
@@ -195,6 +205,7 @@ describe("Button: alias removidos", () => {
     expect(classes(screen.getByRole("button", { name: "Antigo primário" }))).not.toContain("bg-primary")
     expect(classes(screen.getByRole("button", { name: "Antigo contorno" }))).not.toContain("border-input")
     expect(classes(screen.getByRole("button", { name: "Antigo tamanho" }))).not.toContain("h-control-md")
+    expect(classes(screen.getByRole("button", { name: "Antigo tamanho" }))).not.toContain("min-h-control-md")
     expect(classes(screen.getByRole("button", { name: "Antigo ícone" }))).not.toContain("size-control-md")
     expect(classes(screen.getByRole("button", { name: "Antigo ícone compacto" }))).not.toContain("size-control-sm")
   })
@@ -215,6 +226,17 @@ describe("IconButton", () => {
     expect(document.activeElement).toBe(button)
     fireEvent.click(button)
     expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  it("não quebra linha e mantém o quadrado do tamanho", () => {
+    render(
+      <IconButton label="Mais ações" size="sm">
+        <PlusIcon />
+      </IconButton>
+    )
+    const names = classes(screen.getByRole("button", { name: "Mais ações" }))
+    expect(names).toEqual(expect.arrayContaining(["whitespace-nowrap", "size-control-sm"]))
+    expect(names.filter((name) => /^min-h-/.test(name))).toEqual([])
   })
 
   it("sem label não compila", () => {

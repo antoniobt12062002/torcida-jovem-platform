@@ -98,7 +98,7 @@ export function FieldsSection() {
           <State name="Repouso">
             <Field>
               <FieldLabel>Descrição</FieldLabel>
-              <Input placeholder="Ex.: mensalidades de março" />
+              <Input placeholder="Ex.: mensalidades de março…" />
               <FieldDescription>Aparece na lista de lançamentos.</FieldDescription>
             </Field>
           </State>
@@ -135,7 +135,7 @@ export function FieldsSection() {
           <State name="Repouso">
             <Field>
               <FieldLabel>Motivo</FieldLabel>
-              <Textarea placeholder="Explique o motivo do cancelamento" />
+              <Textarea placeholder="Explique o motivo do cancelamento…" />
             </Field>
           </State>
           <State name="Inválido com mensagem">

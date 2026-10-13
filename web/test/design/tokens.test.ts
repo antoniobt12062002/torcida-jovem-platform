@@ -372,6 +372,23 @@ describe("forma, elevação e movimento", () => {
     expect(rule.declarations["transition-duration"]).toBe("0.01ms !important");
   });
 
+  // DSM-06 AC2 (web-design-guidelines, toque): o realce de toque do navegador
+  // fica transparente, porque o foco visível é dado pelo anel; os controles
+  // interativos usam `touch-action: manipulation` (sem atraso de toque duplo).
+  it("na camada base, o realce de toque é transparente e os controles interativos usam touch-action: manipulation", () => {
+    const base = findBlocks(sheet, "@layer base");
+    expect(base).toHaveLength(1);
+    const rules = base[0].children;
+    const html = rules.filter((rule) => rule.prelude === "html");
+    expect(html.map((rule) => rule.declarations["-webkit-tap-highlight-color"])).toEqual(["transparent"]);
+    const touch = rules.filter((rule) => rule.declarations["touch-action"] !== undefined);
+    expect(touch).toHaveLength(1);
+    expect(touch[0].declarations["touch-action"]).toBe("manipulation");
+    expect(touch[0].prelude.split(",").map((part) => part.trim())).toEqual(
+      expect.arrayContaining(["a[href]", "button", "input", "select", "textarea", "label", "summary", '[role="button"]']),
+    );
+  });
+
   it("a folha não tem gradiente nem `transition: all`", () => {
     expect(css).not.toMatch(/gradient\(/);
     expect(findRawValues([GLOBALS]).filter((hit) => hit.rule === "transition-all")).toEqual([]);

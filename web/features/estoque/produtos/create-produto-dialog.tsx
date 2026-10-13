@@ -111,7 +111,12 @@ export function CreateProdutoDialog() {
         >
           <Field invalid={!!errors.codigo}>
             <FieldLabel>Código</FieldLabel>
-            <Input autoComplete="off" {...register("codigo", { validate: required("Informe o código.") })} />
+            <Input
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="none"
+              {...register("codigo", { validate: required("Informe o código.") })}
+            />
             <FieldError>{errors.codigo?.message}</FieldError>
           </Field>
 

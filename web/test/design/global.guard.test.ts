@@ -84,6 +84,23 @@ function openingTags(source: string, name: string): string[] {
   return tags;
 }
 
+// Atributos de formulário (DSP-04 AC6 e AC7). Campos de motivo, filtros e
+// busca declaram `name` (nos filtros, igual à chave da URL) e
+// `autoComplete="off"`; os campos de e-mail e de código desativam a correção
+// ortográfica.
+const FORM_CONTROLS = ["Input", "Textarea", "NativeSelect"] as const;
+const NAMED_CONTROLS: Record<string, readonly string[]> = {
+  "components/app/confirm-dialog.tsx": ["motivo"],
+  "features/estoque/ajustes/ajuste-dialog.tsx": ["motivo"],
+  "features/identity/usuarios/dialogs/admin-dialogs.tsx": ["motivo"],
+  "features/identity/usuarios/dialogs/temporary-password-dialog.tsx": ["motivo"],
+  "features/estoque/produtos/produtos-page.tsx": ["busca"],
+  "features/financeiro/lancamentos/lancamentos-page.tsx": ["tipo", "status", "conta", "de", "ate"],
+  "features/identity/usuarios/users-page.tsx": ["situacao", "papel"],
+};
+const controlTags = (source: string) => FORM_CONTROLS.flatMap((name) => openingTags(source, name));
+const isEmailOrCode = (tag: string) => /\btype="email"|register\("(?:email|codigo)"/.test(tag);
+
 type AliasCheck = { name: string; find: (source: string) => boolean };
 
 // Alias de compatibilidade removidos em DS-INT. O compilador já recusa todos;
@@ -190,6 +207,34 @@ describe("guarda global de design", () => {
 
   it('nenhum título montado com "text-xl font-semibold"', () => {
     const hits = sources.filter((file) => /text-xl font-semibold|font-semibold text-xl/.test(read(file)));
+    expect(hits).toEqual([]);
+  });
+
+  it("campos de motivo, filtros e busca declaram name (a chave da URL nos filtros) e autoComplete=\"off\"", () => {
+    for (const [file, names] of Object.entries(NAMED_CONTROLS)) {
+      const tags = controlTags(read(file));
+      expect(tags.map((tag) => /\bname="([^"]+)"/.exec(tag)?.[1] ?? null).sort(), file).toEqual([...names].sort());
+      expect(tags.filter((tag) => !/\bautoComplete="off"/.test(tag)), file).toEqual([]);
+    }
+  });
+
+  it("campos de e-mail e de código desativam a correção ortográfica e a maiúscula automática", () => {
+    const tags = sources.flatMap((file) => controlTags(read(file)).filter(isEmailOrCode).map((tag) => ({ file, tag })));
+    expect(tags.map(({ file }) => file)).toEqual(
+      expect.arrayContaining(["features/estoque/produtos/create-produto-dialog.tsx", "app/(public)/entrar/login-form.tsx"]),
+    );
+    expect(tags.filter(({ tag }) => !/\bspellCheck=\{false\}/.test(tag)).map(({ file }) => file)).toEqual([]);
+    const codigo = tags.filter(({ tag }) => /register\("codigo"/.test(tag));
+    expect(codigo).toHaveLength(1);
+    expect(codigo[0].tag).toMatch(/\bautoCapitalize="none"/);
+  });
+
+  it("todo placeholder literal termina em reticências (…)", () => {
+    const hits = sources.flatMap((file) =>
+      [...read(file).matchAll(/\bplaceholder="([^"]*)"/g)]
+        .filter((match) => !match[1].endsWith("…"))
+        .map((match) => `${file}: ${match[1]}`),
+    );
     expect(hits).toEqual([]);
   });
 

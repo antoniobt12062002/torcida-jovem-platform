@@ -154,6 +154,8 @@ export function UsersPage() {
           <Field>
             <FieldLabel>Situação</FieldLabel>
             <NativeSelect
+              name="situacao"
+              autoComplete="off"
               value={situacao}
               onChange={(event) => setSituacao(situacaoCodec.parse(event.target.value))}
             >
@@ -167,7 +169,12 @@ export function UsersPage() {
           </Field>
           <Field>
             <FieldLabel>Papel</FieldLabel>
-            <NativeSelect value={papel} onChange={(event) => setPapel(papelCodec.parse(event.target.value))}>
+            <NativeSelect
+              name="papel"
+              autoComplete="off"
+              value={papel}
+              onChange={(event) => setPapel(papelCodec.parse(event.target.value))}
+            >
               <option value="">Todos</option>
               {ALL_ROLES.map((value) => (
                 <option key={value} value={value}>

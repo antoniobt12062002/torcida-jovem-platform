@@ -115,6 +115,8 @@ export function TemporaryPasswordDialog({
               <FieldLabel htmlFor={reasonId}>Motivo</FieldLabel>
               <Textarea
                 id={reasonId}
+                name="motivo"
+                autoComplete="off"
                 value={reason}
                 disabled={pending}
                 onValueChange={(value) => setReason(String(value))}

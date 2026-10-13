@@ -182,5 +182,7 @@ describe("mostrar mais", () => {
     await renderPage();
     await screen.findByText("ana@example.com");
     expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
   });
 });

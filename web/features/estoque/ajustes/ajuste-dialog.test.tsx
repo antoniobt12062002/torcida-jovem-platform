@@ -208,6 +208,9 @@ describe("aviso de saldo negativo", () => {
     expect(aviso.className).toContain("bg-warning-subtle");
     expect(aviso.querySelector("svg")).toBeTruthy();
     expect(within(dialog).getByTestId("ajuste-saldo-resultante").className).toContain("tabular-nums");
+    // DSM-06 AC2 (web-design-guidelines): a prévia é anunciada ao mudar.
+    expect(within(dialog).getByTestId("ajuste-saldo-resultante").closest('[aria-live="polite"]')).toBeTruthy();
+    expect(within(dialog).getByTestId("ajuste-saldo-atual").closest("[aria-live]")).toBeNull();
     expect(within(dialog).getByTestId("ajuste-saldo-atual").className).toContain("tabular-nums");
     expect(confirmButton(dialog).disabled).toBe(false);
   });

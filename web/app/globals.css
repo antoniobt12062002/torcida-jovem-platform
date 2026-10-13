@@ -265,6 +265,19 @@
   html {
     @apply font-sans;
     color-scheme: light;
+    /* O foco visível é o anel do kit; o realce de toque do navegador fica de fora. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Sem o atraso de toque duplo nos controles interativos. */
+  a[href],
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   /* Cobre também as animações do tw-animate-css usadas pelo kit. */

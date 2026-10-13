@@ -30,7 +30,7 @@ function IconButton({
     <ButtonPrimitive
       data-slot="icon-button"
       aria-label={label}
-      className={cn(buttonVariants({ variant, size: null }), SQUARE[size], className)}
+      className={cn(buttonVariants({ variant, size: null }), "whitespace-nowrap", SQUARE[size], className)}
       {...props}
     />
   )

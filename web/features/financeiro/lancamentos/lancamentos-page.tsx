@@ -206,7 +206,12 @@ export function LancamentosPage() {
           <FilterBar activeCount={activeCount} resultCount={visible.length} resultNoun={NOUN} onClear={clear}>
             <Field>
               <FieldLabel>Tipo</FieldLabel>
-              <NativeSelect value={filters.tipo} onChange={(event) => setTipo(tipoCodec.parse(event.target.value))}>
+              <NativeSelect
+                name="tipo"
+                autoComplete="off"
+                value={filters.tipo}
+                onChange={(event) => setTipo(tipoCodec.parse(event.target.value))}
+              >
                 <option value="">Todos</option>
                 {TIPOS.map((t) => (
                   <option key={t} value={t}>
@@ -218,6 +223,8 @@ export function LancamentosPage() {
             <Field>
               <FieldLabel>Status</FieldLabel>
               <NativeSelect
+                name="status"
+                autoComplete="off"
                 value={filters.status}
                 onChange={(event) => setStatus(statusCodec.parse(event.target.value))}
               >
@@ -231,7 +238,12 @@ export function LancamentosPage() {
             </Field>
             <Field>
               <FieldLabel>Conta</FieldLabel>
-              <NativeSelect value={filters.contaId} onChange={(event) => setConta(event.target.value)}>
+              <NativeSelect
+                name="conta"
+                autoComplete="off"
+                value={filters.contaId}
+                onChange={(event) => setConta(event.target.value)}
+              >
                 <option value="">Todas</option>
                 {(contas.data?.items ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
@@ -242,11 +254,23 @@ export function LancamentosPage() {
             </Field>
             <Field>
               <FieldLabel>Criado de</FieldLabel>
-              <Input type="date" value={filters.de} onChange={(event) => setDe(dateCodec.parse(event.target.value))} />
+              <Input
+                type="date"
+                name="de"
+                autoComplete="off"
+                value={filters.de}
+                onChange={(event) => setDe(dateCodec.parse(event.target.value))}
+              />
             </Field>
             <Field>
               <FieldLabel>Criado até</FieldLabel>
-              <Input type="date" value={filters.ate} onChange={(event) => setAte(dateCodec.parse(event.target.value))} />
+              <Input
+                type="date"
+                name="ate"
+                autoComplete="off"
+                value={filters.ate}
+                onChange={(event) => setAte(dateCodec.parse(event.target.value))}
+              />
             </Field>
           </FilterBar>
 
