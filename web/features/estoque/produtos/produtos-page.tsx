@@ -137,7 +137,7 @@ const COLUMNS: readonly Column<Produto>[] = [
       // `content-center` mantém o texto no meio da altura.
       <Link
         href={`/estoque/produtos/${p.id}`}
-        className="inline-flex min-h-control-sm touch-manipulation content-center items-center font-medium underline-offset-4 hover:underline"
+        className="inline-flex min-h-control-sm touch-manipulation content-center items-center font-medium underline-offset-4 hover:underline rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
       >
         {p.nome}
       </Link>

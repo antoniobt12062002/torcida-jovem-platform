@@ -159,7 +159,7 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
           <Item label="Devolução da receita">
             <Link
               href={`${LIST_HREF}/${l.devolucao_de_id}`}
-              className="inline-flex min-h-control-sm touch-manipulation items-center font-mono underline underline-offset-4 hover:decoration-2"
+              className="inline-flex min-h-control-sm touch-manipulation items-center font-mono underline underline-offset-4 hover:decoration-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
             >
               {shortId(l.devolucao_de_id)}
             </Link>
