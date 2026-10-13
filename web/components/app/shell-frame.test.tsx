@@ -177,6 +177,25 @@ describe("identidade", () => {
     expect(within(brand).getByRole("img").getAttribute("loading")).toBe("eager");
   });
 
+  // Verificação, iteração 3, D4: o link da marca tem hover com o fundo dos
+  // itens do shell, só com a transição de cor, e mantém o anel branco do shell.
+  it("o link da marca tem hover com o fundo dos itens do shell e mantém o foco do shell", () => {
+    render(<Shell />);
+    const names = classes(within(screen.getByRole("banner")).getByRole("link", { name: "Torcida Jovem" }));
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "hover:bg-sidebar-accent",
+        "rounded-md",
+        "transition-colors",
+        "duration-fast",
+        "focus-visible:ring-2",
+        "focus-visible:ring-sidebar-ring",
+      ]),
+    );
+    expect(names.filter((name) => /^hover:/.test(name))).toEqual(["hover:bg-sidebar-accent"]);
+    expect(names.filter((name) => /transition-(?!colors)|animate-|translate|scale/.test(name))).toEqual([]);
+  });
+
   it("o nome ao lado do escudo some abaixo de 400 px e não é lido duas vezes", () => {
     render(<Shell />);
     const name = within(screen.getByRole("banner")).getByText("Torcida Jovem");
