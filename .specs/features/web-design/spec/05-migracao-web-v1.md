@@ -64,7 +64,7 @@ As telas da Web V1 estão corretas no comportamento e verificadas, mas foram fei
 **Acceptance Criteria**:
 
 1. The critérios de aceite das sub-specs 01 a 06 da Web V1 SHALL continuar verdadeiros depois da migração, exceto os explicitamente revisados em `STATE.md`.
-2. The migração SHALL não alterar nenhum arquivo fora de `web/`, de `.specs/features/web-design/` e da documentação de desenvolvimento da Web.
+2. The migração SHALL não alterar nenhum arquivo fora de `web/`, de `.specs/` (decisões e evidências do ciclo), da documentação de desenvolvimento (`docs/development/`) e do `.gitignore` (saídas locais do Graphify e do Playwright MCP, aprovado na base documental).
 3. The migração SHALL não acrescentar dependência a `web/package.json`.
 4. IF um teste existente é alterado THEN a alteração SHALL citar a decisão WDS-D ou o requisito desta feature que a motiva, e a lista de testes alterados SHALL constar no relatório de verificação.
 5. The migração SHALL não remover nem enfraquecer nenhum teste de comportamento.

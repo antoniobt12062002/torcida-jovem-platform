@@ -147,6 +147,12 @@ Correção pedida no portão do espécime: com a navegação fixa (a partir de 1
 ### WDS-D-033 — Espécime aprovado e portão da rodada 5 encerrado (2026-10-12)
 O mantenedor aprovou formalmente o espécime depois das correções de WDS-D-032 e autorizou a execução autônoma das rodadas 6 e 7 até a verificação independente, sem push, PR, deploy ou merge na `develop`.
 
+### WDS-D-034 — Fechamento das lacunas da verificação, iteração 1 (2026-10-13)
+- Os achados da `web-design-guidelines` sem registro foram corrigidos (`87fdd3a`, `63b5e8e`) e o mutante M13 foi morto (`ea87164`).
+- `web/lib/forms/use-focus-invalid-after-submit.ts` (criado em `2903f32` para mover o foco ao primeiro campo inválido depois de um erro da API, N2 do smoke final) fica aceito em `lib/forms/`, ao lado de `applyProblemToForm`: é utilitário de formulário, sem regra de negócio; registro de propriedade feito aqui.
+- DSM-01 AC2 foi ajustado para incluir `.specs/`, `docs/development/` e `.gitignore`, que mudaram com aprovação desde a base documental.
+- **Lacunas de precisão da spec apontadas pelo verificador, aceitas como estão** (sem retrabalho neste ciclo): DSF-03 AC4 não lista o nome da marca em caixa alta (aprovado no espécime, WDS-D-031); DSF-04 AC8 fala em dois pontos de quebra, mas o diálogo usa 640 px (DSC-04 AC4) e o shell 400 px para esconder o nome; DSC-05 AC2 cita tom "informação", fundido ao neutro por WDS-D-018; DSC-01 AC1, DSC-05 AC5, DSP-02 AC6 e DSP-07 AC1-3 não têm valor verificável preciso; DSP-07 AC2 contra o link "Detalhes" (verbo implícito); DSC-04 AC5, DSP-01 AC3 e DSP-04 AC2 com evidência parcial. Ficam como entrada para a próxima revisão das specs.
+
 ---
 
 ## Relação com decisões anteriores
