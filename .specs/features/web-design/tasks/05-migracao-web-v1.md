@@ -418,13 +418,13 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: nenhum código. Roteiro por tela, nas cinco larguras; percursos só por teclado; ampliação a 200% e 320 px; movimento reduzido; comparação de cada tela com o espécime aprovado; revisão `web-design-guidelines` pelo coordenador como prévia do gate do verificador.
 
 **Done when**:
-- [ ] Todas as telas da matriz do design conferidas em 390, 768, 820, 1024 e 1440 px, sem rolagem horizontal de página
-- [ ] Percurso só por teclado: login, criação de lançamento, cancelamento com motivo e movimentação de estoque
-- [ ] Console do navegador sem aviso de hidratação em nenhuma tela
-- [ ] Visão de `CONSELHO_FISCAL` sem nenhuma ação de escrita; "Sem acesso" em `/admin/usuarios`
-- [ ] Divergências em relação ao espécime viram tasks de correção na unidade dona, antes de T14
-- [ ] O arquivo não contém senha, token, cookie nem dado pessoal; o que não for executável localmente (redefinição com token válido) é declarado
-- [ ] Gates passam, incluindo Audit (fim da unidade DS-INT)
+- [x] Todas as telas da matriz do design conferidas em 390, 768, 820, 1024 e 1440 px, sem rolagem horizontal de página
+- [x] Percurso só por teclado: login, criação de lançamento, cancelamento com motivo e movimentação de estoque
+- [x] Console do navegador sem aviso de hidratação em nenhuma tela
+- [x] Visão de `CONSELHO_FISCAL` sem nenhuma ação de escrita; "Sem acesso" em `/admin/usuarios`
+- [x] Divergências em relação ao espécime viram tasks de correção na unidade dona, antes de T14
+- [x] O arquivo não contém senha, token, cookie nem dado pessoal; o que não for executável localmente (redefinição com token válido) é declarado
+- [x] Gates passam, incluindo Audit (fim da unidade DS-INT)
 
 **Tests**: aceite manual no navegador (roteiro registrado)
 **Verificação visual**: é o objeto da task
