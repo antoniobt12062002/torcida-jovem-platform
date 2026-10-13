@@ -23,6 +23,7 @@ import {
   formDialog,
   mockComprovantes,
   mockContas,
+  mockContasPendentes,
   mockLancamentos,
   mockWrite,
   PERMISSOES_LEITURA,
@@ -295,5 +296,53 @@ describe("limpeza", () => {
     expect(files.length).toBeGreaterThan(5);
     const offenders = files.filter((file) => /<select[\s>]|select-field/.test(readFileSync(join(WEB_ROOT, file), "utf8")));
     expect(offenders).toEqual([]);
+  });
+});
+
+// Smoke da rodada 6, D3: aberto direto pela URL, o detalhe não mostra o prefixo
+// do id no lugar do nome da conta enquanto o plano de contas carrega.
+describe("nome da conta no detalhe", () => {
+  it("mostra Carregando… até o plano de contas chegar, e depois o nome", async () => {
+    mockMe(authContext({ permissions: PERMISSOES_TESOURARIA }));
+    const contas = mockContasPendentes();
+    mockComprovantes();
+    mockLancamentos([CRIADA]);
+    renderWithSession(<LancamentoDetail id={ID} />);
+    await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` });
+    expect(detailValue("Conta")).toBe("Carregando…");
+    expect(detailValue("Conta")).not.toBe(CONTA_RECEITA.id.slice(0, 8));
+    contas.release();
+    await waitFor(() => expect(detailValue("Conta")).toBe("Mensalidades"));
+  });
+
+  it("conta que não está no plano de contas mantém o identificador curto", async () => {
+    mockMe(authContext({ permissions: PERMISSOES_TESOURARIA }));
+    mockContas([CONTA_DESPESA]);
+    mockComprovantes();
+    mockLancamentos([CRIADA]);
+    renderWithSession(<LancamentoDetail id={ID} />);
+    await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` });
+    await waitFor(() => expect(detailValue("Conta")).toBe(CONTA_RECEITA.id.slice(0, 8)));
+  });
+
+  it("sem financeiro:conta:read, não fica em Carregando… e mostra o identificador curto", async () => {
+    await renderDetail([CRIADA], PERMISSOES_TESOURARIA.filter((p) => p !== "financeiro:conta:read"));
+    await screen.findByRole("heading", { name: `Receita ${ID.slice(0, 8)}` });
+    expect(detailValue("Conta")).toBe(CONTA_RECEITA.id.slice(0, 8));
+  });
+});
+
+// Smoke da rodada 6, D2 (equivalente no detalhe): o link da receita devolvida
+// tem alvo de toque pelo token `control-sm`.
+describe("alvo de toque do link da devolução", () => {
+  it("usa a altura do token de controle", async () => {
+    const receitaId = "00000000-0000-4000-8000-000000000299";
+    await renderDetail([
+      lancamento({ ...CRIADA, tipo: "DESPESA", conta_id: CONTA_DESPESA.id, devolucao_de_id: receitaId }),
+    ]);
+    const link = await screen.findByRole("link", { name: receitaId.slice(0, 8) });
+    for (const name of ["inline-flex", "min-h-control-sm", "items-center"]) {
+      expect(link.className.split(" ")).toContain(name);
+    }
   });
 });

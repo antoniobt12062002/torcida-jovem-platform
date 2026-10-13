@@ -297,6 +297,18 @@ describe("listagem responsiva", () => {
     expect(items[1].textContent).toContain("Unidade de medida: M");
   });
 
+  // Smoke da rodada 6, D2: o nome é o único alvo do item; com ponteiro de
+  // toque ele tem a altura do token `control-sm` (44 px em `pointer: coarse`).
+  it("o link do nome tem alvo de toque, centrado na altura", async () => {
+    mockViewport({ width: 390, coarse: true });
+    await renderPage([PERM.produtoRead]);
+    const list = await screen.findByRole("list", { name: "Produtos" });
+    const link = within(list).getByRole("link", { name: "Faixa da torcida" });
+    for (const name of ["min-h-control-sm", "items-center", "content-center", "touch-manipulation"]) {
+      expect(link.className.split(" ")).toContain(name);
+    }
+  });
+
   it("a partir de 768 px mostra a tabela", async () => {
     mockViewport({ width: 1024 });
     await renderPage([PERM.produtoRead]);

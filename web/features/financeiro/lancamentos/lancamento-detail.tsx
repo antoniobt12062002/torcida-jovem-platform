@@ -24,6 +24,7 @@ import { lancamentosCatalog, MESSAGE_NAO_ENCONTRADO } from "./errors";
 import {
   useCancelarLancamento,
   useContaNome,
+  useContasOptions,
   useLancamento,
   usePagarLancamento,
   useReceberLancamento,
@@ -82,6 +83,7 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
   const { context } = useSession();
   const userId = context?.user.id;
   const contaNome = useContaNome();
+  const contas = useContasOptions();
   const identifier = formatIdentifier(TIPO_LABEL[l.tipo], l.id);
   const available = new Set(lancamentoActions(l, context?.permissions ?? []));
   const actions = DISPLAY_ORDER.filter((action) => available.has(action));
@@ -114,7 +116,10 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
 
       <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[max-content_1fr]">
         <Item label="Tipo">{TIPO_LABEL[l.tipo]}</Item>
-        <Item label="Conta">{contaNome(l.conta_id)}</Item>
+        <Item label="Conta">
+          {/* Sem o plano de contas ainda, o prefixo do id não aparece no lugar do nome. */}
+          {contas.isLoading ? <span className="text-muted-foreground">Carregando…</span> : contaNome(l.conta_id)}
+        </Item>
         <Item label="Valor bruto">
           <MoneyValue cents={l.valor_bruto_cents} />
         </Item>
@@ -136,7 +141,7 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
           <Item label="Devolução da receita">
             <Link
               href={`${LIST_HREF}/${l.devolucao_de_id}`}
-              className="font-mono underline underline-offset-4 hover:decoration-2"
+              className="inline-flex min-h-control-sm touch-manipulation items-center font-mono underline underline-offset-4 hover:decoration-2"
             >
               {shortId(l.devolucao_de_id)}
             </Link>

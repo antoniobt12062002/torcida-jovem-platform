@@ -419,3 +419,13 @@ describe("tela estreita", () => {
     expect(within(item).getByRole("button", { name: "Baixar recibo-agosto.pdf" })).toBeTruthy();
   });
 });
+
+// Smoke da rodada 6, D4: o texto do campo de arquivo fica no meio da caixa.
+describe("campo de arquivo", () => {
+  it("tem respiro vertical para centralizar o texto", async () => {
+    await renderPanel();
+    const input = screen.getByLabelText("Anexar comprovante");
+    expect(input.getAttribute("type")).toBe("file");
+    expect(input.className.split(" ")).toContain("py-1.5");
+  });
+});
