@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 20,
+  "next_id": 21,
   "lessons": [
     {
       "id": "L-001",
@@ -346,6 +346,24 @@
       ],
       "created": "2026-10-13T17:36:49Z",
       "last_seen": "2026-10-13T17:36:49Z"
+    },
+    {
+      "id": "L-020",
+      "key": "surviving_mutant::every accessibility fix including a focus style class ships with a test that fails when the class is removed",
+      "text": "Every accessibility fix, including a focus-style class, ships with a test that fails when the class is removed",
+      "signal": "surviving_mutant",
+      "scope": "web/features",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M28, M29; web/features/estoque/produtos/produtos-page.tsx:140; web/features/financeiro/lancamentos/lancamento-detail.tsx:162 (web/features)"
+      ],
+      "created": "2026-10-13T18:19:13Z",
+      "last_seen": "2026-10-13T18:19:13Z"
     }
   ]
 }

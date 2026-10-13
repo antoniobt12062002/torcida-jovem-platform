@@ -1,18 +1,28 @@
-# Validation — web-design: FAIL ❌ (T14, iteração 2 de 3)
+# Validation — web-design: FAIL ❌ (T14, iteração 3 de 3 — última antes de escalar ao mantenedor)
 
 **Veredito: FAIL ❌**
 
 **Date**: 2026-10-13
 **Spec**: `.specs/features/web-design/spec/01` a `05` (DSF, DSC, DSP, DSS, DSM); Web V1 em `.specs/features/web/spec/01` a `06`
-**Diff range**: `7c30c6a..7499d87` (base documental `7c30c6a` sobre a `develop` em `cebbdf2`; HEAD `7499d87cb1c4b7a83cefb51bc81c48f3823fe9a7`). Correções desta iteração: `87fdd3a`, `63b5e8e`, `ea87164`, integradas em `d050091`; decisões em `7499d87` (WDS-D-034)
-**Verifier**: sub-agente independente (autor ≠ verificador; as correções foram feitas por outro agente). Evidência por `arquivo:linha`, saída de comando ou medição no navegador.
+**Diff range**: `7c30c6a..13e56c5` (base documental `7c30c6a` sobre a `develop` em `cebbdf2`; HEAD `13e56c5c6a21f8a6e58dabb21a153851339e0ff9`). Correções desta iteração, feitas pelo coordenador: `fb62b99` (A1, A2, A3, O3) e `13e56c5` (O1)
+**Verifier**: sub-agente independente (não escreveu nenhuma correção). Evidência por `arquivo:linha`, saída de comando ou medição no navegador.
 
-Motivo do FAIL, em uma linha: todas as lacunas apontadas na iteração 1 estão fechadas e verificadas (inclusive por mutante), mas a revisão refeita do zero achou três pontos que já existiam em `f9de714` e que **a iteração 1 deixou passar** (falha do verificador, não regressão das correções): `NativeSelect` do formulário de lançamento sem `autoComplete` (DSP-04 AC6), quantidade e unidade separadas por espaço comum (DSP-07 AC4) e `QuantityField` do ajuste sem `name` (regra da `web-design-guidelines`). Nenhum tem correção nem conflito registrado.
+Esta é a **terceira e última iteração**. Todas as lacunas da iteração 2 (A1, A2, A3, O1, O3) estão corrigidas e conferidas, por teste, mutante e navegador. O FAIL vem de quatro itens pequenos, para o mantenedor decidir em cada um entre **corrigir** ou **registrar como conflito ou isenção em `STATE.md`**:
+
+| # | Item | Natureza | Onde |
+| --- | --- | --- | --- |
+| D1 | Mutantes M28 e M29 sobrevivem: nenhum teste afirma o anel do kit nos links de produto e de devolução (correção O1 desta iteração) | sensor | `features/estoque/produtos/produtos-page.tsx:140`; `features/financeiro/lancamentos/lancamento-detail.tsx:162` |
+| D2 (F1) | `Input` e `MoneyField` do espécime sem `name` e, nos `Input`, sem `autoComplete` | `web-design-guidelines` ("inputs need autocomplete and meaningful name"); só em `app/(dev)`, que responde 404 em produção | `app/(dev)/design-system/acesso/example-login-form.tsx:47,60`; `example-listing.tsx:58`; `fields-section.tsx:52,55,58,101,108,115,121,127`; `overlays-section.tsx:69,72` |
+| D3 (F2) | Campo de arquivo do comprovante sem `name` | `web-design-guidelines` (`autocomplete` não se aplica a `type="file"`) | `features/financeiro/comprovantes/comprovantes-panel.tsx:176` |
+| D4 (F3) | Link da marca no shell sem estado de `hover` | `web-design-guidelines` ("buttons/links need hover state") | `components/app/shell-frame.tsx:155` |
+
+D2 e D4 já estavam no código e apareceram na minha varredura da iteração 2, mas não os reportei lá. A falha foi minha, de consistência: na iteração 1 reprovei placeholders do espécime, e na iteração 2 deixei os campos do espécime e o link da marca de fora. D3 também já existia. Na iteração 2 eu tinha descartado esse campo só quanto a `autocomplete` e não conferi `name`. Nenhum dos quatro foi introduzido pelas correções. D1 é novo: a correção O1 entrou sem teste.
 
 ## Histórico
 
-- **Iteração 1** (`7c30c6a..f9de714`, 2026-10-13): **FAIL**. Gates verdes (110 arquivos, 1774 testes); 203/219 ACs ✅, 3 ❌ (DSP-04 AC6, DSP-04 AC7, DSM-06 AC2), 13 ⚠️; sensor 16 injetadas, 15 mortas, M13 sobreviveu; 22 achados da `web-design-guidelines` sem correção nem conflito; desvios de propriedade (`lib/forms`) e de escopo (`.gitignore`). Relatório completo no histórico do git (`0da56c2`).
-- **Iteração 2** (este relatório): lacunas da iteração 1 fechadas; três achados novos, listados acima.
+- **Iteração 1** (`7c30c6a..f9de714`): **FAIL**. Gates verdes (110 arquivos, 1774 testes); 203/219 ✅, 3 ❌ (DSP-04 AC6, DSP-04 AC7, DSM-06 AC2), 13 ⚠️; sensor 16/15/1 (M13 sobreviveu); 22 achados da `web-design-guidelines` sem correção; desvios de `lib/forms` e `.gitignore`. Relatório em `0da56c2`.
+- **Iteração 2** (`7c30c6a..7499d87`): **FAIL**. Lacunas da iteração 1 fechadas (`87fdd3a`, `63b5e8e`, `ea87164`; decisões WDS-D-034); gates verdes (1785 testes); 204/219 ✅, 3 ❌ (DSP-04 AC6, DSP-07 AC4, DSM-06 AC2), 12 ⚠️ aceitas; sensor 23/23/0; achados novos A1 a A3 (já existiam e a iteração 1 não os viu) e observações O1 a O3. Relatório em `de84949`.
+- **Iteração 3** (este relatório): A1 a A3, O1 e O3 corrigidos; restam D1 a D4.
 
 ---
 
@@ -21,8 +31,8 @@ Motivo do FAIL, em uma linha: todas as lacunas apontadas na iteração 1 estão 
 | Task | Status | Notes |
 | --- | --- | --- |
 | Rodadas 1 a 6, T11, T12, T13 | ✅ | `STATE.md:267-282`; `evidence/` |
-| Correções da iteração 1 | ✅ | `87fdd3a`, `63b5e8e`, `ea87164`, `d050091`, `7499d87` |
-| T14 | ❌ | três achados novos sem correção nem conflito |
+| Correções das iterações 1 e 2 | ✅ | `87fdd3a`, `63b5e8e`, `ea87164`, `d050091`, `7499d87`, `fb62b99`, `13e56c5` |
+| T14 | ❌ | D1 a D4 |
 
 ---
 
@@ -33,38 +43,32 @@ Motivo do FAIL, em uma linha: todas as lacunas apontadas na iteração 1 estão 
 | `pnpm lint` | exit 0 |
 | `pnpm exec next typegen` | exit 0 |
 | `pnpm exec tsc --noEmit` | exit 0 |
-| `pnpm test` | exit 0 — **110 arquivos, 1785 testes, 1785 passaram, 0 falharam, 0 pulados** (+11 sobre a iteração 1) |
-| `pnpm build` | exit 0 (Next 16.4.0, "Compiled successfully"). Rodado no worktree temporário em `7499d87`, para não sobrescrever o `.next` servido em `:3000` |
+| `pnpm test` | exit 0 — **110 arquivos, 1787 testes, 1787 passaram, 0 falharam, 0 pulados** |
+| `pnpm build` | exit 0 ("Compiled successfully"), no worktree temporário em `13e56c5` (para não sobrescrever o `.next` servido em `:3000`) |
 | `pnpm lint:api` | exit 0 |
 | `pnpm gen:api:check` | exit 0 |
 | `pnpm audit --audit-level high` | exit 0 — 1 high ignorada (`GHSA-vfj7-8cjw-p6xm`, `web/pnpm-workspace.yaml:10-12`, inalterado desde a `develop`) |
 | `git diff --name-only develop -- api/ web/package.json web/pnpm-lock.yaml` | vazio |
 
-- Testes antes do ciclo: 69 arquivos / 851 testes (`STATE.md:271`). Agora: 110 / 1785. Nenhum arquivo de teste removido (lista de `7c30c6a` contida na de HEAD).
+Testes antes do ciclo: 69 arquivos / 851 (`STATE.md:271`). Agora: 110 / 1787. Nenhum arquivo de teste removido.
 
 ---
 
-## Conferência das correções da iteração 1
+## Conferência das correções da iteração 2
 
-| Lacuna da iteração 1 | Correção | Evidência | Mutante |
-| --- | --- | --- | --- |
-| DSP-04 AC7: código sem `spellCheck` | `create-produto-dialog.tsx:114-119` | `global.guard.test.ts:221` | M17 morto |
-| DSP-04 AC6: motivos e filtros sem `name`/`autocomplete` | `confirm-dialog.tsx:151-152`, `ajuste-dialog.tsx:108-109`, `admin-dialogs.tsx:141-142`, `temporary-password-dialog.tsx:118-119`, `produtos-page.tsx:93-99`, `lancamentos-page.tsx:209-273`, `users-page.tsx:156-177` | `global.guard.test.ts:213`; `confirm-dialog.test.tsx:76` | M18 morto |
-| `focus-within` do campo de dinheiro | `numeric-text-field.tsx:77-94` | `numeric-text-field.test.tsx:72`; navegador (recorte abaixo) | M19 morto |
-| `tap-highlight` e `touch-action` | `app/globals.css:268-281` | `tokens.test.ts:378` | M21 morto |
-| Rótulo longo do botão | `button.tsx:12,26-29` (sem `whitespace-nowrap`, `min-h-*`); `icon-button.tsx:33` mantém `whitespace-nowrap` | `actions.test.tsx:98,231`; navegador (320 e 390) | M20 morto |
-| Prévia "Saldo resultante" sem `aria-live` | `ajuste-dialog.tsx:123` | `ajuste-dialog.test.tsx:212` | M22 morto |
-| Placeholders sem "…" | espécime | `global.guard.test.ts:232` | — |
-| Mutante M13 | testes | `lancamentos-page.test.tsx:476`, `produtos-page.test.tsx:366`, `users-page.test.tsx:185` | M13, M13p mortos |
-| `lib/forms` fora da propriedade | registrado | `STATE.md:152` (WDS-D-034) | — |
-| DSM-01 AC2 e `.gitignore` | AC revisado | `spec/05-migracao-web-v1.md:67` | — |
-| Lacunas de precisão da spec | aceitas | `STATE.md:154` (WDS-D-034) | — |
+| Lacuna | Correção | Teste / guarda | Mutante | Navegador |
+| --- | --- | --- | --- | --- |
+| A1: selects do lançamento sem `autoComplete` | `lancamento-form.tsx:189,224,276` | `global.guard.test.ts:221` | M23 morto | `name` `tipo`, `conta_id`, `forma_pagamento`, `autocomplete="off"` |
+| A2: número e unidade com espaço comum | `produto-detail.tsx:107`, `ajuste-dialog.tsx:120,127`, `movimentacao-dialog.tsx:57` (U+00A0) | `global.guard.test.ts:240`; `produto-detail.test.tsx:50`; `ajuste-dialog.test.tsx:55-65`; `movimentacoes-panel.test.tsx:423-424` | M24, M26, M27 mortos | "3 UN", saldo atual e resultante e nome de "Devolver" com U+00A0 |
+| A3: `QuantityField` do ajuste sem `name` | `ajuste-dialog.tsx:96` | `global.guard.test.ts:221` | M25 morto | `name="quantidade"`, `autocomplete="off"` |
+| O3: guarda por lista fixa | guarda geral para `NativeSelect`, `Textarea` e `QuantityField` | `global.guard.test.ts:221` | M23, M25 mortos | — (não cobre `Input` nem `MoneyField`, origem de D2) |
+| O1: links sem o anel do kit | `produtos-page.tsx:140`, `lancamento-detail.tsx:162` | **nenhum** | **M28, M29 sobrevivem (D1)** | anel preto de 2 px com afastamento branco de 2 px nos dois links, por teclado |
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna · ⚠️ lacuna de precisão da spec (aqui todas aceitas e registradas em WDS-D-034, `STATE.md:154`). Linhas sem mudança desde a iteração 1 foram reconferidas contra `7499d87` (os arquivos citados não mudaram, salvo os listados na tabela acima).
+Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna · ⚠️ lacuna de precisão da spec, aceita e registrada em WDS-D-034 (`STATE.md:154`). As linhas sem mudança desde a iteração 2 foram reconferidas contra `13e56c5`; as referências a arquivos alterados em `fb62b99` e `13e56c5` foram remapeadas.
 
 ### DSF-01 Tokens em camadas
 
@@ -145,7 +149,7 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | AC | Outcome | Evidência | Result |
 | --- | --- | --- | --- |
 | 1 | repouso, hover, pressionado, foco, desabilitado distintos | `actions.test.tsx:39,117,130`; espécime aprovado | ⚠️ (aceito em WDS-D-034, `STATE.md:154`) |
-| 2 | foco ≥ 2 px, ≥ 3:1 no claro e no shell | `actions.test.tsx:117`; `shell-frame.test.tsx:102`; `contrast.test.ts:55`; campo de dinheiro: `numeric-text-field.test.tsx:72` e navegador (anel preto de 2 px com afastamento de 2 px no grupo, `box-shadow … 0 0 0 2px #fff, 0 0 0 4px #111`). Observação: o link do nome do produto (`features/estoque/produtos/produtos-page.tsx:138`) e o da devolução (`lancamento-detail.tsx:160`) usam o contorno padrão do navegador (`outline: auto`, cinza a 50%), não o anel do kit | ✅ (observação O1) |
+| 2 | foco ≥ 2 px, ≥ 3:1 no claro e no shell | `actions.test.tsx:117`; `shell-frame.test.tsx:102`; `contrast.test.ts:55`; campo de dinheiro `numeric-text-field.test.tsx:72`. Links de produto e de devolução passaram ao anel do kit (`features/estoque/produtos/produtos-page.tsx:140`, `features/financeiro/lancamentos/lancamento-detail.tsx:162`), conferido no navegador (anel preto de 2 px com afastamento branco de 2 px), **mas sem teste**: mutantes M28 e M29 sobrevivem | ✅ valor no navegador; ⚠️ teste não discrimina (M28, M29) |
 | 3 | foco sem vermelho nem erro | `actions.test.tsx:117`; `components/ui/field.test.tsx:374` | ✅ |
 | 4 | toque ≥ 44 × 44 | `tokens.test.ts:294`; `data.test.tsx:269`; `evidence/smoke-visual.md:121-130` | ✅ |
 | 5 | ≥ 24 × 24 | `tokens.test.ts:262` (alturas 32/36/44); `field.test.tsx:422` | ✅ |
@@ -264,8 +268,8 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | 3 | foco no primeiro inválido ao enviar | `access-screens.test.tsx:65,81,98`; `produtos-page.test.tsx:185`; `lib/forms/use-focus-invalid-after-submit.test.tsx:40` | ✅ |
 | 4 | erro sem campo em alerta no topo | `form-layout.test.tsx:69,85`; `form-error-alert.test.tsx:26` | ✅ |
 | 5 | envio desabilita e mostra progresso | `form-layout.test.tsx:137` | ✅ |
-| 6 | todo campo declara `autocomplete` e tipo/modo | Corrigidos e guardados: `test/design/global.guard.test.ts:213` (motivos, filtros e busca com `name` e `autoComplete="off"`), `confirm-dialog.test.tsx:76`; sensor M18 morto. **Restam** três `NativeSelect` do formulário de lançamento com `name` (via `field.name`) e sem `autoComplete`: `features/financeiro/lancamentos/lancamento-form.tsx:186` (Tipo), `:220` (Conta), `:271` (Forma de pagamento). A guarda só cobre a lista fixa `NAMED_CONTROLS` (`global.guard.test.ts:92-100`), por isso não os vê | ❌ |
-| 7 | e-mail e código sem correção ortográfica | `create-produto-dialog.tsx:116` (`spellCheck={false}`, `autoCapitalize="none"`); `global.guard.test.ts:221` (todo campo `type="email"` ou `register("email"|"codigo")` com `spellCheck={false}`); `access-screens.test.tsx:55,73`; sensor M17 morto | ✅ |
+| 6 | todo campo declara `autocomplete` e tipo/modo | Telas: todos os campos de texto, seleção e quantidade declaram `autoComplete` (direto ou pelo `NumericTextField`, `numeric-text-field.tsx:100`); os três selects do lançamento em `lancamento-form.tsx:189,224,276`, conferidos no navegador (`autocomplete="off"`, `name` `tipo`, `conta_id`, `forma_pagamento`). Guardas `global.guard.test.ts:213` e `:221` (todo `NativeSelect` e `Textarea` com `name` e `autoComplete`, todo `QuantityField` com `name`); mutantes M18, M23 e M25 mortos. `input type="file"` (`comprovantes-panel.tsx:176`) fica fora de `autocomplete` pela especificação do HTML. Os `Input` e `MoneyField` do espécime não declaram `name`/`autoComplete` (achado F1 da revisão; a guarda não cobre `Input` nem `MoneyField`) | ✅ nas telas (F1 no espécime, ver DSM-06 AC2) |
+| 7 | e-mail e código sem correção ortográfica | `create-produto-dialog.tsx:116` (`spellCheck={false}`, `autoCapitalize="none"`); `global.guard.test.ts:253` (todo campo `type="email"` ou `register("email"|"codigo")` com `spellCheck={false}`); `access-screens.test.tsx:55,73`; sensor M17 morto | ✅ |
 | 8 | colar não bloqueado | Estático: nenhum `onPaste` em `app/components/features` | ✅ |
 | 9 | < 768 ações em largura total, principal por último | `form-layout.test.tsx:119` | ✅ |
 
@@ -305,7 +309,7 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | 1 | pt-BR, frase comum | sem teste nem guarda | ⚠️ (aceito em WDS-D-034, `STATE.md:154`) |
 | 2 | rótulo começa por verbo | sem teste; link "Detalhes" (`lancamentos-page.tsx:294`) | ⚠️ (aceito em WDS-D-034, `STATE.md:154`) |
 | 3 | erro do front diz o que houve e o próximo passo | sem teste geral | ⚠️ (aceito em WDS-D-034, `STATE.md:154`) |
-| 4 | "…" e espaço não separável entre número e unidade | "…": `global.guard.test.ts:232` (placeholders), `actions.test.tsx:178`. Espaço não separável só no limite do anexo (`comprovantes-panel.test.tsx:373`, `features/financeiro/comprovantes/limits.ts`). **Quantidade e unidade com espaço comum** no texto visível: `features/estoque/produto-detail.tsx:107` (saldo "3 UN"; no navegador `/ /` falso), `features/estoque/ajustes/ajuste-dialog.tsx:121` (saldo atual) e `:126` (saldo resultante); o teste `features/estoque/produto-detail.test.tsx:50` afirma `"12 UN"` com espaço comum. Valores em reais ficam em `whitespace-nowrap` (`money-value.tsx`), o que equivale | ❌ |
+| 4 | "…" e espaço não separável entre número e unidade | "…": `global.guard.test.ts:264`; `actions.test.tsx:178`. Espaço não separável: `features/estoque/produto-detail.tsx:107`, `features/estoque/ajustes/ajuste-dialog.tsx:120,127`, `features/estoque/movimentacoes/movimentacao-dialog.tsx:57` (U+00A0 conferido nos bytes); guarda `global.guard.test.ts:240`; testes `produto-detail.test.tsx:50`, `ajuste-dialog.test.tsx:55-65` e `movimentacoes-panel.test.tsx:423-424` afirmam U+00A0; mutantes M24, M26 e M27 mortos; navegador: saldo "3 UN", saldo atual e resultante do ajuste e nome de "Devolver" com U+00A0 | ✅ |
 | 5 | progresso termina em "…" | `actions.test.tsx:178` (tipo `${string}…`) | ✅ |
 | 6 | limite em MB inteiros, para baixo | `comprovantes-panel.test.tsx:196` ("9 MB") | ✅ |
 | 7 | tipo + código curto monoespaçado | `format.test.ts:51,55`; `lancamento-detail.test.tsx:237` | ✅ |
@@ -436,7 +440,7 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | AC | Outcome | Evidência | Result |
 | --- | --- | --- | --- |
 | 1 | gates passam | seção Gate Check | ✅ |
-| 2 | `web-design-guidelines` com cada achado corrigido ou registrado como conflito | Os 22 achados da iteração 1 estão corrigidos (seção da revisão). **Restam achados novos sem correção nem conflito** (A1 a A3) | ❌ |
+| 2 | `web-design-guidelines` com cada achado corrigido ou registrado como conflito | A1 a A3 e O1 da iteração 2 corrigidos. **Restam F1 a F3** (seção da revisão), sem correção nem conflito | ❌ |
 | 3 | navegador real, produção, 5 larguras, todas as telas | `evidence/smoke-visual.md:66-85,152-181` | ✅ |
 | 4 | percurso só por teclado | `evidence/smoke-visual.md:87-97`; N2 e N3 corrigidos em `2903f32` | ✅ |
 | 5 | 200% e 320 px | `evidence/smoke-visual.md:101-117` | ✅ |
@@ -444,141 +448,164 @@ Legenda: ✅ o teste/evidência afirma o valor que a spec define · ❌ lacuna �
 | 7 | divergência vira correção | N1, N2, N3 corrigidos (`evidence/smoke-visual.md:229-231`) | ✅ |
 
 
-**Status**: 219 ACs — **204 ✅, 3 ❌ (DSP-04 AC6, DSP-07 AC4, DSM-06 AC2), 12 ⚠️ aceitas em WDS-D-034** (DSF-03 AC4, DSF-04 AC8, DSC-01 AC1, DSC-04 AC5, DSC-05 AC2, DSC-05 AC5, DSP-01 AC3, DSP-02 AC6, DSP-04 AC2, DSP-07 AC1, AC2, AC3). Saíram de ❌: DSP-04 AC7; de ⚠️: DSM-01 AC2 e a borda de 50 de DSP-05. Entrou em ❌: DSP-07 AC4 (na iteração 1 marquei ✅ olhando só o limite do anexo; o AC vale para todo número com unidade).
+
+**Status**: 219 ACs. **206 ✅, 1 ❌ (DSM-06 AC2: D2 a D4), 12 ⚠️ aceitas em WDS-D-034** (DSF-03 AC4, DSF-04 AC8, DSC-01 AC1, DSC-04 AC5, DSC-05 AC2, DSC-05 AC5, DSP-01 AC3, DSP-02 AC6, DSP-04 AC2, DSP-07 AC1, AC2, AC3).
+- DSP-04 AC6 e DSP-07 AC4 passaram a ✅.
+- DSC-01 AC2 tem o valor certo no navegador, mas a correção O1 está sem teste (D1).
 
 ---
 
-## Regressão da Web V1
+## Regressão da Web V1 e testes alterados
 
-- Os 69 arquivos de teste da base passam (gate `pnpm test`, 1785/1785); nenhum removido.
-- Arquivos da base alterados depois de `f9de714`: só acréscimos (`confirm-dialog.test.tsx`, `ajuste-dialog.test.tsx`, `produtos-page.test.tsx`, `lancamentos-page.test.tsx`, `users-page.test.tsx`) e, em `components/ui/actions.test.tsx` (arquivo do ciclo), a troca `h-control-*` → `min-h-control-*` nos tamanhos, motivada por DSM-06 AC2 (rótulo longo) e citada no próprio teste (`actions.test.tsx:96-97`); a altura mínima segue o mesmo token, e no navegador os botões continuam com 32, 36 e 44 px.
-- O julgamento da iteração 1 sobre os 15 arquivos da base alterados continua válido: nenhuma dessas linhas mudou de novo. Os casos removidos na remoção de alias seguem cobertos (`lancamentos-page.test.tsx:422,431,435`; `status-badge.test.tsx:15-21,76`).
+- Os 69 arquivos de teste da base passam (gate `pnpm test`, 1787/1787) e nenhum foi removido.
+- **Alterados em `fb62b99`** (arquivos da base): `features/estoque/produto-detail.test.tsx` (5 asserções), `features/estoque/ajustes/ajuste-dialog.test.tsx` (10) e `features/estoque/movimentacoes/movimentacoes-panel.test.tsx` (13).
+  - Conferido por comparação: com U+00A0 trocado por espaço comum, cada arquivo de HEAD é **byte a byte igual** ao de `7499d87`. A única mudança é o espaço não separável no valor esperado.
+  - Motivo: DSP-07 AC4, citado na mensagem do commit.
+  - A asserção fica mais estrita, não mais fraca. Prova disso: M24, M26 e M27 (voltar ao espaço comum) derrubam esses testes.
+  - Exceção: `movimentacoes-panel.test.tsx:461` usa `getByText` com espaço comum, porque o normalizador do Testing Library junta qualquer espaço. O nome acessível da mesma movimentação é afirmado com U+00A0 em `movimentacoes-panel.test.tsx:423-424`.
+  - DSM-01 AC4 pede essa lista no relatório de verificação, e ela está aqui. `evidence/testes-alterados.md` não foi atualizado depois de `663febe`. Vale acrescentar as linhas de `fb62b99` e das correções da iteração 1 (acréscimos e `min-h-control-*` em `actions.test.tsx`), mas isso não bloqueia, porque o AC aponta o relatório de verificação.
+- As alterações anteriores (os 15 arquivos de `evidence/testes-alterados.md` e as correções da iteração 1) não mudaram de novo. Os casos removidos com a remoção de alias continuam cobertos (`lancamentos-page.test.tsx:422,431,435`; `status-badge.test.tsx:15-21,76`).
+
+---
+
+## FND-05 AC2 (revisado por WDS-D-019)
+
+- **Teste**: `shell-frame.test.tsx:303,310`; `app-shell.test.tsx:101`.
+- **Mutante**: M09 morto.
+- **Navegador** (build `13e56c5`):
+  - Em 390, 768 e 820 px não há navegação fixa e o botão "Abrir menu" mede 44×44.
+  - Em 1024 e 1440 px a "Navegação principal" fica fixa e o botão está oculto.
+  - Nenhuma das cinco larguras rola na horizontal.
 
 ---
 
 ## Discrimination Sensor
 
-Worktree temporário em `7499d87 --detach`, `pnpm install --frozen-lockfile`; uma falha por vez, `pnpm exec vitest run` nos testes relevantes, `git checkout -- .` entre uma e outra (status do worktree vazio depois de cada reversão, registrado no log).
+Worktree temporário em `13e56c5 --detach`, com `pnpm install --frozen-lockfile`. Cada falha foi injetada sozinha, os testes relevantes rodaram com `pnpm exec vitest run` e o worktree voltou com `git checkout -- .` antes da próxima. O log registra o status do worktree vazio após cada reversão.
 
-| # | Falha | Mutação | Resultado |
-| --- | --- | --- | --- |
-| M01 | token quebra contraste | `app/globals.css:178` `--muted-foreground` → `--tj-neutral-400` | **MORTO** (5) |
-| M02 | cor literal numa tela | `lancamentos-page.tsx` + `text-[#D81E28]` | **MORTO** (3) |
-| M03 | traçado do escudo | um dígito do primeiro `d=` do SVG | **MORTO** (3) |
-| M04 | IconButton sem nome | `icon-button.tsx:32` sem `aria-label` | **MORTO** (35) |
-| M05 | `rowLabel` removido da linha | `lancamentos-page.tsx` `rowLabel=""` | **MORTO** (3) |
-| M05b | idem no componente | `row-actions.tsx:60` `name = label` | **MORTO** (32) |
-| M06 | Field sem `aria-invalid`/`describedby` | `field.tsx` força `invalid={false}` | **MORTO** (6) |
-| M07 | `useQueryState` aceita inválido | `codecs.ts:34` | **MORTO** (5) |
-| M08 | parâmetro não limpo no padrão | `use-query-state.ts:69-70` | **MORTO** (8) |
-| M09 | shell em `md` | `shell-frame.tsx` `lg:` → `md:` | **MORTO** (3) |
-| M10 | link de pular removido | `shell-frame.tsx:109` | **MORTO** (7) |
-| M11a | MoneyValue sem sinal | `money-value.tsx:33` | **MORTO** (3) |
-| M11b | MoneyValue sem ícone | `money-value.tsx:50` | **MORTO** (2) |
-| M12 | espécime em produção | `dev-only.ts:8` | **MORTO** (5) |
-| M13 | "Mostrar mais" com exatamente 50 (lançamentos) | `lancamentos-page.tsx` `>` → `>=` | **MORTO** (1: "com exatamente 50, o controle não aparece") |
-| M13p | idem em produtos | `produtos-page.tsx:160` `>` → `>=` | **MORTO** (1) |
-| M13b | idem no componente | `show-more.tsx:33` `<` → `<=` | **MORTO** (2) |
-| M14 | status com rótulo e ícone iguais | `labels.ts:45` | **MORTO** (5) |
-| M17 | código com correção ortográfica | `create-produto-dialog.tsx:116` sem `spellCheck` | **MORTO** (1) |
-| M18 | motivo sem `name` | `confirm-dialog.tsx:151` | **MORTO** (2) |
-| M19 | sem `focus-within` no campo de dinheiro | `numeric-text-field.tsx:80` | **MORTO** (2) |
-| M20 | botão volta a `whitespace-nowrap` | `button.tsx:12` | **MORTO** (3) |
-| M21 | sem `tap-highlight` | `globals.css:269` | **MORTO** (1) |
-| M22 | prévia do ajuste sem `aria-live` | `ajuste-dialog.tsx:123` | **MORTO** (1) |
+| # | Falha | Resultado |
+| --- | --- | --- |
+| M01-M14 (16 falhas do design e variantes: M01, M02, M03, M04, M05, M05b, M06, M07, M08, M09, M10, M11a, M11b, M12, M13, M13b, M14) e M13p | as mesmas das iterações 1 e 2 | **todas MORTAS** |
+| M17-M22 | correções da iteração 1 (`spellCheck`, `name` do motivo, `focus-within`, `whitespace-nowrap`, `tap-highlight`, `aria-live`) | **todas MORTAS** |
+| M23 | `lancamento-form.tsx:189` sem `autoComplete` | **MORTO** (guarda geral) |
+| M24 | `produto-detail.tsx:107` volta ao espaço comum | **MORTO** (18 testes) |
+| M25 | `ajuste-dialog.tsx:96` sem `name` no `QuantityField` | **MORTO** (guarda geral) |
+| M26 | `ajuste-dialog.tsx:127` volta ao espaço comum | **MORTO** (2) |
+| M27 | `movimentacao-dialog.tsx:57` volta ao espaço comum | **MORTO** (2) |
+| M28 | `produtos-page.tsx:140` sem o anel do kit | **SOBREVIVEU** (`features/estoque` e `test/design`: 247/247) |
+| M29 | `lancamento-detail.tsx:162` sem o anel do kit | **SOBREVIVEU** (`features/financeiro` e `test/design`: 435/435) |
 
-**Resultado do sensor**: 23 injetadas (as 16 da iteração 1, M13p e seis sobre as correções), **23 mortas, 0 sobreviventes** → PASS.
+**Resultado do sensor**: 31 injetadas, 29 mortas, 2 sobreviventes (M28 e M29).
 
-**Isolamento**: `git status --porcelain` do principal antes: vazio (0 bytes); depois de `git worktree remove --force` (diretório apagado por `Remove-Item -LiteralPath \\?\…`, caminho longo do `node_modules`) e `git worktree prune`: vazio (0 bytes); `git worktree list` sem o temporário; HEAD `7499d87`.
+**Isolamento**: o `git status --porcelain` do principal estava vazio (0 bytes) antes. Depois de `git worktree remove --force` (com o diretório apagado por `\\?\…`) e `git worktree prune`, continuou vazio (0 bytes). `git worktree list` não lista mais o temporário. HEAD continua `13e56c5`.
 
 ---
 
 ## Revisão `web-design-guidelines` (refeita do zero)
 
-Aplicada a `web/app`, `web/components` e `web/features` (arquivos não-teste), regra a regra. Além das buscas da iteração 1, desta vez: todos os controles de formulário (`Input`, `Textarea`, `NativeSelect`, `MoneyField`, `QuantityField`, nativos) quanto a `name`/`autocomplete`; todo `Link`/`a`/`button` sem variante do kit quanto a `hover:` e foco; números com unidade; aspas retas em texto de interface; `truncate` em flex.
+Apliquei a revisão a `web/app`, `web/components` e `web/features` (arquivos não-teste), regra a regra. As varreduras mecânicas foram:
+- todos os controles de formulário, quanto a `name` e `autocomplete`;
+- todo `Link`, `a` e `button` sem variante do kit, quanto a `hover:` e foco;
+- placeholders, `outline-none`, números com unidade, aspas e `...` literais;
+- `onClick` em `div` e `span`, imagens, `autoFocus`, zoom e `onPaste`.
+
+Cada achado foi lido no trecho.
 
 ### Achados sem correção e sem conflito registrado (reprovam)
 
 ```text
-## features/financeiro/lancamentos/lancamento-form.tsx
-features/financeiro/lancamentos/lancamento-form.tsx:186 - NativeSelect "Tipo" sem autoComplete (DSP-04 AC6)
-features/financeiro/lancamentos/lancamento-form.tsx:220 - NativeSelect "Conta" sem autoComplete (DSP-04 AC6)
-features/financeiro/lancamentos/lancamento-form.tsx:271 - NativeSelect "Forma de pagamento" sem autoComplete (DSP-04 AC6)
+## app/(dev)/design-system (espécime, 404 em produção) - D2
+app/(dev)/design-system/acesso/example-login-form.tsx:47 - Input sem name
+app/(dev)/design-system/acesso/example-login-form.tsx:60 - Input sem name
+app/(dev)/design-system/example-listing.tsx:58 - Input de busca sem name nem autoComplete
+app/(dev)/design-system/fields-section.tsx:52 - MoneyField sem name
+app/(dev)/design-system/fields-section.tsx:55 - MoneyField sem name
+app/(dev)/design-system/fields-section.tsx:58 - MoneyField sem name
+app/(dev)/design-system/fields-section.tsx:101 - Input sem name nem autoComplete
+app/(dev)/design-system/fields-section.tsx:108 - Input sem name nem autoComplete
+app/(dev)/design-system/fields-section.tsx:115 - Input sem name nem autoComplete
+app/(dev)/design-system/fields-section.tsx:121 - Input sem name nem autoComplete
+app/(dev)/design-system/fields-section.tsx:127 - Input sem name nem autoComplete
+app/(dev)/design-system/overlays-section.tsx:69 - Input sem name nem autoComplete
+app/(dev)/design-system/overlays-section.tsx:72 - MoneyField sem name
 
-## features/estoque/produto-detail.tsx
-features/estoque/produto-detail.tsx:107 - "3 UN": espaço comum entre número e unidade → espaço não separável (DSP-07 AC4)
+## features/financeiro/comprovantes/comprovantes-panel.tsx - D3
+features/financeiro/comprovantes/comprovantes-panel.tsx:176 - input type="file" sem name
 
-## features/estoque/ajustes/ajuste-dialog.tsx
-features/estoque/ajustes/ajuste-dialog.tsx:95 - QuantityField "Quantidade" sem name (o NumericTextField já põe autoComplete="off")
-features/estoque/ajustes/ajuste-dialog.tsx:121 - saldo atual com espaço comum entre número e unidade (DSP-07 AC4)
-features/estoque/ajustes/ajuste-dialog.tsx:126 - saldo resultante com espaço comum entre número e unidade (DSP-07 AC4)
+## components/app/shell-frame.tsx - D4
+components/app/shell-frame.tsx:155 - link da marca (escudo + nome) sem estado hover
 ```
 
-Agrupados no relatório como **A1** (selects do formulário de lançamento), **A2** (número e unidade) e **A3** (`name` da quantidade do ajuste). Os três já existiam em `f9de714`; a iteração 1 não os apontou.
+### Achados das iterações 1 e 2: todos corrigidos
 
-### Achados da iteração 1: todos corrigidos
-
-Os 22 da iteração 1 (código, motivos, busca, filtros, `focus-within`, `tap-highlight`, rótulo longo, `aria-live` da prévia, placeholders do espécime) estão corrigidos; ver "Conferência das correções".
+- Os 22 achados da iteração 1 e os A1 a A3 da iteração 2 estão corrigidos (ver as tabelas de conferência).
+- O1, o anel nos links, também está corrigido, mas sem teste (D1).
 
 ### Achados casados com conflito ou decisão registrada (não reprovam)
 
 | Achado | Registro |
 | --- | --- |
-| Title Case | `STATE.md:193` |
-| Envio desabilitado sem motivo | `STATE.md:194` |
-| Estado na URL sem `nuqs` | `STATE.md:195` |
-| Listas > 50 sem virtualização | `STATE.md:196` |
-| Dark mode | `STATE.md:197` |
-| `safe-area` sem `viewportFit: cover` | `STATE.md:286-292` (conflitos da rodada 4) |
-| Placeholder `0,00` do campo de dinheiro (por propriedade, fora da guarda de literais) | idem |
-| Toast anima `height` | idem |
-| Data de calendário sem `Intl` | idem |
-| Anel do item de menu também no hover | idem |
-| Toast `role="dialog"` (D5) e toast de erro `polite` | `STATE.md:299` e `STATE.md:304` |
-| Sem aviso de alterações não salvas | `STATE.md:262` ("Fora deste ciclo") |
+| Title Case; envio desabilitado sem motivo; URL sem `nuqs`; listas > 50 sem virtualização; dark mode | `STATE.md:193-197` |
+| `safe-area` sem `viewportFit: cover`; placeholder `0,00` do campo de dinheiro; toast anima `height`; data de calendário sem `Intl`; anel do item de menu no hover | `STATE.md:286-292` |
+| Toast `role="dialog"` (D5) e toast de erro `polite` | `STATE.md:299`, `STATE.md:304` |
+| Sem aviso de alterações não salvas | `STATE.md:262` |
 | `lib/forms/use-focus-invalid-after-submit.ts` | `STATE.md:152` |
-
-### Observações (não reprovam)
-
-- **O1** `features/estoque/produtos/produtos-page.tsx:138` e `features/financeiro/lancamentos/lancamento-detail.tsx:160`: links com o contorno padrão do navegador no foco (medido: `outline: auto 1px` cinza a 50%, visível no recorte `1440-produto-link-foco.png`), em vez do anel do kit. Atende "foco visível ou equivalente"; para o padrão de DSC-01 AC2, vale passar ao anel de 2 px do token `ring`.
-- **O2** `app/(dev)/design-system/acesso/example-login-form.tsx:52`: o placeholder ficou "pessoa@exemplo.com…", que cumpre a regra mas lê como e-mail incompleto. Só no espécime.
-- **O3** A guarda de `name`/`autoComplete` (`global.guard.test.ts:92-100,213`) é uma lista fixa de arquivos; um campo novo fora dela (como A1 e A3) não é apontado.
 
 ### Conferido e sem achado
 
-`outline-none` só em alvos de foco programático com `tabIndex={-1}`; nenhum `onClick` em `div`/`span`; imagem com dimensões e prioridade; nenhum `autoFocus`, `user-scalable`, `maximum-scale` ou `onPaste`; nenhum `...` literal; nenhuma aspa reta em texto exibido; `touch-action: manipulation` e `-webkit-tap-highlight-color` na camada base; links e cartões com `hover:` (o link do cartão de início herda o `hover:` do `Card`, `atalhos.tsx:74`); rádio nativo do plano de contas com `name` por `register`; `input type="file"` fora da regra de `autocomplete`; valores em reais com `whitespace-nowrap`.
+- **Foco**:
+  - `outline-none` só aparece em alvos de foco programático com `tabIndex={-1}`.
+  - Os links de produto e de devolução têm o anel do kit.
+  - O link do cartão de início usa anel `after:` e herda o `hover:` do `Card` (`atalhos.tsx:75`).
+  - O link de pular só aparece no foco.
+- **Formulários e eventos**:
+  - Todos os campos das telas declaram `autoComplete`; `type="file"` está fora dessa regra.
+  - Nenhum `onClick` em `div` ou `span`, e nenhum `autoFocus`, `user-scalable`, `maximum-scale` ou `onPaste`.
+- **Texto**:
+  - Todos os placeholders literais terminam em "…".
+  - Não há `...` literal nem aspa reta em texto exibido.
+  - Toda quantidade com unidade usa espaço não separável.
+- **Base e toque**:
+  - A camada base tem `touch-action` e `tap-highlight`.
+  - Valores em reais ficam em `whitespace-nowrap`.
 
 ---
 
 ## SSR e hidratação
 
-Sem mudança de padrão nas correções (nenhum Client Component novo; `useSearchParams` continua sob `Suspense` nas quatro páginas; `useMediaQuery` com `useSyncExternalStore` e snapshot de servidor fixo; nenhum `window`, `Date.now`, `Math.random` ou `new Date()` em renderização). No navegador: 0 avisos de hidratação, 0 exceções, 0 avisos de console.
+- Nenhum Client Component novo.
+- `useSearchParams` continua sob `Suspense` e `useMediaQuery` continua com snapshot de servidor fixo.
+- Nenhum `window`, `Date.now`, `Math.random` ou `new Date()` em renderização.
+- O U+00A0 entra em template literal, idêntico no servidor e no cliente.
+- No navegador: 0 avisos de hidratação, 0 exceções e 0 avisos de console.
 
 ---
 
 ## Propriedade e escopo
 
-- Fora de `web/`: só `.specs/` (`features/web-design/`, `LESSONS.md`, `lessons.json`), `docs/development/web.md` e `.gitignore`, como permite DSM-01 AC2 revisado.
-- `api/`, `web/package.json`, `web/pnpm-lock.yaml`, `web/lib/api/`, `web/lib/session/session-provider.tsx`, `features/*/hooks.ts`: sem diff. `RequirePermission`: só a aparência de `NoAccess` (já conferido na iteração 1; sem mudança depois).
-- As correções desta iteração não tocam hooks, clientes, catálogos de erro, permissões nem regras de negócio: só atributos de campo, classes, CSS da camada base e testes.
-- `lib/forms/use-focus-invalid-after-submit.ts`: registrado em `STATE.md:152`.
+- Fora de `web/` mudaram só `.specs/`, `docs/development/web.md` e `.gitignore` (DSM-01 AC2 revisado, `spec/05-migracao-web-v1.md:67`).
+- Sem diff em `api/`, `web/package.json`, `web/pnpm-lock.yaml`, `web/lib/api/`, `web/lib/session/session-provider.tsx` e `features/*/hooks.ts`.
+- `fb62b99` e `13e56c5` mexem só em atributos, texto de quantidade, classes de foco, testes e espécime. Nenhuma regra de negócio, permissão ou contrato foi alterada.
 
 ---
 
-## Smoke (amostra do verificador, build de produção `7499d87` em `:3000`, API em `:8080`)
+## Smoke (amostra do verificador, build de produção `13e56c5` em `:3000`, API em `:8080`)
 
-Edge headless por CDP, scripts em `…/scratchpad/verify2/smoke/`, perfil temporário encerrado. Senha só em memória. Capturas no scratchpad, fora do repositório.
+Usei o Edge headless por CDP, com scripts em `…/scratchpad/verify3/smoke/` e perfil temporário encerrado no fim. A senha ficou só em memória. As capturas estão no scratchpad, fora do repositório.
+
+A primeira tentativa de login do script falhou: o envio saiu antes de o formulário hidratar, com o servidor recém-iniciado, e o script não chegou a mandar o `POST /auth/login`. Com espera da hidratação, o login deu `200` e foi para `/inicio`. Foi um problema de tempo do script, não da aplicação.
 
 | Conferência | Resultado |
 | --- | --- |
-| Login presidente | `/inicio` |
-| Lançamentos, usuários e produtos em 390, 1024 e 1440 | `scrollWidth === clientWidth` nas 9; nenhum botão cortado (`scrollWidth > clientWidth`) nem fora do viewport; alturas de botão 32, 36 e 44 px, as mesmas dos tokens |
-| Comparação com `evidence/smoke-final/` | Usuários 390, 1024, 1440 e produtos 390, 1440: **0,00%** de pixels diferentes. Lançamentos: 9,39% (390), 5,98% (1024), 3,37% (1440), todos de dados: a lista tem 9 lançamentos contra 4 na captura de base (os criados nos smokes), e em 1024 a barra de rolagem vertical desloca o conteúdo 15 px; inspecionadas lado a lado, cabeçalho, barra de filtros, colunas, selos e botões "Detalhes" iguais. Produtos 1024 sem captura de base |
-| Rótulo longo em 320 e 390 | botão real da página ("Novo produto", classes do build) clonado com "Gerar senha temporária para a pessoa selecionada agora": 288 × 54 px em 320 e 358 × 54 px em 390 (duas linhas), `white-space: normal`, nada cortado, dentro do viewport, sem rolagem do documento; o original segue com 36 px |
-| Anel do campo de dinheiro por teclado | "Novo lançamento" → Tab até "Valor bruto": campo `:focus-visible`, grupo `[data-slot=field-group]` com `box-shadow 0 0 0 2px #fff, 0 0 0 4px #111` (anel de 2 px afastado 2 px) envolvendo prefixo "R$" e campo; o campo não repete o anel. Recorte `1440-dinheiro-foco-recorte.png` |
-| Prévia do ajuste | "Saldo resultante" com `aria-live="polite"`; saldo do produto "3 UN" sem espaço não separável (A2) |
-| Foco do link de produto | `:focus-visible` com contorno padrão do navegador (O1) |
-| Console | 0 hidratação, 0 exceções, 0 avisos; só o 401 de `/auth/me` antes do login |
+| Login presidente | `/inicio`, "Início \| TJ Platform" |
+| FND-05 AC2 em 390, 768, 820, 1024 e 1440 | gaveta com botão de 44×44 abaixo de 1024; navegação fixa em 1024 e 1440; sem rolagem horizontal |
+| Anel no link de produto, por teclado | "Bandeira grande" com `:focus-visible` e `box-shadow 0 0 0 2px #fff, 0 0 0 4px #111` (recorte `1440-produto-link-foco.png`) |
+| Anel no link de devolução, por teclado | link `f655839f` com o mesmo anel (recorte `1440-devolucao-link-foco.png`) |
+| Quantidades | saldo "3 UN", saldo atual e resultante do ajuste e nome de "Devolver" ("entrada de 5 UN em …") com U+00A0; `QuantityField` do ajuste com `name="quantidade"` e `autocomplete="off"` |
+| Selects de "Novo lançamento" | Tipo, Conta e Forma de pagamento com `autocomplete="off"` |
+| Console | 0 avisos de hidratação, 0 exceções, 0 avisos |
+
+Não repeti nesta iteração a comparação de pixels de lançamentos, usuários e produtos. As únicas mudanças visíveis desde a iteração 2, que deu 0,00% em usuários e produtos e só diferenças de dados em lançamentos, são o anel de foco, que não aparece em repouso, e o U+00A0, que não altera o desenho.
 
 ---
 
@@ -586,22 +613,32 @@ Edge headless por CDP, scripts em `…/scratchpad/verify2/smoke/`, perfil tempor
 
 | Principle | Status |
 | --- | --- |
-| Minimum code / surgical changes | ✅ correções restritas a atributos, classes e CSS base |
+| Minimum code / surgical changes | ✅ |
 | No scope creep | ✅ |
 | Matches patterns | ✅ |
-| Spec-anchored outcome check | ❌ DSP-04 AC6, DSP-07 AC4, DSM-06 AC2 |
-| Per-layer coverage | ⚠️ guarda de atributos por lista fixa (O3) |
+| Spec-anchored outcome check | ❌ DSM-06 AC2 |
+| Per-layer coverage | ⚠️ anel dos links sem teste (D1); guarda de atributos sem `Input` e `MoneyField` (origem de D2) |
 | Every test maps to a requirement | ✅ |
-| Documented guidelines followed | ❌ três achados da `web-design-guidelines` |
+| Documented guidelines followed | ❌ D2 a D4 |
 
 ---
 
-## Lacunas ordenadas (com unidade dona)
+## O que falta (decisão do mantenedor, iteração 3 de 3)
 
-1. **A1, DSP-04 AC6** — `NativeSelect` "Tipo", "Conta" e "Forma de pagamento" sem `autoComplete` em `features/financeiro/lancamentos/lancamento-form.tsx:186,220,271`. Dono: DS-FB. Correção: `autoComplete="off"`; de preferência, tornar a guarda de `global.guard.test.ts:213` geral (todo `Input`/`Textarea`/`NativeSelect` não de autenticação com `autoComplete`), em vez da lista fixa (O3).
-2. **A2, DSP-07 AC4** — número e unidade com espaço comum em `features/estoque/produto-detail.tsx:107` e `features/estoque/ajustes/ajuste-dialog.tsx:121,126`. Dono: DS-ES. Correção: espaço não separável (`\u00a0`), com o teste `features/estoque/produto-detail.test.tsx:50` e os do ajuste atualizados citando DSP-07 AC4.
-3. **A3, `web-design-guidelines`** (`name` com significado) — `QuantityField` do ajuste sem `name` em `features/estoque/ajustes/ajuste-dialog.tsx:95`. Dono: DS-ES. Correção: `name="quantidade"`.
-4. **O1** (não bloqueia) — links de produto e de devolução com o contorno padrão do navegador; alinhar ao anel do kit. Donos: DS-ES e DS-FB.
+Cada item pode ser corrigido ou registrado em `STATE.md`. Todos são pequenos e nenhum toca regra de negócio, API ou permissão.
+
+1. **D1, sensor M28 e M29** (DS-ES e DS-FB). Os links de produto e de devolução estão com o anel do kit, mas nenhum teste o afirma.
+   - Correção: um teste por link que afirme `focus-visible:ring-2` e `focus-visible:ring-ring`, no padrão de `actions.test.tsx:117`.
+   - Alternativa: aceitar e registrar que esse estilo é coberto só pelo navegador.
+2. **D2** (DS-E). Os `Input` e `MoneyField` do espécime estão sem `name` e, nos `Input`, sem `autoComplete` (13 ocorrências, lista acima).
+   - Correção: acrescentar os atributos e estender a guarda de `global.guard.test.ts:221` a `Input` e `MoneyField`.
+   - Alternativa: registrar em `STATE.md` que o espécime, rota interna e 404 em produção (WDS-D-017), fica isento das regras de `name` e `autocomplete`.
+3. **D3** (DS-FA). O campo de arquivo do comprovante está sem `name` (`comprovantes-panel.tsx:176`).
+   - Correção: `name="comprovante"`.
+   - Alternativa: registrar como conflito, porque o campo não pertence a formulário enviado e a regra de `autocomplete` não se aplica.
+4. **D4** (DS-S). O link da marca no shell está sem `hover` (`shell-frame.tsx:155`).
+   - Correção: um realce de `hover` com tokens do shell.
+   - Alternativa: registrar como conflito, porque a marca não muda de aparência ao passar o ponteiro.
 
 ---
 
@@ -610,30 +647,32 @@ Edge headless por CDP, scripts em `…/scratchpad/verify2/smoke/`, perfil tempor
 | Requirement | New Status |
 | --- | --- |
 | DSF-01 a DSF-06 | ✅ Verified (⚠️ aceitas: DSF-03 AC4, DSF-04 AC8) |
-| DSC-01 a DSC-07 | ✅ Verified (⚠️ aceitas: DSC-01 AC1, DSC-04 AC5, DSC-05 AC2/AC5) |
-| DSP-01, DSP-02, DSP-03, DSP-05, DSP-06 | ✅ Verified (⚠️ aceitas indicadas) |
-| DSP-04 | ❌ Needs Fix (AC6: A1) |
-| DSP-07 | ❌ Needs Fix (AC4: A2) |
+| DSC-01 a DSC-07 | ✅ Verified (⚠️ aceitas: DSC-01 AC1, DSC-04 AC5, DSC-05 AC2/AC5; D1 no teste de DSC-01 AC2) |
+| DSP-01 a DSP-07 | ✅ Verified (⚠️ aceitas indicadas) |
 | DSS-01 a DSS-06 | ✅ Verified (FND-05 AC2 revisado reconfirmado) |
 | DSM-01 a DSM-05 | ✅ Verified |
-| DSM-06 | ❌ Needs Fix (AC2: A1 a A3) |
+| DSM-06 | ❌ Needs Fix ou decisão (AC2: D2 a D4) |
 
 ---
 
 ## Summary
 
-**Overall**: ❌ Not Ready (iteração 2 de 3)
+**Overall**: ❌ Not Ready. É a iteração 3 de 3, a última; a decisão sobre D1 a D4 vai ao mantenedor.
 
-**Spec-anchored check**: 204/219 ✅; 3 ❌; 12 lacunas de precisão aceitas em WDS-D-034
-**Sensor**: 23 injetadas, 23 mortas, 0 sobreviventes
-**Gate**: todos com saída 0 (1785/1785 testes)
+- **Spec-anchored check**: 206/219 ✅; 1 ❌; 12 lacunas de precisão aceitas em WDS-D-034.
+- **Sensor**: 31 injetadas, 29 mortas, 2 sobreviventes.
+- **Gate**: todos com saída 0 (1787/1787 testes).
 
-**What works**: todas as lacunas da iteração 1 fechadas e defendidas por teste e por mutante; rótulo longo quebra sem estourar em 320 e 390; anel do campo de dinheiro no grupo por teclado; nenhuma regressão visual nas três telas nas três larguras (diferenças só de dados); escopo e propriedade conforme o AC revisado.
+**What works**:
+- Fundação, kit, padrões, shell e telas da Web V1 estão migrados e cobertos.
+- Todas as lacunas das iterações 1 e 2 estão fechadas, com teste, mutante e navegador, exceto o teste do anel dos links (D1).
+- FND-05 AC2 revisado foi reconfirmado.
+- Permissões, API e regras de negócio estão intocadas.
 
-**Next steps**: corrigir A1 a A3 (mudança pequena, em dois arquivos de tela e um teste) e nova verificação (iteração 3 de 3, a última antes de escalar ao mantenedor).
+**Next steps**: o mantenedor decide D1 a D4 (corrigir ou registrar). Se escolher corrigir, uma reverificação curta, restrita a esses itens, fecha o ciclo.
 
 ---
 
 ## Fechamento determinístico
 
-`python .claude/skills/tlc-spec-driven/scripts/validate_state.py web-design --root C:/Users/Michels/Desktop/torcida-jovem` → exit 1: "web-design: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)". Coerente com o veredito: a feature não está concluída. Observação: o script lê o veredito do título `# Validation` e das linhas de resultado com dois-pontos; o título traz o veredito e a linha do sensor foi rotulada "Resultado do sensor" para não ser lida como veredito.
+`python .claude/skills/tlc-spec-driven/scripts/validate_state.py web-design --root C:/Users/Michels/Desktop/torcida-jovem` → exit 1: "web-design: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)". Coerente com o veredito: a feature não está concluída.

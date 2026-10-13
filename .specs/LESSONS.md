@@ -128,6 +128,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: DSP-07 AC4; web/features/estoque/produto-detail.tsx:107; web/features/estoque/ajustes/ajuste-dialog.tsx:121,126 (web/features)
 - last seen: 2026-10-13T17:36:49Z
 
+### L-020 - Every accessibility fix, including a focus-style class, ships with a test that fails when the class is removed
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: M28, M29; web/features/estoque/produtos/produtos-page.tsx:140; web/features/financeiro/lancamentos/lancamento-detail.tsx:162 (web/features)
+- last seen: 2026-10-13T18:19:13Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
