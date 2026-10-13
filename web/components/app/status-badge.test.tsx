@@ -6,24 +6,24 @@ import { describe, expect, it } from "vitest";
 
 import { WEB_ROOT } from "@/test/design/guard";
 
-import { activeStatus, activeStatusDef, StatusBadge, type Status, type StatusDef, type Tone } from "./status-badge";
+import { activeStatusDef, StatusBadge, type StatusDef, type Tone } from "./status-badge";
 
+// DS-INT (T11, DSM-05): a forma em texto saiu; cada feature passa o próprio
+// `StatusDef`. O mapa de DD-3 vive em `features/financeiro/lancamentos/labels.ts`
+// e é coberto por `lancamentos-page.test.tsx`.
 describe("StatusBadge", () => {
-  it.each<[Status, string]>([
-    ["CRIADA", "Criada"],
-    ["RECEBIDA", "Recebida"],
-    ["PAGA", "Paga"],
-    ["CANCELADA", "Cancelada"],
-    ["ativo", "Ativo"],
-    ["inativo", "Inativo"],
-  ])("mostra %s como %s", (status, label) => {
-    render(<StatusBadge status={status} />);
+  it.each<[boolean, string]>([
+    [true, "Ativo"],
+    [false, "Inativo"],
+  ])("mostra ativo=%s como %s", (active, label) => {
+    render(<StatusBadge status={activeStatusDef(active)} />);
     expect(screen.getByText(label)).toBeTruthy();
   });
 
-  it("activeStatus converte o booleano de ativo", () => {
-    expect(activeStatus(true)).toBe("ativo");
-    expect(activeStatus(false)).toBe("inativo");
+  it("não aceita mais o status como texto (alias removido em DS-INT)", () => {
+    // @ts-expect-error a forma antiga, com o status em texto, foi removida.
+    const legacy = <StatusBadge status="CANCELADA" />;
+    expect(legacy).toBeTruthy();
   });
 });
 
@@ -69,41 +69,6 @@ describe("StatusBadge com definição", () => {
     const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((match) => match[1]);
     expect(imports.length).toBeGreaterThan(0);
     expect(imports.filter((path) => path.includes("lib/api") || path.includes("features"))).toEqual([]);
-  });
-});
-
-// Forma antiga (status como texto), aceita até DS-INT, com o mapa de DD-3.
-describe("StatusBadge com status em texto (compatibilidade)", () => {
-  const ALL: Status[] = ["CRIADA", "RECEBIDA", "PAGA", "CANCELADA", "ativo", "inativo"];
-
-  it("cada status tem ícone, e rótulo e ícone são únicos entre eles", () => {
-    const shown = ALL.map((status) => {
-      const { container, unmount } = render(<StatusBadge status={status} />);
-      const result = { label: badge(container).textContent ?? "", icon: drawing(container) };
-      unmount();
-      return result;
-    });
-    for (const item of shown) expect(item.icon).not.toBe("");
-    expect(new Set(shown.map((item) => item.label)).size).toBe(ALL.length);
-    expect(new Set(shown.map((item) => item.icon)).size).toBe(ALL.length);
-  });
-
-  it.each<[Status, Tone]>([
-    ["CRIADA", "neutral"],
-    ["RECEBIDA", "success"],
-    ["PAGA", "success"],
-    ["CANCELADA", "neutral"],
-    ["ativo", "success"],
-    ["inativo", "neutral"],
-  ])("%s usa o tom %s", (status, tone) => {
-    const { container } = render(<StatusBadge status={status} />);
-    expect(badge(container).getAttribute("data-tone")).toBe(tone);
-  });
-
-  // DD-3 (WDS-D-026): cancelamento não é erro.
-  it("CANCELADA é neutra, não vermelha", () => {
-    const { container } = render(<StatusBadge status="CANCELADA" />);
-    expect(badge(container).className).not.toContain("destructive");
   });
 });
 

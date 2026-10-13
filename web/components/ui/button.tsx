@@ -21,21 +21,11 @@ const buttonVariants = cva(
           "bg-destructive text-destructive-foreground hover:bg-destructive-emphasis active:bg-destructive-emphasis/90 disabled:bg-disabled disabled:text-disabled-foreground",
         // Hover engrossa o sublinhado: clarear o texto reduziria o contraste.
         link: "text-foreground underline underline-offset-4 hover:decoration-2 disabled:text-disabled-foreground",
-        // Alias de compatibilidade: removido em DS-INT.
-        default: PRIMARY,
-        // Alias de compatibilidade: removido em DS-INT.
-        outline: SECONDARY,
       },
       size: {
         sm: "h-control-sm gap-1.5 px-3",
         md: "h-control-md gap-2 px-4",
         lg: "h-control-lg gap-2 px-5",
-        // Alias de compatibilidade: removido em DS-INT.
-        default: "h-control-md gap-2 px-4",
-        // Alias de compatibilidade: removido em DS-INT.
-        icon: "size-control-md",
-        // Alias de compatibilidade: removido em DS-INT.
-        "icon-sm": "size-control-sm",
       },
     },
     defaultVariants: {

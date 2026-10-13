@@ -368,10 +368,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: saem os alias `default`, `outline`, `icon` e `icon-sm` do botão, as variantes antigas de Badge e Alert, o modo legado de rolagem da tabela e a forma antiga de `StatusBadge`; a guarda global cobre `app`, `components` e `features`, e acrescenta as verificações de `<select>` fora do kit e de contêiner ou título de página montado à mão.
 
 **Done when**:
-- [ ] `tsc` passa sem nenhum uso de alias (o compilador aponta qualquer resto)
-- [ ] A guarda global passa, com a lista de exceções consolidada e justificada
-- [ ] A lista consolidada de testes alterados no ciclo, com a decisão de cada um, é registrada em `evidence/testes-alterados.md`, e nenhum teste foi removido
-- [ ] Gates passam
+- [x] `tsc` passa sem nenhum uso de alias (o compilador aponta qualquer resto)
+- [x] A guarda global passa, com a lista de exceções consolidada e justificada
+- [x] A lista consolidada de testes alterados no ciclo, com a decisão de cada um, é registrada em `evidence/testes-alterados.md`, e nenhum teste foi removido
+- [x] Gates passam
 
 **Tests**: unit + component
 **Verificação visual**: nenhuma tela mudou de aparência com a remoção (conferência rápida de três telas)

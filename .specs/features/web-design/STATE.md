@@ -287,6 +287,12 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 **Pendências registradas para a rodada 7** (melhorias B da revisão, não bloqueiam): `Button` em `loading` perde o foco do teclado; rótulo longo de botão não quebra em 320 px; `Checkbox` solto abaixo de 44 px; `Table` sem nome acessível obrigatório no tipo; `CardTitle` com nível fixo; link de pular ausente durante a troca obrigatória de senha; "Início" e módulos sem ícone; `RowActions` sem motivo para ação indisponível; campo de motivo sem `name`; foco do campo de dinheiro sem `focus-within`; escrita pendente da busca descartada ao sair da tela; `tap-highlight` e `touch-action` na camada base.
 
+**Registrado em DS-INT (T11, 2026-10-12):**
+
+- Alias removidos de `button.tsx`, `badge.tsx`, `alert.tsx` (o tom do `Alert` passou a ser obrigatório), `table.tsx` (sem `scroll`, a tabela não tem contêiner de rolagem; `scrollable` só com justificativa) e `status-badge.tsx` (só `StatusDef`). Nenhum uso restava fora dos testes do kit. Guarda global em `web/test/design/global.guard.test.ts`; testes alterados no ciclo em `evidence/testes-alterados.md`.
+- **D5, limitação da biblioteca**: no `@base-ui/react` 1.8.0 instalado, `Toast.Root` fixa `role="dialog"` (ou `alertdialog` na prioridade alta), `aria-modal=false` e `tabIndex=0` nas propriedades padrão (`toast/root/ToastRoot.js`). A API tipada (`ToastRootProps`) não oferece opção para trocar o papel nem o foco; sobrescrever por atributo solto dependeria da ordem interna de mescla e romperia o modelo de teclado da biblioteca (F6 leva à região "Avisos" e Tab percorre os avisos até "Fechar" e a ação). O anúncio não depende desse papel: a região viva própria do Base UI (`role="alert"` no viewport) faz o anúncio. Mantido como está.
+- `FilterBar` sem filtros além da busca (estoque passa `{null}`): em tela estreita não mostra o botão "Filtros" (a gaveta ficaria vazia); "Limpar filtros" aparece junto da busca preenchida.
+
 **Desvios aceitos pelo coordenador na rodada 2, a rever em DS-INT ou no espécime:**
 
 - O toast de erro é anunciado como `polite`, não `assertive`: no Base UI a prioridade alta duplica o texto do aviso e quebraria 9 testes existentes de `features/` e `lib/session`, que estão congelados. Reavaliar em DS-INT, junto com esses testes.

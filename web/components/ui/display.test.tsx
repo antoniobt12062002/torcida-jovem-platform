@@ -47,7 +47,7 @@ describe("Table", () => {
 describe("Alert", () => {
   it("tem papel alert com título e descrição", () => {
     render(
-      <Alert variant="destructive">
+      <Alert variant="error">
         <AlertTitle>Falha</AlertTitle>
         <AlertDescription>Não foi possível salvar.</AlertDescription>
       </Alert>
@@ -134,24 +134,21 @@ describe("Badge", () => {
     expect(screen.queryByRole("button")).toBeNull()
   })
 
-  it.each([
-    ["destructive", "error"],
-    ["secondary", "neutral"],
-  ] as const)("o alias %s renderiza igual ao tom %s", (alias, tone) => {
+  // DS-INT (T11, DSM-05): alias removidos; o compilador recusa os nomes antigos.
+  it("as variantes antigas não existem mais no tipo nem nas classes", () => {
     render(
       <>
-        <Badge variant={alias}>Alias</Badge>
-        <Badge variant={tone}>Tom</Badge>
+        {/* @ts-expect-error variante removida em DS-INT (use error). */}
+        <Badge variant="destructive">Antigo erro</Badge>
+        {/* @ts-expect-error variante removida em DS-INT (use neutral). */}
+        <Badge variant="secondary">Antigo neutro</Badge>
+        {/* @ts-expect-error variante removida em DS-INT. */}
+        <Badge variant="default">Antigo preto</Badge>
       </>
     )
-    expect(screen.getByText("Alias").className).toBe(screen.getByText("Tom").className)
-  })
-
-  it("o alias default continua renderizando, em preto", () => {
-    render(<Badge variant="default">Paga</Badge>)
-    expect(classes(screen.getByText("Paga"))).toEqual(
-      expect.arrayContaining(["bg-primary", "text-primary-foreground"])
-    )
+    expect(classes(screen.getByText("Antigo erro"))).not.toContain("bg-destructive-subtle")
+    expect(classes(screen.getByText("Antigo neutro"))).not.toContain("bg-info-subtle")
+    expect(classes(screen.getByText("Antigo preto"))).not.toContain("bg-primary")
   })
 })
 
@@ -181,45 +178,15 @@ describe("Alert: tons", () => {
     expect(new Set(ALERT_TONES.map(([, , icon]) => icon)).size).toBe(4)
   })
 
-  it("o alias destructive é o tom de erro", () => {
-    render(
-      <>
-        <Alert variant="destructive">
-          <AlertDescription>Alias</AlertDescription>
-        </Alert>
-        <Alert variant="error">
-          <AlertDescription>Tom</AlertDescription>
-        </Alert>
-      </>
-    )
-    const [alias, tone] = screen.getAllByRole("alert")
-    expect(alias.className).toBe(tone.className)
-    expect(iconName(alias)).toBe("lucide-circle-alert")
-  })
-
-  it("sem variante (alias default) tem a aparência neutra e mantém o papel alert", () => {
-    render(
-      <>
-        <Alert>
-          <AlertDescription>Sua sessão foi encerrada.</AlertDescription>
-        </Alert>
-        <Alert variant="default">
-          <AlertDescription>Senha alterada com sucesso.</AlertDescription>
-        </Alert>
-        <Alert variant="neutral">
-          <AlertDescription>Neutro</AlertDescription>
-        </Alert>
-      </>
-    )
-    const alerts = screen.getAllByRole("alert")
-    expect(alerts.map((alert) => alert.textContent)).toEqual([
-      "Sua sessão foi encerrada.",
-      "Senha alterada com sucesso.",
-    ])
-    for (const alert of alerts) {
-      expect(alert.className).toBe(screen.getByRole("status").className)
-      expect(iconName(alert)).toBe("lucide-info")
-    }
+  // DS-INT (T11, DSM-05): o tom passou a ser obrigatório e os alias saíram.
+  it("exige o tom e recusa as variantes antigas no tipo", () => {
+    // @ts-expect-error o tom é obrigatório desde DS-INT.
+    const semTom = <Alert><AlertDescription>Sem tom</AlertDescription></Alert>
+    // @ts-expect-error variante removida em DS-INT (use error).
+    const antigoErro = <Alert variant="destructive"><AlertDescription>Antigo</AlertDescription></Alert>
+    // @ts-expect-error variante removida em DS-INT (use neutral).
+    const antigoPadrao = <Alert variant="default"><AlertDescription>Antigo</AlertDescription></Alert>
+    expect([semTom, antigoErro, antigoPadrao]).toHaveLength(3)
   })
 
   it("aceita um papel explícito de quem chama", () => {

@@ -202,4 +202,41 @@ describe("forma recolhida em tela estreita", () => {
     expect(screen.getByRole("combobox", { name: "Tipo" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Filtros/ })).toBeNull();
   });
+
+  // Rodada 7 (pedido registrado no smoke da rodada 6): sem filtros além da
+  // busca, como no estoque, não há gaveta vazia a abrir.
+  it("sem filtros além da busca, não mostra o botão Filtros", () => {
+    mockViewport({ width: 390 });
+    render(
+      <FilterBar
+        activeCount={0}
+        resultCount={3}
+        resultNoun={["produto", "produtos"]}
+        onClear={() => {}}
+        search={<input aria-label="Busca" />}
+      >
+        {null}
+      </FilterBar>,
+    );
+    expect(screen.getByRole("textbox", { name: "Busca" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Filtros/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Limpar filtros" })).toBeNull();
+  });
+
+  it("sem filtros além da busca, Limpar filtros fica junto da busca preenchida", () => {
+    mockViewport({ width: 390 });
+    const onClear = vi.fn();
+    render(
+      <FilterBar
+        activeCount={1}
+        resultCount={0}
+        resultNoun={["produto", "produtos"]}
+        onClear={onClear}
+        search={<input aria-label="Busca" />}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /^Filtros/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
+    expect(onClear).toHaveBeenCalledTimes(1);
+  });
 });

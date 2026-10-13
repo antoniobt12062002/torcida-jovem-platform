@@ -118,9 +118,11 @@ describe("Table: quebra de linha por coluna", () => {
 })
 
 describe("Table: rolagem", () => {
-  it("usada como hoje, sem propriedades novas, mantém a rolagem embutida (modo legado)", () => {
-    render(
-      <Table>
+  // DS-INT (T11, DSM-05): o modo legado saiu; sem `scroll`, a tabela não tem
+  // contêiner de rolagem (quem precisa rolar declara `scrollable`).
+  it("sem propriedades, não envolve a tabela em contêiner de rolagem", () => {
+    const { container } = render(
+      <Table aria-label="Mensalidades">
         <TableBody>
           <TableRow>
             <TableCell>Mensalidade</TableCell>
@@ -128,11 +130,14 @@ describe("Table: rolagem", () => {
         </TableBody>
       </Table>
     )
-    const container = screen.getByRole("table").parentElement as HTMLElement
-    expect(container.getAttribute("data-slot")).toBe("table-container")
-    expect(classes(container)).toContain("overflow-x-auto")
-    expect(container.hasAttribute("tabindex")).toBe(false)
-    expect(container.hasAttribute("role")).toBe(false)
+    expect(container.firstElementChild).toBe(screen.getByRole("table", { name: "Mensalidades" }))
+    expect(container.querySelector("[data-slot=table-container]")).toBeNull()
+  })
+
+  it('o modo "legacy" não existe mais no tipo', () => {
+    // @ts-expect-error modo removido em DS-INT.
+    const legado = <Table scroll="legacy" aria-label="Legado" />
+    expect(legado).toBeTruthy()
   })
 
   it('scroll="none" não envolve a tabela em contêiner de rolagem', () => {

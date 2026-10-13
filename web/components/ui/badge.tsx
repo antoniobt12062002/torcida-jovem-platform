@@ -18,12 +18,6 @@ const badgeVariants = cva(
         warning: "bg-warning-subtle text-warning-emphasis",
         error: ERROR,
         outline: "border-border text-foreground",
-        // Alias de compatibilidade: removido em DS-INT.
-        default: "bg-primary text-primary-foreground",
-        // Alias de compatibilidade: removido em DS-INT.
-        secondary: NEUTRAL,
-        // Alias de compatibilidade: removido em DS-INT.
-        destructive: ERROR,
       },
     },
     defaultVariants: {

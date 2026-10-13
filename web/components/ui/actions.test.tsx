@@ -174,34 +174,29 @@ describe("Button: em andamento", () => {
   })
 })
 
-describe("Button: alias de compatibilidade", () => {
-  it.each([
-    [{ variant: "default" }, { variant: "primary" }],
-    [{ variant: "outline" }, { variant: "secondary" }],
-    [{ size: "default" }, { size: "md" }],
-  ] as const)("%o renderiza igual a %o", (alias, canonical) => {
+// DS-INT (T11, DSM-05): os alias saíram; o compilador recusa os nomes antigos
+// e, em tempo de execução, nenhum deles gera mais as classes que gerava.
+describe("Button: alias removidos", () => {
+  it("variantes e tamanhos antigos não existem mais no tipo nem nas classes", () => {
     render(
       <>
-        <Button {...alias}>Alias</Button>
-        <Button {...canonical}>Nome novo</Button>
+        {/* @ts-expect-error variante removida em DS-INT (use primary). */}
+        <Button variant="default">Antigo primário</Button>
+        {/* @ts-expect-error variante removida em DS-INT (use secondary). */}
+        <Button variant="outline">Antigo contorno</Button>
+        {/* @ts-expect-error tamanho removido em DS-INT (use md). */}
+        <Button size="default">Antigo tamanho</Button>
+        {/* @ts-expect-error tamanho removido em DS-INT (use IconButton). */}
+        <Button size="icon" aria-label="Antigo ícone" />
+        {/* @ts-expect-error tamanho removido em DS-INT (use IconButton compacto). */}
+        <Button size="icon-sm" aria-label="Antigo ícone compacto" />
       </>
     )
-    expect(screen.getByRole("button", { name: "Alias" }).className).toBe(
-      screen.getByRole("button", { name: "Nome novo" }).className
-    )
-  })
-
-  it.each([
-    ["icon", "size-control-md"],
-    ["icon-sm", "size-control-sm"],
-  ] as const)("o tamanho %s continua renderizando um botão quadrado", (size, token) => {
-    render(
-      <Button variant="ghost" size={size} aria-label="Abrir menu">
-        <PlusIcon />
-      </Button>
-    )
-    const button = screen.getByRole("button", { name: "Abrir menu" })
-    expect(classes(button)).toContain(token)
+    expect(classes(screen.getByRole("button", { name: "Antigo primário" }))).not.toContain("bg-primary")
+    expect(classes(screen.getByRole("button", { name: "Antigo contorno" }))).not.toContain("border-input")
+    expect(classes(screen.getByRole("button", { name: "Antigo tamanho" }))).not.toContain("h-control-md")
+    expect(classes(screen.getByRole("button", { name: "Antigo ícone" }))).not.toContain("size-control-md")
+    expect(classes(screen.getByRole("button", { name: "Antigo ícone compacto" }))).not.toContain("size-control-sm")
   })
 })
 

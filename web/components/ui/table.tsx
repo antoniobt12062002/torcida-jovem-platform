@@ -4,10 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 type TableScroll =
-  // Alias de compatibilidade: removido em DS-INT. Rolagem embutida das telas
-  // ainda não migradas; é o padrão até lá.
-  | "legacy"
-  /** Sem contêiner de rolagem: a forma usada pela lista responsiva. */
+  /** Padrão. Sem contêiner de rolagem: a forma usada pela lista responsiva. */
   | "none"
   /** Rolagem horizontal explícita, só com justificativa na spec da tela. */
   | "scrollable"
@@ -15,7 +12,7 @@ type TableScroll =
 // A tabela precisa de nome acessível: `aria-label` ou `aria-labelledby`.
 function Table({
   className,
-  scroll = "legacy",
+  scroll = "none",
   ...props
 }: React.ComponentProps<"table"> & { scroll?: TableScroll }) {
   const table = (
@@ -31,25 +28,15 @@ function Table({
     />
   )
   if (scroll === "none") return table
-  if (scroll === "scrollable") {
-    // Região rolável: alcançável pelo teclado e com o mesmo nome da tabela.
-    return (
-      <div
-        data-slot="table-container"
-        role="region"
-        tabIndex={0}
-        aria-label={props["aria-label"]}
-        aria-labelledby={props["aria-labelledby"]}
-        className="relative w-full overflow-x-auto overscroll-x-contain rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
-      >
-        {table}
-      </div>
-    )
-  }
+  // Região rolável: alcançável pelo teclado e com o mesmo nome da tabela.
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      role="region"
+      tabIndex={0}
+      aria-label={props["aria-label"]}
+      aria-labelledby={props["aria-labelledby"]}
+      className="relative w-full overflow-x-auto overscroll-x-contain rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
     >
       {table}
     </div>

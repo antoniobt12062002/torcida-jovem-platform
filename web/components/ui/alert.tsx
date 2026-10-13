@@ -34,33 +34,18 @@ const TONES: Record<AlertTone, { icon: LucideIcon; role: "alert" | "status" }> =
   error: { icon: CircleAlertIcon, role: "alert" },
 }
 
-type AlertVariant =
-  | AlertTone
-  // Alias de compatibilidade: removido em DS-INT.
-  | "default"
-  // Alias de compatibilidade: removido em DS-INT.
-  | "destructive"
-
+// O tom é obrigatório: quem usa o aviso decide o que ele comunica.
 function Alert({
   className,
-  variant = "default",
+  variant: tone,
   children,
   ...props
-}: React.ComponentProps<"div"> & { variant?: AlertVariant | null }) {
-  // Alias de compatibilidade: removido em DS-INT. `default` (ou nenhuma
-  // variante) é o tom neutro com o papel `alert` que as telas ainda esperam;
-  // `destructive` é o tom de erro.
-  const legacy = variant === "default" || variant === null
-  const tone: AlertTone = legacy
-    ? "neutral"
-    : variant === "destructive"
-      ? "error"
-      : variant
+}: React.ComponentProps<"div"> & { variant: AlertTone }) {
   const Icon = TONES[tone].icon
   return (
     <div
       data-slot="alert"
-      role={legacy ? "alert" : TONES[tone].role}
+      role={TONES[tone].role}
       className={cn(alertVariants({ tone }), className)}
       {...props}
     >
