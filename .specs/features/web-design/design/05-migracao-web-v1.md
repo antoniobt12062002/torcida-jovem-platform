@@ -77,7 +77,7 @@ Todas as telas autenticadas usam `ShellFrame`, `PageContainer` e `PageHeader`; a
 
 | Listagem | Prioridade 1 (sempre) | Prioridade 2 (a partir de 768) | Prioridade 3 (a partir de 1024) | Item empilhado |
 | --- | --- | --- | --- | --- |
-| Lançamentos | Data, conta, valor líquido, status | Tipo, forma de pagamento | Valor bruto, taxa | Título: conta. Campos: data, tipo. Valor líquido à direita. Status |
+| Lançamentos | Data, conta, valor líquido, status | Tipo | Forma de pagamento, valor bruto, taxa (WDS-D-032) | Título: conta. Campos: data, tipo. Valor líquido à direita. Status |
 | Usuários | Nome, situação | E-mail, papéis | Acesso administrativo | Título: nome. Campos: e-mail, papéis. Status |
 | Produtos | Código, nome, situação | Unidade | — | Título: nome. Campos: código, unidade. Status |
 | Movimentações | Tipo, quantidade, data | Origem, responsável | Motivo, devolução de | Título: tipo e quantidade. Campos: data, responsável, motivo (três linhas) |

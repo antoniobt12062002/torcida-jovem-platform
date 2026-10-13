@@ -24,7 +24,7 @@ export type Column<T> = {
   numeric?: boolean;
   /**
    * 1 e 2 aparecem sempre na tabela; 3 só com tela de 1024 px ou mais e
-   * contêiner de 56rem ou mais (o dado continua no detalhe).
+   * contêiner de 64rem ou mais (o dado continua no detalhe).
    */
   priority: 1 | 2 | 3;
   /** Tratamento de texto longo na tabela. Padrão: quebra de linha; coluna numérica não quebra. */
@@ -58,9 +58,9 @@ export type DataListProps<T> = {
 const MAX_FIELDS = 3;
 
 // Prioridade 3: fora da tabela abaixo de 1024 px de tela e também quando o
-// contêiner da tabela tem menos de 56rem (896 px), como ao lado da navegação
+// contêiner da tabela tem menos de 64rem (1024 px), como ao lado da navegação
 // fixa entre 1024 e ~1200 px.
-const LOW_PRIORITY = "hidden lg:table-cell @max-4xl:hidden";
+const LOW_PRIORITY = "hidden lg:table-cell @max-5xl:hidden";
 
 export function DataList<T>({ layout = "auto", ...props }: DataListProps<T>) {
   const narrow = useIsNarrow();

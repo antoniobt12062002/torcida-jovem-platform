@@ -151,7 +151,7 @@ describe("tabela", () => {
 
   // A prioridade 3 depende também da largura do contêiner, não só da tela: ao
   // lado da navegação fixa, em 1024 px, sobram cerca de 720 px para a tabela.
-  it("coluna de prioridade 3 também fica oculta quando o contêiner tem menos de 56rem", () => {
+  it("coluna de prioridade 3 também fica oculta quando o contêiner tem menos de 64rem", () => {
     render(<Lista />);
     for (const el of [
       screen.getByRole("columnheader", { name: "Código" }),
@@ -159,7 +159,7 @@ describe("tabela", () => {
       screen.getByText("fb6e3d8f"),
       screen.getByText("Ana Souza"),
     ]) {
-      expect(classes(el)).toContain("@max-4xl:hidden");
+      expect(classes(el)).toContain("@max-5xl:hidden");
     }
   });
 

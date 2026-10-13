@@ -56,7 +56,7 @@ export function ListingSection() {
           <LancamentosList label="Lançamentos de exemplo (tabela)" rows={first} layout="table" />
         </div>
         <SpecimenCaption>
-          A coluna Conta (prioridade 3) só aparece com tela de 1024 px ou mais e área de conteúdo de pelo menos 896 px. Abaixo de 768 px a moldura rola na horizontal.
+          A coluna Conta (prioridade 3) só aparece com tela de 1024 px ou mais e área de conteúdo de pelo menos 1024 px. Abaixo de 768 px a moldura rola na horizontal.
         </SpecimenCaption>
       </SpecimenBlock>
 
