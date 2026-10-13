@@ -331,6 +331,25 @@ describe("listagem responsiva", () => {
     }
   });
 
+  // Verificação, iteração 3, D1 (mutante M28): o link do nome usa o anel de
+  // foco do kit (DSC-01 AC2), o mesmo do `Button` (`components/ui/actions.test.tsx`).
+  it("o link do nome tem o anel de foco do kit, nunca vermelho", async () => {
+    mockViewport({ width: 1024 });
+    await renderPage([PERM.produtoRead]);
+    const table = await screen.findByRole("table", { name: "Produtos" });
+    const names = within(table).getByRole("link", { name: "Faixa da torcida" }).className.split(/\s+/);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "outline-none",
+        "focus-visible:ring-2",
+        "focus-visible:ring-ring",
+        "focus-visible:ring-offset-2",
+        "focus-visible:ring-offset-ring-offset",
+      ])
+    );
+    expect(names.filter((name) => /focus-visible:.*(destructive|brand)/.test(name))).toEqual([]);
+  });
+
   it("a partir de 768 px mostra a tabela", async () => {
     mockViewport({ width: 1024 });
     await renderPage([PERM.produtoRead]);

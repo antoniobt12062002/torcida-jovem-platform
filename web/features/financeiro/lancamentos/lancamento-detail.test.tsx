@@ -345,4 +345,25 @@ describe("alvo de toque do link da devolução", () => {
       expect(link.className.split(" ")).toContain(name);
     }
   });
+
+  // Verificação, iteração 3, D1 (mutante M29): o link usa o anel de foco do
+  // kit (DSC-01 AC2), o mesmo do `Button` (`components/ui/actions.test.tsx`).
+  it("tem o anel de foco do kit, nunca vermelho", async () => {
+    const receitaId = "00000000-0000-4000-8000-000000000299";
+    await renderDetail([
+      lancamento({ ...CRIADA, tipo: "DESPESA", conta_id: CONTA_DESPESA.id, devolucao_de_id: receitaId }),
+    ]);
+    const link = await screen.findByRole("link", { name: receitaId.slice(0, 8) });
+    const names = link.className.split(/\s+/);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "outline-none",
+        "focus-visible:ring-2",
+        "focus-visible:ring-ring",
+        "focus-visible:ring-offset-2",
+        "focus-visible:ring-offset-ring-offset",
+      ])
+    );
+    expect(names.filter((name) => /focus-visible:.*(destructive|brand)/.test(name))).toEqual([]);
+  });
 });
