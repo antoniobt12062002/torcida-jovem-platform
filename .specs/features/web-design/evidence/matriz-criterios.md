@@ -81,7 +81,8 @@ Os 12 atendidos por decisão documentada são os mesmos 12 ⚠️ do `validation
 | DSM-03 | 8 | 8 | 0 | 0 | 0 |
 | DSM-04 | 7 | 7 | 0 | 0 | 0 |
 | DSM-05 | 5 | 5 | 0 | 0 | 0 |
-| DSM-06 | 7 | 7 | 0 | 0 | 0 || **Total** | **219** | **207** | **12** | **0** | **0** |
+| DSM-06 | 7 | 7 | 0 | 0 | 0 |
+| **Total** | **219** | **207** | **12** | **0** | **0** |
 
 ## Matriz por critério
 

@@ -312,6 +312,12 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
+- **Fase**: Verification concluída com **PASS** na iteração 4 (excepcional e restrita, WDS-D-035), em 2026-10-13, sobre `86f6a30`. Relatório em `validation.md` (seção "Iteração 4"). D1 a D4 corrigidos com teste e mutantes mortos; T2 da DS-S reproduzida pelo verificador com exceção real; matriz dos 219 critérios conferida (207 comprovados, 12 atendidos por decisão documentada em WDS-D-034, 0 pendentes, 0 reprovados); gates verdes (110 arquivos, 1794 testes).
+- **Pendências de execução**: nenhuma. Ficam como entrada para a próxima revisão das specs as 12 lacunas de precisão aceitas em WDS-D-034; `global-error` (DSS-04 AC2) coberto só por teste; D5 e os conflitos registrados acima seguem como estão.
+- **Bloqueios**: nenhum. Push, PR e merge na `develop` continuam não autorizados.
+
+Snapshot anterior (antes da rodada 7), mantido para histórico:
+
 - **Fase**: Execute. Rodadas 1 a 6 concluídas e integradas, gates verdes (107 arquivos, 1761 testes, build, contrato, audit) e smoke real da rodada 6 aprovado (`evidence/smoke-rodada6.md`). Rodada 7 liberada.
 - **Pendências para a rodada 7**: remoção de alias; D5 (toast como `role="dialog"`); percurso completo só por teclado e zoom de 200% (DSM-06 AC4 e AC5) no smoke final; item de T2 da DS-S "exceção forçada mostra a página de erro dentro do shell" (coberto por teste de componente; sem conferência no navegador).
 - **Bloqueios**: nenhum. Sem push, PR ou merge na `develop`.

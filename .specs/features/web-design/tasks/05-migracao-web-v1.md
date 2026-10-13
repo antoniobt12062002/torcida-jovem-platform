@@ -446,13 +446,13 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: nenhum código de produção. Entrada: as cinco specs, os designs, o intervalo de commits e `STATE.md`; nunca os relatórios dos autores como prova. O verificador: (1) checa cada AC de DSF, DSC, DSP, DSS e DSM contra teste ou evidência, com `arquivo:linha`; (2) confirma que os testes da Web V1 passam e que só os testes listados mudaram; (3) reverifica FND-05 AC2 no navegador; (4) executa a skill `web-design-guidelines` como **gate obrigatório**; (5) roda o sensor de discriminação com as 14 falhas mínimas do design, num worktree temporário; (6) repete parte do smoke (login, um ciclo do financeiro, visão de `CONSELHO_FISCAL`); (7) confirma que `api/`, contratos, permissões e regras de negócio não mudaram.
 
 **Done when**:
-- [ ] `validation.md` tem veredito, evidência por AC, resultado do sensor por falha, saída da `web-design-guidelines` e o intervalo de commits
-- [ ] Cada achado da `web-design-guidelines` está corrigido ou casado com um conflito registrado em `STATE.md`; achado sem um dos dois reprova
-- [ ] Toda falha do sensor que sobreviveu virou task de correção na unidade dona
-- [ ] O worktree do sensor foi descartado e `git status --porcelain` é igual ao de antes
-- [ ] `validate_state.py` passa
-- [ ] Lições registradas pelo `lessons.py` só para falhas reais
-- [ ] IF o veredito for FAIL THEN as lacunas viram tasks de correção e a verificação é refeita, no limite de três iterações antes de escalar ao mantenedor
+- [x] `validation.md` tem veredito, evidência por AC, resultado do sensor por falha, saída da `web-design-guidelines` e o intervalo de commits
+- [x] Cada achado da `web-design-guidelines` está corrigido ou casado com um conflito registrado em `STATE.md`; achado sem um dos dois reprova
+- [x] Toda falha do sensor que sobreviveu virou task de correção na unidade dona
+- [x] O worktree do sensor foi descartado e `git status --porcelain` é igual ao de antes
+- [x] `validate_state.py` passa
+- [x] Lições registradas pelo `lessons.py` só para falhas reais
+- [x] IF o veredito for FAIL THEN as lacunas viram tasks de correção e a verificação é refeita, no limite de três iterações antes de escalar ao mantenedor
 
 **Tests**: verificador independente (spec, sensor, smoke, `web-design-guidelines`)
 **Verificação visual**: reverificação de FND-05 AC2 e amostra do smoke

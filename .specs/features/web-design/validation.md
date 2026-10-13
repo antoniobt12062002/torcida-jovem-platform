@@ -1,4 +1,7 @@
-# Validation — web-design: FAIL ❌ (T14, iteração 3 de 3 — última antes de escalar ao mantenedor)
+# Validation — web-design: PASS ✅ (T14, iteração 4, excepcional e restrita — WDS-D-035)
+
+**Veredito atual (iteração 4): PASS ✅**. O relatório da iteração 4 está na seção "Iteração 4 (excepcional, autorizada — WDS-D-035)", no fim deste arquivo. O texto abaixo, até essa seção, é o relatório da iteração 3, mantido sem alteração; o título original dele era: "Validation — web-design: FAIL ❌ (T14, iteração 3 de 3 — última antes de escalar ao mantenedor)".
+
 
 **Veredito: FAIL ❌**
 
@@ -676,3 +679,254 @@ Cada item pode ser corrigido ou registrado em `STATE.md`. Todos são pequenos e 
 ## Fechamento determinístico
 
 `python .claude/skills/tlc-spec-driven/scripts/validate_state.py web-design --root C:/Users/Michels/Desktop/torcida-jovem` → exit 1: "web-design: validation.md verdict is FAIL - route the ranked gaps to fix tasks, then re-verify (feature is not done)". Coerente com o veredito: a feature não está concluída.
+
+---
+
+## Iteração 4 (excepcional, autorizada — WDS-D-035)
+
+- **Data**: 2026-10-13
+- **Verificador**: agente independente; não escreveu o código nem as evidências.
+- **Escopo**: restrito por WDS-D-035 (`STATE.md:156`):
+  - D1 a D4;
+  - item da T2 da DS-S;
+  - `evidence/testes-alterados.md`;
+  - matriz dos 219 critérios;
+  - sensores relacionados.
+
+  As iterações 1 a 3 acima ficam como estão.
+- **Commits verificados**: `13f5ad7` (D1), `9e95fb9` (D3), `131a5c4` (D2), `023558b` (D4) e `86f6a30` (evidências e matriz), sobre `1056707`. HEAD `86f6a30`.
+- **Veredito**: ✅ **PASS**.
+  - D1 a D4 estão corrigidos, com teste que discrimina.
+  - Reproduzi a T2 da DS-S de forma independente.
+  - A matriz confere; corrigi só uma linha de formatação (abaixo).
+  - Gates verdes. Nenhum defeito material novo.
+
+### 1. D1: anel de foco nos links de produto e de devolução
+
+- **Código**: `features/estoque/produtos/produtos-page.tsx:140` e `features/financeiro/lancamentos/lancamento-detail.tsx:162` têm `rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset`.
+- **Testes**: `produtos-page.test.tsx:336` e `lancamento-detail.test.tsx:351` exigem essas classes e recusam `destructive` ou `brand` no foco.
+- **Mutantes**: reaplicados por mim num worktree descartável em `86f6a30` (`<scratchpad>/v4wt`, `pnpm install --frozen-lockfile`). Cada um foi aplicado sozinho e revertido antes do seguinte.
+
+| # | Mutação | Testes rodados | Resultado |
+| --- | --- | --- | --- |
+| M28 | tira as classes do anel do link de produto | `produtos-page.test.tsx` | **MORTO** (1 falha, 26 passam) |
+| M29 | tira as classes do anel do link de devolução | `lancamento-detail.test.tsx` | **MORTO** (1 falha, 27 passam) |
+| M28r | `focus-visible:ring-ring` → `focus-visible:ring-destructive` no link de produto | `produtos-page.test.tsx` | **MORTO** (1 falha) |
+| M29o | tira só o afastamento (`ring-offset-*`) do link de devolução | `lancamento-detail.test.tsx` | **MORTO** (1 falha) |
+
+- **Navegador** (build de `86f6a30` em `:3142`, foco só por Tab):
+  - "Bandeira grande" (12 Tabs) e `f655839f` (14 Tabs) ficam com `:focus-visible`.
+  - `box-shadow` computado: `rgb(255,255,255) 0 0 0 2px, rgb(17,17,17) 0 0 0 4px`.
+  - `outline: none`; raio de 4 px.
+
+### 2. D2: campos do espécime
+
+- **Atributos**:
+  - Os 13 campos listados na iteração 3 têm `name` próprio e `autoComplete`.
+  - Login de exemplo: `email`/`username` e `senha`/`current-password`, nunca `off`.
+  - Busca e campos de demonstração: `off`.
+  - O diff de `131a5c4` só acrescenta `name` e `autoComplete`. Rótulos, ids e valores ficam iguais.
+- **Componentes**: `git diff fb62b99 HEAD -- web/components` só mostra `shell-frame.tsx` e o teste dele, que são de D4. `Input`, `MoneyField` e `NumericTextField` estão intactos; o `MoneyField` já repassava `name` (`numeric-text-field.tsx:22,97`).
+- **Guarda** (`global.guard.test.ts:246`): cobre todo `Input` (`name` e `autoComplete`) e todo `MoneyField` (`name`) de `app`, `components` e `features`. As exceções são justificadas:
+  - `components/ui/` fica fora porque é onde o componente é definido;
+  - `type="file"` só exige `name`, porque o HTML não aplica `autocomplete` a esse tipo;
+  - `{...field}` e `{...register()}` contam como `name`.
+- **Testes de página**:
+  - `page.test.tsx:77`: todo campo do espécime tem `name`, sem repetição, e os de texto têm `autocomplete`.
+  - `subpages.test.tsx:75`.
+- **Mutantes da guarda**:
+
+| # | Mutação | Resultado |
+| --- | --- | --- |
+| G1 | tira `name` do `Input` "Descrição" do espécime (`fields-section.tsx:101`) | **MORTO** (guarda e `page.test.tsx:77`) |
+| G2 | tira `autoComplete` de um `Input` real (`features/financeiro/contas/conta-dialogs.tsx:103`, com `{...register}`) | **MORTO** (guarda) |
+| G3 | tira `name` do `MoneyField` do diálogo do espécime | **MORTO** (guarda) |
+| G4 | tira `name="comprovante"` | **MORTO** (guarda e `comprovantes-panel.test.tsx`) |
+| G5 | troca `current-password` por `off` no login de exemplo | **MORTO** (`subpages.test.tsx:75`) |
+| G6 | `name` repetido entre dois `MoneyField` do espécime | **MORTO** (`page.test.tsx:77`) |
+
+- **Produção**: `/design-system` em `:3142` responde `404`, com título "Página não encontrada | TJ Platform" e `h1` "Página não encontrada".
+
+### 3. D3: campo de arquivo do comprovante
+
+- **Código e teste**: `comprovantes-panel.tsx:179` tem `name="comprovante"`; o teste "declara name=…" de `comprovantes-panel.test.tsx` passa.
+- **Navegador**:
+  - `name="comprovante"`, sem `autocomplete`.
+  - Rótulo "Anexar comprovante".
+  - `accept=".pdf,.jpg,.jpeg,.png,.webp"`.
+  - Fora de `<form>`; há um único campo com esse nome.
+- **Contrato inalterado**:
+  - O envio continua sendo `FormData.append("file", …)` (`features/financeiro/comprovantes/hooks.ts:41`).
+  - Os demais testes do painel passam sem mudança.
+  - Não há diff em `hooks.ts` nem em `lib/api`.
+
+### 4. D4: hover da marca do shell
+
+- **Código** (`shell-frame.tsx:157`): acrescenta `transition-colors duration-fast hover:bg-sidebar-accent`, os mesmos tokens e a mesma transição dos itens da navegação (`shell-frame.tsx:53,254,258`).
+  - Nenhum token, cor ou animação nova.
+  - Escudo, raio, alvo e foco não mudam.
+- **Teste** (`shell-frame.test.tsx:182`): exige as classes e o anel do shell, e recusa outro `hover:` e qualquer animação além da transição de cor. Mutantes:
+  - H1, tirar o `hover:`: **MORTO**.
+  - H2, acrescentar `hover:scale-105`: **MORTO**.
+- **Navegador** (`:3142`, 1440 px):
+  - Repouso: fundo `rgba(0,0,0,0)` sobre o cabeçalho `rgb(17,17,17)`.
+  - Hover (`:hover` verdadeiro): fundo `rgb(42,44,46)`, que é `--sidebar-accent` `#2a2c2e`; texto branco; `animation: none`; `transform: none`.
+  - Escudo continua com 32 px; caixa de 156 × 44.
+  - Foco no 2º Tab: `:focus-visible`, anel branco de 2 px, `outline: none`.
+  - O contraste do branco sobre `sidebar-accent` já está nos pares calculados (`lib/design/contrast-pairs.ts`).
+
+### 5. T2 da DS-S: erro dentro do shell numa exceção real
+
+**O que conferi na evidência**:
+- `evidence/erro-no-shell.md` descreve um worktree descartável com rotas temporárias de cliente e de servidor.
+- As capturas de cliente e de servidor são idênticas byte a byte (mesmo md5). Isso é coerente com a mesma página de erro desenhada nos dois casos, mas por isso mesmo reproduzi o teste em vez de confiar nelas.
+- Não há rota `zz-falha`, `__zzRenders` nem `SIMULACAO` em `web/`, nem no histórico (`git log --all -S zz-falha -- web` vazio).
+- `git worktree list` não lista `err-sim`. O worktree `ds-v3fix` está limpo e sem `zz*`.
+
+**Reprodução independente**:
+- Worktree descartável `v4wt`, com duas rotas minhas:
+  - `app/(app)/zz-v4/cliente`: Client Component que lança erro;
+  - `zz-v4/servidor`: Server Component `force-dynamic` que lança erro.
+- Build de produção e `next start -p 3143`, com a API em `:8080`.
+- Sessão do presidente aberta por `:3000`; a senha ficou só em memória.
+
+| Verificação | Cliente | Servidor |
+| --- | --- | --- |
+| Boundary acionado | `app/(app)/error.tsx` ("Não foi possível mostrar esta página…"); não é o `global-error` nem a tela padrão do Next | igual |
+| Shell | `[data-slot=shell]`, "Navegação principal", 1 `main` | igual |
+| `h1` | "Algo deu errado", com foco ao abrir e depois de "Tentar de novo"; título "Algo deu errado \| TJ Platform" | igual |
+| Detalhe técnico | nenhum no texto nem no HTML (`V4SIM`, `digest`, `Error:`, `stack`) | nenhum; o `digest` aparece só no log do servidor |
+| Sem loop | 5 s parado: 0 requisições, renderizações 6 → 6. "Tentar de novo": 1 `GET ?_rsc`, renderizações 6 → 12. Mais 5 s: 0 requisições, 12 → 12 | 5 s parado: 0 requisições. "Tentar de novo": 1 `GET ?_rsc`, 2 renderizações no servidor no total. Depois: 0 requisições |
+| 390 px | página de erro no shell, foco no `h1` | igual |
+| "Voltar ao início" | `/inicio`, `h1` "Início", sem erro | igual |
+| Console | só o `console.error` do React com a exceção capturada | só o "Minified React error #441" |
+
+**Limpeza**:
+- O `next start` de 3143 foi encerrado.
+- `git worktree remove --force` falhou por caminho longo; apaguei o diretório com `robocopy /MIR` e rodei `git worktree prune`.
+- `git worktree list` sem `v4wt`; `git status --porcelain` do principal vazio.
+
+**Decisão**: o checkbox da T2 (`tasks/04-shell-e-acesso.md`) está **justificado**. A exceção foi real, no cliente e no servidor, sem código artificial no produto.
+- Ressalva: a exceção no layout raiz (`global-error`, DSS-04 AC2) continua coberta só por teste (`error-pages.test.tsx:77,89`), como a própria evidência registra. Isso não faz parte do item da T2.
+
+### 6. Documentação
+
+**`testes-alterados.md`**:
+- Cobre as trocas de `fb62b99`. Conferi com `git show fb62b99`:
+  - `produto-detail.test.tsx`: 5 asserções;
+  - `ajuste-dialog.test.tsx`: 10;
+  - `movimentacoes-panel.test.tsx`: 13.
+
+  As contagens e os trechos citados batem.
+- Explica a exceção de `movimentacoes-panel.test.tsx:461`: o `getByText` normaliza `\s`, que inclui U+00A0. O caractere certo é exigido pela guarda `global.guard.test.ts:267` e pelas linhas 423-424.
+- Lista os 7 testes acrescentados nos quatro commits de correção (1787 → 1794).
+- Lacuna menor, não bloqueia: os testes que `fb62b99` acrescentou à guarda não estão na tabela de acréscimos. Não são asserções trocadas, e o que DSM-01 AC4 exige são as trocas.
+
+**`matriz-criterios.md`**:
+- Contei por script os itens numerados de cada bloco "Acceptance Criteria" de `spec/01` a `05`: **219** (DSF 47, DSC 46, DSP 53, DSS 35, DSM 38). A contagem bate com a matriz por requisito.
+- Há exatamente uma linha por AC, numeradas de 1 a N em cada requisito, sem linhas a mais.
+- Cada linha tem uma única situação:
+  - comprovado: 207 (15 com a anotação "mudou nesta rodada");
+  - atendido por decisão documentada: 12;
+  - pendente: 0;
+  - reprovado: 0.
+- Os 12 "por decisão" são os 12 ⚠️ desta validação e todos citam WDS-D-034. Nenhum AC com lacuna aceita está marcado como comprovado.
+- Amostra: conferi 40 referências de linhas "comprovado". Todas existem em HEAD e o teste no local cobre o AC. Critérios amostrados:
+  - DSF-05 AC1, DSF-06 AC5;
+  - DSC-01 AC2, DSC-02 AC3, DSC-03 AC7, DSC-04 AC2, DSC-06 AC2;
+  - DSP-02 AC3, DSP-03 AC4, DSP-04 AC6 e AC7, DSP-05 AC4, AC12 e borda, DSP-07 AC4;
+  - DSS-01 AC2, AC4, AC5 e AC7, DSS-02 AC1, AC3 e AC4, DSS-04 AC1, AC4 e AC5, DSS-05 AC1, DSS-06 AC3;
+  - DSM-02 AC2, DSM-03 AC7, DSM-05 AC2.
+- As referências remapeadas em `global.guard.test.ts`, `shell-frame.test.tsx` e `produtos-page.test.tsx` estão corretas.
+- **Correção feita nesta iteração**: na tabela "Resumo por requisito", a linha **Total** estava colada à linha DSM-06 (`…| 0 || **Total**…`), o que quebrava a tabela. Separei as duas linhas; os números não mudaram.
+
+### 7. Gates e escopo (repositório principal, `web/`, `API_URL=http://localhost:8080`)
+
+| Gate | Saída |
+| --- | --- |
+| `pnpm lint` | exit 0 |
+| `pnpm exec next typegen` | exit 0 |
+| `pnpm exec tsc --noEmit` | exit 0 |
+| `pnpm test` | exit 0: **110 arquivos, 1794 testes, 1794 passaram**, 0 falharam (iteração 3: 1787; +7 acréscimos) |
+| `pnpm build` | exit 0 ("Compiled successfully") |
+| `pnpm lint:api` | exit 0 |
+| `pnpm gen:api:check` | exit 0 |
+| `pnpm audit --audit-level high` | exit 0 (1 high ignorada, `GHSA-vfj7-8cjw-p6xm`, a mesma da iteração 3) |
+| `git diff develop -- api web/package.json web/pnpm-lock.yaml web/openapi* api/openapi` | vazio |
+| `git diff 1056707..HEAD --name-only` fora de `.specs/` | só os 4 arquivos do espécime e os 2 testes dele, `shell-frame.tsx` e o teste, `comprovantes-panel.tsx` e o teste, os testes de produtos e do detalhe do lançamento, e `global.guard.test.ts` |
+
+- Nada mudou em `web/lib`, `features/*/hooks.ts`, permissões, regras de negócio ou payloads.
+- **Ambiente, não produto**: o build regravou `web/.next`, de onde o processo antigo de `:3000` serve.
+  - Esse processo já servia um `.next` recompilado depois do seu início (BUILD_ID de 19:57; processo iniciado às 14:49).
+  - O navegador registra `ChunkLoadError` em `:3000`.
+  - O processo não foi tocado.
+
+### 8. Navegador
+
+- Edge headless por CDP, com perfil temporário, apagado no fim.
+- Login pelo formulário em `:3000`, na conta do presidente. A senha foi lida do arquivo local e não foi impressa nem gravada.
+- O cookie `tj_session` (`localhost`, `httpOnly`) valeu em `:3142` e `:3143`.
+- As medidas de D1, D3, D4 e de `/design-system` estão nos itens acima.
+- Console em `:3142`: nenhum erro nas telas medidas, além do `404` esperado de `/design-system`.
+- `:3142`, `:3143` e o Edge foram encerrados; `:3000` continua rodando.
+
+### Revisão `web-design-guidelines` (restrita aos 8 arquivos alterados desde a iteração 3)
+
+Arquivos revisados contra as regras de formulários, foco e hover:
+- `example-login-form.tsx`
+- `example-listing.tsx`
+- `fields-section.tsx`
+- `overlays-section.tsx`
+- `shell-frame.tsx`
+- `comprovantes-panel.tsx`
+- `produtos-page.tsx`
+- `lancamento-detail.tsx`
+
+```text
+Nenhum achado novo. F1 (D2), F2 (D3) e F3 (D4) corrigidos; O1 com teste (D1).
+```
+
+Notas, sem achado:
+- O hover da marca deixa o fundo menos escuro e reduz o contraste do branco em relação ao repouso. É o mesmo padrão já aprovado nos itens do shell.
+- O `Input` "Código" do espécime é `readOnly`, sem edição, e por isso fica fora da regra de correção ortográfica.
+
+### Situação final por AC
+
+`evidence/matriz-criterios.md`, conferida e corrigida só na formatação:
+
+| Situação | ACs |
+| --- | --- |
+| comprovado | 207 |
+| atendido por decisão documentada (WDS-D-034) | 12 |
+| pendente | 0 |
+| reprovado | 0 |
+| **Total** | **219** |
+
+| Requirement | Status |
+| --- | --- |
+| DSF-01 a DSF-06 | ✅ Verified (WDS-D-034: DSF-03 AC4, DSF-04 AC8) |
+| DSC-01 a DSC-07 | ✅ Verified (WDS-D-034: DSC-01 AC1, DSC-04 AC5, DSC-05 AC2 e AC5); DSC-01 AC2 agora tem teste e os mutantes morrem |
+| DSP-01 a DSP-07 | ✅ Verified (WDS-D-034: DSP-01 AC3, DSP-02 AC6, DSP-04 AC2, DSP-07 AC1 a AC3) |
+| DSS-01 a DSS-06 | ✅ Verified; DSS-04 AC1, AC4 e AC5 reproduzidos com exceção real |
+| DSM-01 a DSM-05 | ✅ Verified |
+| DSM-06 | ✅ Verified (AC2: D2 a D4 corrigidos; revisão restrita sem achado) |
+
+### Sensor (iteração 4)
+
+- **Resultado**: 14 mutações injetadas (M28, M29, M28r, M29o, G1 a G6, H1, H2); **14 mortas**, 0 sobreviventes.
+- **Somado à iteração 3**: lá morreram 29 (M01 a M27 e variantes). M28 e M29, que lá sobreviveram, agora morrem. Nenhum sobrevivente em aberto.
+- **Isolamento**: worktree descartável.
+  - As reversões regravaram os arquivos com LF no lugar de CRLF.
+  - Conferi com `git diff --ignore-cr-at-eol` (vazio) e restaurei com `git checkout -- .`.
+  - O status ficou vazio antes de remover o worktree.
+
+### Pendências e exceções que ficam
+
+- **12 lacunas de precisão das specs** aceitas em WDS-D-034: entram na próxima revisão das specs.
+- **`global-error`** (DSS-04 AC2): sem simulação no navegador; coberto por teste.
+- **D5** (toast com `role="dialog"`) e os conflitos registrados em `STATE.md`: sem mudança.
+- **Execução**: nenhuma pendência. Push, PR e merge continuam não autorizados.
+
+### Fechamento determinístico (iteração 4)
+
+`python .claude/skills/tlc-spec-driven/scripts/validate_state.py web-design --root C:/Users/Michels/Desktop/torcida-jovem` → exit 0, "validate_state: 0 error(s) across [web-design]".
