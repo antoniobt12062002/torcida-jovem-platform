@@ -116,6 +116,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: DSF-04 AC8 vs DSC-04 AC4; DSF-03 AC4 vs design/01-fundacao-visual.md:192 (specs)
 - last seen: 2026-10-13T16:50:07Z
 
+### L-018 - Write attribute guards over every form control in the scanned roots, not over a fixed list of files, so new fields are checked too
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/test/design` · harmful: 0
+- features: web-design
+- evidence: DSP-04 AC6; web/features/financeiro/lancamentos/lancamento-form.tsx:186; web/test/design/global.guard.test.ts:92-100 (web/test/design)
+- last seen: 2026-10-13T17:36:49Z
+
+### L-019 - Apply copy rules such as the non-breaking space between number and unit to every rendered quantity and assert it in the screen tests
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: DSP-07 AC4; web/features/estoque/produto-detail.tsx:107; web/features/estoque/ajustes/ajuste-dialog.tsx:121,126 (web/features)
+- last seen: 2026-10-13T17:36:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
