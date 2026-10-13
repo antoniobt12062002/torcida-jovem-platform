@@ -69,6 +69,16 @@ describe("tela de acesso de exemplo", () => {
     expect(screen.queryByText("Informe o e-mail.")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  // Verificação, iteração 3, D2: o login de exemplo usa os valores de
+  // `autocomplete` de autenticação, como a tela real (`app/(public)/entrar`).
+  it("e-mail e senha têm name e o autocomplete de autenticação, nunca off", () => {
+    render(<AccessPage />);
+    const email = screen.getByRole("textbox", { name: "E-mail" });
+    expect([email.getAttribute("name"), email.getAttribute("autocomplete")]).toEqual(["email", "username"]);
+    const senha = screen.getByLabelText("Senha");
+    expect([senha.getAttribute("name"), senha.getAttribute("autocomplete")]).toEqual(["senha", "current-password"]);
+  });
 });
 
 describe("página de exemplo completa", () => {

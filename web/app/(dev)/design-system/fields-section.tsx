@@ -49,13 +49,13 @@ function NumericFields() {
       <SpecimenBlock title="MoneyField">
         <div className={GRID}>
           <State name="Repouso">
-            <MoneyField label="Valor" value={valor} onChange={setValor} description="Em reais, com vírgula nos centavos." />
+            <MoneyField name="valor" label="Valor" value={valor} onChange={setValor} description="Em reais, com vírgula nos centavos." />
           </State>
           <State name="Inválido">
-            <MoneyField label="Valor" value={valorInvalido} onChange={setValorInvalido} error="Informe o valor." />
+            <MoneyField name="valor-invalido" label="Valor" value={valorInvalido} onChange={setValorInvalido} error="Informe o valor." />
           </State>
           <State name="Desabilitado">
-            <MoneyField label="Valor" value={50000} onChange={() => {}} disabled />
+            <MoneyField name="valor-desabilitado" label="Valor" value={50000} onChange={() => {}} disabled />
           </State>
         </div>
       </SpecimenBlock>
@@ -98,33 +98,40 @@ export function FieldsSection() {
           <State name="Repouso">
             <Field>
               <FieldLabel>Descrição</FieldLabel>
-              <Input placeholder="Ex.: mensalidades de março…" />
+              <Input name="descricao" autoComplete="off" placeholder="Ex.: mensalidades de março…" />
               <FieldDescription>Aparece na lista de lançamentos.</FieldDescription>
             </Field>
           </State>
           <State name="Inválido com mensagem">
             <Field invalid>
               <FieldLabel>E-mail</FieldLabel>
-              <Input type="email" defaultValue="pessoa@exemplo" spellCheck={false} autoCapitalize="none" />
+              <Input
+                type="email"
+                name="email-invalido"
+                autoComplete="off"
+                defaultValue="pessoa@exemplo"
+                spellCheck={false}
+                autoCapitalize="none"
+              />
               <FieldError>Informe um e-mail válido.</FieldError>
             </Field>
           </State>
           <State name="Desabilitado">
             <Field disabled>
               <FieldLabel>Conta</FieldLabel>
-              <Input defaultValue="Associações" disabled />
+              <Input name="conta" autoComplete="off" defaultValue="Associações" disabled />
             </Field>
           </State>
           <State name="Somente leitura">
             <Field>
               <FieldLabel>Código</FieldLabel>
-              <Input defaultValue="fb6e3d8f" readOnly />
+              <Input name="codigo" autoComplete="off" defaultValue="fb6e3d8f" readOnly />
             </Field>
           </State>
           <State name="Opcional">
             <Field>
               <FieldLabel optional>Observação</FieldLabel>
-              <Input />
+              <Input name="observacao" autoComplete="off" />
             </Field>
           </State>
         </div>

@@ -66,10 +66,11 @@ function NewEntryDialog() {
         >
           <Field invalid={submitted && missing}>
             <FieldLabel>Descrição</FieldLabel>
-            <Input value={descricao} onChange={(event) => setDescricao(event.target.value)} />
+            <Input name="descricao-dialogo" autoComplete="off" value={descricao} onChange={(event) => setDescricao(event.target.value)} />
             {submitted && missing ? <FieldError>Informe a descrição.</FieldError> : null}
           </Field>
           <MoneyField
+            name="valor-dialogo"
             label="Valor"
             value={valor}
             onChange={setValor}

@@ -46,7 +46,8 @@ export function ExampleLoginForm() {
           <FieldLabel>E-mail</FieldLabel>
           <Input
             type="email"
-            autoComplete="off"
+            name="email"
+            autoComplete="username"
             spellCheck={false}
             autoCapitalize="none"
             placeholder="pessoa@exemplo.com…"
@@ -57,7 +58,11 @@ export function ExampleLoginForm() {
         </Field>
         <Field invalid={submitted && senhaMissing}>
           <FieldLabel>Senha</FieldLabel>
-          <Input type="password" autoComplete="off" value={senha} onChange={(event) => setSenha(event.target.value)} />
+          <Input
+            type="password"
+            name="senha"
+            autoComplete="current-password"
+            value={senha} onChange={(event) => setSenha(event.target.value)} />
           {submitted && senhaMissing ? <FieldError>Informe a senha.</FieldError> : null}
         </Field>
       </FormLayout>

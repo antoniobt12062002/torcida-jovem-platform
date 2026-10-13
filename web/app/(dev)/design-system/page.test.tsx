@@ -69,6 +69,24 @@ describe("estrutura da página", () => {
     expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
   });
 
+  // Verificação, iteração 3, D2: todo campo do espécime tem `name` próprio e
+  // `autocomplete` (os de demonstração, "off"). Rádios de um grupo dividem o
+  // mesmo `name`, por definição, e ficam fora da contagem de repetidos. Os
+  // espelhos ocultos do Base UI (`aria-hidden`, por exemplo o do Checkbox) não
+  // são campos que a pessoa preenche e ficam fora.
+  it("todo campo tem name, sem repetição fora dos grupos de rádio, e os de texto têm autocomplete", () => {
+    const { container } = renderPage();
+    const controls = [...container.querySelectorAll<HTMLInputElement>("input, select, textarea")].filter(
+      (control) => control.type !== "hidden" && control.getAttribute("aria-hidden") !== "true",
+    );
+    expect(controls.length).toBeGreaterThan(0);
+    expect(controls.filter((control) => !control.name).map((control) => control.outerHTML)).toEqual([]);
+    const names = controls.filter((control) => control.type !== "radio").map((control) => control.name);
+    expect(names.filter((name, index) => names.indexOf(name) !== index)).toEqual([]);
+    const textual = controls.filter((control) => !["radio", "checkbox", "file"].includes(control.type));
+    expect(textual.filter((control) => !control.getAttribute("autocomplete")).map((control) => control.name)).toEqual([]);
+  });
+
   it.each(SECTIONS.map((section) => [section.title, section] as const))(
     "a seção %s existe, com âncora, título h2 e link no índice",
     (_title, section) => {

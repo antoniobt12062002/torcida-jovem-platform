@@ -237,6 +237,33 @@ describe("guarda global de design", () => {
     expect(missing).toEqual([]);
   });
 
+  // Verificação, iteração 3, D2 e D3: a guarda acima não cobria `Input` nem
+  // `MoneyField`. Todo `Input` declara `name` e `autoComplete`; o de arquivo
+  // (`type="file"`) só `name`, porque `autocomplete` não se aplica a ele. Todo
+  // `MoneyField` declara `name` (o componente não repassa `autoComplete`).
+  // `{...field}` do Controller e `{...register(...)}` do React Hook Form já
+  // trazem o `name`; o `autoComplete` continua exigido no `Input`.
+  it("todo Input do front declara name e autoComplete (o de arquivo só name), e todo MoneyField declara name", () => {
+    const spreadName = /\{\.\.\.(?:field\}|register\()/;
+    const missing = sources
+      .filter((file) => !file.startsWith("components/ui/") && file.endsWith(".tsx"))
+      .flatMap((file) => {
+        const source = read(file);
+        const inputs = openingTags(source, "Input")
+          .filter((tag) => {
+            const named = /\bname=/.test(tag) || spreadName.test(tag);
+            const isFile = /\btype="file"/.test(tag);
+            return !named || (!isFile && !/\bautoComplete=/.test(tag));
+          })
+          .map((tag) => `${file}: <Input${tag.slice(0, 60)}`);
+        const money = openingTags(source, "MoneyField")
+          .filter((tag) => !/\bname=/.test(tag) && !spreadName.test(tag))
+          .map((tag) => `${file}: <MoneyField${tag.slice(0, 60)}`);
+        return [...inputs, ...money];
+      });
+    expect(missing).toEqual([]);
+  });
+
   it("número e unidade de quantidade separados por espaço não separável (DSP-07 AC4)", () => {
     const offenders = sources
       .filter((file) => file.endsWith(".tsx"))
