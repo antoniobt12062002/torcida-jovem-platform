@@ -153,6 +153,9 @@ O mantenedor aprovou formalmente o espécime depois das correções de WDS-D-032
 - DSM-01 AC2 foi ajustado para incluir `.specs/`, `docs/development/` e `.gitignore`, que mudaram com aprovação desde a base documental.
 - **Lacunas de precisão da spec apontadas pelo verificador, aceitas como estão** (sem retrabalho neste ciclo): DSF-03 AC4 não lista o nome da marca em caixa alta (aprovado no espécime, WDS-D-031); DSF-04 AC8 fala em dois pontos de quebra, mas o diálogo usa 640 px (DSC-04 AC4) e o shell 400 px para esconder o nome; DSC-05 AC2 cita tom "informação", fundido ao neutro por WDS-D-018; DSC-01 AC1, DSC-05 AC5, DSP-02 AC6 e DSP-07 AC1-3 não têm valor verificável preciso; DSP-07 AC2 contra o link "Detalhes" (verbo implícito); DSC-04 AC5, DSP-01 AC3 e DSP-04 AC2 com evidência parcial. Ficam como entrada para a próxima revisão das specs.
 
+### WDS-D-035 — Quarta verificação, exceção autorizada pelo mantenedor (2026-10-13)
+Depois do FAIL da terceira iteração (limite aprovado de três), o mantenedor aprovou a correção de D1 a D4, o fechamento do item pendente da T2 da DS-S (página de erro dentro do shell numa exceção real, em ambiente controlado) e a atualização de `evidence/testes-alterados.md`, e autorizou **uma quarta verificação independente, excepcional e restrita** a esses itens, à matriz consolidada dos 219 critérios e aos sensores relacionados. A exceção não reinicia o limite de iterações nem amplia o escopo. Se a quarta iteração reprovar ou achar defeito material novo, a execução para e o resultado é apresentado; não há quinta iteração automática. Push, PR e merge continuam não autorizados.
+
 ---
 
 ## Relação com decisões anteriores
