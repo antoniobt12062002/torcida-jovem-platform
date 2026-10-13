@@ -165,6 +165,72 @@ O navegador só fala com a origem do front (`http://localhost:3000`). O `web/nex
 
 O rewrite do Next trunca corpos acima de cerca de 10 MiB: o upload chega truncado à API e a pessoa recebe `500` em texto, não o `413 document_too_large` da API. Por isso o front recusa, **antes do envio**, comprovantes acima de **10 MiB − 64 KiB (10.420.224 bytes)**, deixando margem para o envelope `multipart/form-data` (`web/features/financeiro/comprovantes/limits.ts`). O limite da API continua 10 MiB e é a autoridade. Não se usa `experimental.proxyClientMaxBodySize` nem proxy externo na V1 (ADR-010, Notas; WEB-D-009).
 
+## Design System
+
+A interface da Web segue o design system do ciclo `web-design`. As decisões estão em `.specs/features/web-design/` (specs em `spec/`, desenho em `design/01-fundacao-visual.md` a `design/05-migracao-web-v1.md`, decisões `WDS-D-*` em `STATE.md`). Esta seção é o resumo prático para quem vai mexer no front.
+
+### Tokens em três camadas
+
+Todos ficam em `web/app/globals.css`:
+
+1. **Primitivos** (`--tj-*`): a paleta oficial (`--tj-ink`, `--tj-red`, `--tj-white`, `--tj-steel`) e as escalas derivadas. Só a camada semântica os lê. Eles ficam fora do `@theme`, então nenhum utilitário do Tailwind chega a eles.
+2. **Semânticos**: o tema (`--background`, `--foreground`, `--primary`, `--brand`, `--destructive`, `--success`, `--warning`, `--info`, `--border`, `--ring`...). Um tema futuro reatribui só estes.
+3. **De componente**: as medidas compartilhadas (altura de controle, alvo de toque, linha de tabela, cabeçalho e navegação do shell, margem de página e larguras de conteúdo `--content-narrow|default|wide`).
+
+O bloco `@theme inline` expõe as camadas 2 e 3 ao Tailwind (`bg-primary`, `text-muted-foreground`, `h-control-md`, `min-h-touch`, `max-w-content-default`...). Na tela, use só esses utilitários. A guarda recusa cor literal, paleta crua do Tailwind (`bg-red-600`), valor arbitrário (`text-[13px]`, `p-[7px]`), `transition-all` e a variante `dark:`. Não existe tema escuro: nenhum elemento recebe a classe `.dark`.
+
+### Camadas de componentes
+
+| Camada | Onde | O que tem | Pode importar |
+| --- | --- | --- | --- |
+| Kit | `web/components/ui/` | Primitivos visuais: `Button`, `IconButton`, `Badge`, `Alert`, `Card`, `Field`, `Input`, `NativeSelect`, `Textarea`, `Checkbox`, `Table`, `Dialog`, `AlertDialog`, `Sheet`, `DropdownMenu`, `Toast`, `Skeleton`, `ShowMore` e a tipografia (`PageTitle`, `DisplayTitle`, `SectionTitle`, `Eyebrow`) | Só `@/lib/utils` e pacotes |
+| Compostos e padrões | `web/components/app/` | Padrões de tela: `PageContainer`, `PageHeader`, `FormLayout`, `FilterBar`, `DataList`, `RowActions`, estados (`LoadingState`, `EmptyState`, `ErrorState`), `ConfirmDialog`, `MoneyValue`, `MoneyField`, `QuantityField`, `StatusBadge`, `RoleBadge`, `AccessLayout`, `RequirePermission` e o shell (`AppShell`, `ShellFrame`, navegação) | Kit, `lib/` e, de `features/`, só a navegação dos módulos em `nav-items.ts` |
+| Telas | `web/features/<modulo>/` e `web/app/` | Composição dos padrões com dados da API | Kit, compostos e `lib/`. Um módulo não importa outro |
+| Apoio | `web/lib/url-state/`, `web/lib/responsive/` | Estado na URL e consultas de mídia | Nada de `features/` nem de `components/` |
+
+Os alias de compatibilidade foram removidos no fim do ciclo: `Button` `default`, `outline`, `icon` e `icon-sm`, as variantes antigas de `Badge` e `Alert`, a rolagem legada da `Table` e o `StatusBadge` por texto. O `tsc` e a guarda global recusam essas formas. O `Alert` exige o tom (`neutral`, `success`, `warning`, `error`), a `Table` não tem contêiner de rolagem a menos que receba `scroll="scrollable"` (com justificativa na spec da tela) e o `StatusBadge` recebe uma definição (`StatusDef`).
+
+### Guardas
+
+São testes de leitura de arquivo e rodam no `pnpm test`, sem navegador:
+
+- `web/test/design/guard.ts`: a biblioteca que aponta valores visuais soltos (cor literal, paleta crua, valores arbitrários de cor, texto, espaço e raio, fonte de identidade, caixa alta, `transition-all`, `dark:`).
+- `web/test/design/global.guard.test.ts`: aplica a guarda a `app/`, `components/` e `features/` com duas exceções justificadas, e testa que cada uma ainda é necessária: a tipografia de identidade em `components/ui/typography.tsx` e a meta `theme-color` em `app/layout.tsx`. Também recusa `<select>` fora de `NativeSelect`, `h1` fora de `PageTitle` e `DisplayTitle`, `<main>` fora de `PageContainer` e `AccessLayout`, largura de página (`max-w-content-*`) montada à mão, título com `text-xl font-semibold` e qualquer alias removido.
+- Guardas por camada ou por área: `components/ui/tokens.guard.test.ts`, `components/app/tokens.guard.test.ts`, `app/(app)/shell-acesso.guard.test.ts`, `app/(dev)/design-system/design-system.guard.test.ts` e os `tokens.guard.test.ts` de cada módulo em `features/`.
+- `web/test/design/tokens.test.ts`, `contrast.test.ts`, `fonts.test.ts` e `brand.test.ts`: conferem a folha de tokens, o contraste mínimo dos pares de cor, as fontes e o uso da marca.
+
+Quando a guarda apontar algo, corrija usando o token ou o componente. Uma exceção nova só entra com motivo escrito, na lista `EXCEPTIONS` da guarda global, e passa por revisão.
+
+### Espécime
+
+O espécime (`web/app/(dev)/design-system/`) mostra num lugar só a marca, as cores, a tipografia, o espaço, os componentes reais, os estados, o shell, a tela de acesso e uma página de exemplo. Usa dados fictícios, sem sessão e sem API. É a referência visual aprovada pelo mantenedor.
+
+Com o front em desenvolvimento (`pnpm dev`, passo 5 acima), abra `http://localhost:3000/design-system`. As subpáginas são `/design-system/acesso`, `/design-system/sem-acesso` e `/design-system/pagina-de-exemplo`. Em produção (`pnpm build` e `pnpm start`), todas respondem **404** antes de renderizar qualquer coisa, inclusive os metadados (`notFoundInProduction()` em `dev-only.ts`). O espécime não é publicado. Componente exclusivo do espécime fica em `app/(dev)/`, e a guarda do espécime impede que ele seja importado fora desse grupo.
+
+### Tela nova só com kit, compostos e padrões
+
+1. Comece pela página de exemplo do espécime (`app/(dev)/design-system/pagina-de-exemplo/` e `example-listing.tsx`). Ela é o modelo de uma listagem completa.
+2. A rota em `app/(app)/<modulo>/...` só monta o componente da tela, que fica em `features/<modulo>/`. A proteção de acesso vem do layout autenticado e de `RequirePermission`, e a API continua sendo a autoridade.
+3. Estrutura: `PageContainer` (`narrow` para formulário, `default` ou `wide` para listagem) com `PageHeader`, que é o único `h1` e leva descrição, trilha e ações (a primária por último). Não monte `<main>`, `h1` nem `max-w-*` de página à mão.
+4. Conteúdo: `FilterBar` com `DataList` para listagem, `FormLayout` com `Field` para formulário, `Dialog` ou `ConfirmDialog` para confirmar. O botão final da confirmação leva o verbo e o objeto, por exemplo "Pagar despesa". `LoadingState`, `EmptyState` (`empty` ou `no-results`) e `ErrorState` ocupam o lugar do conteúdo, e o cabeçalho e os filtros continuam onde estão. Dinheiro aparece com `MoneyValue` e é editado com `MoneyField`, sempre em centavos. Status vai em `StatusBadge` com uma `StatusDef` por módulo.
+5. Ações de linha passam por `RowActions` com `rowLabel`. O nome acessível de cada ação identifica o registro ("Devolver {registro}", "Ações de {registro}").
+6. Se faltar um padrão, não crie a variação na tela. Esses arquivos são compartilhados por todas as telas, então a mudança no kit ou nos compostos passa por spec.
+7. Escreva os testes da tela e uma guarda de tokens para os arquivos do módulo, no modelo das que já existem, e rode os gates.
+
+### Estado na URL
+
+Filtros, busca, aba e paginação ficam na query string, por `useQueryState(nome, codec, opções)` de `@/lib/url-state`:
+
+- Os codecs (`codecs.string()`, `codecs.oneOf(valores, padrão)`, `codecs.isoDate()`) convertem o texto da URL. Valor ausente ou inválido vira o padrão, e o padrão remove o parâmetro da URL.
+- Filtro e busca usam `history: "replace"` (o padrão). Aba usa `"push"`. Busca usa `debounceMs: SEARCH_DEBOUNCE_MS` (300 ms): o valor na tela muda na hora e a URL é escrita depois.
+- Quem chama `useQueryState` fica dentro de `<Suspense>`, porque `useSearchParams` exige.
+
+### Listagem e filtros por largura
+
+- `DataList` recebe uma só definição de colunas. Abaixo de 768 px de tela (`useIsNarrow()`, `BREAKPOINT_MD` em `@/lib/responsive`) vira lista empilhada, e a partir daí é tabela. Essa é a única consulta de mídia em JavaScript. No servidor e na primeira renderização da hidratação vale a tabela.
+- A prioridade das colunas é só CSS, com container query. A coluna de prioridade 3 sai abaixo de 1024 px de tela **e** quando o contêiner da tabela tem menos de 64rem, como acontece ao lado da navegação fixa entre 1024 e ~1200 px. Nenhuma listagem da V1 precisa de rolagem horizontal.
+- `FilterBar` também é `@container`: uma coluna em contêiner estreito, duas a partir de 28rem e colunas de pelo menos 11rem a partir de 48rem, com a busca sempre visível. Em tela estreita, os filtros vão para uma gaveta inferior ("Filtros (n)"). Sem filtros além da busca, o botão "Filtros" não aparece, e "Limpar filtros" fica junto da busca preenchida. Os filtros usam `NativeSelect` ou `Input` de data dentro de `Field`.
+
 ## Gates da Web
 
 A partir de `web/`, com `API_URL` no ambiente (exigido por `next typegen` e `next build`):

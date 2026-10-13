@@ -393,10 +393,10 @@ Quatro cadeias independentes na rodada 6 (T1 e T2; T3 e T4; T5 a T7; T8 a T10), 
 **Mudanças previstas**: seção no guia com tokens, camadas de componentes, guardas, como abrir o espécime e como adicionar uma tela nova; grafo regenerado pelo coordenador com o executável local, versão conferida; revisão registrada: nenhuma dependência nova entre módulos, `components/app` sem importação de `features` além de `nav-items.ts`, `components/ui` dependendo só de `lib/utils`, relações conferidas com os `import` reais.
 
 **Done when**:
-- [ ] O guia descreve o fluxo para uma tela nova usando só kit, compostos e padrões
-- [ ] A revisão estrutural lista as relações conferidas e declara os limites do grafo (arestas `INFERRED` descartadas, `.d.ts` fora do grafo)
-- [ ] Nenhum hook, MCP remoto ou serviço novo foi configurado
-- [ ] Gates passam
+- [x] O guia descreve o fluxo para uma tela nova usando só kit, compostos e padrões
+- [x] A revisão estrutural lista as relações conferidas e declara os limites do grafo (arestas `INFERRED` descartadas, `.d.ts` fora do grafo)
+- [x] Nenhum hook, MCP remoto ou serviço novo foi configurado
+- [x] Gates passam
 
 **Tests**: revisão registrada (documental e estrutural)
 **Verificação visual**: não se aplica
