@@ -39,3 +39,8 @@ Build de produção (`next start`, porta 3110), Playwright:
 - `/entrar` e `/nao-existe` em 320 px: sem rolagem horizontal (`scrollWidth` 320 = `clientWidth` 320).
 - `/nao-existe`: status 404, título "Página não encontrada | TJ Platform", foco no `h1` ao abrir.
 - `/recuperar-acesso`: enviar vazio leva o foco ao campo de e-mail, com a mensagem "Informe o e-mail.".
+
+
+## Execução com sessão real (coordenador, 2026-10-12)
+
+O roteiro acima foi executado com a stack real (API, PostgreSQL e S3 locais, `next start`), registrado em `smoke-rodada6.md`, seção "Navegação responsiva": gaveta em 390, 768 e 820 px (abre, fecha ao navegar e com Esc, foco volta ao botão de 44 × 44 px), navegação fixa em 1024 e 1440 px, gaveta aberta em 820 px fecha ao passar a 1024 px, primeiro Tab em "Pular para o conteúdo" levando a `main#conteudo`, `aria-current="page"` nas 40 combinações de tela e largura, nenhuma rolagem horizontal do documento em 320 a 1440 px. **A verificação anterior de FND-05 AC2, feita para o ponto de quebra de 768 px, não foi reaproveitada.** Resultado: PASSOU.

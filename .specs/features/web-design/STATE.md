@@ -273,6 +273,8 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 | 5 | DS-E | `7f72ba6`, `d529b4f`; evidência neste commit | 97 / 1612 | Espécime em `/design-system`, 404 em produção; aguardando aprovação visual |
 
+| 6 | DS-FA, DS-FB, DS-ES, DS-ID, DS-S | integrações `a629608` e seguintes; ícones de navegação `fc73eac`; correções do smoke `7ebae02`, `32184e8`, `c0b1925` | 107 / 1761 | Smoke real com API: 5 fluxos passaram; 4 defeitos corrigidos; FND-05 AC2 reverificado |
+
 **Alias de compatibilidade a remover em DS-INT** (marcados no código com "Alias de compatibilidade: removido em DS-INT."): `button.tsx` (variantes `default` e `outline`; tamanhos `default`, `icon`, `icon-sm`), `badge.tsx` (`default`, `secondary`, `destructive`), `alert.tsx` (`default` e `destructive`), `table.tsx` (`scroll="legacy"` como padrão).
 
 **Conflitos com a `web-design-guidelines` registrados na rodada 4** (o projeto prevalece; reavaliar na rodada 7):
@@ -295,7 +297,6 @@ A numeração `T1…Tn` é local a cada arquivo, como na Web V1. Total: 44 tasks
 
 ## Handoff
 
-- **Fase**: Execute. Rodadas 1 a 5 concluídas; correções do portão do espécime feitas (`6414cd9`, `74dd8fe`, `d99df70` e a correção do alvo da marca), com toque, teclado e movimento reduzido conferidos no navegador. **Portão aberto de novo**, aguardando o mantenedor.
-- **Testes**: 97 arquivos, 1620 testes; todos os gates verdes.
-- **Bloqueios**: rodadas 6 e 7 não começam sem aprovação explícita. Sem push, PR ou merge na `develop`.
-- **Fora do versionamento**: `.claude/`, `graphify-out/` e `.playwright-mcp/`.
+- **Fase**: Execute. Rodadas 1 a 6 concluídas e integradas, gates verdes (107 arquivos, 1761 testes, build, contrato, audit) e smoke real da rodada 6 aprovado (`evidence/smoke-rodada6.md`). Rodada 7 liberada.
+- **Pendências para a rodada 7**: remoção de alias; D5 (toast como `role="dialog"`); percurso completo só por teclado e zoom de 200% (DSM-06 AC4 e AC5) no smoke final; item de T2 da DS-S "exceção forçada mostra a página de erro dentro do shell" (coberto por teste de componente; sem conferência no navegador).
+- **Bloqueios**: nenhum. Sem push, PR ou merge na `develop`.

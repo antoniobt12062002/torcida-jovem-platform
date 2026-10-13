@@ -189,12 +189,12 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 **Mudanças previstas**: nenhum código. Roteiro executado num build de produção, com a stack real, em 390, 768, 820, 1024 e 1440 px.
 
 **Done when**:
-- [ ] Em 390, 768 e 820 px: botão de menu presente, gaveta abre, fecha ao navegar e com Esc, foco volta ao botão, nenhuma ação inacessível
-- [ ] Em 1024 e 1440 px: navegação fixa presente, sem botão de menu
-- [ ] Link de pular funciona por teclado; item ativo anunciado; nenhuma rolagem horizontal de página a partir de 320 px
+- [x] Em 390, 768 e 820 px: botão de menu presente, gaveta abre, fecha ao navegar e com Esc, foco volta ao botão, nenhuma ação inacessível
+- [x] Em 1024 e 1440 px: navegação fixa presente, sem botão de menu
+- [x] Link de pular funciona por teclado; item ativo anunciado; nenhuma rolagem horizontal de página a partir de 320 px
 - [x] A evidência registra que a verificação anterior de FND-05 AC2 (ponto de quebra de 768 px) não foi reaproveitada
 - [x] O arquivo não contém senha, token, cookie nem dado pessoal
-- [ ] IF algum item falhar THEN a unidade para, registra a falha e reporta ao coordenador
+- [x] IF algum item falhar THEN a unidade para, registra a falha e reporta ao coordenador
 - [x] Gates passam, incluindo Audit (fim da unidade DS-S)
 
 **Tests**: aceite manual no navegador (roteiro registrado)
