@@ -176,6 +176,8 @@ function UploadComprovante({
         <Input
           ref={inputRef}
           type="file"
+          // O campo de arquivo nativo não centraliza o texto na vertical.
+          className="py-1.5"
           accept={ACCEPTED_EXTENSIONS}
           disabled={upload.isPending}
           onChange={(event) => void onChange(event)}

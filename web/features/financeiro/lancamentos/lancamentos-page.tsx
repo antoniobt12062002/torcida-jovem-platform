@@ -112,7 +112,19 @@ export function LancamentosPage() {
       cell: (l) => formatDate(l.criado_em),
     },
     { id: "tipo", header: "Tipo", priority: 2, inList: "field", cell: (l) => TIPO_LABEL[l.tipo] },
-    { id: "conta", header: "Conta", priority: 1, inList: "title", cell: (l) => contaNome(l.conta_id) },
+    {
+      id: "conta",
+      header: "Conta",
+      priority: 1,
+      inList: "title",
+      // É a coluna que cede espaço quando o contêiner aperta (ao lado da
+      // navegação fixa): quebra por palavra e, se uma palavra não couber,
+      // dentro dela, em vez de alargar a tabela. Truncar esconderia o nome
+      // mesmo com espaço sobrando, porque a tabela dá a uma coluna truncada
+      // só o resto da largura.
+      wrap: "wrap",
+      cell: (l) => <span className="wrap-anywhere">{contaNome(l.conta_id)}</span>,
+    },
     {
       id: "bruto",
       header: "Valor bruto",
@@ -142,7 +154,10 @@ export function LancamentosPage() {
     {
       id: "forma",
       header: "Forma de pagamento",
-      priority: 2,
+      // Prioridade 3, não 2 como na matriz do design: com ela, as colunas que
+      // ficam de 768 a 1023 px (contêiner de 720 px) não cabiam sem rolagem
+      // interna nem corte da ação "Detalhes" (smoke da rodada 6, D1).
+      priority: 3,
       inList: false,
       cell: (l) => FORMA_PAGAMENTO_LABEL[l.forma_pagamento],
     },

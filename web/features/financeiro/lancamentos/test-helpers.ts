@@ -86,6 +86,21 @@ export function mockContas(items: Conta[] = CONTAS) {
   return calls;
 }
 
+/** GET /contas só responde quando `release()` é chamado: o plano de contas ainda carregando. */
+export function mockContasPendentes(items: Conta[] = CONTAS) {
+  let release: () => void = () => {};
+  const ready = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  server.use(
+    http.get(apiUrl(`${BASE}/contas`), async () => {
+      await ready;
+      return HttpResponse.json({ items });
+    }),
+  );
+  return { release: () => release() };
+}
+
 /** GET /lancamentos/{id}/comprovantes devolve `current()`; conta as chamadas. */
 export function mockComprovantes(items: Comprovante[] | (() => Comprovante[]) = []) {
   const calls = { count: 0 };

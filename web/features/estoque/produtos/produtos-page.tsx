@@ -126,7 +126,13 @@ const COLUMNS: readonly Column<Produto>[] = [
     priority: 1,
     inList: "title",
     cell: (p) => (
-      <Link href={`/estoque/produtos/${p.id}`} className="font-medium underline-offset-4 hover:underline">
+      // Alvo de 44 px com ponteiro de toque (o token `control-sm` cresce em
+      // `pointer: coarse`). No item empilhado o link vira bloco e
+      // `content-center` mantém o texto no meio da altura.
+      <Link
+        href={`/estoque/produtos/${p.id}`}
+        className="inline-flex min-h-control-sm touch-manipulation content-center items-center font-medium underline-offset-4 hover:underline"
+      >
         {p.nome}
       </Link>
     ),
