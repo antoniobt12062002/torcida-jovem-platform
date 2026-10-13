@@ -125,6 +125,22 @@ describe("erros da API", () => {
     expect(await within(dialog).findByText(message)).toBeTruthy();
     expect(screen.getByTestId("saldo-valor").textContent).toBe("0 UN");
   });
+
+  // N2 (smoke T13): os controles ficam desabilitados durante o envio; o erro
+  // recebe o foco, dentro do diálogo.
+  it("o erro da API recebe o foco, dentro do diálogo", async () => {
+    renderDetail(ALL, 0);
+    await screen.findByTestId("saldo-valor");
+    server.use(http.post(apiUrl("/api/v1/estoque/ajustes"), () => problem(422, "quantidade_invalida")));
+    const dialog = await openAjuste();
+    fill(dialog, "-1", "Motivo");
+    confirmButton(dialog).focus();
+    fireEvent.click(confirmButton(dialog));
+    const message = await within(dialog).findByText("Quantidade inválida.");
+    const alert = message.closest('[role="alert"]');
+    expect(alert).not.toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(alert));
+  });
 });
 
 // EWB-04 AC1-2.

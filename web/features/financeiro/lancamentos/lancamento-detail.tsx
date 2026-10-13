@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { ApiErrorAlert } from "@/components/app/api-error";
 import { ConfirmDialog } from "@/components/app/confirm-dialog";
@@ -89,12 +89,30 @@ function LancamentoView({ lancamento: l }: { lancamento: Lancamento }) {
   const actions = DISPLAY_ORDER.filter((action) => available.has(action));
   const [actionError, setActionError] = useState<ApiError | null>(null);
   const report = (error: unknown) => setActionError(isApiError(error) ? error : networkError(error));
-  const common = { lancamento: l, identifier, onStart: () => setActionError(null), onError: report };
+
+  // Receber, pagar e cancelar tiram o próprio botão do cabeçalho: sem destino,
+  // o foco cairia no body. Ele vai ao título quando o status novo chega à
+  // tela, já sem a confirmação aberta.
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const focusFrom = useRef<Lancamento["status"] | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  useEffect(() => {
+    if (focusFrom.current === null || focusFrom.current === l.status) return;
+    focusFrom.current = null;
+    titleRef.current?.focus();
+  }, [focusRequest, l.status]);
+  const onDone = () => {
+    focusFrom.current = l.status;
+    setFocusRequest((n) => n + 1);
+  };
+
+  const common = { lancamento: l, identifier, onStart: () => setActionError(null), onError: report, onDone };
 
   return (
     <>
       <PageHeader
         title={identifier.label}
+        titleRef={titleRef}
         breadcrumb={[LIST_CRUMB, { label: identifier.label }]}
         meta={<StatusBadge status={STATUS_DEF[l.status]} />}
         actions={
@@ -177,6 +195,8 @@ type ActionProps = {
   identifier: Identifier;
   onStart: () => void;
   onError: (error: unknown) => void;
+  /** Ação concluída: o botão dela pode ter sumido. */
+  onDone: () => void;
 };
 
 // O botão de confirmar repete o verbo da ação (DSP-03 AC3).
@@ -200,7 +220,14 @@ const STATUS_ACTION = {
 } as const;
 
 /** Receber (FWB-04 AC1) ou pagar (AC2), com confirmação. */
-function StatusAction({ kind, lancamento, identifier, onStart, onError }: ActionProps & { kind: "receber" | "pagar" }) {
+function StatusAction({
+  kind,
+  lancamento,
+  identifier,
+  onStart,
+  onError,
+  onDone,
+}: ActionProps & { kind: "receber" | "pagar" }) {
   const receber = useReceberLancamento(lancamento.id);
   const pagar = usePagarLancamento(lancamento.id);
   const mutation = kind === "receber" ? receber : pagar;
@@ -219,6 +246,7 @@ function StatusAction({ kind, lancamento, identifier, onStart, onError }: Action
         try {
           await mutation.mutateAsync();
           toast.success(text.success);
+          onDone();
         } catch (error) {
           onError(error);
         }
@@ -228,7 +256,7 @@ function StatusAction({ kind, lancamento, identifier, onStart, onError }: Action
 }
 
 /** Cancelamento com motivo obrigatório (FWB-04 AC3-4). */
-function CancelarAction({ lancamento, identifier, onStart, onError }: ActionProps) {
+function CancelarAction({ lancamento, identifier, onStart, onError, onDone }: ActionProps) {
   const cancelar = useCancelarLancamento(lancamento.id);
   return (
     <ConfirmDialog
@@ -249,6 +277,7 @@ function CancelarAction({ lancamento, identifier, onStart, onError }: ActionProp
         try {
           await cancelar.mutateAsync(reason);
           toast.success("Lançamento cancelado.");
+          onDone();
         } catch (error) {
           onError(error);
         }

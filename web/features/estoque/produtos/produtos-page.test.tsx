@@ -180,6 +180,28 @@ describe("criação de produto", () => {
     expect(describedByText(unidade)).toContain("Campo obrigatório.");
     expect(isInvalid(screen.getByLabelText("Código"))).toBe(false);
   });
+
+  // N2 (smoke T13): o botão de enviar fica desabilitado durante o envio; o foco
+  // vai ao primeiro campo inválido (DSP-04 AC3), na ordem do formulário.
+  it("erro de campo da API leva o foco ao primeiro campo inválido", async () => {
+    mockMe(authContext({ permissions: ALL }));
+    mockCreate([camisa], () =>
+      problem(422, "validation_failed", {
+        errors: [
+          { field: "unidade_medida", code: "required" },
+          { field: "nome", code: "too_large" },
+        ],
+      }),
+    );
+    renderWithSession(<ProdutosPage />);
+    await screen.findByText("Camisa oficial");
+    await openCreate();
+    fillCreate("X-1", "Nome", "UN");
+    screen.getByRole("button", { name: "Criar produto" }).focus();
+    submitCreate();
+    expect(await screen.findByText("Valor acima do máximo permitido.")).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Nome")));
+  });
 });
 
 // EWB-04 AC1.

@@ -6,9 +6,9 @@ import { Controller, useForm } from "react-hook-form";
 
 import { apiErrorMessage } from "@/components/app/api-error";
 import { formatDateTime } from "@/components/app/format";
+import { FormErrorAlert } from "@/components/app/form-error-alert";
 import { QuantityField } from "@/components/app/quantity-field";
 import { rowActionName } from "@/components/app/row-actions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { estoqueCatalog, origemLabels, tipoLabels } from "../errors";
 import type { Produto } from "../produtos/hooks";
@@ -63,13 +64,17 @@ export function MovimentacaoDialog(props: MovimentacaoDialogProps) {
   const texts = TEXTS[tipo];
   const [open, setOpen] = useState(false);
   const mutation = useRegistrarMovimentacao();
+  const form = useForm<Values>({ defaultValues: { quantidade: null } });
   const {
     control,
     handleSubmit,
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<Values>({ defaultValues: { quantidade: null } });
+  } = form;
+  // O campo fica desabilitado durante o envio; no erro, o foco volta ao
+  // diálogo: no campo inválido ou no alerta (N2 do smoke T13).
+  useFocusInvalidAfterSubmit(form, ["quantidade"]);
 
   function changeOpen(next: boolean) {
     if (!next && isSubmitting) return;
@@ -131,11 +136,7 @@ export function MovimentacaoDialog(props: MovimentacaoDialogProps) {
           noValidate
           onSubmit={(event) => void handleSubmit(onValid)(event)}
         >
-          {errors.root ? (
-            <Alert variant="error">
-              <AlertDescription>{errors.root.message}</AlertDescription>
-            </Alert>
-          ) : null}
+          {errors.root ? <FormErrorAlert>{errors.root.message}</FormErrorAlert> : null}
 
           <Controller
             control={control}

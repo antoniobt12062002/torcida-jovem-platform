@@ -4,6 +4,7 @@ import { SlidersHorizontalIcon } from "lucide-react";
 import { useState } from "react";
 
 import { apiErrorMessage } from "@/components/app/api-error";
+import { FormErrorAlert } from "@/components/app/form-error-alert";
 import { QuantityField } from "@/components/app/quantity-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -88,11 +89,8 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {error ? (
-            <Alert variant="error">
-              <AlertDescription>{apiErrorMessage(error, estoqueCatalog)}</AlertDescription>
-            </Alert>
-          ) : null}
+          {/* Recebe o foco: os controles ficam desabilitados durante o envio. */}
+          {error ? <FormErrorAlert>{apiErrorMessage(error, estoqueCatalog)}</FormErrorAlert> : null}
 
           <QuantityField
             mode="nonZero"

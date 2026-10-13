@@ -21,6 +21,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { toast } from "@/components/ui/toast";
 import { type ErrorCatalog, isApiError, messageFor, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { FIELD_BY_CODE, lancamentosCatalog } from "./errors";
 import { contasParaLancamento } from "./filters";
@@ -61,6 +62,9 @@ const FIELD_MAP = {
   taxa_cents: "taxa_cents",
   forma_pagamento: "forma_pagamento",
 } as const;
+
+/** Campos na ordem em que aparecem no formulário. */
+const FIELD_ORDER = ["tipo", "conta_id", "valor_bruto_cents", "taxa_cents", "forma_pagamento"] as const;
 
 export const NEW_LANCAMENTO: LancamentoFormValues = {
   tipo: "RECEITA",
@@ -117,13 +121,16 @@ function LancamentoForm({
   const contas = useContasOptions();
   const catalog: ErrorCatalog = { forbidden: MESSAGE_FORBIDDEN, ...lancamentosCatalog, ...extraCatalog };
 
+  const form = useForm<LancamentoFormValues>({ defaultValues });
   const {
     control,
     handleSubmit,
     setError,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<LancamentoFormValues>({ defaultValues });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, FIELD_ORDER);
 
   const tipo = useWatch({ control, name: "tipo" });
   const bruto = useWatch({ control, name: "valor_bruto_cents" });

@@ -13,9 +13,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+
+import { FormErrorAlert } from "./form-error-alert";
 
 // Confirmação de ação irreversível ou sensível (FND-05 AC6, DSP-03). Nada é
 // chamado antes do clique em confirmar. Com motivo obrigatório, confirmar fica
@@ -154,11 +155,8 @@ export function ConfirmDialog({
             />
           </Field>
         ) : null}
-        {error ? (
-          <Alert variant="error">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
+        {/* Recebe o foco: os botões ficam desabilitados durante a ação. */}
+        {error ? <FormErrorAlert>{error}</FormErrorAlert> : null}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction

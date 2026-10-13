@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { contasFormCatalog, tipoContaLabel } from "./errors";
 import { type Conta, useCreateConta, useRenameConta } from "./hooks";
@@ -47,12 +48,15 @@ export type CreateContaDialogProps = {
 
 export function CreateContaDialog({ parent, onClose }: CreateContaDialogProps) {
   const mutation = useCreateConta();
+  const form = useForm<CreateValues>({ defaultValues: { nome: "", tipo: parent?.tipo ?? "" } });
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<CreateValues>({ defaultValues: { nome: "", tipo: parent?.tipo ?? "" } });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, ["nome", "tipo"]);
 
   const title = parent ? `Nova subconta em ${parent.nome}` : "Nova conta";
 
@@ -134,12 +138,15 @@ type RenameValues = { nome: string };
 
 export function RenameContaDialog({ conta, onClose }: { conta: Conta; onClose: () => void }) {
   const mutation = useRenameConta();
+  const form = useForm<RenameValues>({ defaultValues: { nome: conta.nome } });
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<RenameValues>({ defaultValues: { nome: conta.nome } });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, ["nome"]);
 
   async function onValid(values: RenameValues) {
     try {

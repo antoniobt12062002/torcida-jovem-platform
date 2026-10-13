@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { estoqueCatalog, MESSAGE_CODIGO_DUPLICADO } from "../errors";
 import { type CreateProdutoRequest, useCreateProduto } from "./hooks";
@@ -32,13 +33,16 @@ const EMPTY: CreateProdutoRequest = { codigo: "", nome: "", unidade_medida: "" }
 export function CreateProdutoDialog() {
   const [open, setOpen] = useState(false);
   const mutation = useCreateProduto();
+  const form = useForm<CreateProdutoRequest>({ defaultValues: EMPTY });
   const {
     register,
     handleSubmit,
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateProdutoRequest>({ defaultValues: EMPTY });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, ["codigo", "nome", "unidade_medida"]);
 
   function changeOpen(next: boolean) {
     // Enquanto envia, o diálogo não fecha por fora.
