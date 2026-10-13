@@ -70,6 +70,17 @@ Três arquivos da base tiveram asserções trocadas. Em todas, só o espaço ent
 | `features/estoque/ajustes/ajuste-dialog.test.tsx` | saldo e prévia do ajuste (saldo atual e resultante: `"0 UN"`, `"-3 UN"`, `"5 UN"`, `"7 UN"`, `"3 UN"`, `"1 UN"`; linhas 55, 59-60, 65, 83, 86-87, 126, 170, 202) com espaço comum | os mesmos textos com U+00A0 | 10 |
 | `features/estoque/movimentacoes/movimentacoes-panel.test.tsx` | saldo depois de cada movimentação (`saldoText("0 UN")` e afins, linhas 131, 144, 153, 162, 194, 201, 209, 222, 253 e 471) e nome acessível de "Devolver" (`"Devolver entrada de 10 UN em …"`, `"Devolver saída de 4 UN em …"`, linhas 423-424 e 451) com espaço comum | os mesmos textos com U+00A0 | 13 |
 
+### `fb62b99`: testes da guarda geral (DSP-04 AC6 e DSP-07 AC4, achados A1 a A3 da iteração 2)
+
+Acrescentado em 2026-10-13, antes da publicação (pendência menor apontada na iteração 4). `test/design/global.guard.test.ts` é arquivo criado no ciclo (T11), não da base; `fb62b99` só acrescenta linhas a ele (`git show fb62b99 --numstat`: 32 inserções, 0 remoções), sem trocar nem remover asserção existente.
+
+| Arquivo (`web/`) | Commit | Acréscimo | Testes |
+| --- | --- | --- | --- |
+| `test/design/global.guard.test.ts:221` | `fb62b99` | todo `NativeSelect` e `Textarea` do front declara `name` e `autoComplete`, e todo `QuantityField` declara `name` (ou recebe `{...field}`), em todo o front em vez de uma lista fixa de arquivos (DSP-04 AC6) | +1 |
+| `test/design/global.guard.test.ts:267` | `fb62b99` | nenhum número de quantidade seguido da unidade com espaço comum (`} ${unidade}`) no código: o separador é U+00A0 (DSP-07 AC4) | +1 |
+
+O teste de `Input` e `MoneyField` que `131a5c4` acrescentou depois (tabela da iteração 3 abaixo) também é só acréscimo (27 inserções, 0 remoções) e não altera estes dois.
+
 Antes desta rodada, `produto-detail.test.tsx` e `ajuste-dialog.test.tsx` estavam na lista "Somente acréscimos" abaixo; a partir de `fb62b99` têm estas trocas. Nenhuma outra asserção desses arquivos mudou.
 
 **Por que `movimentacoes-panel.test.tsx:461` ficou com espaço comum**: a linha é `within(dialog).getByText("Devolução da saída de 4 UN em 04/10/2026 09:00.")`. O `getByText` da Testing Library aplica o normalizador padrão ao texto do DOM (`trim()` e troca de `\s+` por um espaço comum). Em JavaScript, `\s` inclui U+00A0, então o U+00A0 da tela vira espaço comum antes da comparação, e a cadeia esperada precisa ter espaço comum. Com U+00A0 na cadeia esperada a busca falharia mesmo com a tela correta. O caractere da tela nessa frase é conferido pela guarda `test/design/global.guard.test.ts:267` (nenhum `} ${unidade}` com espaço comum no código) e o do nome de "Devolver", pelas linhas 423-424 e 451, que comparam `aria-label` e nome acessível sem normalizador.
