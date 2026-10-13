@@ -90,7 +90,13 @@ function ProdutosListing({ produtos, busca, onBusca }: ListingProps) {
         search={
           <Field>
             <FieldLabel>Buscar por código ou nome</FieldLabel>
-            <Input type="search" value={busca} onChange={(event) => onBusca(event.target.value)} />
+            <Input
+              type="search"
+              name="busca"
+              autoComplete="off"
+              value={busca}
+              onChange={(event) => onBusca(event.target.value)}
+            />
           </Field>
         }
       >

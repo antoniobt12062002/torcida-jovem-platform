@@ -105,6 +105,8 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
           <Field>
             <FieldLabel>Motivo</FieldLabel>
             <Textarea
+              name="motivo"
+              autoComplete="off"
               value={motivo}
               required
               disabled={pending}
