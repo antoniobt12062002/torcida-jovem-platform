@@ -202,6 +202,38 @@ describe("registro de movimentações", () => {
     expect(historyRows(true)).toHaveLength(1);
   });
 
+  // N2 (smoke T13): o campo fica desabilitado durante o envio e perde o foco;
+  // o erro tem de receber o foco, dentro do diálogo modal (DSP-04 AC3 e AC4).
+  it("erro da API sem campo leva o foco à mensagem, dentro do diálogo", async () => {
+    renderDetail(ALL, [movimentacao({ tipo: "ENTRADA", quantidade: 2 })]);
+    await saldoText("2 UN");
+    const dialog = await openDialog(screen.getByRole("button", { name: "Registrar saída" }), "Registrar saída");
+    type("Quantidade", "5");
+    within(dialog).getByLabelText("Quantidade").focus();
+    await submit(dialog);
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("Saldo insuficiente para esta saída.");
+    await waitFor(() => expect(document.activeElement).toBe(alert));
+    expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
+  it("erro de campo da API leva o foco ao campo inválido", async () => {
+    renderDetail(ALL, []);
+    await saldoText("0 UN");
+    server.use(
+      http.post(apiUrl("/api/v1/estoque/movimentacoes"), () =>
+        problem(422, "validation_failed", { errors: [{ field: "quantidade", code: "too_large" }] }),
+      ),
+    );
+    const dialog = await openDialog(screen.getByRole("button", { name: "Registrar entrada" }), "Registrar entrada");
+    type("Quantidade", "5");
+    const button = await within(dialog).findByRole("button", { name: "Registrar" });
+    button.focus();
+    fireEvent.click(button);
+    expect(await within(dialog).findByText("Valor acima do máximo permitido.")).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText("Quantidade")));
+  });
+
   it.each([
     [404, "produto_nao_encontrado", "Produto não encontrado."],
     [422, "quantidade_invalida", "Quantidade inválida."],

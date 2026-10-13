@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { usersCatalog } from "../errors";
 import { useCreateUser } from "../hooks";
@@ -42,13 +43,16 @@ export function CreateUserDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const mutation = useCreateUser();
+  const form = useForm<CreateUserValues>({ defaultValues: EMPTY });
   const {
     register,
     handleSubmit,
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateUserValues>({ defaultValues: EMPTY });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, ["name", "email", "password"]);
 
   function close() {
     reset(EMPTY);

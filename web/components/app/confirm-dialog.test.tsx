@@ -163,6 +163,35 @@ describe("falha na ação confirmada", () => {
   });
 });
 
+// N2 (smoke T13): os botões ficam desabilitados durante a ação; o erro recebe
+// o foco, dentro da confirmação.
+describe("foco na falha", () => {
+  it("a mensagem de erro recebe o foco dentro do diálogo", async () => {
+    function Failing() {
+      const [error, setError] = useState<string>();
+      return (
+        <ConfirmDialog
+          open
+          title="Desativar conta?"
+          confirmLabel="Desativar conta"
+          error={error}
+          onConfirm={async () => {
+            setError("A conta tem lançamentos em aberto.");
+            throw new Error("falhou");
+          }}
+        />
+      );
+    }
+    render(<Failing />);
+    const button = await screen.findByRole("button", { name: "Desativar conta" });
+    button.focus();
+    fireEvent.click(button);
+    const dialog = screen.getByRole("alertdialog");
+    const alert = await within(dialog).findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(alert));
+  });
+});
+
 // DSC-02 AC4: com a ação em andamento, confirmar fica desabilitado, expõe
 // `aria-busy` e mostra um rótulo de progresso terminado em "…".
 describe("ação em andamento", () => {

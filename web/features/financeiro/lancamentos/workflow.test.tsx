@@ -251,6 +251,70 @@ describe("devolução", () => {
   });
 });
 
+// N3 (smoke T13): a ação concluída tira o próprio botão do cabeçalho; o foco
+// vai para o título da página, e não para o body.
+describe("foco depois das ações", () => {
+  function title() {
+    return screen.getByRole("heading", { level: 1 });
+  }
+
+  it.each([
+    ["receber", RECEITA_CRIADA, "Receber", "Receber receita", "receive", "RECEBIDA", "Recebida"],
+    ["pagar", DESPESA_CRIADA, "Pagar", "Pagar despesa", "pay", "PAGA", "Paga"],
+  ] as const)("%s leva o foco ao título", async (_, initial, trigger, confirm, path, status, label) => {
+    const { state } = await renderDetail([initial]);
+    mockWrite("post", `/lancamentos/${ID}/${path}`, () => {
+      state.items = [{ ...initial, status }];
+      return new HttpResponse(null, { status: 204 });
+    });
+    const button = screen.getByRole("button", { name: trigger });
+    button.focus();
+    fireEvent.click(button);
+    await confirmIn(confirm);
+    await waitFor(() => expect(badge()).toBe(label));
+    expect(screen.queryByRole("button", { name: trigger })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(title()));
+    expect(title().getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("cancelar leva o foco ao título", async () => {
+    const { state } = await renderDetail([RECEITA_CRIADA]);
+    mockWrite("post", `/lancamentos/${ID}/cancel`, () => {
+      state.items = [{ ...RECEITA_CRIADA, status: "CANCELADA", motivo_cancelamento: "Duplicado" }];
+      return new HttpResponse(null, { status: 204 });
+    });
+    const button = screen.getByRole("button", { name: "Cancelar lançamento" });
+    button.focus();
+    fireEvent.click(button);
+    const alert = within(await screen.findByRole("alertdialog"));
+    change(alert.getByLabelText("Motivo do cancelamento"), "Duplicado");
+    fireEvent.click(alert.getByRole("button", { name: "Cancelar lançamento" }));
+    await waitFor(() => expect(badge()).toBe("Cancelada"));
+    await waitFor(() => expect(document.activeElement).toBe(title()));
+  });
+
+  // A devolução não muda o status da receita: o botão continua e o diálogo
+  // devolve o foco a ele.
+  it("registrar devolução devolve o foco ao botão, que continua no cabeçalho", async () => {
+    await renderDetail([RECEITA_RECEBIDA]);
+    mockWrite("post", "/lancamentos/devolucoes", () =>
+      HttpResponse.json(lancamento({ id: "devolucao", tipo: "DESPESA", devolucao_de_id: ID }), { status: 201 }),
+    );
+    const button = screen.getByRole("button", { name: "Registrar devolução" });
+    button.focus();
+    fireEvent.click(button);
+    await waitFor(() => expect(formDialog()).not.toBeNull());
+    const form = dialog();
+    await waitFor(() => expect(form.getByRole("option", { name: "Devoluções" })).toBeTruthy());
+    change(form.getByLabelText("Conta"), CONTA_DESPESA.id);
+    change(form.getByLabelText("Valor bruto"), "50,00");
+    change(form.getByLabelText("Forma de pagamento"), "PIX");
+    fireEvent.click(form.getByRole("button", { name: "Registrar devolução" }));
+    await waitFor(() => expect(formDialog()).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Registrar devolução" })));
+  });
+});
+
 // FWB-04 AC6-7 e casos de borda: cada ação só no status e com a permissão certos.
 describe("ações visíveis", () => {
   const ALL = ["Receber", "Pagar", "Editar", "Registrar devolução", "Cancelar lançamento"];

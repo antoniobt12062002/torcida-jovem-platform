@@ -321,6 +321,32 @@ describe("Dialog: tela estreita, rolagem e profundidade", () => {
       "Criar conta",
     ])
   })
+
+  // N1 (smoke T13): o elemento grudado com `bottom-0` para na borda do padding
+  // do contêiner que rola; com padding inferior e margem negativa, o rodapé
+  // subia 16/24 px e cobria o fim do corpo.
+  it("com rodapé, o diálogo não tem padding inferior e o rodapé não usa margem negativa embaixo", async () => {
+    const dialog = await open()
+    const footer = dialog.querySelector("[data-slot=dialog-footer]") as Element
+    expect(classes(dialog)).toEqual(
+      expect.arrayContaining(["has-data-[slot=dialog-footer]:pb-0", "md:has-data-[slot=dialog-footer]:pb-0"])
+    )
+    expect(classes(footer).filter((name) => /(^|:)-?m[by]-/.test(name))).toEqual([])
+    expect(classes(footer)).toEqual(expect.arrayContaining(["-mx-4", "md:-mx-6"]))
+  })
+
+  it("sem rodapé, o diálogo mantém o padding em todos os lados", async () => {
+    render(
+      <Dialog defaultOpen>
+        <DialogContent>
+          <DialogTitle>Detalhe</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    )
+    const dialog = await screen.findByRole("dialog")
+    expect(dialog.querySelector("[data-slot=dialog-footer]")).toBeNull()
+    expect(classes(dialog)).toEqual(expect.arrayContaining(["p-4", "md:p-6"]))
+  })
 })
 
 describe("AlertDialog: foco, Esc e clique fora", () => {

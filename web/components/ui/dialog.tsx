@@ -47,6 +47,8 @@ function DialogOverlay({
 
 // Abaixo de 640 px ocupa a tela inteira; a partir daí é uma caixa centrada de
 // 480 px (`default`) ou 640 px (`wide`). A rolagem fica contida no diálogo.
+// Com rodapé, o diálogo não tem padding inferior: o elemento grudado com
+// `bottom-0` para na borda do padding de quem rola, e o rodapé subiria.
 function DialogContent({
   className,
   children,
@@ -64,7 +66,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed inset-0 z-50 flex w-full flex-col gap-4 overflow-y-auto overscroll-contain bg-popover p-4 text-sm text-popover-foreground shadow-elevation-2 duration-slow outline-none focus-visible:ring-2 focus-visible:ring-ring data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-11/12 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95 md:p-6",
+          "fixed inset-0 z-50 flex w-full flex-col gap-4 overflow-y-auto overscroll-contain bg-popover p-4 text-sm text-popover-foreground shadow-elevation-2 duration-slow outline-none focus-visible:ring-2 focus-visible:ring-ring data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-11/12 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95 md:p-6 has-data-[slot=dialog-footer]:pb-0 md:has-data-[slot=dialog-footer]:pb-0",
           size === "wide" ? "sm:max-w-content-narrow" : "sm:max-w-120",
           className
         )}
@@ -100,7 +102,8 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-// Preso à base do diálogo (não à janela), acima da área segura do aparelho.
+// Preso à base do diálogo (não à janela), colado à borda inferior e acima da
+// área segura do aparelho; o corpo rola por trás dele.
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -113,7 +116,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "sticky bottom-0 -mx-4 mt-auto -mb-4 flex flex-col-reverse gap-2 border-t bg-muted p-4 sm:flex-row sm:justify-end md:-mx-6 md:-mb-6 md:px-6",
+        "sticky bottom-0 -mx-4 mt-auto flex flex-col-reverse gap-2 border-t bg-muted p-4 sm:flex-row sm:justify-end md:-mx-6 md:px-6",
         className
       )}
       {...props}

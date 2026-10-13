@@ -1,9 +1,10 @@
 "use client";
 
-import { type ComponentProps, type ReactNode, useEffect, useRef } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+
+import { FormErrorAlert } from "./form-error-alert";
 
 // Layout de formulário (DSP-04): coluna única na largura estreita, com o erro
 // que não pertence a nenhum campo num alerta no topo e as ações no rodapé.
@@ -17,30 +18,14 @@ export type FormLayoutProps = ComponentProps<"form"> & {
 };
 
 export function FormLayout({ error, footer, className, children, ...props }: FormLayoutProps) {
-  const alertRef = useRef<HTMLDivElement>(null);
-  const hasError = Boolean(error);
-
-  // O foco vai ao alerta só quando o erro surge, não a cada renderização.
-  useEffect(() => {
-    if (hasError) alertRef.current?.focus();
-  }, [hasError]);
-
   return (
     <form
       data-slot="form-layout"
       className={cn("flex w-full max-w-content-narrow flex-col gap-4", className)}
       {...props}
     >
-      {hasError ? (
-        <Alert
-          ref={alertRef}
-          variant="error"
-          tabIndex={-1}
-          className="outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
-        >
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
+      {/* O alerta recebe o foco quando surge, não a cada renderização. */}
+      {error ? <FormErrorAlert>{error}</FormErrorAlert> : null}
       {children}
       <div
         data-slot="form-footer"
