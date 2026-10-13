@@ -77,7 +77,7 @@ function NewEntryDialog() {
           />
           <Field>
             <FieldLabel optional>Conta</FieldLabel>
-            <NativeSelect defaultValue="">
+            <NativeSelect name="exemplo-dialogo-13" autoComplete="off" defaultValue="">
               <option value="">Selecione a conta</option>
               <option value="associacoes">Associações</option>
               <option value="loja">Loja</option>

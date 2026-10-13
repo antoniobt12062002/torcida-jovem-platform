@@ -61,7 +61,7 @@ export function ExampleListing({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
       >
         <Field>
           <FieldLabel>Tipo</FieldLabel>
-          <NativeSelect value={tipo} onChange={(event) => setTipo(tipoCodec.parse(event.target.value))}>
+          <NativeSelect name="tipo" autoComplete="off" value={tipo} onChange={(event) => setTipo(tipoCodec.parse(event.target.value))}>
             <option value="">Todos</option>
             {TIPOS.map((value) => (
               <option key={value} value={value}>
@@ -72,7 +72,7 @@ export function ExampleListing({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
         </Field>
         <Field>
           <FieldLabel>Status</FieldLabel>
-          <NativeSelect value={status} onChange={(event) => setStatus(statusCodec.parse(event.target.value))}>
+          <NativeSelect name="status" autoComplete="off" value={status} onChange={(event) => setStatus(statusCodec.parse(event.target.value))}>
             <option value="">Todos</option>
             {STATUS.map((value) => (
               <option key={value} value={value}>

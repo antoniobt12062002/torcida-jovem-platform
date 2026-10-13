@@ -93,6 +93,7 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
           {error ? <FormErrorAlert>{apiErrorMessage(error, estoqueCatalog)}</FormErrorAlert> : null}
 
           <QuantityField
+            name="quantidade"
             mode="nonZero"
             label="Quantidade"
             description={`Em ${unidade}, com sinal.`}
@@ -116,14 +117,14 @@ export function AjusteDialog({ produto, saldoAtual }: AjusteDialogProps) {
 
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted-foreground">Saldo atual</dt>
-            <dd data-testid="ajuste-saldo-atual" className="tabular-nums">{`${saldoAtual} ${unidade}`}</dd>
+            <dd data-testid="ajuste-saldo-atual" className="tabular-nums">{`${saldoAtual} ${unidade}`}</dd>
             <dt className="text-muted-foreground">Saldo resultante</dt>
             <dd
               data-testid="ajuste-saldo-resultante"
               aria-live="polite"
               className={cn("tabular-nums", resultante !== null && resultante < 0 && "font-semibold text-destructive")}
             >
-              {resultante === null ? "—" : `${resultante} ${unidade}`}
+              {resultante === null ? "—" : `${resultante} ${unidade}`}
             </dd>
           </dl>
 

@@ -218,6 +218,38 @@ describe("guarda global de design", () => {
     }
   });
 
+  it("todo NativeSelect e Textarea do front declara name e autoComplete, e todo QuantityField declara name (DSP-04 AC6)", () => {
+    const missing = sources
+      .filter((file) => !file.startsWith("components/ui/") && file.endsWith(".tsx"))
+      .flatMap((file) => {
+        const source = read(file);
+        const textual = ["NativeSelect", "Textarea"].flatMap((name) =>
+          openingTags(source, name)
+            .filter((tag) => !/\bname=/.test(tag) || !/\bautoComplete=/.test(tag))
+            .map((tag) => `${file}: <${name}${tag.slice(0, 60)}`),
+        );
+        // `{...field}` do Controller do React Hook Form já traz o `name`.
+        const quantity = openingTags(source, "QuantityField")
+          .filter((tag) => !/\bname=|\{\.\.\.field\}/.test(tag))
+          .map((tag) => `${file}: <QuantityField${tag.slice(0, 60)}`);
+        return [...textual, ...quantity];
+      });
+    expect(missing).toEqual([]);
+  });
+
+  it("número e unidade de quantidade separados por espaço não separável (DSP-07 AC4)", () => {
+    const offenders = sources
+      .filter((file) => file.endsWith(".tsx"))
+      .flatMap((file) =>
+        read(file)
+          .split("\n")
+          .map((line, index) => ({ line, index }))
+          .filter(({ line }) => /\} \$\{(?:produto\.)?(?:unidade|unidade_medida)\}/.test(line))
+          .map(({ index }) => `${file}:${index + 1}`),
+      );
+    expect(offenders).toEqual([]);
+  });
+
   it("campos de e-mail e de código desativam a correção ortográfica e a maiúscula automática", () => {
     const tags = sources.flatMap((file) => controlTags(read(file)).filter(isEmailOrCode).map((tag) => ({ file, tag })));
     expect(tags.map(({ file }) => file)).toEqual(

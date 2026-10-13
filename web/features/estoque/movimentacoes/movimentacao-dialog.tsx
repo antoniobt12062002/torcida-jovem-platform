@@ -54,7 +54,7 @@ const ICONS: Record<MovimentacaoDialogProps["tipo"], LucideIcon> = {
  * nome das ações da linha no histórico (DSP-05 AC10) e descrição da devolução.
  */
 export function movimentacaoLabel(mov: Movimentacao, unidade: string): string {
-  return `${tipoLabels[mov.tipo].toLowerCase()} de ${Math.abs(mov.quantidade)} ${unidade} em ${formatDateTime(mov.criado_em)}`;
+  return `${tipoLabels[mov.tipo].toLowerCase()} de ${Math.abs(mov.quantidade)} ${unidade} em ${formatDateTime(mov.criado_em)}`;
 }
 
 type Values = { quantidade: number | null };

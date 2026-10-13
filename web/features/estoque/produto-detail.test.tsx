@@ -47,7 +47,7 @@ describe("saldo", () => {
   it("com estoque:saldo:read chama o saldo e mostra com a unidade", async () => {
     const { saldoState } = renderDetail([PERM.produtoRead, PERM.saldoRead], 12);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("12 UN");
+    expect(saldo.textContent).toBe("12 UN");
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByText("Saldo negativo")).toBeNull();
   });
@@ -55,7 +55,7 @@ describe("saldo", () => {
   it("saldo negativo é destacado", async () => {
     renderDetail([PERM.produtoRead, PERM.saldoRead], -3);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("-3 UN");
+    expect(saldo.textContent).toBe("-3 UN");
     expect(screen.getByText("Saldo negativo")).toBeTruthy();
     expect(saldo.getAttribute("data-negative")).toBe("true");
   });
@@ -63,7 +63,7 @@ describe("saldo", () => {
   it("saldo zero não é destacado", async () => {
     renderDetail([PERM.produtoRead, PERM.saldoRead], 0);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("0 UN");
+    expect(saldo.textContent).toBe("0 UN");
     expect(screen.queryByText("Saldo negativo")).toBeNull();
     expect(saldo.getAttribute("data-negative")).toBe("false");
   });
@@ -117,7 +117,7 @@ describe("isolamento das permissões de leitura", () => {
 
   it("estoque:saldo:read sozinha (com a rota) mostra o saldo e não chama o histórico", async () => {
     const { saldoState, movs } = renderDetail([PERM.produtoRead, PERM.saldoRead], 7);
-    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
     expect(screen.getByRole("heading", { name: "Saldo" })).toBeTruthy();
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
@@ -145,7 +145,7 @@ describe("isolamento das permissões de leitura", () => {
 
   it("todas as permissões menos estoque:movimentacao:read: sem histórico e sem chamá-lo", async () => {
     const { saldoState, movs } = renderDetail(allExcept(PERM.movRead), 7);
-    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
     expect(screen.queryByRole("table")).toBeNull();

@@ -128,7 +128,7 @@ describe("Devolver", () => {
 describe("registro de movimentações", () => {
   it("entrada de 10, saída de 4, devolução da saída; corpo sempre com INVENTARIO", async () => {
     const backend = renderDetail(ALL, []);
-    await saldoText("0 UN");
+    await saldoText("0 UN");
 
     // Entrada: a origem é fixa, sem opção de escolha.
     let dialog = await openDialog(screen.getByRole("button", { name: "Registrar entrada" }), "Registrar entrada");
@@ -141,7 +141,7 @@ describe("registro de movimentações", () => {
     }
     type("Quantidade", "10");
     await submit(dialog);
-    await saldoText("10 UN");
+    await saldoText("10 UN");
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Registrar entrada" })).toBeNull());
     expect(historyRows().map((r) => cells(r).slice(0, 3))).toEqual([["Entrada", "10", "Inventário"]]);
 
@@ -150,7 +150,7 @@ describe("registro de movimentações", () => {
     expect(within(dialog).getByText("Inventário")).toBeTruthy();
     type("Quantidade", "4");
     await submit(dialog);
-    await saldoText("6 UN");
+    await saldoText("6 UN");
     await waitFor(() => expect(historyRows()).toHaveLength(2));
 
     // Devolução da saída, a partir do histórico.
@@ -159,7 +159,7 @@ describe("registro de movimentações", () => {
     expect(within(dialog).getByText("Inventário")).toBeTruthy();
     type("Quantidade", "4");
     await submit(dialog);
-    await saldoText("10 UN");
+    await saldoText("10 UN");
     await waitFor(() => expect(historyRows()).toHaveLength(3));
 
     const saidaId = backend.items[1].id;
@@ -191,14 +191,14 @@ describe("registro de movimentações", () => {
   // EWB-02 AC5.
   it("saída maior que o saldo mostra saldo insuficiente e não altera nada", async () => {
     const backend = renderDetail(ALL, [movimentacao({ tipo: "ENTRADA", quantidade: 2 })]);
-    await saldoText("2 UN");
+    await saldoText("2 UN");
     const dialog = await openDialog(screen.getByRole("button", { name: "Registrar saída" }), "Registrar saída");
     type("Quantidade", "5");
     await submit(dialog);
     expect(await within(dialog).findByText("Saldo insuficiente para esta saída.")).toBeTruthy();
     expect(screen.getByRole("dialog", { name: "Registrar saída" })).toBeTruthy();
     expect(backend.movRequests).toHaveLength(1);
-    expect(screen.getByTestId("saldo-valor").textContent).toBe("2 UN");
+    expect(screen.getByTestId("saldo-valor").textContent).toBe("2 UN");
     expect(historyRows(true)).toHaveLength(1);
   });
 
@@ -206,7 +206,7 @@ describe("registro de movimentações", () => {
   // o erro tem de receber o foco, dentro do diálogo modal (DSP-04 AC3 e AC4).
   it("erro da API sem campo leva o foco à mensagem, dentro do diálogo", async () => {
     renderDetail(ALL, [movimentacao({ tipo: "ENTRADA", quantidade: 2 })]);
-    await saldoText("2 UN");
+    await saldoText("2 UN");
     const dialog = await openDialog(screen.getByRole("button", { name: "Registrar saída" }), "Registrar saída");
     type("Quantidade", "5");
     within(dialog).getByLabelText("Quantidade").focus();
@@ -219,7 +219,7 @@ describe("registro de movimentações", () => {
 
   it("erro de campo da API leva o foco ao campo inválido", async () => {
     renderDetail(ALL, []);
-    await saldoText("0 UN");
+    await saldoText("0 UN");
     server.use(
       http.post(apiUrl("/api/v1/estoque/movimentacoes"), () =>
         problem(422, "validation_failed", { errors: [{ field: "quantidade", code: "too_large" }] }),
@@ -250,7 +250,7 @@ describe("registro de movimentações", () => {
 
   it("quantidade zero, negativa ou vazia não chama a API", async () => {
     const backend = renderDetail(ALL, []);
-    await saldoText("0 UN");
+    await saldoText("0 UN");
     const dialog = await openDialog(screen.getByRole("button", { name: "Registrar entrada" }), "Registrar entrada");
     await submit(dialog);
     expect(await within(dialog).findByText("Informe a quantidade.")).toBeTruthy();
@@ -420,8 +420,8 @@ describe("nome de Devolver", () => {
     renderDetail(ALL);
     await screen.findByRole("table", { name: "Movimentações" });
     const [entrada, saida] = historyRows().map((row) => within(row).queryByRole("button", { name: DEVOLVER }));
-    expect(entrada?.getAttribute("aria-label")).toBe("Devolver entrada de 10 UN em 04/10/2026 09:00");
-    expect(saida?.getAttribute("aria-label")).toBe("Devolver saída de 4 UN em 04/10/2026 09:00");
+    expect(entrada?.getAttribute("aria-label")).toBe("Devolver entrada de 10 UN em 04/10/2026 09:00");
+    expect(saida?.getAttribute("aria-label")).toBe("Devolver saída de 4 UN em 04/10/2026 09:00");
     expect(saida?.textContent).toBe("Devolver");
   });
 });
@@ -448,7 +448,7 @@ describe("histórico no celular", () => {
     expect(fields?.className).toContain("line-clamp-3");
 
     // Devolver continua no item, com o nome que identifica a movimentação.
-    expect(within(items[1]).getByRole("button", { name: "Devolver saída de 4 UN em 04/10/2026 09:00" })).toBeTruthy();
+    expect(within(items[1]).getByRole("button", { name: "Devolver saída de 4 UN em 04/10/2026 09:00" })).toBeTruthy();
     expect(within(items[2]).queryByRole("button", { name: DEVOLVER })).toBeNull();
   });
 
@@ -468,7 +468,7 @@ describe("histórico no celular", () => {
 
   it("quantidade decimal continua recusada, sem chamar a API", async () => {
     const backend = renderDetail(ALL, []);
-    await saldoText("0 UN");
+    await saldoText("0 UN");
     const dialog = await openDialog(screen.getByRole("button", { name: "Registrar entrada" }), "Registrar entrada");
     type("Quantidade", "1,5");
     await submit(dialog);

@@ -62,10 +62,10 @@ function NumericFields() {
       <SpecimenBlock title="QuantityField">
         <div className={GRID}>
           <State name="Repouso (positive)">
-            <QuantityField label="Quantidade" mode="positive" value={quantidade} onChange={setQuantidade} />
+            <QuantityField name="quantidade-10" label="Quantidade" mode="positive" value={quantidade} onChange={setQuantidade} />
           </State>
           <State name="Inválido (nonZero)">
-            <QuantityField
+            <QuantityField name="quantidade-11"
               label="Ajuste de estoque"
               mode="nonZero"
               value={ajuste}
@@ -75,7 +75,7 @@ function NumericFields() {
             />
           </State>
           <State name="Desabilitado">
-            <QuantityField label="Quantidade" mode="positive" value={10} onChange={() => {}} disabled />
+            <QuantityField name="quantidade-12" label="Quantidade" mode="positive" value={10} onChange={() => {}} disabled />
           </State>
         </div>
         <SpecimenCaption>
@@ -135,32 +135,32 @@ export function FieldsSection() {
           <State name="Repouso">
             <Field>
               <FieldLabel>Motivo</FieldLabel>
-              <Textarea placeholder="Explique o motivo do cancelamento…" />
+              <Textarea name="exemplo-1" autoComplete="off" placeholder="Explique o motivo do cancelamento…" />
             </Field>
           </State>
           <State name="Inválido com mensagem">
             <Field invalid>
               <FieldLabel>Motivo</FieldLabel>
-              <Textarea />
+              <Textarea name="exemplo-2" autoComplete="off" />
               <FieldError>Informe o motivo.</FieldError>
             </Field>
           </State>
           <State name="Desabilitado">
             <Field disabled>
               <FieldLabel>Motivo</FieldLabel>
-              <Textarea defaultValue="Lançamento duplicado." disabled />
+              <Textarea name="exemplo-3" autoComplete="off" defaultValue="Lançamento duplicado." disabled />
             </Field>
           </State>
           <State name="Somente leitura">
             <Field>
               <FieldLabel>Histórico</FieldLabel>
-              <Textarea defaultValue="Criado pela Tesouraria em 02/03/2026." readOnly />
+              <Textarea name="exemplo-4" autoComplete="off" defaultValue="Criado pela Tesouraria em 02/03/2026." readOnly />
             </Field>
           </State>
           <State name="Opcional">
             <Field>
               <FieldLabel optional>Observação</FieldLabel>
-              <Textarea />
+              <Textarea name="exemplo-5" autoComplete="off" />
             </Field>
           </State>
         </div>
@@ -171,7 +171,7 @@ export function FieldsSection() {
           <State name="Repouso">
             <Field>
               <FieldLabel>Conta</FieldLabel>
-              <NativeSelect defaultValue="">
+              <NativeSelect name="exemplo-6" autoComplete="off" defaultValue="">
                 <ContaOptions />
               </NativeSelect>
             </Field>
@@ -179,7 +179,7 @@ export function FieldsSection() {
           <State name="Inválido com mensagem">
             <Field invalid>
               <FieldLabel>Conta</FieldLabel>
-              <NativeSelect defaultValue="">
+              <NativeSelect name="exemplo-7" autoComplete="off" defaultValue="">
                 <ContaOptions />
               </NativeSelect>
               <FieldError>Escolha a conta.</FieldError>
@@ -188,7 +188,7 @@ export function FieldsSection() {
           <State name="Desabilitado">
             <Field disabled>
               <FieldLabel>Conta</FieldLabel>
-              <NativeSelect defaultValue="loja" disabled>
+              <NativeSelect name="exemplo-8" autoComplete="off" defaultValue="loja" disabled>
                 <ContaOptions />
               </NativeSelect>
             </Field>
@@ -196,7 +196,7 @@ export function FieldsSection() {
           <State name="Opcional">
             <Field>
               <FieldLabel optional>Conta de destino</FieldLabel>
-              <NativeSelect defaultValue="">
+              <NativeSelect name="exemplo-9" autoComplete="off" defaultValue="">
                 <ContaOptions />
               </NativeSelect>
             </Field>

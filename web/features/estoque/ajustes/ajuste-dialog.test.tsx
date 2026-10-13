@@ -52,17 +52,17 @@ function previewText(dialog: HTMLElement, testId: string) {
 describe("ajuste com sucesso", () => {
   it("−3 num produto com saldo 0: avisa o negativo, envia e atualiza saldo e histórico", async () => {
     const backend = renderDetail(ALL, 0);
-    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("0 UN"));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("0 UN"));
     const dialog = await openAjuste();
     fill(dialog, "-3", "  Contagem física do inventário  ");
 
-    expect(previewText(dialog, "ajuste-saldo-atual")).toBe("0 UN");
-    expect(previewText(dialog, "ajuste-saldo-resultante")).toBe("-3 UN");
+    expect(previewText(dialog, "ajuste-saldo-atual")).toBe("0 UN");
+    expect(previewText(dialog, "ajuste-saldo-resultante")).toBe("-3 UN");
     expect(within(dialog).getByText(WARNING, { exact: false })).toBeTruthy();
     expect(confirmButton(dialog).disabled).toBe(false);
 
     fireEvent.click(confirmButton(dialog));
-    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("-3 UN"));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("-3 UN"));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ajustar estoque" })).toBeNull());
 
     expect(backend.ajusteRequests).toEqual([
@@ -80,11 +80,11 @@ describe("ajuste com sucesso", () => {
 
   it("resultado positivo não mostra aviso", async () => {
     renderDetail(ALL, 5);
-    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("5 UN"));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("5 UN"));
     const dialog = await openAjuste();
     fill(dialog, "+2", "Achado no depósito");
-    expect(previewText(dialog, "ajuste-saldo-atual")).toBe("5 UN");
-    expect(previewText(dialog, "ajuste-saldo-resultante")).toBe("7 UN");
+    expect(previewText(dialog, "ajuste-saldo-atual")).toBe("5 UN");
+    expect(previewText(dialog, "ajuste-saldo-resultante")).toBe("7 UN");
     expect(within(dialog).queryByText(WARNING, { exact: false })).toBeNull();
     expect(confirmButton(dialog).disabled).toBe(false);
   });
@@ -123,7 +123,7 @@ describe("erros da API", () => {
     fill(dialog, "-1", "Motivo");
     fireEvent.click(confirmButton(dialog));
     expect(await within(dialog).findByText(message)).toBeTruthy();
-    expect(screen.getByTestId("saldo-valor").textContent).toBe("0 UN");
+    expect(screen.getByTestId("saldo-valor").textContent).toBe("0 UN");
   });
 
   // N2 (smoke T13): os controles ficam desabilitados durante o envio; o erro
@@ -167,7 +167,7 @@ describe("isolamento de estoque:movimentacao:adjust", () => {
     const dialog = await openAjuste();
     fill(dialog, "-1", "Peça danificada");
     fireEvent.click(confirmButton(dialog));
-    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("3 UN"));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("3 UN"));
     expect(backend.ajusteRequests).toEqual([
       {
         body: { produto_id: camisa.id, quantidade: -1, motivo: "Peça danificada" },
@@ -199,7 +199,7 @@ describe("isolamento de estoque:movimentacao:adjust", () => {
 describe("aviso de saldo negativo", () => {
   it("é um alerta no tom de aviso, com ícone e texto, sem desabilitar a confirmação", async () => {
     renderDetail(ALL, 1);
-    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("1 UN"));
+    await waitFor(() => expect(screen.getByTestId("saldo-valor").textContent).toBe("1 UN"));
     const dialog = await openAjuste();
     fill(dialog, "-3", "Contagem");
     const aviso = within(dialog).getByRole("alert");

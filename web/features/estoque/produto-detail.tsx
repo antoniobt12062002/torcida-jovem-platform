@@ -104,7 +104,7 @@ function SaldoSection({ produto }: { produto: Produto }) {
             data-negative={query.data < 0}
             className={cn("text-2xl font-semibold tabular-nums", query.data < 0 && "text-destructive")}
           >
-            {`${query.data} ${produto.unidade_medida}`}
+            {`${query.data} ${produto.unidade_medida}`}
           </span>
           {query.data < 0 ? <StatusBadge status={SALDO_NEGATIVO} /> : null}
           {/* O ajuste fica aqui porque a confirmação mostra o saldo atual (EWB-03 AC3). */}

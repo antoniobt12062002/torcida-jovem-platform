@@ -186,6 +186,7 @@ function LancamentoForm({
               <NativeSelect
                 ref={field.ref}
                 name={field.name}
+                autoComplete="off"
                 value={field.value}
                 onBlur={field.onBlur}
                 onChange={(event) => {
@@ -220,6 +221,7 @@ function LancamentoForm({
             <NativeSelect
               ref={field.ref}
               name={field.name}
+              autoComplete="off"
               value={field.value}
               onBlur={field.onBlur}
               onChange={(event) => field.onChange(event.target.value)}
@@ -271,6 +273,7 @@ function LancamentoForm({
             <NativeSelect
               ref={field.ref}
               name={field.name}
+              autoComplete="off"
               value={field.value}
               onBlur={field.onBlur}
               onChange={(event) => field.onChange(event.target.value)}
