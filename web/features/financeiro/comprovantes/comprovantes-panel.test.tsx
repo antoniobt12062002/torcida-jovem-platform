@@ -428,4 +428,17 @@ describe("campo de arquivo", () => {
     expect(input.getAttribute("type")).toBe("file");
     expect(input.className.split(" ")).toContain("py-1.5");
   });
+
+  // Verificação, iteração 3, D3: o campo de arquivo tem nome de formulário e
+  // continua ligado ao rótulo (nome acessível); `autocomplete` não se aplica a
+  // `type="file"`. O envio continua levando o arquivo no campo `file`
+  // (conferido em "anexar"): o `name` do campo não muda o contrato.
+  it('declara name="comprovante", ligado ao rótulo, sem autocomplete', async () => {
+    await renderPanel();
+    const input = fileInput();
+    expect(input.getAttribute("name")).toBe("comprovante");
+    expect(input.getAttribute("autocomplete")).toBeNull();
+    expect([...(input.labels ?? [])].map((label) => label.textContent)).toEqual(["Anexar comprovante"]);
+    expect(document.querySelectorAll('input[name="comprovante"]')).toHaveLength(1);
+  });
 });
