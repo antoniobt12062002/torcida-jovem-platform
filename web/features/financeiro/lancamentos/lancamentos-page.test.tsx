@@ -518,3 +518,35 @@ describe("nome do link de detalhe", () => {
     ]);
   });
 });
+
+// Smoke da rodada 6, D1: de 768 a 1440 px a tabela cabe no contêiner. Forma de
+// pagamento sai junto com as colunas de prioridade 3, e a conta quebra (até
+// dentro da palavra) em vez de alargar a tabela.
+describe("colunas por largura", () => {
+  function header(name: string) {
+    const table = screen.getByRole("table", { name: "Lançamentos" });
+    return within(table).getByRole("columnheader", { name });
+  }
+
+  it("forma de pagamento, valor bruto e taxa são de prioridade 3; as demais ficam sempre", async () => {
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    for (const name of ["Forma de pagamento", "Valor bruto", "Taxa"]) {
+      expect(header(name).className).toContain("hidden");
+      expect(header(name).className).toContain("lg:table-cell");
+    }
+    for (const name of ["Criado em", "Tipo", "Conta", "Valor líquido", "Status"]) {
+      expect(header(name).className).not.toContain("hidden");
+    }
+  });
+
+  it("a conta quebra em qualquer ponto em vez de alargar a tabela, sem cortar o nome", async () => {
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    const conta = await waitFor(() => within(rows()[0]).getByText("Mensalidades"));
+    expect(conta.className.split(" ")).toContain("wrap-anywhere");
+    const cell = conta.closest("td");
+    expect(cell?.className).not.toContain("truncate");
+    expect(cell?.className).not.toContain("whitespace-nowrap");
+  });
+});
