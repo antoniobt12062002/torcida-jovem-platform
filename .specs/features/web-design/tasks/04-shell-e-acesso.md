@@ -114,7 +114,7 @@ Um único agente, em worktree próprio, em paralelo às quatro frentes de módul
 - [x] Cada página tem um `h1` em português e leva o foco a ele ao montar
 - [x] Nenhuma exibe `error.message`, pilha ou `digest` (teste com um erro de exemplo)
 - [x] "Tentar de novo" chama a função de nova tentativa recebida
-- [ ] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell — **parcial**: endereço inexistente conferido em `next start` (404, título e foco no `h1`, 390 e 1440 px); a exceção dentro do shell exige sessão real e fica para a conferência do coordenador
+- [x] Num build de produção, um endereço inexistente mostra "Página não encontrada" e uma exceção forçada mostra a página de erro dentro do shell — endereço inexistente conferido em `next start` (404, título e foco no `h1`, 390 e 1440 px); exceção real no cliente e no servidor conferida em 2026-10-13 (WDS-D-035), com sessão real, num worktree descartável: `app/(app)/error.tsx` dentro do shell, `h1` com foco, "Tentar de novo" sem loop, "Voltar ao início", sem detalhe técnico nem aviso de hidratação (`evidence/erro-no-shell.md`)
 - [x] Gates passam
 
 **Tests**: component

@@ -56,6 +56,40 @@ Acréscimos de T11: `components/app/filter-bar.test.tsx` (23 → 25: sem filtros
 
 `app/(app)/conta/senha/page.test.tsx`, `app/(app)/estoque/produtos/page.test.tsx`, `app/(app)/financeiro/contas/page.test.tsx`, `app/(app)/financeiro/saldo/page.test.tsx`, `app/(app)/layout.test.tsx`, `app/(app)/sem-acesso/page.test.tsx`, `components/app/confirm-dialog.test.tsx`, `components/app/format.test.ts`, `components/app/require-permission.test.tsx`, `components/app/states.test.tsx`, `components/ui/field.test.tsx`, `components/ui/overlays.test.tsx`, `features/estoque/ajustes/ajuste-dialog.test.tsx`, `features/estoque/produto-detail.test.tsx`, `features/estoque/produtos/produtos-page.test.tsx`, `features/financeiro/contas/contas-page.test.tsx`. Em todos, as linhas removidas são só `import` reagrupados ou comentários; os testes da base continuam com as mesmas asserções, e os novos cobrem os ACs de DSP, DSM e DSS de cada tela.
 
+## Alterações das correções da verificação (iterações 2 e 3)
+
+Acrescentado em 2026-10-13 (correção da iteração 3, WDS-D-035), sobre o ponto `023558b`. Mesmo critério das seções acima.
+
+### `fb62b99`: espaço não separável entre número e unidade (DSP-07 AC4, achado A2 da iteração 2)
+
+Três arquivos da base tiveram asserções trocadas. Em todas, só o espaço entre o número e a unidade mudou, de espaço comum (U+0020) para espaço não separável (U+00A0), porque a tela passou a usar U+00A0 (`produto-detail.tsx:107`, `ajuste-dialog.tsx:120,127`, `movimentacao-dialog.tsx:57`). O número, a unidade e o restante do texto são os mesmos; a asserção ficou mais estrita (exige o caractere certo), não mais fraca.
+
+| Arquivo (`web/`) | Antes | Depois | Asserções |
+| --- | --- | --- | --- |
+| `features/estoque/produto-detail.test.tsx` | saldo `"12 UN"`, `"-3 UN"`, `"0 UN"`, `"7 UN"` (linhas 50, 58, 66, 120, 148) com espaço comum | os mesmos textos com U+00A0 | 5 |
+| `features/estoque/ajustes/ajuste-dialog.test.tsx` | saldo e prévia do ajuste (saldo atual e resultante: `"0 UN"`, `"-3 UN"`, `"5 UN"`, `"7 UN"`, `"3 UN"`, `"1 UN"`; linhas 55, 59-60, 65, 83, 86-87, 126, 170, 202) com espaço comum | os mesmos textos com U+00A0 | 10 |
+| `features/estoque/movimentacoes/movimentacoes-panel.test.tsx` | saldo depois de cada movimentação (`saldoText("0 UN")` e afins, linhas 131, 144, 153, 162, 194, 201, 209, 222, 253 e 471) e nome acessível de "Devolver" (`"Devolver entrada de 10 UN em …"`, `"Devolver saída de 4 UN em …"`, linhas 423-424 e 451) com espaço comum | os mesmos textos com U+00A0 | 13 |
+
+Antes desta rodada, `produto-detail.test.tsx` e `ajuste-dialog.test.tsx` estavam na lista "Somente acréscimos" abaixo; a partir de `fb62b99` têm estas trocas. Nenhuma outra asserção desses arquivos mudou.
+
+**Por que `movimentacoes-panel.test.tsx:461` ficou com espaço comum**: a linha é `within(dialog).getByText("Devolução da saída de 4 UN em 04/10/2026 09:00.")`. O `getByText` da Testing Library aplica o normalizador padrão ao texto do DOM (`trim()` e troca de `\s+` por um espaço comum). Em JavaScript, `\s` inclui U+00A0, então o U+00A0 da tela vira espaço comum antes da comparação, e a cadeia esperada precisa ter espaço comum. Com U+00A0 na cadeia esperada a busca falharia mesmo com a tela correta. O caractere da tela nessa frase é conferido pela guarda `test/design/global.guard.test.ts:267` (nenhum `} ${unidade}` com espaço comum no código) e o do nome de "Devolver", pelas linhas 423-424 e 451, que comparam `aria-label` e nome acessível sem normalizador.
+
+### `13f5ad7`, `9e95fb9`, `131a5c4` e `023558b`: correção da iteração 3 (D1 a D4)
+
+Nenhuma asserção existente foi trocada ou removida; só acréscimos.
+
+| Arquivo (`web/`) | Commit | Acréscimo | Testes |
+| --- | --- | --- | --- |
+| `features/estoque/produtos/produtos-page.test.tsx` | `13f5ad7` | o link do nome tem o anel de foco do kit, nunca vermelho (D1, mutante M28) | +1 |
+| `features/financeiro/lancamentos/lancamento-detail.test.tsx` | `13f5ad7` | o link da devolução tem o anel de foco do kit, nunca vermelho (D1, mutante M29) | +1 |
+| `features/financeiro/comprovantes/comprovantes-panel.test.tsx` | `9e95fb9` | o campo de arquivo declara `name="comprovante"`, ligado ao rótulo, sem `autocomplete` (D3) | +1 |
+| `test/design/global.guard.test.ts` | `131a5c4` | todo `Input` do front declara `name` e `autoComplete` (o de arquivo só `name`) e todo `MoneyField` declara `name`; `{...field}` e `{...register(...)}` contam como `name` (D2, D3) | +1 |
+| `app/(dev)/design-system/page.test.tsx` | `131a5c4` | todo campo do espécime tem `name` sem repetição (fora dos grupos de rádio e dos espelhos ocultos do Base UI) e os de texto têm `autocomplete` (D2) | +1 |
+| `app/(dev)/design-system/subpages.test.tsx` | `131a5c4` | o login de exemplo usa `name` `email`/`senha` e `autocomplete` `username`/`current-password` (D2) | +1 |
+| `components/app/shell-frame.test.tsx` | `023558b` | o link da marca tem `hover:bg-sidebar-accent`, a transição de cor e o anel do shell (D4) | +1 |
+
+Total do front: 1787 → 1794 testes, 110 arquivos (nenhum arquivo novo).
+
 ## Desvios de teste já registrados
 
 - Os 9 testes de `features/` e `lib/session` que dependem do toast de erro anunciado como `polite` não mudaram (desvio aceito na rodada 2, `../STATE.md`); T11 não os altera.
