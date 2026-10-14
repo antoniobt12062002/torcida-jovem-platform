@@ -288,7 +288,7 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 2. WHEN a use case registers a job inside its transaction and the transaction rolls back THEN no job SHALL exist.
 3. IF a job is registered outside a transaction THEN the platform SHALL return an error and SHALL write nothing.
 4. IF a module registers a job whose type prefix is not its own module THEN the platform SHALL refuse it with an error.
-5. WHEN a job is registered with a deduplication key equal to that of a non-terminal job of the same type THEN the platform SHALL NOT create a new job and SHALL return the id of the existing one.
+5. WHEN a job is registered with a deduplication key equal to that of a job of the same type in `PENDENTE` or `EM_EXECUCAO` THEN the platform SHALL NOT create a new job and SHALL return the id of the existing one.
 6. IF a job payload exceeds 64 KiB THEN the platform SHALL refuse the job with an error.
 7. The API process SHALL register no job executor and SHALL run no job.
 
@@ -420,13 +420,14 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 
 **Acceptance Criteria**:
 1. WHEN a person with `jobs:job:read` lists jobs by state, type or `correlation_id` THEN the platform SHALL return them with attempts and sanitized errors, without the payload.
-2. WHEN a person holding `jobs:job:retry` re-enqueues a job in `FALHOU` with a reason of at least 10 characters THEN the job SHALL return to `PENDENTE` with a new attempt cycle and its previous attempts kept.
+2. WHEN a person holding `jobs:job:retry` re-enqueues a job in `FALHOU` with a reason of at least 10 characters and the job type's reprocessing policy allows it THEN the job SHALL return to `PENDENTE` with a new attempt cycle and its previous attempts kept.
 3. WHEN a person holding `jobs:job:close` and the close permission declared by the module that owns the job type closes a job in `FALHOU` with a reason of at least 10 characters THEN the job SHALL move to `ENCERRADO_MANUALMENTE`.
 4. IF re-enqueue or close is requested for a job not in `FALHOU` THEN the platform SHALL refuse it with `conflict`.
 5. IF the person lacks either required permission THEN the platform SHALL refuse with `forbidden` and SHALL write a `denied` audit entry.
 6. The platform SHALL require every job type to declare whether it carries an obligation and, IF it does, to provide a resolution check owned by its module.
 7. IF a person tries to close a job whose type carries an obligation and the module's resolution check does not confirm that the obligation was resolved by another path THEN the platform SHALL refuse the close with code `obrigacao_pendente`.
 8. The platform SHALL NOT treat the manual close of a job as the fulfilment of the obligation it carried.
+9. The platform SHALL require every job type with a financial or associative effect to declare a reprocessing policy owned by its module that checks idempotency, the obligation's validity and any additional permission, and IF the policy refuses THEN the re-enqueue SHALL be refused with the policy's code.
 
 **Independent Test**: provocar um `FALHOU`, reenfileirar e ver o novo ciclo com histórico preservado; tentar sem a permissão do tipo e ver a recusa.
 

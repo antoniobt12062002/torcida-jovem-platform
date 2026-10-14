@@ -72,7 +72,7 @@ O TJ Connect traz operações de governança (reembolso, check-in, procedimento 
 | Consultar contas de serviço | `identity:service_account:read` | normal |
 | Desativar conta de serviço (chave de emergência) | `identity:service_account:deactivate` | sensivel |
 | Reativar conta de serviço | `identity:service_account:reactivate` | sensivel (mais restrita: quem reativa ≠ quem desativou; contingência com espera e revisão posterior) |
-| Nomear, retirar, desativar ou redefinir a senha de membro do Conselho Fiscal (ato institucional registrado) | `identity:conselho_fiscal:manage` (proposta, D-02-4) | sensivel |
+| Registrar a nomeação ou a destituição de membro do Conselho Fiscal (ato institucional registrado; não inclui bloqueio técnico nem redefinição de senha) | `identity:conselho_fiscal:manage` (D-02-4) | sensivel |
 | Atribuir papéis, promover, revogar (existentes) | `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` | sensivel (com concessão explícita de transição) |
 | Verificar a separação de funções (função de plataforma usada pelos módulos) | — | — |
 | Consultar a elegibilidade de identidade de um fiscal (consulta publicada para `acesso`) | — (chamada entre módulos, autorizada no caso de uso de `acesso`) | — |
@@ -189,7 +189,7 @@ Regras:
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 |---|---|---|---|
-| Classificação das 30 permissões existentes | Tabela "Classificação das permissões existentes" abaixo (**proposta revisada**, D-02-2): `sensivel` para tudo o que altera acesso de terceiros, movimenta recursos, altera saldos ou estrutura contábil, ou é ato institucional; `normal` para leituras e atos sem efeito patrimonial | Diretriz do mantenedor (2026-10-14). A base de compatibilidade está aprovada; a classificação de segurança **não é definitiva** e aguarda aprovação desta proposta | n |
+| Classificação das 30 permissões existentes | Tabela "Classificação das permissões existentes" abaixo: `sensivel` para tudo o que altera acesso de terceiros, movimenta recursos, altera saldos ou estrutura contábil, ou é ato institucional; `normal` para leituras e atos sem efeito patrimonial | **D-02-2 aprovada** em 2026-10-14 (18 sensíveis, 12 normais) | y |
 | Preservação na transição | Concessão explícita, justificada e revisada em PR, a cada papel que já tem hoje uma permissão que passa a `sensivel`; a única exceção aprovada é a D-02-3 | Diretriz do mantenedor: preservar acessos legítimos por concessões explícitas quando justificadas | n |
 | Onde os papéis de serviço são declarados | No mesmo lugar único que já declara os papéis (`identity/domain/role.go`, protegido por teste); o módulo dono concede as permissões `servico` | Mantém a regra "só um arquivo soletra papéis" | n |
 | E-mail das contas de serviço | Endereço no domínio reservado `.invalid` (RFC 2606), por exemplo `svc.cobrancas-sincronizacao@service.invalid` | A coluna `email` é obrigatória e única; o domínio `.invalid` garante que nenhum e-mail seja entregue | n |
@@ -197,13 +197,13 @@ Regras:
 | Quem recebe `identity:service_account:deactivate` e `:reactivate` | `ADMIN_SISTEMA` e `PRESIDENTE`, por concessão explícita, com reativação por pessoa diferente e procedimento de contingência (SVC-01 AC18–21) | **D-02-1 aprovada** em 2026-10-14; concessão ainda não aplicada no código | y |
 | Prazo de espera e revisão da reativação de contingência | 30 minutos desde a desativação; revisão posterior por outra pessoa com `identity:service_account:reactivate` ou pelo Conselho Fiscal (leitura da auditoria) | Evita bloqueio operacional sem anular a separação de funções; prazo configurável | n |
 | Lista explícita do Conselho Fiscal | As 11 permissões que o Conselho Fiscal tem hoje (tabela em CFS-01) | Preserva as autorizações legítimas atuais; todo acréscimo exige mudança revisada da lista | n |
-| Nomeação institucional do Conselho Fiscal (INS-01) | Especificada como proposta **D-02-4**, sem a qual a D-02-3 não pode ser aplicada; a lista de papéis incompatíveis além de `PRESIDENTE` fica sujeita ao estatuto | Consequência verificada de `authz.Covers`; aguarda aprovação do mantenedor | n |
+| Nomeação institucional do Conselho Fiscal (INS-01) | Regra da **D-02-4**, sem a qual a D-02-3 não pode ser aplicada; a lista de papéis incompatíveis além de `PRESIDENTE` fica sujeita ao estatuto | **D-02-4 aprovada como direção arquitetural** em 2026-10-14; a concessão de `identity:conselho_fiscal:manage` continua pendente | y |
 | Separação de funções "se o regulamento exigir" | Regra ligada (mais estrita) por padrão | ADR-016 | y |
 | Ordem de chegada da classificação | A `02` define as classes e a transição; as permissões novas do TJ Connect são declaradas por cada spec de módulo | Cada módulo é dono das suas permissões | y |
 
 **Open questions:** none — as decisões ainda abertas estão listadas acima como premissas não confirmadas e na seção "Pendências que impedem o Design".
 
-### Classificação das permissões existentes (proposta revisada, D-02-2, não definitiva)
+### Classificação das permissões existentes (D-02-2, aprovada em 2026-10-14)
 
 Critério do mantenedor: é `sensivel` toda operação que movimenta recursos, altera saldos, altera a estrutura contábil ou patrimonial, altera direitos ou acesso de terceiros, ou é ato institucional. A revisão anterior (10 sensíveis) foi ampliada para **18**.
 
@@ -293,10 +293,11 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 15. WHEN a person with `identity:service_account:read` lists service accounts THEN the system SHALL return name, description, owning module, role, permissions and activity, and never any credential field.
 16. WHEN a person with `identity:service_account:reactivate` reactivates a service account with a reason THEN the system SHALL apply the change only if that person is not the one who performed the last deactivation, and SHALL write an audit entry with the reason.
 17. IF the person who performed the last deactivation tries an ordinary reactivation of the same service account THEN the system SHALL refuse with code `separacao_de_funcoes`.
-18. WHEN no other person can perform the reactivation THEN the system SHALL allow a contingency reactivation by the same person only after 30 minutes since the deactivation and with a reason of at least 30 characters.
-19. WHEN a contingency reactivation is performed THEN the system SHALL write an audit entry marked `contingencia` and SHALL open a pending post-review item visible to every holder of `identity:service_account:reactivate` and to `audit:log:read`.
-20. WHILE a contingency post-review item is open the system SHALL show it in the service account listing, and the item SHALL be closed only by a person different from the one who reactivated.
-21. The system SHALL NOT allow a contingency reactivation of a service account whose deactivation was performed by the synchronization because the account was removed from code.
+18. WHEN no other active person holds `identity:service_account:reactivate` THEN the system SHALL allow a contingency reactivation by the same person only after the configurable waiting time (initially 30 minutes) since the deactivation, with a reason of at least 30 characters and the identification of the emergency.
+19. WHEN a contingency reactivation is performed THEN the system SHALL write an audit entry marked `contingencia`, SHALL emit a structured log alert at level `warn` and SHALL open a pending independent-review item visible to every holder of `identity:service_account:reactivate` or `identity:service_account:deactivate` and to every holder of `audit:log:read`.
+20. The system SHALL allow the independent-review item to be closed only by a person different from the one who reactivated who holds `identity:service_account:reactivate` or `identity:service_account:deactivate`.
+21. WHILE an independent-review item opened by a person is still open the system SHALL refuse a new contingency reactivation by that same person, and SHALL repeat the alert once per day.
+22. The system SHALL NOT allow a contingency reactivation of a service account whose deactivation was performed by the synchronization because the account was removed from code.
 
 **Independent Test**: declarar uma conta de serviço de teste, partir, ver a conta criada; tentar login, recuperação e sessão e ver as recusas; desativar e ver um caso de uso recusado com o `Principal` dela.
 
@@ -407,14 +408,18 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 
 **Acceptance Criteria**:
 1. The system SHALL mark `financeiro:prestacao_contas:approve` and `financeiro:parecer:opine` as institutional permissions of the Conselho Fiscal.
-2. WHEN a person assigns or removes the role `CONSELHO_FISCAL`, or deactivates or resets the password of a holder of that role, THEN the use case SHALL require `identity:conselho_fiscal:manage` and `authz.Covers` over every permission of the role except the institutional ones.
-3. WHEN such an institutional act is registered THEN the use case SHALL require a decision record with the reference of the institutional act (for example the minutes of the assembly) and a reason of at least 10 characters.
-4. IF the actor of such an act holds the role `CONSELHO_FISCAL` or is the target of the act THEN the use case SHALL refuse with code `separacao_de_funcoes`.
-5. The system SHALL refuse to assign the role `CONSELHO_FISCAL` to a user who holds `PRESIDENTE`, and SHALL refuse to assign `PRESIDENTE` to a user who holds `CONSELHO_FISCAL`, checking by user identity.
-6. WHEN the API starts THEN it SHALL report as a pending item every existing user who holds both `PRESIDENTE` and `CONSELHO_FISCAL`, without revoking any role automatically.
-7. The system SHALL evaluate every separation-of-duties rule by user identity over the union of all the user's roles, so that holding several roles never bypasses a rule.
+2. WHEN a person registers the appointment or the removal of a member of the Conselho Fiscal (assigning or removing the role `CONSELHO_FISCAL`) THEN the use case SHALL require `identity:conselho_fiscal:manage` and `authz.Covers` over every permission involved except the institutional ones.
+3. WHEN such an appointment or removal is registered THEN the use case SHALL require a reference to the act of the competent body (body, act identification and date), a stored document of that act and a reason of at least 10 characters, and SHALL record it as the registration of an external act, never as a decision of the actor.
+4. IF the actor of an appointment or removal holds the role `CONSELHO_FISCAL` or is the target of the act THEN the use case SHALL refuse with code `separacao_de_funcoes`.
+5. WHEN a person deactivates or reactivates the account of a holder of `CONSELHO_FISCAL` (technical blocking) THEN the use case SHALL keep requiring `identity:user:update` and SHALL apply `authz.Covers` over the target's permissions except the institutional ones, without requiring the appointment authorization.
+6. The system SHALL keep the full `authz.Covers` rule, with no exception, for the administrative password reset of a holder of `CONSELHO_FISCAL`, whose access recovery SHALL use only the self-service e-mail recovery.
+7. The system SHALL apply the exclusion of institutional permissions in `authz.Covers` only to the operations listed in AC2 and AC5, and a test SHALL fail if any other use case uses it.
+8. The system SHALL refuse to assign the role `CONSELHO_FISCAL` to a user who holds `PRESIDENTE`, and SHALL refuse to assign `PRESIDENTE` to a user who holds `CONSELHO_FISCAL`, checking by user identity.
+9. WHILE an existing user holds both `PRESIDENTE` and `CONSELHO_FISCAL` the system SHALL keep every historical record, SHALL report the user as an irregularity on every start and in the identity administration, and SHALL deny that user the institutional permissions until the irregularity is resolved by removing one of the roles.
+10. The system SHALL evaluate every separation-of-duties rule by user identity over the union of all the user's roles, so that holding several roles never bypasses a rule.
+11. The system SHALL hold the list of incompatible role pairs as versioned configuration that initially contains only `PRESIDENTE` × `CONSELHO_FISCAL`; any other pair SHALL be added only from a rule of the statute approved by the maintainer.
 
-**Independent Test**: com a matriz após a D-02-3, mostrar que uma atribuição de `CONSELHO_FISCAL` pelo `PRESIDENTE` sem `identity:conselho_fiscal:manage` falha por `Covers`; com a permissão e uma decisão registrada, passa; com o próprio presidente como alvo, falha; e uma pessoa com `PRESIDENTE` + `CONSELHO_FISCAL` é recusada na atribuição e listada como pendência na partida.
+**Independent Test**: com a matriz após a D-02-3, mostrar que atribuir `CONSELHO_FISCAL` pelo caminho comum (`AssignRoles`/`PromoteToAdmin`) é recusado com `ato_institucional_obrigatorio`; que o caso de uso institucional sem `identity:conselho_fiscal:manage` é recusado; que com a permissão, o documento do ato e o motivo, passa; que com o próprio ator como alvo, falha; que o bloqueio técnico pelo `PRESIDENTE` passa e a redefinição administrativa de senha do conselheiro é recusada; e que uma pessoa com `PRESIDENTE` + `CONSELHO_FISCAL` é recusada na atribuição e, se já existir, perde só os atos institucionais e aparece como irregularidade.
 
 ---
 
@@ -456,7 +461,7 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 | T-22 | Mesma pessoa desativa e tenta reativar a conta de serviço → `separacao_de_funcoes` | Integração | SVC-01 |
 | T-23 | Reativação de contingência antes de 30 min → recusada; depois de 30 min com motivo → aceita, marcada `contingencia` e com revisão posterior aberta | Integração (relógio do banco controlado) | SVC-01 |
 | T-24 | Matriz após a D-02-3: `PRESIDENTE` sem `prestacao_contas:approve` e `parecer:opine`; Conselho Fiscal com as 11; diferença do snapshot igual exatamente à exceção aprovada | Unidade (snapshot) | TRN-01 |
-| T-25 | Atribuir `CONSELHO_FISCAL` sem `identity:conselho_fiscal:manage` → falha por `Covers`; com a permissão e decisão registrada → passa; alvo = ator → `separacao_de_funcoes` | Integração | INS-01 |
+| T-25 | Atribuir `CONSELHO_FISCAL` pelo caminho comum → `ato_institucional_obrigatorio`; caso de uso institucional sem `identity:conselho_fiscal:manage` → `forbidden`; com a permissão, documento e motivo → passa; alvo = ator → `separacao_de_funcoes` | Integração | INS-01 |
 | T-26 | Usuário com `PRESIDENTE` recebendo `CONSELHO_FISCAL` → recusado; usuário existente com os dois → pendência na partida, sem revogação | Integração | INS-01 |
 | T-27 | Usuário com dois papéis, sendo um o autor de um ato anterior incompatível → separação recusada pela identidade, não pelo papel | Unidade | INS-01, SOD-01 |
 
@@ -479,10 +484,10 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 
 **Nenhuma** pendência muda a estrutura do Design. Situação das decisões do mantenedor em 2026-10-14 (nenhuma concessão real foi aplicada no código):
 
-- **D-02-1 — aprovada**: `ADMIN_SISTEMA` e `PRESIDENTE` recebem `identity:service_account:deactivate` e `:reactivate` por concessão explícita. A reativação exige pessoa diferente de quem desativou, com procedimento de contingência (SVC-01 AC16–21). Os parâmetros da contingência (30 minutos, revisão posterior) aguardam confirmação.
-- **D-02-2 — aprovada parcialmente**: a classificação vale como base de compatibilidade. A **proposta revisada** (18 sensíveis, tabela acima) aguarda aprovação como classificação de segurança, junto com as 16 concessões explícitas ao `PRESIDENTE` e as suas justificativas.
+- **D-02-1 — aprovada**: `ADMIN_SISTEMA` e `PRESIDENTE` recebem `identity:service_account:deactivate` e `:reactivate` por concessão explícita. A reativação exige pessoa diferente de quem desativou; a contingência (espera configurável, inicial 30 min, motivo, emergência, auditoria, alerta e revisão independente que quem reativou não pode fechar) cobre o caso de uma única pessoa habilitada (SVC-01 AC16–22).
+- **D-02-2 — aprovada**: 18 sensíveis e 12 normais; 16 concessões explícitas de transição ao `PRESIDENTE`, com justificativa individual e testes de compatibilidade.
 - **D-02-3 — aprovada**: retirada de `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine` do `PRESIDENTE`, registrada como única exceção à preservação da matriz (TRN-01 AC8). **Só pode ser aplicada junto com a D-02-4**, senão ninguém mais consegue nomear ou retirar membros do Conselho Fiscal.
-- **D-02-4 — nova, aguarda aprovação**: regra de nomeação institucional do Conselho Fiscal (INS-01), com a permissão `identity:conselho_fiscal:manage`, decisão registrada com referência ao ato institucional, `Covers` sem as permissões institucionais, incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade do usuário, e a lista definitiva de papéis incompatíveis, sujeita às regras do estatuto.
+- **D-02-4 — aprovada como direção arquitetural**: autorização institucional específica, referência verificável ao ato, exceção de `Covers` só nas operações listadas, nomeação separada do bloqueio técnico, incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade, irregularidades preservadas e bloqueadas até regularização, outras incompatibilidades só pelo estatuto (INS-01). **Pendente**: quem recebe `identity:conselho_fiscal:manage` (bloqueia só a implantação da D-02-3).
 
 ---
 
