@@ -1,6 +1,6 @@
 # ADR-014: `cmd/worker` e processamento persistente em PostgreSQL
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3, parecer externo: execução pelo menos uma vez, limites da cerca, agendamento e retenção)
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: architecture, jobs, reliability, tj-connect
@@ -22,7 +22,7 @@ O mantenedor decidiu por um `cmd/worker` independente da API. Exigiu recuperaç�
 
 - Um trabalho aceito sobrevive a reinício, deploy e queda.
 - O trabalho é enfileirado na **mesma transação** do caso de uso que o origina.
-- Várias instâncias rodam juntas sem executar o mesmo job ao mesmo tempo, e sem que uma instância "zumbi" sobrescreva o resultado de outra.
+- Várias instâncias rodam juntas sem **capturar** o mesmo job ao mesmo tempo, e sem que uma instância "zumbi" sobrescreva o **estado do job** registrado por outra. A execução física é **pelo menos uma vez** e pode se sobrepor depois da perda de concessão; a correção vem da idempotência dos efeitos (revisão 3).
 - Toda falha termina num estado visível e tratável; nada some.
 - Nenhuma infraestrutura nova além do PostgreSQL 16.
 
@@ -52,7 +52,15 @@ Chosen option: **1**. A opção 2 só a substitui se o Design comprovar, com tes
 ### Captura e concorrência entre instâncias
 
 - Uma transação curta faz `SELECT … WHERE estado = 'pendente' AND run_at <= now() … FOR UPDATE SKIP LOCKED LIMIT n` e marca `em_execucao`, com um novo `lease_token` e `locked_until = now() + lease`. A transação é confirmada antes da execução.
-- **Token de cerca (fencing)**: concluir, falhar ou renovar é `UPDATE … WHERE id = ? AND lease_token = ?`. Uma instância que perdeu a concessão (pausa longa, rede) não consegue registrar nada, porque o token já mudou.
+- **Token de cerca (fencing)**: concluir, falhar, renovar e registrar a próxima janela de agendamento é `UPDATE … WHERE id = ? AND lease_token = ?`. Uma instância que perdeu a concessão (pausa longa, rede) não consegue mudar o estado do job, porque o token já mudou.
+- **Limites da cerca** (revisão 3, parecer externo): a cerca **não** impede a instância antiga de continuar executando, **não** protege as tabelas dos módulos e **não** alcança sistemas externos. Por isso:
+  - toda escrita de negócio é condicional (estado e versão) ou protegida por chave única durável;
+  - toda chamada externa usa uma chave de idempotência gravada antes da chamada;
+  - a falha de renovação cancela o contexto do executor (reduz a sobreposição, não a elimina).
+
+  Detalhes e critérios na spec `01` (LEA-01, seção "Limites da cerca").
+- **Agendamento sem ponto único de perda**: a próxima janela é registrada na mesma transação da conclusão ou falha da janela atual, e uma verificação independente a cada 60 s recria janelas ausentes (spec `01`, SCH-01).
+- **Retenção**: a limpeza técnica nunca remove um evento com entrega não concluída nem a inbox antes do evento; as garantias de negócio dependem das chaves duráveis dos módulos (spec `01`, RET-01).
 - **Serialização por agregado** quando a regra exige (por exemplo, uma sincronização por cobrança por vez): a `chave_dedup` impede dois jobs não terminais iguais, e os efeitos de negócio usam `UPDATE` condicional por estado e versão.
 
 ### Recuperação após falha
@@ -82,7 +90,7 @@ Todo executor é **obrigatoriamente idempotente**, e esse é um critério de ace
 - **Espera** exponencial com variação aleatória, limitada por tipo; `max_tentativas` por tipo.
 - **Falha definitiva**: estado `falhou`, mantido para sempre.
   - Gera métrica e alerta.
-  - Aparece no painel operacional para quem tem `jobs:job:read`; reenfileirar ou encerrar exige `jobs:job:retry` ou `jobs:job:close` **e** a permissão de operação declarada pelo módulo dono do tipo (ex. `cobrancas:processamento:retry`), conforme a spec `01`.
+  - Aparece no painel operacional para quem tem `jobs:job:read`; reenfileirar exige `jobs:job:retry`; encerrar exige `jobs:job:close` **e** a permissão de encerramento do módulo dono do tipo (ex. `cobrancas:processamento:close`), e é recusado enquanto houver obrigação pendente (spec `01`, DLQ-01; D-01-1 aprovada).
   - Uma pessoa pode **reenfileirar** (novo ciclo de tentativas) ou **encerrar manualmente** com motivo (`encerrado_manualmente`), sempre com auditoria. Nunca há exclusão.
   - Um job com falha não bloqueia os outros: o isolamento é por linha.
 

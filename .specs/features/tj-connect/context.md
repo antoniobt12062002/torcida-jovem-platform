@@ -29,7 +29,7 @@ Tudo com Financeiro e Estoque existentes, sem duplicá-los. Fora do escopo: app 
 ### D1 — `cobrancas` → [ADR-012](../../../docs/adr/012-cobrancas-e-eventos-persistentes.md)
 
 - O módulo é independente do provedor e sem funcionalidade comercial antecipada.
-- **Ciclo de vida interno completo**: `CRIADA`, `AGUARDANDO_PAGAMENTO`, `EM_PROCESSAMENTO`, `PAGA`, `NAO_CONCLUIDA`, `FALHA_CRIACAO`, `REEMBOLSO_EM_ANDAMENTO`, `REEMBOLSADA`, `CONTESTADA`, `CONTESTACAO_PERDIDA`, `DIVERGENTE`. Transições por `UPDATE` condicional; retrocesso informado pelo provedor vira `DIVERGENTE`.
+- **Ciclo de vida interno completo** (revisão 3): `CRIADA`, `AGUARDANDO_PAGAMENTO`, `EM_PROCESSAMENTO`, `PAGA`, `PARCIALMENTE_REEMBOLSADA`, `NAO_CONCLUIDA` (não terminal: admite `→ PAGA` tardio), `FALHA_CRIACAO`, `REEMBOLSO_EM_ANDAMENTO`, `REEMBOLSADA`, `CONTESTADA`, `CONTESTACAO_PERDIDA`, `DIVERGENTE`. Reembolso é entidade própria com estados e teto pelo valor pago. Transições por `UPDATE` condicional; retrocesso informado pelo provedor vira `DIVERGENTE`.
 - Relação com a adesão por eventos `cobranca.*.v1` (outbox, inbox). A adesão tem uma cobrança de origem e nunca troca de plano.
 - **Idempotência em 7 camadas**: chave do provedor gravada antes da chamada; unicidade da notificação; job deduplicado por cobrança; consulta da verdade em vez do payload; transição condicional; chave no lançamento; inbox.
 - Conciliação ativa (periódica e diária, com detecção de órfãs) e tabela de divergências local × provedor; resolução humana sensível.
@@ -137,7 +137,8 @@ Cada item vira uma pergunta em aberto na sub-spec indicada:
 ## Deferred Ideas
 
 - Mudança de plano dentro da temporada (M-6).
-- Wallet, modo offline, renovação com número mantido como "fase 2" (PDF 02).
+- Wallet e modo offline como "fase 2" (PDF 02).
+- **Correção (2026-10-14)**: o número permanente do associado **não** é ideia adiada. Ele faz parte do MVP (TJ-ASSOC-001, AC-PL-02; M-8). A renovação não é automática, mas uma nova adesão em temporada posterior **preserva o mesmo número e o histórico** (sub-spec `06`).
 - Exportações além do relatório agregado ao clube.
 - Portal de transparência e balancete público (PDF 01).
 - Loja, pré-venda e condições especiais para associados.

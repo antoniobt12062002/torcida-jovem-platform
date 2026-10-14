@@ -1,6 +1,6 @@
 # ADR-018: Invariantes transacionais de quota, check-in e histórico de frequência
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3, parecer externo: projeção de presença efetiva; elegibilidade sob bloqueio; cenário 9)
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: concurrency, postgresql, integrity, tj-connect
@@ -47,20 +47,32 @@ Três invariantes do TJ Connect precisam valer sob concorrência e falhas, garan
 
 ### Check-in, frequência e correção
 
-- **Tentativas**: tabela append-only de `acesso` com todas as leituras (fiscal, jogo, credencial, resultado, motivo, horário), mais auditoria.
-- **Check-in efetivo**: índice único parcial `(jogo_id, associado_id)` sobre os check-ins aceitos e não anulados.
-- **Elegibilidade na mesma transação**:
-  - jogo publicado e elegível;
-  - designação do fiscal;
-  - fiscal ≠ titular (M-7);
-  - adesão ativa com plano de ingresso, foto habilitada e benefício iniciado (lidos de `associados`);
-  - nenhuma suspensão vigente.
+Correção da revisão 3 (parecer externo): a revisão 2 previa um "índice único parcial sobre os check-ins aceitos e **não anulados**". Isso é incompatível com o histórico append-only, porque a anulação é **outra linha** e um índice parcial não enxerga outra tabela. Para "desligar" o check-in anulado do índice seria preciso alterar a linha original, o que violaria o append-only. A solução separa o histórico imutável de uma projeção transacional.
 
-  O **QR é dinâmico, de curta duração e específico do jogo** (decisão A-3), emitido e validado online pelo servidor. Um QR de outro jogo ou vencido é recusado (AC-JOG-04). Validade, assinatura e renovação ficam para o Design da spec `07`. Um QR válido **não** dispensa a unicidade do check-in (o índice único continua sendo a garantia) nem a conferência visual da identidade pelo fiscal. Somente online (AC-JOG-03).
-- **Correção** é sempre um registro novo e append-only: anulação de check-in indevido ou presença reconhecida administrativamente, sem `UPDATE` nem `DELETE` no original.
+- **Histórico imutável** (append-only, sem `UPDATE` nem `DELETE`):
+  - tentativas de leitura (fiscal, jogo, credencial, resultado, motivo, horário);
+  - check-ins aceitos;
+  - correções (anulação de um check-in aceito; presença reconhecida administrativamente).
+- **Projeção de presença efetiva** (estado derivado, mutável, reconstruível a partir do histórico): uma linha por `(jogo_id, associado_id)`, com **chave primária** nesse par, o estado `EFETIVA` ou `ANULADA` e a referência ao fato que a define.
+  - Check-in aceito: `INSERT` na projeção como `EFETIVA`, ou `UPDATE` de `ANULADA` para `EFETIVA`, **na mesma transação** que grava o fato no histórico. Se já existe `EFETIVA`, a operação recusa: "entrada já registrada".
+  - Anulação: `UPDATE` da projeção de `EFETIVA` para `ANULADA`, na mesma transação do fato de anulação.
+  - Presença reconhecida: `INSERT` ou `UPDATE` para `EFETIVA`, com origem "correção", na mesma transação do fato.
+  - A **unicidade de presença efetiva** é garantida pela chave primária e pelo bloqueio da linha da projeção. O histórico nunca muda.
+  - **Verificação de consistência**: um job reconstrói a projeção a partir do histórico e abre uma pendência se houver diferença. Ele nunca corrige sozinho.
+- **Elegibilidade no momento da efetivação**, na mesma transação do check-in e **sob bloqueio compartilhado** (`FOR SHARE`) das linhas que podem revogá-la:
+  - jogo publicado e elegível (linha do jogo);
+  - designação ativa do fiscal (linha da designação);
+  - fiscal ≠ titular (M-7);
+  - adesão ativa com plano de ingresso, foto habilitada e benefício iniciado: linha da adesão em `associados`, lida pela consulta publicada que aplica o bloqueio compartilhado dentro da transação do chamador (`WithTx`);
+  - nenhuma suspensão vigente: **linha de controle do benefício do associado** em `acesso` (uma por associado e temporada, com versão), que toda decisão de suspensão, revisão ou restabelecimento bloqueia com `FOR UPDATE` e atualiza.
+
+  Toda operação que revoga elegibilidade (encerrar adesão, revogar foto, decidir suspensão, cancelar jogo, revogar designação) pega bloqueio **exclusivo** na mesma linha. O check-in e a revogação ficam serializados: um acontece inteiramente antes do outro (cenário 9).
+
+  O **QR é dinâmico, de curta duração e específico do jogo** (decisão A-3), emitido e validado online pelo servidor. Um QR de outro jogo ou vencido é recusado (AC-JOG-04). Validade, assinatura e renovação ficam para o Design da spec `07`. Um QR válido **não** dispensa a unicidade do check-in (garantida pela projeção) nem a conferência visual da identidade pelo fiscal. Somente online (AC-JOG-03).
+- **Correção** é sempre um fato novo e append-only no histórico, refletido na projeção na mesma transação, sem `UPDATE` nem `DELETE` no fato original.
 - **Fatos de frequência desde o 1º jogo**:
   - elegibilidade do jogo congelada na conclusão (`acesso:jogo:conclude`), com correção posterior como fato novo auditado;
-  - check-ins efetivos e correções;
+  - check-ins aceitos e correções (histórico), com a presença efetiva lida da projeção;
   - períodos de suspensão vigentes;
   - início do benefício de cada adesão (lido de `associados`).
 - **Apuração**: função pura e determinística sobre os fatos, consultável a qualquer momento.
@@ -136,20 +148,20 @@ Reserva R ligada à cobrança C, validade alinhada à order (`expiration_time`) 
 ### 6. Check-in simultâneo do mesmo associado por fiscais diferentes
 
 1. F1 e F2, ambos designados para o jogo J e nenhum deles titular, leem a credencial de A ao mesmo tempo.
-2. `T1` e `T2` passam pela elegibilidade e fazem `INSERT` do check-in aceito.
-3. O índice único parcial `(J, A)` faz `T2` esperar `T1`; com `T1` confirmada, `T2` recebe violação de unicidade.
+2. `T1` e `T2` passam pela elegibilidade e tentam gravar a presença efetiva `(J, A)` na projeção, junto com o fato "check-in aceito" no histórico.
+3. A chave primária `(J, A)` da projeção faz `T2` esperar `T1`. Com `T1` confirmada, `T2` encontra a linha `EFETIVA`, recusa e **desfaz também o fato** que ia gravar no histórico.
 4. `T2` grava uma **tentativa** "entrada já registrada" (numa transação nova) e responde com o horário e o fiscal de `T1`.
 
-**Garantia**: um check-in efetivo (AC-JOG-02). **Teste**: 10 goroutines com fiscais distintos → 1 aceito, 9 tentativas "já registrada".
+**Garantia**: uma presença efetiva e um único fato "check-in aceito" (AC-JOG-02). **Teste**: 10 goroutines com fiscais distintos → 1 aceito, 9 tentativas "já registrada", 1 linha `EFETIVA` e 1 fato aceito no histórico.
 
 ### 7. Correção auditada de check-in
 
 1. Um check-in foi aceito por engano (por exemplo, credencial de outra pessoa). Quem tem `acesso:checkin:correct` registra uma **anulação**, com motivo e evidência. Não pode ser o titular nem o fiscal original.
-2. A anulação é append-only e única por check-in. Ela remove o check-in do índice de "efetivos", o que permite um novo check-in legítimo do titular no mesmo jogo, se ainda ocorrer.
+2. Numa transação: o fato de anulação é acrescentado ao histórico (append-only, único por check-in aceito), e a projeção `(J, A)` passa de `EFETIVA` para `ANULADA` por `UPDATE` condicional (`WHERE estado = 'EFETIVA' AND fato = :checkin_anulado`). O fato original **não muda**. Um novo check-in legítimo do titular no mesmo jogo, se ainda ocorrer, leva a projeção de `ANULADA` a `EFETIVA` com o novo fato. Uma anulação e um novo check-in concorrentes se serializam na linha da projeção.
 3. Uma presença reconhecida administrativamente (por exemplo, falha de rede comprovada na entrada) é um fato de correção do tipo "presença reconhecida", com motivo e evidência, nunca um check-in retroativo disfarçado. O MVP continua sem check-in offline (AC-JOG-03).
 4. A apuração seguinte inclui as correções. Se um procedimento já instaurado usou a apuração anterior, ele recebe um aviso de fato superveniente para revisão; nada muda automaticamente.
 
-**Garantia**: o histórico nunca é editado; toda correção tem autor, motivo e evidência. **Teste**: anulação, nova apuração e unicidade da anulação.
+**Garantia**: o histórico nunca é editado; a projeção sempre corresponde ao histórico (verificação de consistência); toda correção tem autor, motivo e evidência. **Teste**: anulação, nova apuração, unicidade da anulação, anulação concorrente com novo check-in, e reconstrução da projeção a partir do histórico igual à projeção corrente.
 
 ### 8. Frequência com jogos inelegíveis e suspensão
 
@@ -171,6 +183,28 @@ Associado B, benefício iniciado no J7, mesmos jogos e nenhuma suspensão: denom
 
 **Garantia**: a coleta começa no 1º jogo; a regra dos 6 só limita a instauração (AC-FRQ-03). **Teste**: tabela de casos da função de apuração, mais o teste do caso de uso de instauração.
 
+### 9. Check-in concorrente com cancelamento ou suspensão do benefício
+
+O fiscal F lê a credencial de A no jogo J (`T1`) no mesmo instante em que uma pessoa autorizada efetiva o encerramento da adesão de A, ou decide a suspensão dele (`T2`).
+
+**Ordem a: `T2` bloqueia primeiro.**
+
+1. `T2` pega o bloqueio exclusivo da linha da adesão (encerramento) ou da linha de controle do benefício de A (suspensão), muda o estado e confirma.
+2. `T1` pede `FOR SHARE` na mesma linha e espera `T2`.
+3. Liberado o bloqueio, `T1` lê a versão confirmada (`ENCERRADA` ou suspensão vigente).
+4. `T1` recusa com "benefício não habilitado" (sem expor o motivo privado no ginásio, §16) e grava a tentativa.
+
+**Ordem b: `T1` bloqueia primeiro.**
+
+1. `T1` segura `FOR SHARE` nas linhas de elegibilidade, verifica tudo válido, grava o check-in e a projeção e confirma.
+2. `T2` esperou o bloqueio e só então efetiva o encerramento ou a suspensão.
+3. A entrada foi registrada **antes** de a revogação existir, o que é correto: a elegibilidade valia no momento da efetivação.
+4. A auditoria mostra a ordem pelos horários de confirmação.
+
+**Nunca**: `T1` confirmar o check-in com base numa leitura feita antes da confirmação de `T2`. Isso exigiria que `T1` lesse sem bloqueio e confirmasse depois de `T2`, e o `FOR SHARE` torna essa sequência impossível. O mesmo vale para revogação de foto, cancelamento do jogo e revogação da designação do fiscal, que pegam bloqueio exclusivo na linha correspondente.
+
+**Garantia**: a elegibilidade é verdadeira no momento da efetivação do check-in (TJ-ASSOC-003 "invalidar prontamente"; TJ-JOG-005). **Teste**: goroutines com barreira e pausas controladas executando as duas ordens, repetido 200 vezes; para cada execução, se o check-in foi aceito, a confirmação de `T1` é anterior à de `T2`; se `T2` foi anterior, o check-in é recusado. Mais a mesma bateria para suspensão, revogação de foto e revogação de designação.
+
 ### Positive Consequences
 
 - AC-CAP-01, AC-CAP-03..06, AC-PAG-02, AC-JOG-02..04, AC-FRQ-01..03 e AC-CAN-01 garantidos por restrição de banco ou por função pura testada.
@@ -179,6 +213,8 @@ Associado B, benefício iniciado no J7, mesmos jogos e nenhuma suspensão: denom
 ### Negative Consequences
 
 - Contadores redundantes às linhas exigem o job de consistência.
+- A projeção de presença efetiva duplica informação do histórico e exige reconstrução e verificação periódicas.
+- O check-in segura bloqueios compartilhados em linhas de `associados` e `acesso`. Revogações concorrentes esperam alguns milissegundos; o volume de entrada no ginásio é baixo, mas o teste de pico (P2-19) deve medir isso.
 - A linha de quota serializa as reservas de uma temporada; é aceitável em dezenas de vagas.
 - A suíte de concorrência com PostgreSQL real aumenta o tempo do CI de integração.
 

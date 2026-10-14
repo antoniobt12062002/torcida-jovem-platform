@@ -1,6 +1,6 @@
 # ADR-016: Permissões sensíveis, papel `FISCAL`, autorização por jogo e Conselho Fiscal fail-closed
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3, parecer externo: Conselho Fiscal por permissões explícitas; "exige decisão")
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: security, rbac, governance, tj-connect
@@ -48,7 +48,11 @@ Chosen option: **1**.
 | `propria` (dados do próprio titular) | Sim | Sim, normalmente ao papel base `ASSOCIADO` | Não |
 | `servico` | Não | **Não** | Sim |
 
-Todas as permissões já existentes são classificadas na sub-spec `02`, sem mudar quem as tem hoje, salvo decisão explícita.
+Todas as permissões já existentes são classificadas na sub-spec `02`, sem mudar quem as tem hoje, salvo decisão explícita. Decisões do mantenedor (2026-10-14), ainda sem concessão aplicada no código:
+
+- **D-02-2 (parcial)**: a classificação vale como base de compatibilidade. A proposta revisada torna `sensivel` toda operação que movimenta recursos ou altera saldos (18 de 30), preservando acessos legítimos por concessões explícitas justificadas.
+- **D-02-3 (aprovada)**: o `PRESIDENTE` deixa de ter `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine`. É a única exceção aprovada à preservação da matriz.
+- **D-02-4 (proposta, pendente)**: a D-02-3 só pode entrar em vigor com uma regra de nomeação institucional do Conselho Fiscal (`identity:conselho_fiscal:manage`, decisão registrada, `Covers` sem as permissões institucionais e incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade). Sem ela, `authz.Covers` impediria qualquer pessoa de nomear ou retirar conselheiros (spec `02`, INS-01).
 
 ### Catálogo das operações exigidas (nomes finais no Specify)
 
@@ -59,7 +63,7 @@ Todas as permissões já existentes são classificadas na sub-spec `02`, sem mud
 | | `associados:cancelamento:decide` | sensivel | Decisão motivada; **não** pode ser de quem analisou, se o regulamento exigir |
 | | `cobrancas:reembolso:request` | sensivel | Solicita valor e motivo, vinculado à decisão de cancelamento ou de regularização |
 | | `cobrancas:reembolso:approve` | sensivel | Aprovador ≠ solicitante (sempre) |
-| | `cobrancas:reembolso:execute` | servico | Exige `decision_id` aprovado e não executado |
+| | `cobrancas:reembolso:execute` | servico (**exige decisão**) | Exige `decision_id` aprovado e não executado |
 | | `cobrancas:reembolso:read` | normal | — |
 | **Jogos** | `acesso:jogo:create` | normal | — |
 | | `acesso:jogo:update` | normal | Publicar, editar, adiar, cancelar, com motivo |
@@ -81,7 +85,11 @@ Todas as permissões já existentes são classificadas na sub-spec `02`, sem mud
 | | `associados:vaga:release` | sensivel | Exige cancelamento definitivo e condições do acordo |
 | **Camisetas** | `associados:lote:close` | sensivel | Fechamento manual; alteração depois do fechamento só com registro |
 | **Operação** | `cobrancas:conciliacao:resolve` | sensivel | Resolve `DIVERGENTE` com evidência |
-| | `cobrancas:processamento:retry` | sensivel | Reenfileirar ou encerrar job falho |
+| | `cobrancas:processamento:close` | sensivel | Autorização do módulo para encerrar job de cobrança falho (junto com `jobs:job:close`); recusado com obrigação pendente |
+| **Contas de serviço** | `identity:service_account:deactivate` | sensivel | Desativação de emergência, com motivo |
+| | `identity:service_account:reactivate` | sensivel | Reativação com motivo; quem reativa ≠ quem desativou |
+
+**Permissões `servico` e o atributo "exige decisão"** (revisão 3, ver [ADR-013](013-contas-de-servico-e-autoria-de-processos.md)): toda permissão `servico` declara se exige decisão humana. As de **regra aprovada** (por exemplo, sincronizar e confirmar cobrança, registrar receita de cobrança, ativar adesão paga, expirar reserva reconciliada) **não** exigem decisão caso a caso. As de **execução de decisão administrativa** (por exemplo, `cobrancas:reembolso:execute`, aplicar suspensão decidida) exigem `decision_id`. Os nomes finais ficam nas specs de cada módulo.
 
 Os papéis que recebem cada permissão sensível **dependem do regulamento** (P0-2, P0-3, P1-14). Até o mantenedor aprovar uma matriz, **ninguém** as recebe e o fluxo correspondente não opera. Esse bloqueio é deliberado e nada é presumido. A sub-spec `02` garante que essas permissões nasçam sem concessão; a matriz proposta será submetida à aprovação do mantenedor antes da operação, nas specs de cada módulo.
 
@@ -102,9 +110,13 @@ Implementada no caso de uso comparando os autores registrados nos atos anteriore
 
 ### Conselho Fiscal: fail-closed
 
-- `forbiddenToConselhoFiscal` (lista de proibidos) é substituída por uma **lista de ações permitidas**: `read`, `opine` e `approve` restrito a recurso `prestacao_contas`.
-- Qualquer concessão ao `CONSELHO_FISCAL` com ação fora dessa lista, ou de permissão `sensivel` que não seja de leitura, ou `servico`, faz `BuildMatrix` falhar e a partida não acontece.
-- Um teste percorre o catálogo agregado e prova a regra para todo módulo, inclusive os novos.
+Revisão 3 (parecer externo): restringir só por verbo ainda aceitaria `read` sobre qualquer recurso sensível novo (por exemplo, dados disciplinares) sem revisão. A proteção passa a ser por **permissões explicitamente autorizadas**:
+
+- `forbiddenToConselhoFiscal` (lista de verbos proibidos) é substituída por uma **lista explícita e versionada de permissões** que o `CONSELHO_FISCAL` pode receber. Ela começa com exatamente as 11 que ele tem hoje: `audit:log:read`; `financeiro:conta:read`, `:lancamento:read`, `:saldo:read`, `:comprovante:read`, `:prestacao_contas:read`, `:prestacao_contas:approve`, `financeiro:parecer:opine`; `estoque:produto:read`, `:movimentacao:read`, `:saldo:read`.
+- **Primeira barreira**: qualquer concessão ao `CONSELHO_FISCAL` fora da lista faz `BuildMatrix` falhar, **mesmo que a ação seja `read`**.
+- **Segunda barreira**: toda permissão da lista precisa ter ação `read`, `opine` ou `approve` sobre `prestacao_contas`, e nunca classe `servico`.
+- Acrescentar uma permissão à lista exige mudança revisada do arquivo versionado e do seu snapshot de teste. Um novo acesso do Conselho Fiscal nunca acontece por omissão.
+- As autorizações legítimas atuais ficam preservadas exatamente (spec `02`, CFS-01).
 
 ### Relatório ao clube, sem conta
 

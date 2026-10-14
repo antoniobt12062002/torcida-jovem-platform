@@ -1,6 +1,6 @@
 # ADR-013: Contas de serviço e autoria de processos automatizados
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3, parecer externo: regra aprovada × decisão administrativa)
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: security, identity, audit, rbac, tj-connect
@@ -43,11 +43,14 @@ Chosen option: **1**.
 |---|---|---|---|
 | **Humana direta** | Pessoa com sessão, pela própria permissão | Associado solicita cancelamento; fiscal registra check-in | `actor_type = user`, `actor_user_id` = a pessoa |
 | **Decisão administrativa** | Pessoa com permissão **sensível**, com motivação registrada | Diretor aprova reembolso; autoridade decide suspensão; responsável registra liberação comercial | Igual à humana, mais o **registro de decisão** no módulo dono (decisão, motivo, evidência, versão) com id próprio (`decision_id`) |
-| **Processo automatizado** | Conta de serviço, aplicando regra determinística | Sincronizar a cobrança, ativar a adesão paga, expirar a reserva, executar o reembolso **já aprovado** | `actor_type = service` (novo), `actor_user_id` = a conta de serviço, mais `causation_id`, `correlation_id` e, quando houver, `on_behalf_of_user_id` e `decision_id` |
+| **Processo automatizado: execução de regra aprovada** | Conta de serviço, aplicando uma regra determinística fixada em spec, código e ADR, a partir de um fato verificável | Confirmar o pagamento consultado no provedor, registrar a receita da cobrança paga, ativar a adesão paga com vaga, expirar a reserva depois da reconciliação, conciliar | `actor_type = service` (novo), `actor_user_id` = a conta de serviço, `regra` (nome e versão), `causation_id`, `correlation_id` e, quando houver, `on_behalf_of_user_id`. **Sem decisão humana caso a caso** |
+| **Processo automatizado: execução de decisão administrativa** | Conta de serviço, executando o efeito de uma decisão humana já registrada | Executar no provedor o reembolso **já aprovado**; aplicar uma suspensão **já decidida** | Igual à linha anterior, mais `decision_id` obrigatório |
 
 Regras:
 
-- **Processo nunca decide.** As permissões de juízo (aprovar, decidir, liberar, corrigir) são `sensível` e **não podem** ser concedidas a papel de serviço. Uma permissão de execução exclusiva de serviço (por exemplo `cobrancas:reembolso:execute`) só é aceita pelo caso de uso junto com o `decision_id` de uma decisão humana válida, aprovada e ainda não executada. Sem isso, a recusa é auditada.
+- **Processo nunca exerce juízo discricionário.** As permissões de juízo (aprovar reembolso, decidir suspensão, liberar vaga, corrigir presença, conceder liberação comercial) são `sensivel` e **não podem** ser concedidas a papel de serviço.
+- **Regra aprovada não exige decisão por caso.** Confirmar um pagamento, registrar a receita correspondente, ativar a adesão paga com vaga ou expirar uma reserva reconciliada são aplicações determinísticas de regras já aprovadas. Exigir uma decisão humana para cada pagamento seria artificial e é expressamente rejeitado.
+- **Execução de decisão exige `decision_id`.** Toda permissão `servico` declara se "exige decisão". Uma permissão que exige (por exemplo `cobrancas:reembolso:execute`) só é aceita pelo caso de uso junto com o `decision_id` de uma decisão humana `APROVADA`, do mesmo escopo e ainda não executada. Sem isso, a recusa é auditada.
 - **Humano não executa como processo**: as permissões exclusivas de serviço não podem ser concedidas a papel humano.
 - A matriz (`BuildMatrix`, [ADR-016](016-permissoes-sensiveis-e-escopo-por-jogo.md)) recusa os dois casos e **impede a partida** da API e do worker.
 
@@ -68,7 +71,8 @@ Regras:
 
 - `audit_log.actor_type` ganha `service`, com id **obrigatório**. A restrição da tabela passa a ser "`user` e `service` exigem `actor_user_id`; `anonymous` não tem". Muda por migration em `platform`; aqui fica só o planejamento.
 - O ator `system` sem id deixa de ser aceito em caminhos novos. Um teste proíbe o seu uso fora da partida e do bootstrap, que ficam documentados como as únicas exceções.
-- `context` padroniza `correlation_id` (fluxo inteiro, ex. do checkout à ativação), `causation_id` (evento, notificação ou job imediato), `on_behalf_of_user_id` (pessoa cuja ação originou o fluxo, ex. quem iniciou o checkout) e `decision_id` (decisão humana executada).
+- `context` padroniza `correlation_id` (fluxo inteiro, ex. do checkout à ativação), `causation_id` (evento, notificação ou job imediato), `on_behalf_of_user_id` (pessoa cuja ação originou o fluxo, ex. quem iniciou o checkout), `regra` (nome e versão da regra aprovada aplicada) e `decision_id` (decisão humana executada, só no segundo tipo de execução).
+- **Desativação e reativação** de conta de serviço usam permissões distintas (`identity:service_account:deactivate` e `:reactivate`); a reativação exige pessoa diferente de quem desativou. Ver spec `02` (SVC-01).
 - Com isso, para qualquer efeito automático é possível responder: qual processo, disparado por quê, em nome de quem e sob qual decisão.
 
 ### Positive Consequences

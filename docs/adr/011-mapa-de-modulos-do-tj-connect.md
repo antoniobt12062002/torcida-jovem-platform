@@ -1,6 +1,6 @@
 # ADR-011: Mapa de módulos e dependências do TJ Connect
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3: nomes de eventos alinhados à ADR-012)
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: architecture, modules, tj-connect
@@ -77,7 +77,7 @@ A composição (`cmd/api`, `cmd/worker`) importa todos os módulos, mas não é 
 | `acesso` | `identity` | D | Validar que o fiscal designado tem conta ativa |
 | `cobrancas` | `financeiro` | D | Registrar receita e devolução de cobrança, com idempotência ([ADR-017](017-evolucao-aditiva-de-financeiro-e-estoque.md)) |
 | `associados` | `cobrancas` | D | `CriarCobranca`, `ConsultarCobranca`, `SolicitarReembolso` |
-| `associados` | `cobrancas` | E | Consumir `cobranca.paga`, `nao_concluida`, `reembolsada`, `contestada`, `contestacao_perdida`, `divergente` ([ADR-012](012-cobrancas-e-eventos-persistentes.md)) |
+| `associados` | `cobrancas` | E | Consumir `cobranca.paga`, `nao_concluida`, `reembolso_concluido`, `contestada`, `contestacao_perdida`, `divergente` ([ADR-012](012-cobrancas-e-eventos-persistentes.md)) |
 | `associados` | `estoque` | D | Recebimento de lote e entrega de camiseta (só referência opaca) |
 | `acesso` | `associados` | D | Consultar elegibilidade (adesão ativa, plano com ingresso, foto habilitada, início do benefício, número) |
 

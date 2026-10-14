@@ -1,6 +1,6 @@
 # ADR-012: Módulo `cobrancas`, ciclo de vida da cobrança, eventos persistentes e conciliação
 
-- **Date**: 2026-10-13 (revisão 2, com as decisões M-1 a M-9 do mantenedor)
+- **Date**: 2026-10-13 (revisão 2, decisões M-1 a M-9); 2026-10-14 (revisão 3, parecer externo: `NAO_CONCLUIDA` não terminal, reembolso parcial)
 - **Status**: Proposed. Aprovado conceitualmente; ainda não aceito; não autoriza implementação.
 - **Deciders**: @antoniobt12062002
 - **Tags**: architecture, payments, outbox, idempotency, tj-connect
@@ -62,24 +62,42 @@ Chosen option: **1**.
 | `CRIADA` | Registro local gravado; a order ainda não existe no provedor | Não |
 | `AGUARDANDO_PAGAMENTO` | Order criada (`created`), `checkout_url` disponível, dentro da validade | Não |
 | `EM_PROCESSAMENTO` | Há um pagamento em análise ou pendente no provedor | Não |
-| `PAGA` | O provedor confirmou o pagamento integral; valor, moeda e `external_reference` conferidos | Não (pode ir a reembolso ou contestação) |
-| `NAO_CONCLUIDA` | Expirou, foi recusada ou cancelada **com confirmação do provedor** de que não há pagamento possível | Sim |
-| `FALHA_CRIACAO` | A order não pôde ser criada depois das tentativas com a mesma chave de idempotência | Sim |
-| `REEMBOLSO_EM_ANDAMENTO` | Reembolso solicitado ao provedor, aguardando conclusão | Não |
-| `REEMBOLSADA` | O provedor confirmou o reembolso do valor devolvido | Sim |
-| `CONTESTADA` | Chargeback aberto | Não |
-| `CONTESTACAO_PERDIDA` | O dinheiro voltou ao comprador por contestação | Sim |
+| `PAGA` | O provedor confirmou o pagamento integral; valor, moeda e `external_reference` conferidos; nenhum valor reembolsado | Não (pode ir a reembolso ou contestação) |
+| `PARCIALMENTE_REEMBOLSADA` | Pagamento confirmado com parte do valor já devolvida (`0 < valor_reembolsado_cents < valor_pago_cents`). **Não está encerrada**: ainda há saldo pago, sujeito a novo reembolso ou contestação | Não |
+| `NAO_CONCLUIDA` | Expirou, foi recusada ou cancelada **com confirmação do provedor** de que não há pagamento em curso. Encerrada para novas tentativas de pagamento, mas **admite uma única transição**: `→ PAGA` (pagamento tardio confirmado pelo provedor) | **Não** (correção da revisão 2, que a classificava como terminal) |
+| `FALHA_CRIACAO` | A order não pôde ser criada depois das tentativas com a mesma chave de idempotência | Sim (uma order órfã encontrada depois pela conciliação vira divergência, nunca reabre a cobrança) |
+| `REEMBOLSO_EM_ANDAMENTO` | Um reembolso (integral ou parcial) aprovado está sendo executado no provedor | Não |
+| `REEMBOLSADA` | A soma dos reembolsos concluídos é igual ao valor pago | Sim |
+| `CONTESTADA` | Chargeback aberto (pendente) | Não |
+| `CONTESTACAO_PERDIDA` | O pagamento foi definitivamente revertido por contestação | Sim |
 | `DIVERGENTE` | O estado do provedor contradiz o local ou é inconsistente (ver tabela de divergências); exige resolução humana | Não (sai por decisão auditada) |
+
+Estados terminais: `FALHA_CRIACAO`, `REEMBOLSADA` e `CONTESTACAO_PERDIDA`.
 
 Transições permitidas:
 
-`CRIADA → AGUARDANDO_PAGAMENTO | FALHA_CRIACAO`; `AGUARDANDO_PAGAMENTO → EM_PROCESSAMENTO | PAGA | NAO_CONCLUIDA`; `EM_PROCESSAMENTO → PAGA | NAO_CONCLUIDA`; `NAO_CONCLUIDA → PAGA` (pagamento tardio confirmado pelo provedor, marcado como `tardio`); `PAGA → REEMBOLSO_EM_ANDAMENTO | CONTESTADA`; `REEMBOLSO_EM_ANDAMENTO → REEMBOLSADA | PAGA` (reembolso recusado pelo provedor); `CONTESTADA → PAGA | CONTESTACAO_PERDIDA`. Qualquer estado pode ir a `DIVERGENTE`.
+- `CRIADA → AGUARDANDO_PAGAMENTO | FALHA_CRIACAO`
+- `AGUARDANDO_PAGAMENTO → EM_PROCESSAMENTO | PAGA | NAO_CONCLUIDA`
+- `EM_PROCESSAMENTO → PAGA | NAO_CONCLUIDA`
+- `NAO_CONCLUIDA → PAGA` (só pagamento tardio confirmado pelo provedor; marcado `tardio = true`)
+- `PAGA | PARCIALMENTE_REEMBOLSADA → REEMBOLSO_EM_ANDAMENTO | CONTESTADA`
+- `REEMBOLSO_EM_ANDAMENTO → REEMBOLSADA` (reembolsado acumulado = pago)
+- `REEMBOLSO_EM_ANDAMENTO → PARCIALMENTE_REEMBOLSADA` (concluído com 0 < acumulado < pago)
+- `REEMBOLSO_EM_ANDAMENTO → PAGA | PARCIALMENTE_REEMBOLSADA` (reembolso recusado ou falho; volta ao estado indicado pelo acumulado)
+- `CONTESTADA → PAGA | PARCIALMENTE_REEMBOLSADA` (contestação ganha; volta ao estado indicado pelo acumulado) ou `→ CONTESTACAO_PERDIDA`
+- Qualquer estado → `DIVERGENTE`.
 
 Regras:
 
 - Toda transição é um `UPDATE` com comparação do estado atual (`WHERE estado IN (origens permitidas)`) e um contador de versão. Aplicar duas vezes a mesma verdade não muda nada.
 - Um retrocesso informado pelo provedor (por exemplo, `processed` e depois pendente) nunca é aplicado: vira `DIVERGENTE`.
-- **Reembolso parcial** (decisão A-1): o domínio representa reembolsos integrais e parciais, cada um com valor, motivo, aprovação e rastreabilidade. A soma dos reembolsos aprovados e concluídos nunca excede o valor elegível, o que é garantido no banco. **Nenhuma regra automática** calcula ou processa reembolso parcial sem validação jurídica e sem a confirmação do suporte do Mercado Pago (verificação 7). Até lá, a execução no provedor de um valor parcial fica bloqueada.
+- **Reembolsos como entidade própria** (decisão A-1). Cada `Reembolso` tem valor, motivo, solicitante, aprovador (`decision_id`), chave de idempotência no provedor e estado próprio:
+
+  `SOLICITADO → APROVADO | INDEFERIDO`; `APROVADO → EM_PROCESSAMENTO`; `EM_PROCESSAMENTO → CONCLUIDO | RECUSADO_PROVEDOR | FALHOU`.
+
+  A cobrança guarda `valor_pago_cents` e `valor_reembolsado_cents` (soma dos `CONCLUIDO`). O banco garante que `valor_reembolsado_cents` mais os valores `APROVADO` e `EM_PROCESSAMENTO` nunca ultrapassem `valor_pago_cents`. Há no máximo um reembolso não terminal por cobrança.
+- Um reembolso parcial leva a cobrança a `PARCIALMENTE_REEMBOLSADA`, **nunca** a `REEMBOLSADA`. Só a soma igual ao pago encerra a cobrança.
+- **Nenhuma regra automática** calcula valor de reembolso parcial. A execução no provedor de um valor parcial fica bloqueada até a validação jurídica e a confirmação do suporte do Mercado Pago (verificação 7). O modelo já representa o parcial.
 - **Contestação** (decisão A-2): `CONTESTADA` (pendente) e `CONTESTACAO_PERDIDA` (pagamento definitivamente revertido) são estados distintos. A contestação não suspende o benefício nem altera a adesão automaticamente. Andamento e desfecho financeiro ficam registrados; qualquer consequência associativa segue procedimento administrativo próprio.
 
 ### Relação com a adesão (dono: `associados`)
@@ -91,7 +109,7 @@ A cobrança não conhece adesão; `associados` reage aos eventos:
 | `cobranca.paga.v1` (não tardia) | Reserva válida → ocupação; adesão `ATIVA`. Plano básico: adesão `ATIVA`, sem quota |
 | `cobranca.paga.v1` (tardia) | Revalida a quota sob bloqueio: com vaga, `ATIVA`; sem vaga, `EM_REGULARIZACAO` e pendência (nunca excede, nunca converte em outro plano) |
 | `cobranca.nao_concluida.v1` | Adesão `NAO_CONCLUIDA`; a reserva é liberada (a liberação só acontece depois desta confirmação) |
-| `cobranca.reembolsada.v1` | Registra o reembolso no cancelamento ou na regularização; encerra a adesão se a decisão previu isso |
+| `cobranca.reembolso_concluido.v1` (um por reembolso concluído; payload com valor do reembolso, acumulado e `integral`) | Registra o reembolso no cancelamento ou na regularização; encerra a adesão só se a decisão de cancelamento previu isso, nunca pelo simples fato de o reembolso ser integral |
 | `cobranca.contestada.v1` / `cobranca.contestacao_perdida.v1` | Registra a contestação, o andamento e o desfecho, e abre pendência administrativa. **Nenhum efeito automático** sobre a adesão ou o ingresso (decisão A-2); qualquer consequência segue procedimento administrativo |
 | `cobranca.divergente.v1` | Nenhuma ativação; pendência visível |
 
@@ -123,14 +141,14 @@ A cobrança não conhece adesão; `associados` reage aos eventos:
   - um job periódico consulta as cobranças não terminais sem atualização recente;
   - as reservas próximas de expirar disparam consulta antecipada;
   - um job diário busca as orders do período no provedor e compara com o banco, encontrando órfãs e diferenças.
-- **Reprocessamento**: jobs e entregas de evento que esgotarem as tentativas ficam em estado de falha permanente, nunca descartados em silêncio. Uma pessoa com `jobs:job:retry` ou `jobs:job:close` **e** `cobrancas:processamento:retry` (todas sensíveis; spec `01`) pode reenfileirar ou encerrar com motivo, com auditoria.
+- **Reprocessamento**: jobs e entregas de evento que esgotarem as tentativas ficam em estado de falha permanente, nunca descartados em silêncio. Uma pessoa com `jobs:job:retry` pode reenfileirar com motivo. Encerrar exige `jobs:job:close` **e** `cobrancas:processamento:close`, e é recusado enquanto a obrigação do job (pagamento, reembolso) não estiver resolvida por outro caminho (spec `01`, DLQ-01). Tudo é auditado.
 - **Divergências** (estado local × provedor):
 
 | Situação | Tratamento |
 |---|---|
 | Local `AGUARDANDO`/`EM_PROCESSAMENTO`, provedor pago | Transição normal para `PAGA` |
 | Local `NAO_CONCLUIDA`, provedor pago | `PAGA` com `tardio = true`; `associados` revalida a quota |
-| Local `PAGA`, provedor reembolsado fora do sistema (pelo painel do provedor) | `REEMBOLSADA` com origem "externa"; devolução registrada no Financeiro; alerta |
+| Local `PAGA` ou `PARCIALMENTE_REEMBOLSADA`, provedor com reembolso feito fora do sistema (pelo painel do provedor) | `Reembolso` registrado com origem "externa" e o valor do provedor; cobrança em `PARCIALMENTE_REEMBOLSADA` ou `REEMBOLSADA` conforme o acumulado; devolução registrada no Financeiro; alerta e pendência para regularizar a decisão que faltou |
 | Local `PAGA`, provedor contestado | `CONTESTADA` |
 | Valor ou moeda diferentes do esperado | `DIVERGENTE`; nenhuma ativação |
 | Order no provedor com `external_reference` desconhecida | Registro de divergência órfã; nenhum efeito |

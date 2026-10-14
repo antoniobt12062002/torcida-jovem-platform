@@ -17,11 +17,11 @@ O TJ Connect traz operações de governança (reembolso, check-in, procedimento 
 
 - [ ] Toda permissão do catálogo tem uma classe obrigatória, e a ausência de classe impede a partida da API e do worker.
 - [ ] Nenhuma permissão sensível chega a um papel por regra genérica; o `PRESIDENTE` só recebe sensíveis por concessão explícita.
-- [ ] A transição para a classificação mantém **idênticas** as permissões efetivas de todos os papéis e usuários existentes.
-- [ ] Processos automatizados agem com contas de serviço identificáveis, não interativas e de privilégio mínimo, sem poder decidir.
+- [ ] A transição para a classificação mantém **idênticas** as permissões efetivas de todos os papéis e usuários existentes, com uma única exceção expressamente aprovada (D-02-3), que só entra em vigor com a regra de nomeação institucional do Conselho Fiscal (INS-01).
+- [ ] Processos automatizados agem com contas de serviço identificáveis, não interativas e de privilégio mínimo. Sem juízo discricionário, executam **regras determinísticas aprovadas** (por exemplo, confirmar pagamento) ou **decisões humanas registradas** (por exemplo, reembolso aprovado), e a diferença entre os dois casos é explícita.
 - [ ] Toda entrada nova de auditoria identifica um autor (pessoa ou conta de serviço) e, quando automatizada, a sua causa e o fluxo.
 - [ ] O papel `FISCAL` existe, e o contrato de escopo por jogo está definido para a spec `07`.
-- [ ] O Conselho Fiscal é protegido por uma lista de ações **permitidas** (fail-closed).
+- [ ] O Conselho Fiscal só recebe permissões de uma **lista explícita e versionada de permissões autorizadas** (fail-closed), com a restrição de verbos como segunda barreira.
 
 ## Out of Scope
 
@@ -35,7 +35,7 @@ O TJ Connect traz operações de governança (reembolso, check-in, procedimento 
 | Renomear o papel `ASSOCIADO` | Sem efeito na autorização (que não lê nomes); fica como evolução |
 | Dupla aprovação de promoção administrativa | Já é decisão futura do ADR-009 |
 | Interface web de administração de contas de serviço e catálogo | Spec `10` ou posterior |
-| Rever concessões herdadas (por exemplo, `PRESIDENTE` com `financeiro:prestacao_contas:approve`) | Esta spec preserva o estado atual; reduzir concessão é uma decisão de governança separada (D-02-3) |
+| Aplicar concessões reais (inclusive a D-02-3, já aprovada) | Esta spec **especifica** a mudança; a alteração das concessões no código acontece só na implementação autorizada |
 
 ---
 
@@ -70,7 +70,9 @@ O TJ Connect traz operações de governança (reembolso, check-in, procedimento 
 |---|---|---|
 | Sincronizar catálogo, classes, concessões e contas de serviço | — (partida) | — |
 | Consultar contas de serviço | `identity:service_account:read` | normal |
-| Desativar ou reativar conta de serviço | `identity:service_account:update` | sensivel |
+| Desativar conta de serviço (chave de emergência) | `identity:service_account:deactivate` | sensivel |
+| Reativar conta de serviço | `identity:service_account:reactivate` | sensivel (mais restrita: quem reativa ≠ quem desativou; contingência com espera e revisão posterior) |
+| Nomear, retirar, desativar ou redefinir a senha de membro do Conselho Fiscal (ato institucional registrado) | `identity:conselho_fiscal:manage` (proposta, D-02-4) | sensivel |
 | Atribuir papéis, promover, revogar (existentes) | `identity:role:assign`, `identity:admin:grant`, `identity:admin:revoke` | sensivel (com concessão explícita de transição) |
 | Verificar a separação de funções (função de plataforma usada pelos módulos) | — | — |
 | Consultar a elegibilidade de identidade de um fiscal (consulta publicada para `acesso`) | — (chamada entre módulos, autorizada no caso de uso de `acesso`) | — |
@@ -82,7 +84,7 @@ O TJ Connect traz operações de governança (reembolso, check-in, procedimento 
 | `ASSOCIADO` | Papel base de toda conta humana: só os próprios dados | Só recebe permissões `normal` de leitura pública e `propria`; **nunca** `sensivel` ou `servico`. Não indica adesão paga (alerta do §3 dos requisitos) |
 | `PRESIDENTE` | Presidência | Recebe automaticamente só `normal` e `propria`; `sensivel` só por concessão explícita no módulo dono |
 | `DIRETORIA`, `TESOURARIA`, `ESTOQUE_LOJA`, `EVENTOS` | Como hoje | `sensivel` só por concessão explícita |
-| `CONSELHO_FISCAL` | Fiscalização | Só ações `read`, `opine` e `approve` sobre `prestacao_contas`; nunca `servico` |
+| `CONSELHO_FISCAL` | Fiscalização | Só permissões da lista explícita autorizada (hoje 11, ver CFS-01); cada uma também precisa ter ação `read`, `opine` ou `approve` sobre `prestacao_contas`; nunca `servico` |
 | `ADMIN_SISTEMA` | Administração técnica | Como hoje; não recebe `sensivel` de módulos de negócio sem decisão registrada (D-02-2) |
 | `FISCAL` (novo) | Verificação de credenciais em jogo designado | Exige `AdminMembership`; começa sem permissões (concedidas na spec `07`); nunca `servico` |
 | Papéis de serviço (novos) | Um por conta de serviço | Só `servico`; nunca atribuíveis a pessoa; não exigem `AdminMembership` |
@@ -102,18 +104,31 @@ O tipo é definido na criação e **nunca muda**.
 
 ### Conta de serviço (atividade)
 
-`ATIVA ⇄ DESATIVADA`. As duas transições exigem `identity:service_account:update`, motivo e auditoria. A sincronização também pode desativar uma conta removida do código, mas **nunca a exclui** e **nunca reativa** uma conta desativada manualmente.
+`ATIVA → DESATIVADA` exige `identity:service_account:deactivate`; `DESATIVADA → ATIVA` exige `identity:service_account:reactivate` e uma pessoa **diferente** de quem desativou. As duas transições exigem motivo e auditoria. A sincronização também pode desativar uma conta removida do código, mas **nunca a exclui** e **nunca reativa** uma conta desativada.
 
 ### Registro de decisão (contrato que os módulos implementam)
 
 `APROVADA → EXECUTADA` ou `APROVADA → REVOGADA`. A execução e a revogação são únicas, e os dois estados finais são terminais.
+
+### Dois tipos de execução automatizada
+
+| Tipo | Quando | O que autoriza | O que a auditoria registra | Exemplos |
+|---|---|---|---|---|
+| **Execução de regra aprovada** (determinística) | O efeito decorre de um fato verificável e de uma regra fixada em spec, código e ADR, sem juízo | A permissão `servico` do processo, sem decisão humana caso a caso | `regra` (nome e versão da regra), `causation_id` (fato de origem: notificação, evento, janela de agendamento), `correlation_id` | Confirmar pagamento consultado no provedor; registrar a receita da cobrança paga; ativar a adesão paga com vaga; expirar a reserva depois da reconciliação; conciliar |
+| **Execução de decisão administrativa** | O efeito depende de juízo discricionário, que só uma pessoa exerce | A permissão `servico` **marcada como "exige decisão"**, mais um `decision_id` `APROVADA`, do mesmo escopo e não executado | Além do acima, `decision_id` e `on_behalf_of_user_id` (quem decidiu) | Executar no provedor o reembolso aprovado; aplicar a suspensão decidida |
+
+Regras:
+
+- Uma confirmação de pagamento **não** exige nova decisão humana: é regra aprovada.
+- Aprovar reembolso, decidir suspensão, liberar vaga, corrigir presença e conceder liberação comercial são **sempre** atos humanos `sensivel`. Nenhum papel de serviço os recebe, e a execução automática deles só existe como "execução de decisão administrativa".
+- Toda permissão `servico` declara, no catálogo, se **exige decisão**. A classe e esse atributo são verificados na partida.
 
 ### Invariantes
 
 - **INV-1**: toda permissão do catálogo agregado tem exatamente uma classe.
 - **INV-2**: nenhum papel humano tem permissão `servico`; nenhum papel de serviço tem permissão que não seja `servico`.
 - **INV-3**: `PRESIDENTE` tem uma permissão `sensivel` se, e somente se, um módulo a concedeu explicitamente.
-- **INV-4**: `CONSELHO_FISCAL` só tem permissões com ação `read`, `opine`, ou `approve` em recurso `prestacao_contas`.
+- **INV-4**: `CONSELHO_FISCAL` só tem permissões que constam da lista explícita e versionada de permissões autorizadas, e cada uma tem ação `read`, `opine`, ou `approve` em recurso `prestacao_contas`.
 - **INV-5**: nenhuma sessão pertence a uma conta `SERVICE`.
 - **INV-6**: toda entrada de auditoria nova com `actor_type` `user` ou `service` tem `actor_user_id`; `system` só aparece nas ações de bootstrap e de sincronização do RBAC.
 - **INV-7**: a mesma pessoa não pratica dois atos que a regra de separação de funções do caso de uso declara incompatíveis.
@@ -134,9 +149,15 @@ O tipo é definido na criação e **nunca muda**.
 ### F2 — Primeira partida após a transição (compatibilidade)
 
 1. As 30 permissões existentes recebem a classe da tabela "Classificação das permissões existentes".
-2. As que passam a `sensivel` e que o `PRESIDENTE` tem hoje recebem uma **concessão explícita de transição** ao `PRESIDENTE`, no módulo dono.
-3. A matriz efetiva resultante é comparada com o retrato atual: tem de ser idêntica, papel a papel.
+2. As que passam a `sensivel` e que um papel tem hoje recebem uma **concessão explícita e justificada** a esse papel, no módulo dono. O `PRESIDENTE` recebe 16; as concessões de TESOURARIA, ESTOQUE_LOJA, ADMIN_SISTEMA e CONSELHO_FISCAL já são explícitas.
+3. A matriz efetiva resultante é comparada com o retrato atual: tem de ser idêntica, papel a papel, exceto pela **exceção aprovada D-02-3** (retirada de duas permissões do `PRESIDENTE`), aplicada só com a regra de nomeação institucional (INS-01).
 4. As permissões novas de classe `sensivel` do TJ Connect, quando existirem, entram sem nenhuma concessão.
+
+### F3a — Execução automatizada de regra aprovada (contrato)
+
+1. Um fato verificável chega (por exemplo, a consulta ao provedor confirma o pagamento).
+2. A conta de serviço executa com a sua permissão `servico` que **não** exige decisão; o caso de uso aplica a regra fixada na spec do módulo.
+3. A auditoria registra a conta de serviço, a `regra` (nome e versão), o `causation_id` e o `correlation_id`. Não há decisão humana caso a caso.
 
 ### F3 — Execução automatizada de uma decisão humana (contrato)
 
@@ -149,9 +170,9 @@ O tipo é definido na criação e **nunca muda**.
 
 ### F4 — Desativação de emergência de uma conta de serviço
 
-1. Um administrador com `identity:service_account:update` desativa a conta, com motivo.
+1. Um administrador com `identity:service_account:deactivate` desativa a conta, com motivo.
 2. A partir daí, todo caso de uso chamado com o `Principal` dessa conta é recusado (o comportamento do worker está na spec `01`).
-3. A reativação é o mesmo fluxo, também auditado.
+3. A reativação exige `identity:service_account:reactivate`, motivo e uma pessoa diferente de quem desativou. É auditada.
 
 ---
 
@@ -168,40 +189,40 @@ O tipo é definido na criação e **nunca muda**.
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 |---|---|---|---|
-| Classificação das 30 permissões existentes | Tabela "Classificação das permissões existentes" abaixo | Tudo o que altera acesso de outra pessoa, cancela lançamento, ajusta estoque ou é ato institucional é `sensivel`; o resto, `normal` | n |
-| Preservação na transição | Concessão explícita de transição ao `PRESIDENTE` para cada permissão existente que vira `sensivel` | Exigência do mantenedor: nenhuma perda e nenhum ganho | n |
+| Classificação das 30 permissões existentes | Tabela "Classificação das permissões existentes" abaixo (**proposta revisada**, D-02-2): `sensivel` para tudo o que altera acesso de terceiros, movimenta recursos, altera saldos ou estrutura contábil, ou é ato institucional; `normal` para leituras e atos sem efeito patrimonial | Diretriz do mantenedor (2026-10-14). A base de compatibilidade está aprovada; a classificação de segurança **não é definitiva** e aguarda aprovação desta proposta | n |
+| Preservação na transição | Concessão explícita, justificada e revisada em PR, a cada papel que já tem hoje uma permissão que passa a `sensivel`; a única exceção aprovada é a D-02-3 | Diretriz do mantenedor: preservar acessos legítimos por concessões explícitas quando justificadas | n |
 | Onde os papéis de serviço são declarados | No mesmo lugar único que já declara os papéis (`identity/domain/role.go`, protegido por teste); o módulo dono concede as permissões `servico` | Mantém a regra "só um arquivo soletra papéis" | n |
 | E-mail das contas de serviço | Endereço no domínio reservado `.invalid` (RFC 2606), por exemplo `svc.cobrancas-sincronizacao@service.invalid` | A coluna `email` é obrigatória e única; o domínio `.invalid` garante que nenhum e-mail seja entregue | n |
 | `CommonRead` | Continua permitido só para ação `read` e passa a exigir classe `normal` | Compatível com a regra atual de `authz.Definition` | n |
-| Quem recebe `identity:service_account:update` | **Ninguém** até decisão (D-02-1) | Não presumir concessão sensível | n |
+| Quem recebe `identity:service_account:deactivate` e `:reactivate` | `ADMIN_SISTEMA` e `PRESIDENTE`, por concessão explícita, com reativação por pessoa diferente e procedimento de contingência (SVC-01 AC18–21) | **D-02-1 aprovada** em 2026-10-14; concessão ainda não aplicada no código | y |
+| Prazo de espera e revisão da reativação de contingência | 30 minutos desde a desativação; revisão posterior por outra pessoa com `identity:service_account:reactivate` ou pelo Conselho Fiscal (leitura da auditoria) | Evita bloqueio operacional sem anular a separação de funções; prazo configurável | n |
+| Lista explícita do Conselho Fiscal | As 11 permissões que o Conselho Fiscal tem hoje (tabela em CFS-01) | Preserva as autorizações legítimas atuais; todo acréscimo exige mudança revisada da lista | n |
+| Nomeação institucional do Conselho Fiscal (INS-01) | Especificada como proposta **D-02-4**, sem a qual a D-02-3 não pode ser aplicada; a lista de papéis incompatíveis além de `PRESIDENTE` fica sujeita ao estatuto | Consequência verificada de `authz.Covers`; aguarda aprovação do mantenedor | n |
 | Separação de funções "se o regulamento exigir" | Regra ligada (mais estrita) por padrão | ADR-016 | y |
 | Ordem de chegada da classificação | A `02` define as classes e a transição; as permissões novas do TJ Connect são declaradas por cada spec de módulo | Cada módulo é dono das suas permissões | y |
 
 **Open questions:** none — as decisões ainda abertas estão listadas acima como premissas não confirmadas e na seção "Pendências que impedem o Design".
 
-### Classificação das permissões existentes (proposta)
+### Classificação das permissões existentes (proposta revisada, D-02-2, não definitiva)
 
-| Permissão | Classe | Hoje com o `PRESIDENTE` (automático) | Concessão explícita de transição ao `PRESIDENTE` |
-|---|---|---|---|
-| `identity:user:read` | normal | sim | — |
-| `identity:user:create` | sensivel | sim | sim |
-| `identity:user:update` | sensivel | sim | sim |
-| `identity:role:assign` | sensivel | sim | sim |
-| `identity:admin:grant` | sensivel | sim | sim |
-| `identity:admin:revoke` | sensivel | sim | sim |
-| `identity:user:reset_password` | sensivel | sim | sim |
-| `audit:log:read` | normal | sim | — |
-| `financeiro:conta:create`, `:update`, `:deactivate`, `:read` | normal | sim | — |
-| `financeiro:lancamento:create`, `:update`, `:read`, `:receive`, `:pay` | normal | sim | — |
-| `financeiro:lancamento:cancel` | sensivel | sim | sim |
-| `financeiro:saldo:read`, `financeiro:comprovante:create`, `financeiro:comprovante:read` | normal | sim | — |
-| `financeiro:prestacao_contas:read` | normal | sim | — |
-| `financeiro:prestacao_contas:approve` | sensivel | sim | sim |
-| `financeiro:parecer:opine` | sensivel | sim | sim |
-| `estoque:produto:create`, `:read`; `estoque:movimentacao:create`, `:read`; `estoque:saldo:read` | normal | sim | — |
-| `estoque:movimentacao:adjust` | sensivel | sim | sim |
+Critério do mantenedor: é `sensivel` toda operação que movimenta recursos, altera saldos, altera a estrutura contábil ou patrimonial, altera direitos ou acesso de terceiros, ou é ato institucional. A revisão anterior (10 sensíveis) foi ampliada para **18**.
 
-Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao `PRESIDENTE`. As concessões atuais aos demais papéis não mudam.
+| Permissão | Classe | Motivo | Quem tem hoje | Concessão explícita após a classificação |
+|---|---|---|---|---|
+| `identity:user:read` | normal | Leitura | ADMIN_SISTEMA, DIRETORIA, PRESIDENTE | PRESIDENTE automático; os outros já explícitos |
+| `identity:user:create`, `:update`, `:reset_password`; `identity:role:assign`; `identity:admin:grant`, `:revoke` | sensivel | Alteram acesso de terceiros | ADMIN_SISTEMA (explícito), PRESIDENTE (automático) | ADMIN_SISTEMA: mantém. **PRESIDENTE: explícita, justificada** |
+| `audit:log:read` | normal | Leitura | ADMIN_SISTEMA, CONSELHO_FISCAL, PRESIDENTE | Sem mudança |
+| `financeiro:conta:create`, `:update`, `:deactivate` | **sensivel** (antes normal) | Alteram a estrutura contábil em que os saldos são classificados | TESOURARIA (explícito), PRESIDENTE (automático) | TESOURARIA: mantém. **PRESIDENTE: explícita, justificada** |
+| `financeiro:lancamento:create`, `:update`, `:receive`, `:pay` | **sensivel** (antes normal) | Movimentam recursos e alteram saldos | TESOURARIA (explícito), PRESIDENTE (automático) | TESOURARIA: mantém. **PRESIDENTE: explícita, justificada** |
+| `financeiro:lancamento:cancel` | sensivel | Altera saldo já liquidado | TESOURARIA, PRESIDENTE | TESOURARIA: mantém. **PRESIDENTE: explícita, justificada** |
+| `financeiro:conta:read`, `:lancamento:read`, `:saldo:read`, `:comprovante:read`, `:prestacao_contas:read` | normal | Leitura | TESOURARIA, DIRETORIA, CONSELHO_FISCAL (exceto `prestacao_contas:read` em DIRETORIA e TESOURARIA), PRESIDENTE | Sem mudança |
+| `financeiro:comprovante:create` | normal | Anexa evidência; não altera saldo | TESOURARIA, PRESIDENTE | Sem mudança |
+| `financeiro:prestacao_contas:approve`, `financeiro:parecer:opine` | sensivel | Atos institucionais do Conselho Fiscal | CONSELHO_FISCAL (explícito), PRESIDENTE (automático) | CONSELHO_FISCAL: mantém. **PRESIDENTE: retirada (D-02-3, exceção aprovada)** |
+| `estoque:movimentacao:create`, `:adjust` | **sensivel** (`create` antes normal) | Alteram saldo físico e patrimônio | ESTOQUE_LOJA (explícito), PRESIDENTE (automático) | ESTOQUE_LOJA: mantém. **PRESIDENTE: explícita, justificada** |
+| `estoque:produto:create` | normal | Cria SKU; não altera saldo | ESTOQUE_LOJA, PRESIDENTE | Sem mudança |
+| `estoque:produto:read`, `:movimentacao:read`, `:saldo:read` | normal | Leitura | ESTOQUE_LOJA, DIRETORIA, CONSELHO_FISCAL, PRESIDENTE | Sem mudança |
+
+Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lançamento, 2 institucionais e 2 de estoque. **12 `normal`**. O `PRESIDENTE` precisa de **16 concessões explícitas** para manter o que tem hoje: as 18 sensíveis menos as 2 retiradas pela D-02-3. Cada concessão deve ter justificativa registrada no PR que a implementar. TESOURARIA, ESTOQUE_LOJA, ADMIN_SISTEMA e CONSELHO_FISCAL **já** recebem as suas por concessão explícita no código atual, então nada muda para eles.
 
 ---
 
@@ -235,13 +256,14 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 **Why P1**: Exigência do mantenedor; o sistema atual está em uso.
 
 **Acceptance Criteria**:
-1. WHEN the classified matrix is built for the first time THEN the effective permissions of each of the eight existing roles SHALL be identical to the effective permissions before the classification.
-2. WHEN an existing permission becomes `sensivel` and `PRESIDENTE` held it automatically before THEN its owning module SHALL grant it to `PRESIDENTE` explicitly.
+1. WHEN the classified matrix is built for the first time THEN the effective permissions of each of the eight existing roles SHALL be identical to the effective permissions before the classification, except for the changes recorded as approved exceptions.
+2. WHEN an existing permission becomes `sensivel` and a role held it before, automatically or explicitly, THEN its owning module SHALL grant it to that role explicitly with a recorded justification, unless an approved exception removes it.
 3. The system SHALL keep a versioned snapshot of the pre-classification matrix and SHALL fail its test suite if any existing role gains or loses a permission without an approved change to that snapshot.
 4. WHEN a new permission of class `sensivel` is declared by a TJ Connect module THEN it SHALL start granted to no role.
 5. WHEN the synchronization applies the classified matrix THEN existing sessions SHALL keep working without a new login, because effective permissions are resolved per request.
 6. WHEN the `users` table receives the account type THEN every existing account SHALL be of type `HUMAN`.
 7. The system SHALL keep every existing audit entry unchanged, including entries whose `actor_type` is `system`.
+8. The system SHALL record the removal of `financeiro:prestacao_contas:approve` and `financeiro:parecer:opine` from `PRESIDENTE` (decision D-02-3, approved on 2026-10-14) as the only approved exception to the preservation of the previous matrix, and SHALL apply it only together with the institutional appointment rule of INS-01.
 
 **Independent Test**: comparar o retrato versionado da matriz atual com a matriz classificada, papel a papel; criar uma permissão `sensivel` nova e ver nenhum papel com ela.
 
@@ -264,11 +286,17 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 8. The system SHALL reject at the database level any session row whose user is of type `SERVICE`.
 9. IF a person tries to assign any role to a service account, promote it, revoke it or reset its password THEN the system SHALL refuse with `forbidden` and SHALL write a `denied` audit entry.
 10. The system SHALL hold each service account with exactly one service role, and each service role SHALL belong to exactly one service account.
-11. WHEN a person with `identity:service_account:update` deactivates or reactivates a service account with a reason THEN the system SHALL apply the change and SHALL write an audit entry with the reason.
+11. WHEN a person with `identity:service_account:deactivate` deactivates a service account with a reason THEN the system SHALL apply the change and SHALL write an audit entry with the reason.
 12. IF a deactivation or reactivation has a reason shorter than 10 characters THEN the system SHALL refuse it with `validation_failed`.
 13. WHILE a service account is inactive the system SHALL refuse every use case invoked with its principal, with `forbidden`.
 14. WHEN users are listed by the existing user administration THEN accounts of type `SERVICE` SHALL NOT appear.
 15. WHEN a person with `identity:service_account:read` lists service accounts THEN the system SHALL return name, description, owning module, role, permissions and activity, and never any credential field.
+16. WHEN a person with `identity:service_account:reactivate` reactivates a service account with a reason THEN the system SHALL apply the change only if that person is not the one who performed the last deactivation, and SHALL write an audit entry with the reason.
+17. IF the person who performed the last deactivation tries an ordinary reactivation of the same service account THEN the system SHALL refuse with code `separacao_de_funcoes`.
+18. WHEN no other person can perform the reactivation THEN the system SHALL allow a contingency reactivation by the same person only after 30 minutes since the deactivation and with a reason of at least 30 characters.
+19. WHEN a contingency reactivation is performed THEN the system SHALL write an audit entry marked `contingencia` and SHALL open a pending post-review item visible to every holder of `identity:service_account:reactivate` and to `audit:log:read`.
+20. WHILE a contingency post-review item is open the system SHALL show it in the service account listing, and the item SHALL be closed only by a person different from the one who reactivated.
+21. The system SHALL NOT allow a contingency reactivation of a service account whose deactivation was performed by the synchronization because the account was removed from code.
 
 **Independent Test**: declarar uma conta de serviço de teste, partir, ver a conta criada; tentar login, recuperação e sessão e ver as recusas; desativar e ver um caso de uso recusado com o `Principal` dela.
 
@@ -276,7 +304,7 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 
 ### P1: Solicitação, decisão e execução separadas ⭐ MVP
 
-**User Story**: Como presidente ou diretor, quero que operações sensíveis separem quem solicita, quem decide e quem executa, e que processos automáticos só executem decisões humanas registradas, para que nenhum ato de governança dependa de uma pessoa só ou de um processo sem juízo.
+**User Story**: Como presidente ou diretor, quero que operações sensíveis separem quem solicita, quem decide e quem executa, e que processos automáticos executem só regras aprovadas ou decisões humanas registradas, nunca juízo próprio, para que nenhum ato de governança dependa de uma pessoa só nem de um processo.
 
 **Why P1**: Contrato usado por reembolso (`04`/`06`), liberação de vaga (`05`), correção de check-in (`07`) e procedimento (`14`).
 
@@ -285,12 +313,15 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 2. WHEN the separation rule refuses an act THEN the use case SHALL respond `forbidden` with code `separacao_de_funcoes` and SHALL write a `denied` audit entry naming the rule.
 3. IF an actor attempts a sensitive act whose subject is the actor's own person THEN the use case SHALL refuse it with code `ato_sobre_si_mesmo` and SHALL write a `denied` audit entry.
 4. The system SHALL require every decision record to carry an id, the deciding person, a reason of at least 10 characters, the scope it authorizes, the time and its state.
-5. WHEN a service account executes a decision THEN the use case SHALL require a `decision_id` in state `APROVADA`, of the same scope and not yet executed.
+5. WHEN a service account uses a `servico` permission marked as requiring a decision THEN the use case SHALL require a `decision_id` in state `APROVADA`, of the same scope and not yet executed.
 6. IF the `decision_id` is missing, unknown, `REVOGADA`, `EXECUTADA` or of a different scope THEN the use case SHALL refuse the execution, SHALL produce no effect and SHALL write a `denied` audit entry.
 7. WHEN two executions of the same decision run concurrently THEN exactly one SHALL succeed and the other SHALL be refused.
 8. The system SHALL NOT allow a service account to create, approve or revoke a decision record.
+9. The system SHALL require every permission of class `servico` to declare whether it requires a decision, and IF the declaration is missing THEN the API and the worker SHALL refuse to start.
+10. WHEN a service account uses a `servico` permission that does not require a decision THEN the use case SHALL execute the approved rule without any human decision record and SHALL record the rule name and version.
+11. The system SHALL NOT grant any permission whose act involves discretionary judgment (approve a refund, decide a suspension, release a quota slot, correct attendance, grant a commercial release) to a service role.
 
-**Independent Test**: um módulo de teste com a regra "solicitante ≠ aprovador" e uma execução por serviço: ver a recusa do mesmo autor, a recusa sem decisão, uma única execução sob concorrência.
+**Independent Test**: um módulo de teste com a regra "solicitante ≠ aprovador", uma execução por regra aprovada (sem decisão, com `regra` na auditoria) e uma execução de decisão: ver a recusa do mesmo autor, a recusa da execução de decisão sem `decision_id`, a execução por regra aceita sem decisão e uma única execução sob concorrência.
 
 ---
 
@@ -310,6 +341,7 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 7. WHEN an action executes a human decision THEN the entry context SHALL contain `decision_id`.
 8. WHERE an automated flow was started by a person THEN the entry context SHALL contain `on_behalf_of_user_id` with that person's id.
 9. WHEN a person with `audit:log:read` filters the audit log by `correlation_id` THEN the system SHALL return every entry of that flow ordered by time.
+10. WHEN a service account executes an approved deterministic rule THEN the entry context SHALL contain `regra` with the rule name and version, and SHALL NOT require `decision_id`.
 
 **Independent Test**: gravar entradas válidas e inválidas para cada combinação de tipo de ator e conta; percorrer um fluxo de teste pelo `correlation_id`.
 
@@ -337,15 +369,52 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 
 **User Story**: Como Conselho Fiscal, quero que a plataforma garanta que eu só fiscalizo e nunca opero, mesmo quando módulos novos surgirem, para preservar a minha independência.
 
-**Why P1**: Exigência do mantenedor; a lista atual de verbos proibidos não cobre verbos novos.
+**Why P1**: Exigência do mantenedor e do parecer externo: a lista atual de verbos proibidos não cobre verbos novos, e restringir só por verbo ainda aceitaria `read` sobre qualquer recurso sensível novo sem revisão.
+
+**Lista explícita de permissões autorizadas ao Conselho Fiscal** (versionada no código, com teste; corresponde exatamente ao que ele tem hoje):
+
+| # | Permissão |
+|---|---|
+| 1 | `audit:log:read` |
+| 2 | `financeiro:conta:read` |
+| 3 | `financeiro:lancamento:read` |
+| 4 | `financeiro:saldo:read` |
+| 5 | `financeiro:comprovante:read` |
+| 6 | `financeiro:prestacao_contas:read` |
+| 7 | `financeiro:prestacao_contas:approve` |
+| 8 | `financeiro:parecer:opine` |
+| 9 | `estoque:produto:read` |
+| 10 | `estoque:movimentacao:read` |
+| 11 | `estoque:saldo:read` |
 
 **Acceptance Criteria**:
-1. WHEN the matrix is built THEN every permission granted to `CONSELHO_FISCAL` SHALL have action `read` or `opine`, or action `approve` on resource `prestacao_contas`.
-2. IF a contribution grants `CONSELHO_FISCAL` a permission outside that list THEN the API and the worker SHALL refuse to start.
-3. IF a contribution grants `CONSELHO_FISCAL` a permission of class `servico` THEN the API and the worker SHALL refuse to start.
-4. WHEN the allow-list replaces the current deny-list THEN `CONSELHO_FISCAL` SHALL keep exactly its current effective permissions.
+1. The system SHALL hold a versioned explicit list of the permissions that may be granted to `CONSELHO_FISCAL`, initially the eleven permissions in the table above.
+2. IF a contribution grants `CONSELHO_FISCAL` a permission that is not in the explicit list THEN the API and the worker SHALL refuse to start, even when its action is `read`.
+3. IF a permission in the explicit list has an action other than `read` or `opine`, or `approve` on resource `prestacao_contas` THEN the API and the worker SHALL refuse to start.
+4. IF a contribution grants `CONSELHO_FISCAL` a permission of class `servico` THEN the API and the worker SHALL refuse to start.
+5. WHEN the explicit list replaces the current deny-list THEN `CONSELHO_FISCAL` SHALL keep exactly its current eleven effective permissions.
+6. The system SHALL fail its test suite when the explicit list changes without the matching update of its versioned snapshot, so that every new access of the Conselho Fiscal requires a reviewed change.
 
-**Independent Test**: tentar conceder `acesso:checkin:create`, `cobrancas:reembolso:approve` e um verbo inventado ao Conselho Fiscal e ver a partida falhar; ver as permissões atuais intactas.
+**Independent Test**: tentar conceder ao Conselho Fiscal `acesso:checkin:create`, `cobrancas:reembolso:approve`, um verbo inventado e uma leitura nova fora da lista (por exemplo `acesso:procedimento:read`) e ver a partida falhar; ver as 11 permissões atuais intactas.
+
+---
+
+### P1: Nomeação institucional do Conselho Fiscal e papéis incompatíveis ⭐ MVP
+
+**User Story**: Como presidente, quero registrar a nomeação e a saída de membros do Conselho Fiscal decididas pela instância competente, sem eu mesmo ter os poderes de aprovar contas, e sem que uma pessoa acumule papéis que comprometam a independência do Conselho.
+
+**Why P1**: Consequência verificada da D-02-3. `authz.Covers` exige que quem atribui um papel, promove, revoga, desativa ou redefine a senha tenha **todas** as permissões do papel ou do alvo (`identity/app/assign_roles.go:87`, `promote_admin.go:78`, `revoke_admin.go:74`, `deactivate_user.go:88`, `admin_reset_password.go:75`). Hoje só o `PRESIDENTE` cobre as permissões do Conselho Fiscal. Depois da D-02-3, **ninguém** as cobriria, porque o Conselho não tem permissões de `identity`. Ninguém mais conseguiria nomear, retirar, desativar ou redefinir a senha de um conselheiro. A D-02-3 só pode ser aplicada junto com esta regra.
+
+**Acceptance Criteria**:
+1. The system SHALL mark `financeiro:prestacao_contas:approve` and `financeiro:parecer:opine` as institutional permissions of the Conselho Fiscal.
+2. WHEN a person assigns or removes the role `CONSELHO_FISCAL`, or deactivates or resets the password of a holder of that role, THEN the use case SHALL require `identity:conselho_fiscal:manage` and `authz.Covers` over every permission of the role except the institutional ones.
+3. WHEN such an institutional act is registered THEN the use case SHALL require a decision record with the reference of the institutional act (for example the minutes of the assembly) and a reason of at least 10 characters.
+4. IF the actor of such an act holds the role `CONSELHO_FISCAL` or is the target of the act THEN the use case SHALL refuse with code `separacao_de_funcoes`.
+5. The system SHALL refuse to assign the role `CONSELHO_FISCAL` to a user who holds `PRESIDENTE`, and SHALL refuse to assign `PRESIDENTE` to a user who holds `CONSELHO_FISCAL`, checking by user identity.
+6. WHEN the API starts THEN it SHALL report as a pending item every existing user who holds both `PRESIDENTE` and `CONSELHO_FISCAL`, without revoking any role automatically.
+7. The system SHALL evaluate every separation-of-duties rule by user identity over the union of all the user's roles, so that holding several roles never bypasses a rule.
+
+**Independent Test**: com a matriz após a D-02-3, mostrar que uma atribuição de `CONSELHO_FISCAL` pelo `PRESIDENTE` sem `identity:conselho_fiscal:manage` falha por `Covers`; com a permissão e uma decisão registrada, passa; com o próprio presidente como alvo, falha; e uma pessoa com `PRESIDENTE` + `CONSELHO_FISCAL` é recusada na atribuição e listada como pendência na partida.
 
 ---
 
@@ -380,6 +449,16 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 | T-15 | Filtro por `correlation_id` devolve o fluxo ordenado | Integração | AUT-01 |
 | T-16 | Revogação de `FISCAL` → consulta de elegibilidade falsa | Integração | FIS-01 |
 | T-17 | Conselho Fiscal com verbo novo → partida falha; permissões atuais intactas | Unidade | CFS-01 |
+| T-18 | Conselho Fiscal com `read` fora da lista explícita (ex. `acesso:procedimento:read`) → partida falha | Unidade | CFS-01 |
+| T-19 | Lista explícita alterada sem atualizar o snapshot → suíte falha | Unidade (snapshot) | CFS-01 |
+| T-20 | Execução por regra aprovada (confirmação de pagamento de teste) sem decisão → aceita, auditoria com `regra` e sem `decision_id` | Integração | SOD-01, AUT-01 |
+| T-21 | Permissão `servico` sem declarar "exige decisão" → partida falha | Unidade | SOD-01 |
+| T-22 | Mesma pessoa desativa e tenta reativar a conta de serviço → `separacao_de_funcoes` | Integração | SVC-01 |
+| T-23 | Reativação de contingência antes de 30 min → recusada; depois de 30 min com motivo → aceita, marcada `contingencia` e com revisão posterior aberta | Integração (relógio do banco controlado) | SVC-01 |
+| T-24 | Matriz após a D-02-3: `PRESIDENTE` sem `prestacao_contas:approve` e `parecer:opine`; Conselho Fiscal com as 11; diferença do snapshot igual exatamente à exceção aprovada | Unidade (snapshot) | TRN-01 |
+| T-25 | Atribuir `CONSELHO_FISCAL` sem `identity:conselho_fiscal:manage` → falha por `Covers`; com a permissão e decisão registrada → passa; alvo = ator → `separacao_de_funcoes` | Integração | INS-01 |
+| T-26 | Usuário com `PRESIDENTE` recebendo `CONSELHO_FISCAL` → recusado; usuário existente com os dois → pendência na partida, sem revogação | Integração | INS-01 |
+| T-27 | Usuário com dois papéis, sendo um o autor de um ato anterior incompatível → separação recusada pela identidade, não pelo papel | Unidade | INS-01, SOD-01 |
 
 ---
 
@@ -398,11 +477,12 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 
 ## Pendências que impedem o Design
 
-**Nenhuma.** As decisões abertas abaixo não mudam a estrutura do Design e podem ser fechadas até as Tasks:
+**Nenhuma** pendência muda a estrutura do Design. Situação das decisões do mantenedor em 2026-10-14 (nenhuma concessão real foi aplicada no código):
 
-- **D-02-1**: quem recebe `identity:service_account:update` (chave de emergência). Recomendação: `ADMIN_SISTEMA` e `PRESIDENTE`, por concessão explícita.
-- **D-02-2**: confirmar a classificação proposta das 30 permissões existentes.
-- **D-02-3** (governança, fora desta spec): rever concessões herdadas pelo `PRESIDENTE`, por exemplo `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine`, que são atos do Conselho Fiscal. Esta spec as **preserva**.
+- **D-02-1 — aprovada**: `ADMIN_SISTEMA` e `PRESIDENTE` recebem `identity:service_account:deactivate` e `:reactivate` por concessão explícita. A reativação exige pessoa diferente de quem desativou, com procedimento de contingência (SVC-01 AC16–21). Os parâmetros da contingência (30 minutos, revisão posterior) aguardam confirmação.
+- **D-02-2 — aprovada parcialmente**: a classificação vale como base de compatibilidade. A **proposta revisada** (18 sensíveis, tabela acima) aguarda aprovação como classificação de segurança, junto com as 16 concessões explícitas ao `PRESIDENTE` e as suas justificativas.
+- **D-02-3 — aprovada**: retirada de `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine` do `PRESIDENTE`, registrada como única exceção à preservação da matriz (TRN-01 AC8). **Só pode ser aplicada junto com a D-02-4**, senão ninguém mais consegue nomear ou retirar membros do Conselho Fiscal.
+- **D-02-4 — nova, aguarda aprovação**: regra de nomeação institucional do Conselho Fiscal (INS-01), com a permissão `identity:conselho_fiscal:manage`, decisão registrada com referência ao ato institucional, `Covers` sem as permissões institucionais, incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade do usuário, e a lista definitiva de papéis incompatíveis, sujeita às regras do estatuto.
 
 ---
 
@@ -417,12 +497,14 @@ Total: 30 permissões, 10 `sensivel` com concessão explícita de transição ao
 | AUT-01 | P1: Autoria e rastreabilidade | Specify | Pending |
 | FIS-01 | P1: Papel FISCAL e contrato de escopo por jogo | Specify | Pending |
 | CFS-01 | P1: Conselho Fiscal fail-closed | Specify | Pending |
+| INS-01 | P1: Nomeação institucional do Conselho Fiscal e papéis incompatíveis | Specify | Pending |
 
-**Coverage:** 7 total, 0 mapped to tasks, 7 unmapped (Design não iniciado).
+**Coverage:** 8 total, 0 mapped to tasks, 8 unmapped (Design não iniciado).
 
 ## Success Criteria
 
-- [ ] A matriz efetiva dos 8 papéis atuais é idêntica antes e depois (teste de retrato verde).
+- [ ] A matriz efetiva dos 8 papéis atuais é idêntica antes e depois, salvo a exceção aprovada D-02-3 (teste de retrato verde com a diferença registrada).
+- [ ] Depois da D-02-3, continua possível nomear e retirar membros do Conselho Fiscal (INS-01), e ninguém acumula `PRESIDENTE` e `CONSELHO_FISCAL`.
 - [ ] Nenhuma permissão sensível nova está concedida a nenhum papel ao fim desta spec.
 - [ ] Toda entrada de auditoria nova tem autor identificável; `system` só no bootstrap e na sincronização.
 - [ ] Uma conta de serviço não consegue sessão por nenhum caminho (aplicação e banco).
