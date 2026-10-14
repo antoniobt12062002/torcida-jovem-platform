@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 14,
+  "next_id": 21,
   "lessons": [
     {
       "id": "L-001",
@@ -238,6 +238,132 @@
       ],
       "created": "2026-10-09T22:06:16Z",
       "last_seen": "2026-10-09T22:06:16Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::cover form field attribute rules spellcheck autocomplete name with a guard or per field test since component tests of the kit do not reach each screen s fields",
+      "text": "Cover form-field attribute rules (spellcheck, autocomplete, name) with a guard or per-field test, since component tests of the kit do not reach each screen's fields",
+      "signal": "ac_gap",
+      "scope": "web/features",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DSP-04 AC7; web/features/estoque/produtos/create-produto-dialog.tsx:114 (web/features)"
+      ],
+      "created": "2026-10-13T16:50:06Z",
+      "last_seen": "2026-10-13T16:50:06Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::resolve every registered pending ui guideline item before the final review or record it as an explicit conflict a pending note does not satisfy the guideline gate",
+      "text": "Resolve every registered pending UI-guideline item before the final review, or record it as an explicit conflict; a pending note does not satisfy the guideline gate",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DSM-06 AC2; validation.md web-design-guidelines section (web)"
+      ],
+      "created": "2026-10-13T16:50:07Z",
+      "last_seen": "2026-10-13T16:50:07Z"
+    },
+    {
+      "id": "L-016",
+      "key": "surviving_mutant::for boundary rules on a composite control assert the whole component is absent not just its button",
+      "text": "For boundary rules on a composite control, assert the whole component is absent, not just its button",
+      "signal": "surviving_mutant",
+      "scope": "web/components",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13; web/features/financeiro/lancamentos/lancamentos-page.test.tsx:471 (web/components)"
+      ],
+      "created": "2026-10-13T16:50:07Z",
+      "last_seen": "2026-10-13T16:50:07Z"
+    },
+    {
+      "id": "L-017",
+      "key": "spec_precision_gap::cross check spec acs against the approved design values before execute so spec and design do not contradict each other",
+      "text": "Cross-check spec ACs against the approved design values before Execute so spec and design do not contradict each other",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DSF-04 AC8 vs DSC-04 AC4; DSF-03 AC4 vs design/01-fundacao-visual.md:192 (specs)"
+      ],
+      "created": "2026-10-13T16:50:07Z",
+      "last_seen": "2026-10-13T16:50:07Z"
+    },
+    {
+      "id": "L-018",
+      "key": "ac_gap::write attribute guards over every form control in the scanned roots not over a fixed list of files so new fields are checked too",
+      "text": "Write attribute guards over every form control in the scanned roots, not over a fixed list of files, so new fields are checked too",
+      "signal": "ac_gap",
+      "scope": "web/test/design",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DSP-04 AC6; web/features/financeiro/lancamentos/lancamento-form.tsx:186; web/test/design/global.guard.test.ts:92-100 (web/test/design)"
+      ],
+      "created": "2026-10-13T17:36:49Z",
+      "last_seen": "2026-10-13T17:36:49Z"
+    },
+    {
+      "id": "L-019",
+      "key": "ac_gap::apply copy rules such as the non breaking space between number and unit to every rendered quantity and assert it in the screen tests",
+      "text": "Apply copy rules such as the non-breaking space between number and unit to every rendered quantity and assert it in the screen tests",
+      "signal": "ac_gap",
+      "scope": "web/features",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DSP-07 AC4; web/features/estoque/produto-detail.tsx:107; web/features/estoque/ajustes/ajuste-dialog.tsx:121,126 (web/features)"
+      ],
+      "created": "2026-10-13T17:36:49Z",
+      "last_seen": "2026-10-13T17:36:49Z"
+    },
+    {
+      "id": "L-020",
+      "key": "surviving_mutant::every accessibility fix including a focus style class ships with a test that fails when the class is removed",
+      "text": "Every accessibility fix, including a focus-style class, ships with a test that fails when the class is removed",
+      "signal": "surviving_mutant",
+      "scope": "web/features",
+      "status": "candidate",
+      "features": [
+        "web-design"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M28, M29; web/features/estoque/produtos/produtos-page.tsx:140; web/features/financeiro/lancamentos/lancamento-detail.tsx:162 (web/features)"
+      ],
+      "created": "2026-10-13T18:19:13Z",
+      "last_seen": "2026-10-13T18:19:13Z"
     }
   ]
 }

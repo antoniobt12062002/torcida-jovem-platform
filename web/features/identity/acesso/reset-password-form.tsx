@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { FormLayout } from "@/components/app/form-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { PageTitle } from "@/components/ui/typography";
 import { api, unwrap } from "@/lib/api/client";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -98,39 +100,38 @@ export function ResetPasswordForm() {
   if (linkState === "missing" || linkState === "expired") {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-xl font-semibold">Redefinir senha</h1>
-        <Alert variant="destructive">
+        <PageTitle>Redefinir senha</PageTitle>
+        <Alert variant="error">
           <AlertDescription>
             {linkState === "expired" ? MESSAGE_INVALID_RESET_TOKEN : "O link de recuperação é inválido."}
           </AlertDescription>
         </Alert>
-        <Link
-          href={routes.recuperarAcesso}
-          className="text-sm underline underline-offset-4 hover:text-foreground"
-        >
-          Pedir um novo link
-        </Link>
+        <div>
+          <Link href={routes.recuperarAcesso} className={buttonVariants({ variant: "link", size: "sm" })}>
+            Pedir um novo link
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Redefinir senha</h1>
+      <div className="flex flex-col gap-2">
+        <PageTitle>Redefinir senha</PageTitle>
         <p className="text-sm text-muted-foreground">Escolha uma nova senha para a sua conta.</p>
       </div>
 
-      <form
-        className="flex flex-col gap-4"
+      <FormLayout
         noValidate
         onSubmit={(event) => void handleSubmit(onValid)(event)}
+        error={errors.root?.message}
+        footer={
+          <Button type="submit" size="lg" className="w-full md:w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Redefinindo…" : "Redefinir senha"}
+          </Button>
+        }
       >
-        {errors.root ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errors.root.message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Field invalid={!!errors.new_password}>
           <FieldLabel>Nova senha</FieldLabel>
@@ -156,10 +157,7 @@ export function ResetPasswordForm() {
           <FieldError>{errors.confirm_password?.message}</FieldError>
         </Field>
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Redefinindo…" : "Redefinir senha"}
-        </Button>
-      </form>
+      </FormLayout>
     </div>
   );
 }

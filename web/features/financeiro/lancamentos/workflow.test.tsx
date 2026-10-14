@@ -63,6 +63,8 @@ function badge() {
   return screen.getByRole("heading", { level: 1 }).parentElement?.querySelector('[data-slot="badge"]')?.textContent;
 }
 
+// Botão de confirmar com o verbo da ação (DSP-03 AC3): antes "Confirmar
+// recebimento" e "Confirmar pagamento", agora "Receber receita" e "Pagar despesa".
 async function confirmIn(buttonName: string) {
   const alert = await screen.findByRole("alertdialog");
   fireEvent.click(within(alert).getByRole("button", { name: buttonName }));
@@ -78,7 +80,7 @@ describe("receber", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Receber" }));
     expect(requests).toEqual([]);
-    await confirmIn("Confirmar recebimento");
+    await confirmIn("Receber receita");
     await waitFor(() => expect(requests).toEqual([{ body: null, csrf: "csrf-token-de-teste" }]));
     await waitFor(() => expect(badge()).toBe("Recebida"));
     expect(list.count).toBe(2);
@@ -92,7 +94,7 @@ describe("receber", () => {
       return problem(409, "lancamento_nao_pode_ser_recebido");
     });
     fireEvent.click(screen.getByRole("button", { name: "Receber" }));
-    await confirmIn("Confirmar recebimento");
+    await confirmIn("Receber receita");
     expect(await screen.findByText("Este lançamento não está mais em aberto.")).toBeTruthy();
     await waitFor(() => expect(list.count).toBe(2));
     await waitFor(() => expect(badge()).toBe("Cancelada"));
@@ -108,7 +110,7 @@ describe("pagar", () => {
       return new HttpResponse(null, { status: 204 });
     });
     fireEvent.click(screen.getByRole("button", { name: "Pagar" }));
-    await confirmIn("Confirmar pagamento");
+    await confirmIn("Pagar despesa");
     await waitFor(() => expect(requests).toEqual([{ body: null, csrf: "csrf-token-de-teste" }]));
     await waitFor(() => expect(badge()).toBe("Paga"));
     expect(list.count).toBe(2);
@@ -119,7 +121,7 @@ describe("pagar", () => {
     const { list } = await renderDetail([DESPESA_CRIADA]);
     mockWrite("post", `/lancamentos/${ID}/pay`, () => problem(409, "lancamento_nao_pode_ser_pago"));
     fireEvent.click(screen.getByRole("button", { name: "Pagar" }));
-    await confirmIn("Confirmar pagamento");
+    await confirmIn("Pagar despesa");
     expect(await screen.findByText("Este lançamento não está mais em aberto.")).toBeTruthy();
     await waitFor(() => expect(list.count).toBe(2));
   });
@@ -249,6 +251,70 @@ describe("devolução", () => {
   });
 });
 
+// N3 (smoke T13): a ação concluída tira o próprio botão do cabeçalho; o foco
+// vai para o título da página, e não para o body.
+describe("foco depois das ações", () => {
+  function title() {
+    return screen.getByRole("heading", { level: 1 });
+  }
+
+  it.each([
+    ["receber", RECEITA_CRIADA, "Receber", "Receber receita", "receive", "RECEBIDA", "Recebida"],
+    ["pagar", DESPESA_CRIADA, "Pagar", "Pagar despesa", "pay", "PAGA", "Paga"],
+  ] as const)("%s leva o foco ao título", async (_, initial, trigger, confirm, path, status, label) => {
+    const { state } = await renderDetail([initial]);
+    mockWrite("post", `/lancamentos/${ID}/${path}`, () => {
+      state.items = [{ ...initial, status }];
+      return new HttpResponse(null, { status: 204 });
+    });
+    const button = screen.getByRole("button", { name: trigger });
+    button.focus();
+    fireEvent.click(button);
+    await confirmIn(confirm);
+    await waitFor(() => expect(badge()).toBe(label));
+    expect(screen.queryByRole("button", { name: trigger })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(title()));
+    expect(title().getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("cancelar leva o foco ao título", async () => {
+    const { state } = await renderDetail([RECEITA_CRIADA]);
+    mockWrite("post", `/lancamentos/${ID}/cancel`, () => {
+      state.items = [{ ...RECEITA_CRIADA, status: "CANCELADA", motivo_cancelamento: "Duplicado" }];
+      return new HttpResponse(null, { status: 204 });
+    });
+    const button = screen.getByRole("button", { name: "Cancelar lançamento" });
+    button.focus();
+    fireEvent.click(button);
+    const alert = within(await screen.findByRole("alertdialog"));
+    change(alert.getByLabelText("Motivo do cancelamento"), "Duplicado");
+    fireEvent.click(alert.getByRole("button", { name: "Cancelar lançamento" }));
+    await waitFor(() => expect(badge()).toBe("Cancelada"));
+    await waitFor(() => expect(document.activeElement).toBe(title()));
+  });
+
+  // A devolução não muda o status da receita: o botão continua e o diálogo
+  // devolve o foco a ele.
+  it("registrar devolução devolve o foco ao botão, que continua no cabeçalho", async () => {
+    await renderDetail([RECEITA_RECEBIDA]);
+    mockWrite("post", "/lancamentos/devolucoes", () =>
+      HttpResponse.json(lancamento({ id: "devolucao", tipo: "DESPESA", devolucao_de_id: ID }), { status: 201 }),
+    );
+    const button = screen.getByRole("button", { name: "Registrar devolução" });
+    button.focus();
+    fireEvent.click(button);
+    await waitFor(() => expect(formDialog()).not.toBeNull());
+    const form = dialog();
+    await waitFor(() => expect(form.getByRole("option", { name: "Devoluções" })).toBeTruthy());
+    change(form.getByLabelText("Conta"), CONTA_DESPESA.id);
+    change(form.getByLabelText("Valor bruto"), "50,00");
+    change(form.getByLabelText("Forma de pagamento"), "PIX");
+    fireEvent.click(form.getByRole("button", { name: "Registrar devolução" }));
+    await waitFor(() => expect(formDialog()).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Registrar devolução" })));
+  });
+});
+
 // FWB-04 AC6-7 e casos de borda: cada ação só no status e com a permissão certos.
 describe("ações visíveis", () => {
   const ALL = ["Receber", "Pagar", "Editar", "Registrar devolução", "Cancelar lançamento"];
@@ -300,5 +366,55 @@ describe("ações visíveis", () => {
     // As outras ações aparecem: a sessão já carregou e a ausência é da permissão.
     await waitFor(() => expect(visibleActions()).toEqual(expected));
     expect(screen.queryByRole("button", { name: action })).toBeNull();
+  });
+});
+
+// DSP-03 AC2 e AC3: a confirmação nomeia o lançamento, diz a consequência e
+// repete o verbo da ação no botão.
+describe("confirmações", () => {
+  const SUBJECT = `Receita ${ID.slice(0, 8)}, R$ 100,00`;
+
+  const subject = () => screen.getByRole("alertdialog").querySelector("strong")?.textContent;
+
+  async function openConfirm(trigger: string) {
+    fireEvent.click(screen.getByRole("button", { name: trigger }));
+    return within(await screen.findByRole("alertdialog"));
+  }
+
+  it("receber mostra o registro, a consequência e o botão Receber receita", async () => {
+    await renderDetail([RECEITA_CRIADA]);
+    const alert = await openConfirm("Receber");
+    expect(subject()).toBe(SUBJECT);
+    expect(alert.getByText("A receita passa a Recebida e entra no saldo.")).toBeTruthy();
+    expect(alert.getByRole("button", { name: "Receber receita" })).toBeTruthy();
+    expect(alert.queryByRole("button", { name: /^Confirmar/ })).toBeNull();
+  });
+
+  it("pagar mostra o registro, a consequência e o botão Pagar despesa", async () => {
+    await renderDetail([DESPESA_CRIADA]);
+    const alert = await openConfirm("Pagar");
+    expect(subject()).toBe(`Despesa ${ID.slice(0, 8)}, R$ 100,00`);
+    expect(alert.getByText("A despesa passa a Paga e sai do saldo.")).toBeTruthy();
+    expect(alert.getByRole("button", { name: "Pagar despesa" })).toBeTruthy();
+  });
+
+  it("cancelar mostra o registro, a consequência, o motivo e o botão Cancelar lançamento", async () => {
+    await renderDetail([RECEITA_CRIADA]);
+    const alert = await openConfirm("Cancelar lançamento");
+    expect(subject()).toBe(SUBJECT);
+    expect(alert.getByText("O lançamento não é excluído: fica como Cancelado, com o motivo registrado.")).toBeTruthy();
+    expect(alert.getByLabelText("Motivo do cancelamento")).toBeTruthy();
+    expect(alert.getByRole("button", { name: "Cancelar lançamento" })).toBeTruthy();
+  });
+
+  it("devolução nomeia a receita devolvida e o botão diz Registrar devolução", async () => {
+    await renderDetail([RECEITA_RECEBIDA]);
+    fireEvent.click(screen.getByRole("button", { name: "Registrar devolução" }));
+    await waitFor(() => expect(formDialog()).not.toBeNull());
+    const description = formDialog()?.querySelector('[data-slot="dialog-description"]');
+    expect(description?.textContent).toBe(
+      `Devolução da Receita ${ID.slice(0, 8)}: uma despesa que referencia esta receita recebida.`,
+    );
+    expect(dialog().getByRole("button", { name: "Registrar devolução" })).toBeTruthy();
   });
 });

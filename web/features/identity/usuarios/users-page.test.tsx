@@ -142,7 +142,7 @@ describe("filtros", () => {
       return { items: [ana], next_cursor: "pagina-2" };
     });
     await renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: "Carregar mais" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Mostrar mais" }));
     await screen.findByText("bruno@example.com");
 
     fireEvent.change(screen.getByLabelText("Papel"), { target: { value: "ESTOQUE_LOJA" } });
@@ -159,7 +159,7 @@ describe("filtros", () => {
 });
 
 // USR-01 AC3.
-describe("carregar mais", () => {
+describe("mostrar mais", () => {
   it("com next_cursor, acrescenta a próxima página; na última, some", async () => {
     const requests = mockListUsers((query) =>
       query.get("cursor") === "pagina-2"
@@ -169,18 +169,20 @@ describe("carregar mais", () => {
     await renderPage();
     await screen.findByText("ana@example.com");
 
-    fireEvent.click(screen.getByRole("button", { name: "Carregar mais" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar mais" }));
 
     await screen.findByText("bruno@example.com");
     expect(screen.getByText("ana@example.com")).toBeTruthy();
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Carregar mais" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull());
     expect(requests).toEqual([{ limit: "50" }, { limit: "50", cursor: "pagina-2" }]);
   });
 
-  it("sem next_cursor, não oferece Carregar mais", async () => {
+  it("sem next_cursor, não oferece Mostrar mais", async () => {
     mockListUsers(() => ({ items: [ana], next_cursor: null }));
     await renderPage();
     await screen.findByText("ana@example.com");
-    expect(screen.queryByRole("button", { name: "Carregar mais" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
   });
 });

@@ -1,0 +1,1 @@
+Arquivo fora das extensões percorridas: bg-blue-500 não é apontado no percurso de diretório.

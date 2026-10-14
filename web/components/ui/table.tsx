@@ -3,17 +3,42 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+type TableScroll =
+  /** Padrão. Sem contêiner de rolagem: a forma usada pela lista responsiva. */
+  | "none"
+  /** Rolagem horizontal explícita, só com justificativa na spec da tela. */
+  | "scrollable"
+
+// A tabela precisa de nome acessível: `aria-label` ou `aria-labelledby`.
+function Table({
+  className,
+  scroll = "none",
+  ...props
+}: React.ComponentProps<"table"> & { scroll?: TableScroll }) {
+  const table = (
+    <table
+      data-slot="table"
+      className={cn(
+        "w-full caption-bottom text-sm",
+        scroll === "scrollable" &&
+          "[&_tr>*:first-child]:sticky [&_tr>*:first-child]:left-0 [&_tbody_tr>*:first-child]:bg-background [&_thead_tr>*:first-child]:bg-muted",
+        className
+      )}
+      {...props}
+    />
+  )
+  if (scroll === "none") return table
+  // Região rolável: alcançável pelo teclado e com o mesmo nome da tabela.
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      role="region"
+      tabIndex={0}
+      aria-label={props["aria-label"]}
+      aria-labelledby={props["aria-labelledby"]}
+      className="relative w-full overflow-x-auto overscroll-x-contain rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
     >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+      {table}
     </div>
   )
 }
@@ -22,7 +47,10 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn(
+        "bg-muted [&_tr]:border-b-2 [&_tr]:border-border-strong [&_tr]:hover:bg-muted",
+        className
+      )}
       {...props}
     />
   )
@@ -43,7 +71,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+        "border-t bg-muted font-medium [&>tr]:last:border-b-0",
         className
       )}
       {...props}
@@ -56,7 +84,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b transition-colors duration-fast hover:bg-accent has-aria-expanded:bg-accent data-[state=selected]:bg-muted",
         className
       )}
       {...props}
@@ -64,12 +92,22 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+// Coluna numérica: à direita, com algarismos tabulares.
+const NUMERIC = "text-right tabular-nums"
+
+function TableHead({
+  className,
+  numeric,
+  scope = "col",
+  ...props
+}: React.ComponentProps<"th"> & { numeric?: boolean }) {
   return (
     <th
       data-slot="table-head"
+      scope={scope}
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        "h-table-head px-3 text-left align-middle text-xs font-semibold whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        numeric && NUMERIC,
         className
       )}
       {...props}
@@ -77,12 +115,25 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   )
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+// A coluna declara como trata texto longo: quebra (padrão), `nowrap` ou
+// `truncate`, que corta com reticências sem alargar a tabela.
+function TableCell({
+  className,
+  numeric,
+  wrap,
+  ...props
+}: React.ComponentProps<"td"> & {
+  numeric?: boolean
+  wrap?: "nowrap" | "truncate"
+}) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "h-table-row px-3 py-2 align-middle [&:has([role=checkbox])]:pr-0",
+        numeric && NUMERIC,
+        wrap === "nowrap" && "whitespace-nowrap",
+        wrap === "truncate" && "max-w-0 truncate",
         className
       )}
       {...props}

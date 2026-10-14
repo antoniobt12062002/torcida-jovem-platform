@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { PlusIcon } from "lucide-react";
+
 import { apiErrorMessage } from "@/components/app/api-error";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FormLayout } from "@/components/app/form-layout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -19,24 +21,28 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { isApiError, networkError } from "@/lib/api/problem";
 import { applyProblemToForm } from "@/lib/forms/apply-problem";
+import { useFocusInvalidAfterSubmit } from "@/lib/forms/use-focus-invalid-after-submit";
 
 import { estoqueCatalog, MESSAGE_CODIGO_DUPLICADO } from "../errors";
 import { type CreateProdutoRequest, useCreateProduto } from "./hooks";
 
-// Criação de produto (EWB-01 AC2-3).
+// Criação de produto (EWB-01 AC2-3), no layout de formulário (DSP-04).
 
 const EMPTY: CreateProdutoRequest = { codigo: "", nome: "", unidade_medida: "" };
 
 export function CreateProdutoDialog() {
   const [open, setOpen] = useState(false);
   const mutation = useCreateProduto();
+  const form = useForm<CreateProdutoRequest>({ defaultValues: EMPTY });
   const {
     register,
     handleSubmit,
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateProdutoRequest>({ defaultValues: EMPTY });
+  } = form;
+  // No erro de campo da API, o foco vai ao primeiro campo inválido (DSP-04 AC3).
+  useFocusInvalidAfterSubmit(form, ["codigo", "nome", "unidade_medida"]);
 
   function changeOpen(next: boolean) {
     // Enquanto envia, o diálogo não fecha por fora.
@@ -79,25 +85,38 @@ export function CreateProdutoDialog() {
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogTrigger render={<Button />}>Novo produto</DialogTrigger>
+      <DialogTrigger render={<Button />}>
+        <PlusIcon aria-hidden />
+        Novo produto
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo produto</DialogTitle>
+          <DialogDescription>O código identifica o produto e não se repete.</DialogDescription>
         </DialogHeader>
-        <form
-          className="flex flex-col gap-4"
+        <FormLayout
           noValidate
           onSubmit={(event) => void handleSubmit(onValid)(event)}
+          error={errors.root?.message}
+          footer={
+            <>
+              <Button type="button" variant="secondary" disabled={isSubmitting} onClick={() => changeOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" loading={isSubmitting} loadingLabel="Criando…">
+                Criar produto
+              </Button>
+            </>
+          }
         >
-          {errors.root ? (
-            <Alert variant="destructive">
-              <AlertDescription>{errors.root.message}</AlertDescription>
-            </Alert>
-          ) : null}
-
           <Field invalid={!!errors.codigo}>
             <FieldLabel>Código</FieldLabel>
-            <Input autoComplete="off" {...register("codigo", { validate: required("Informe o código.") })} />
+            <Input
+              autoComplete="off"
+              spellCheck={false}
+              autoCapitalize="none"
+              {...register("codigo", { validate: required("Informe o código.") })}
+            />
             <FieldError>{errors.codigo?.message}</FieldError>
           </Field>
 
@@ -116,16 +135,7 @@ export function CreateProdutoDialog() {
             />
             <FieldError>{errors.unidade_medida?.message}</FieldError>
           </Field>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => changeOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Criando…" : "Criar produto"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </FormLayout>
       </DialogContent>
     </Dialog>
   );

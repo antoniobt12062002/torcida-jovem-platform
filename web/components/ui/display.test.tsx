@@ -1,7 +1,10 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { CircleDashedIcon } from "lucide-react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -44,7 +47,7 @@ describe("Table", () => {
 describe("Alert", () => {
   it("tem papel alert com título e descrição", () => {
     render(
-      <Alert variant="destructive">
+      <Alert variant="error">
         <AlertTitle>Falha</AlertTitle>
         <AlertDescription>Não foi possível salvar.</AlertDescription>
       </Alert>
@@ -74,5 +77,327 @@ describe("Toast", () => {
     expect(screen.getByText("Lançamento criado.")).toBeTruthy()
     fireEvent.click(screen.getByLabelText("Fechar aviso"))
     await waitFor(() => expect(screen.queryByText("Salvo com sucesso")).toBeNull())
+  })
+})
+
+// Acrescentados na revisão do kit (DSC-01 AC7, DSC-04 AC6-7, DSC-05 AC2).
+
+function classes(el: Element) {
+  return el.getAttribute("class")?.split(/\s+/) ?? []
+}
+
+/** Nome do ícone do Lucide (`lucide-circle-check`), para distinguir os tons sem depender de cor. */
+function iconName(el: Element | null) {
+  const icon = el?.matches("svg") ? el : el?.querySelector("svg")
+  return classes(icon as Element).find((name) => /^lucide-.+/.test(name))
+}
+
+const BADGE_TONES = [
+  ["neutral", "bg-info-subtle", "text-info"],
+  ["success", "bg-success-subtle", "text-success-emphasis"],
+  ["warning", "bg-warning-subtle", "text-warning-emphasis"],
+  ["error", "bg-destructive-subtle", "text-destructive-emphasis"],
+  ["outline", "border-border", "text-foreground"],
+] as const
+
+describe("Badge", () => {
+  it.each(BADGE_TONES)("tom %s mostra o rótulo e o ícone, com fundo e texto do tom", (tone, surface, text) => {
+    render(
+      <Badge variant={tone}>
+        <CircleDashedIcon />
+        Criada
+      </Badge>
+    )
+    const badge = screen.getByText("Criada")
+    expect(badge.tagName).toBe("SPAN")
+    expect(classes(badge)).toEqual(expect.arrayContaining([surface, text]))
+    expect(badge.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
+  })
+
+  it("sem variante é o tom neutro", () => {
+    render(
+      <>
+        <Badge>Padrão</Badge>
+        <Badge variant="neutral">Neutro</Badge>
+      </>
+    )
+    expect(screen.getByText("Padrão").className).toBe(screen.getByText("Neutro").className)
+  })
+
+  it("é uma pílula de texto, não uma ação, e não usa transition-all", () => {
+    render(<Badge variant="success">Recebida</Badge>)
+    const badge = screen.getByText("Recebida")
+    expect(classes(badge)).toEqual(expect.arrayContaining(["rounded-full", "text-xs", "font-medium"]))
+    expect(classes(badge)).not.toContain("transition-all")
+    expect(classes(badge).filter((name) => /hover:|focus-visible:/.test(name))).toEqual([])
+    expect(badge.getAttribute("tabindex")).toBeNull()
+    expect(screen.queryByRole("button")).toBeNull()
+  })
+
+  // DS-INT (T11, DSM-05): alias removidos; o compilador recusa os nomes antigos.
+  it("as variantes antigas não existem mais no tipo nem nas classes", () => {
+    render(
+      <>
+        {/* @ts-expect-error variante removida em DS-INT (use error). */}
+        <Badge variant="destructive">Antigo erro</Badge>
+        {/* @ts-expect-error variante removida em DS-INT (use neutral). */}
+        <Badge variant="secondary">Antigo neutro</Badge>
+        {/* @ts-expect-error variante removida em DS-INT. */}
+        <Badge variant="default">Antigo preto</Badge>
+      </>
+    )
+    expect(classes(screen.getByText("Antigo erro"))).not.toContain("bg-destructive-subtle")
+    expect(classes(screen.getByText("Antigo neutro"))).not.toContain("bg-info-subtle")
+    expect(classes(screen.getByText("Antigo preto"))).not.toContain("bg-primary")
+  })
+})
+
+const ALERT_TONES = [
+  ["neutral", "status", "lucide-info", "bg-info-subtle", "border-info"],
+  ["success", "status", "lucide-circle-check", "bg-success-subtle", "border-success"],
+  ["warning", "alert", "lucide-triangle-alert", "bg-warning-subtle", "border-warning"],
+  ["error", "alert", "lucide-circle-alert", "bg-destructive-subtle", "border-destructive"],
+] as const
+
+describe("Alert: tons", () => {
+  it.each(ALERT_TONES)("tom %s tem papel %s, ícone próprio e texto", (tone, role, icon, surface, border) => {
+    render(
+      <Alert variant={tone}>
+        <AlertTitle>Título</AlertTitle>
+        <AlertDescription>Descrição do aviso.</AlertDescription>
+      </Alert>
+    )
+    const alert = screen.getByRole(role)
+    expect(alert.textContent).toBe("TítuloDescrição do aviso.")
+    expect(iconName(alert)).toBe(icon)
+    expect(alert.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
+    expect(classes(alert)).toEqual(expect.arrayContaining(["border", surface, border]))
+  })
+
+  it("os quatro tons têm ícones diferentes entre si", () => {
+    expect(new Set(ALERT_TONES.map(([, , icon]) => icon)).size).toBe(4)
+  })
+
+  // DS-INT (T11, DSM-05): o tom passou a ser obrigatório e os alias saíram.
+  it("exige o tom e recusa as variantes antigas no tipo", () => {
+    // @ts-expect-error o tom é obrigatório desde DS-INT.
+    const semTom = <Alert><AlertDescription>Sem tom</AlertDescription></Alert>
+    // @ts-expect-error variante removida em DS-INT (use error).
+    const antigoErro = <Alert variant="destructive"><AlertDescription>Antigo</AlertDescription></Alert>
+    // @ts-expect-error variante removida em DS-INT (use neutral).
+    const antigoPadrao = <Alert variant="default"><AlertDescription>Antigo</AlertDescription></Alert>
+    expect([semTom, antigoErro, antigoPadrao]).toHaveLength(3)
+  })
+
+  it("aceita um papel explícito de quem chama", () => {
+    render(
+      <Alert variant="error" role="status">
+        <AlertDescription>Só lançamentos em aberto podem ser editados.</AlertDescription>
+      </Alert>
+    )
+    expect(screen.getByRole("status").textContent).toBe("Só lançamentos em aberto podem ser editados.")
+  })
+})
+
+describe("Skeleton: formas", () => {
+  it.each([
+    ["text", "h-4"],
+    ["row", "h-table-row"],
+    ["block", "h-10"],
+  ] as const)("a forma %s tem a altura %s", (shape, height) => {
+    const { container } = render(<Skeleton shape={shape} />)
+    expect(classes(container.firstElementChild as Element)).toContain(height)
+  })
+
+  it("é decorativo, em muted, com pulso que para sob redução de movimento", () => {
+    const { container } = render(<Skeleton shape="text" />)
+    const el = container.firstElementChild as Element
+    expect(el.getAttribute("aria-hidden")).toBe("true")
+    expect(classes(el)).toEqual(expect.arrayContaining(["bg-muted", "animate-pulse", "motion-reduce:animate-none"]))
+  })
+})
+
+describe("Toast: API e tons", () => {
+  it.each([
+    ["show", "lucide-info"],
+    ["success", "lucide-circle-check"],
+    ["warning", "lucide-triangle-alert"],
+    ["error", "lucide-circle-alert"],
+  ] as const)("toast.%s(título, opções) devolve o id e mostra título, descrição e ícone do tom", async (method, icon) => {
+    render(<Toaster />)
+    let id = ""
+    act(() => {
+      id = toast[method]("Título do aviso", { description: "Detalhe do aviso.", timeout: 0 })
+    })
+    expect(typeof id).toBe("string")
+    expect(id).not.toBe("")
+    const item = (await screen.findByText("Título do aviso", { ignore: "[role=alert] *" })).closest("[data-slot=toast]")
+    expect(item?.textContent).toContain("Detalhe do aviso.")
+    expect(iconName(item)).toBe(icon)
+    expect(item?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
+    act(() => toast.dismiss(id))
+    await waitFor(() => expect(document.querySelector("[data-slot=toast]")).toBeNull())
+  })
+
+  it("aceita só o título", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Conta criada.")
+    })
+    expect(await screen.findByText("Conta criada.")).toBeTruthy()
+  })
+})
+
+describe("Toast: anúncio e teclado", () => {
+  it("aparece dentro de uma região viva nomeada em português", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Salvo com sucesso", { timeout: 0 })
+    })
+    const region = screen.getByRole("region", { name: "Avisos" })
+    expect(region.getAttribute("aria-live")).toBe("polite")
+    expect(await within(region).findByText("Salvo com sucesso")).toBeTruthy()
+  })
+
+  // SPEC_DEVIATION: o design pede o erro como `assertive`. No Base UI isso
+  // duplica o texto do aviso na página, e os testes das telas ainda não
+  // migradas procuram a mensagem de erro como texto único. Até DS-INT, todos
+  // os tons, inclusive o erro, são anunciados pela região viva, uma só vez.
+  it.each(["show", "success", "warning", "error"] as const)(
+    "toast.%s é anunciado pela região viva, com o texto uma única vez na página",
+    async (method) => {
+      render(<Toaster />)
+      act(() => {
+        toast[method]("Não foi possível sair.", { timeout: 0 })
+      })
+      const region = screen.getByRole("region", { name: "Avisos" })
+      expect(await within(region).findByText("Não foi possível sair.")).toBeTruthy()
+      expect(screen.getAllByText("Não foi possível sair.")).toHaveLength(1)
+    }
+  )
+
+  it("o botão de fechar, ao receber foco, é um botão com nome e alvo pelo token de altura", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Salvo com sucesso", { timeout: 0 })
+    })
+    // O Base UI só expõe o botão de fechar quando o aviso tem foco ou está expandido.
+    const close = await screen.findByLabelText("Fechar aviso")
+    act(() => close.focus())
+    expect(screen.getByRole("button", { name: "Fechar aviso" })).toBe(close)
+    expect(close.tagName).toBe("BUTTON")
+    expect(classes(close)).toContain("size-control-sm")
+    expect(close.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
+  })
+
+  it("Esc com o foco no aviso dispensa o aviso", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Salvo com sucesso", { timeout: 0 })
+    })
+    const close = await screen.findByLabelText("Fechar aviso")
+    act(() => close.focus())
+    expect(document.activeElement).toBe(close)
+    fireEvent.keyDown(close, { key: "Escape" })
+    await waitFor(() => expect(screen.queryByText("Salvo com sucesso")).toBeNull())
+  })
+})
+
+describe("Toast: duração", () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function shown() {
+    return document.querySelector("[data-slot=toast]") !== null
+  }
+
+  it.each([
+    ["show", 5000],
+    ["success", 5000],
+    ["warning", 8000],
+    ["error", 8000],
+  ] as const)("toast.%s some depois de %i ms", (method, duration) => {
+    render(<Toaster />)
+    act(() => {
+      toast[method]("Título do aviso")
+    })
+    act(() => {
+      vi.advanceTimersByTime(duration - 100)
+    })
+    expect(shown()).toBe(true)
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
+    expect(shown()).toBe(false)
+  })
+
+  it("o tempo informado por quem chama prevalece", () => {
+    render(<Toaster />)
+    act(() => {
+      toast.error("Título do aviso", { timeout: 1000 })
+    })
+    act(() => {
+      vi.advanceTimersByTime(1100)
+    })
+    expect(shown()).toBe(false)
+  })
+
+  it("a contagem pausa enquanto o ponteiro está sobre os avisos", () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Título do aviso")
+    })
+    fireEvent.mouseEnter(screen.getByRole("region", { name: "Avisos" }))
+    act(() => {
+      vi.advanceTimersByTime(20000)
+    })
+    expect(shown()).toBe(true)
+  })
+
+  it("a contagem pausa enquanto o foco está no aviso", () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Título do aviso")
+    })
+    act(() => {
+      ;(document.querySelector("[data-slot=toast]") as HTMLElement).focus()
+    })
+    act(() => {
+      vi.advanceTimersByTime(20000)
+    })
+    expect(shown()).toBe(true)
+  })
+})
+
+describe("Separator", () => {
+  it("é um separador horizontal por padrão, na cor de divisória", () => {
+    render(<Separator />)
+    const separator = screen.getByRole("separator")
+    expect(separator.getAttribute("aria-orientation")).toBe("horizontal")
+    expect(classes(separator)).toEqual(expect.arrayContaining(["bg-border", "data-horizontal:h-px"]))
+  })
+
+  it("aceita a orientação vertical", () => {
+    render(<Separator orientation="vertical" />)
+    expect(screen.getByRole("separator").getAttribute("aria-orientation")).toBe("vertical")
+  })
+})
+
+// Revisão da rodada 4: o título do aviso não entra na estrutura de títulos.
+describe("Toast: título fora da estrutura de títulos", () => {
+  it("o título do aviso é um div, sem h2 nem papel de título", async () => {
+    render(<Toaster />)
+    act(() => {
+      toast.success("Salvo com sucesso", { description: "Lançamento criado.", timeout: 0 })
+    })
+    const title = await screen.findByText("Salvo com sucesso")
+    expect(title.tagName).toBe("DIV")
+    const region = screen.getByRole("region", { name: "Avisos" })
+    expect(region.querySelector("h1, h2, h3, h4, h5, h6")).toBeNull()
+    expect(within(region).queryByRole("heading")).toBeNull()
   })
 })

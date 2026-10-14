@@ -92,6 +92,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: V07 (web/lib/session/session-provider.tsx:106) / FND-03 AC6 (web,tests,session)
 - last seen: 2026-10-09T22:06:16Z
 
+### L-014 - Cover form-field attribute rules (spellcheck, autocomplete, name) with a guard or per-field test, since component tests of the kit do not reach each screen's fields
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: DSP-04 AC7; web/features/estoque/produtos/create-produto-dialog.tsx:114 (web/features)
+- last seen: 2026-10-13T16:50:06Z
+
+### L-015 - Resolve every registered pending UI-guideline item before the final review, or record it as an explicit conflict; a pending note does not satisfy the guideline gate
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: web-design
+- evidence: DSM-06 AC2; validation.md web-design-guidelines section (web)
+- last seen: 2026-10-13T16:50:07Z
+
+### L-016 - For boundary rules on a composite control, assert the whole component is absent, not just its button
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web/components` · harmful: 0
+- features: web-design
+- evidence: M13; web/features/financeiro/lancamentos/lancamentos-page.test.tsx:471 (web/components)
+- last seen: 2026-10-13T16:50:07Z
+
+### L-017 - Cross-check spec ACs against the approved design values before Execute so spec and design do not contradict each other
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: web-design
+- evidence: DSF-04 AC8 vs DSC-04 AC4; DSF-03 AC4 vs design/01-fundacao-visual.md:192 (specs)
+- last seen: 2026-10-13T16:50:07Z
+
+### L-018 - Write attribute guards over every form control in the scanned roots, not over a fixed list of files, so new fields are checked too
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/test/design` · harmful: 0
+- features: web-design
+- evidence: DSP-04 AC6; web/features/financeiro/lancamentos/lancamento-form.tsx:186; web/test/design/global.guard.test.ts:92-100 (web/test/design)
+- last seen: 2026-10-13T17:36:49Z
+
+### L-019 - Apply copy rules such as the non-breaking space between number and unit to every rendered quantity and assert it in the screen tests
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: DSP-07 AC4; web/features/estoque/produto-detail.tsx:107; web/features/estoque/ajustes/ajuste-dialog.tsx:121,126 (web/features)
+- last seen: 2026-10-13T17:36:49Z
+
+### L-020 - Every accessibility fix, including a focus-style class, ships with a test that fails when the class is removed
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web/features` · harmful: 0
+- features: web-design
+- evidence: M28, M29; web/features/estoque/produtos/produtos-page.tsx:140; web/features/financeiro/lancamentos/lancamento-detail.tsx:162 (web/features)
+- last seen: 2026-10-13T18:19:13Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

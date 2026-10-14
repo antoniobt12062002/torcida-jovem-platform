@@ -1,8 +1,10 @@
 "use client";
 
+import { LockIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { PageTitle } from "@/components/ui/typography";
 import { routes } from "@/lib/session/routes";
 import { useCan, useSession } from "@/lib/session/session-provider";
 
@@ -30,15 +32,25 @@ export function RequirePermission({ permission, mode, children }: RequirePermiss
   return <NoAccess />;
 }
 
-/** Conteúdo da página "Sem acesso" (o mesmo de /sem-acesso). */
+/**
+ * Estado "Sem acesso", o mesmo em todas as áreas (DSP-02 AC5, DSP-06 AC4).
+ * Ocupa o lugar do conteúdo da página e traz o único `h1` dela.
+ */
 export function NoAccess() {
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col justify-center gap-3 px-4 py-12">
-      <h1 className="text-xl font-semibold">Sem acesso</h1>
-      <p className="text-sm text-muted-foreground">
+    <section
+      data-slot="no-access"
+      className="mx-auto flex w-full max-w-content-narrow flex-col items-start gap-3 py-8 md:py-12"
+    >
+      <LockIcon aria-hidden="true" className="size-6 text-muted-foreground" />
+      <PageTitle>Sem acesso</PageTitle>
+      <p className="text-sm text-pretty text-muted-foreground">
         Você não tem permissão para acessar esta área. Se precisar dela, fale com a administração.
       </p>
-      <Link href={routes.inicio} className="text-sm underline underline-offset-4 hover:text-foreground">
+      <Link
+        href={routes.inicio}
+        className="inline-flex min-h-control-sm touch-manipulation items-center rounded-sm text-sm font-medium underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-ring-offset"
+      >
         Voltar ao início
       </Link>
     </section>

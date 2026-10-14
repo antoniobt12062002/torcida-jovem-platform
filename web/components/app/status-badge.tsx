@@ -1,30 +1,34 @@
+import { CircleCheckIcon, CircleSlashIcon, type LucideIcon } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
-import type { components } from "@/lib/api/financeiro";
 
-// Badge de status com rótulo em português.
+// Indicador de status (DSC-05 AC2 a AC4): tom, ícone e rótulo, nunca só cor.
+// O componente não conhece os status de nenhum módulo: cada feature exporta o
+// próprio mapa de `StatusDef`. "Ativo e inativo" é comum aos módulos e fica aqui.
 
-export type Status = components["schemas"]["StatusLancamento"] | "ativo" | "inativo";
+export type Tone = "neutral" | "success" | "warning" | "error";
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+export type StatusDef = { label: string; tone: Tone; icon: LucideIcon };
 
-const STATUS: Record<Status, { label: string; variant: BadgeVariant }> = {
-  CRIADA: { label: "Criada", variant: "outline" },
-  RECEBIDA: { label: "Recebida", variant: "default" },
-  PAGA: { label: "Paga", variant: "default" },
-  CANCELADA: { label: "Cancelada", variant: "destructive" },
-  ativo: { label: "Ativo", variant: "secondary" },
-  inativo: { label: "Inativo", variant: "outline" },
-};
+const ACTIVE: StatusDef = { label: "Ativo", tone: "success", icon: CircleCheckIcon };
+const INACTIVE: StatusDef = { label: "Inativo", tone: "neutral", icon: CircleSlashIcon };
 
-/** Converte o booleano `ativo`/`active` dos recursos em status. */
-export function activeStatus(active: boolean): Status {
-  return active ? "ativo" : "inativo";
+/** Definição pronta para o booleano `ativo`/`active` dos recursos. */
+export function activeStatusDef(active: boolean): StatusDef {
+  return active ? ACTIVE : INACTIVE;
 }
 
-export function StatusBadge({ status, className }: { status: Status; className?: string }) {
-  const { label, variant } = STATUS[status];
+export type StatusBadgeProps = {
+  /** Definição da feature dona. */
+  status: StatusDef;
+  className?: string;
+};
+
+export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const { label, tone, icon: Icon } = status;
   return (
-    <Badge variant={variant} className={className}>
+    <Badge variant={tone} data-tone={tone} className={className}>
+      <Icon aria-hidden="true" />
       {label}
     </Badge>
   );

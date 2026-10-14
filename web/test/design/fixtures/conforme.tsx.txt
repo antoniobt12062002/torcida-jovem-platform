@@ -1,0 +1,11 @@
+// Exemplo conforme: só utilitários de token. A guarda não aponta nada aqui.
+export function Exemplo() {
+  return (
+    <section className="rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">
+      <h2 className="font-sans text-xl font-semibold text-foreground">Lançamentos</h2>
+      <a href="#conteudo" className="text-destructive transition-colors hover:bg-accent">Pular</a>
+      <p className="mt-2 gap-x-3 px-2.5 font-money-display normal-case">toUpperCase darkness</p>
+      <span style={{ fontFamily: "var(--font-display)" }} className="bg-background/50 shadow-md" />
+    </section>
+  );
+}

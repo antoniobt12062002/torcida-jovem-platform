@@ -87,3 +87,23 @@ it("/estoque/produtos/[id] só com estoque:produto:read abre o detalhe, sem sald
   expect(area.saldo.calls).toBe(0);
   expect(area.movs.calls).toBe(0);
 });
+
+// DSP-01 AC1, DSM-05 AC1: a rota usa o contêiner de página, sem largura própria.
+it("/estoque/produtos fica no contêiner de página, alvo do link de pular", async () => {
+  mockMe(authContext({ permissions: [PERM.produtoRead] }));
+  mockProdutos([produto()]);
+  renderWithSession(<EstoqueProdutosPage />);
+  await screen.findByText("Camisa oficial");
+  const main = screen.getByRole("main");
+  expect(main.id).toBe("conteudo");
+  expect(main.className).not.toContain("max-w-5xl");
+});
+
+it("/estoque/produtos/[id] fica no contêiner de página", async () => {
+  const p = produto();
+  mockMe(authContext({ permissions: [PERM.produtoRead] }));
+  mockProdutos([p]);
+  renderWithSession(await EstoqueProdutoPage({ params: Promise.resolve({ id: p.id }), searchParams: Promise.resolve({}) }));
+  await screen.findByRole("heading", { name: "Camisa oficial" });
+  expect(screen.getByRole("main").id).toBe("conteudo");
+});

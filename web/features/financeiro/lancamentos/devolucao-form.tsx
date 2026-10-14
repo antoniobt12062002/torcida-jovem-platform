@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 
+import { formatIdentifier } from "@/components/app/format";
 import { Button } from "@/components/ui/button";
 
 import { useRegistrarDevolucao } from "./hooks";
 import { LancamentoFormDialog } from "./lancamento-form";
-import type { Lancamento } from "./labels";
+import { IdentifierText } from "./identifier";
+import { type Lancamento, TIPO_LABEL } from "./labels";
 
 // Devolução de uma receita recebida (FWB-04 AC5): despesa com conta de
 // despesa, valores e forma de pagamento, referenciando a receita.
@@ -14,16 +16,22 @@ import type { Lancamento } from "./labels";
 export function DevolucaoAction({ receita }: { receita: Lancamento }) {
   const [open, setOpen] = useState(false);
   const devolucao = useRegistrarDevolucao();
+  const identifier = formatIdentifier(TIPO_LABEL[receita.tipo], receita.id);
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
         Registrar devolução
       </Button>
       <LancamentoFormDialog
         open={open}
         onOpenChange={setOpen}
         title="Registrar devolução"
-        description="A devolução é uma despesa que referencia esta receita recebida."
+        description={
+          <>
+            Devolução da <IdentifierText identifier={identifier} />: uma despesa que referencia esta receita
+            recebida.
+          </>
+        }
         defaultValues={{
           tipo: "DESPESA",
           conta_id: "",

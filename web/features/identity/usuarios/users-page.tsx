@@ -1,13 +1,19 @@
 "use client";
 
-import { useId, useState } from "react";
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
 
 import { ApiErrorAlert } from "@/components/app/api-error";
-import { RequirePermission } from "@/components/app/require-permission";
+import { FilterBar } from "@/components/app/filter-bar";
+import { PageHeader } from "@/components/app/page-header";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { NativeSelect } from "@/components/ui/native-select";
+import { ShowMore } from "@/components/ui/show-more";
 import { isApiError } from "@/lib/api/problem";
-import { useSession } from "@/lib/session/session-provider";
+import { useCan, useSession } from "@/lib/session/session-provider";
+import { codecs, useQueryState } from "@/lib/url-state";
 
 import { availableActions, type UserAction } from "./actions";
 import { GrantAdminDialog, RevokeAdminDialog, SetRolesDialog } from "./dialogs/admin-dialogs";
@@ -19,8 +25,10 @@ import { type User, type UsersListFilters, useUsers } from "./hooks";
 import { ALL_ROLES, type Role, roleLabel } from "./roles";
 import { UsersTable } from "./users-table";
 
-// Administração de usuários (USR-01 a USR-05): filtros enviados à API, lista
-// paginada por cursor, "Carregar mais" e ações por linha em diálogos.
+// Administração de usuários (USR-01 a USR-05; DSM-02). Os filtros ficam na URL
+// (`situacao` e `papel`, DSP-05 AC2 a AC4) e seguem para a API como `active` e
+// `role`; a lista é paginada por cursor ("Mostrar mais", DSP-05 AC14) e as
+// ações de cada linha abrem diálogos. Quem usa fica dentro de `<Suspense>`.
 
 type OpenAction = { action: UserAction; user: User };
 
@@ -48,116 +56,136 @@ function ActionDialog({ open, onClose }: { open: OpenAction; onClose: () => void
   }
 }
 
-type ActiveFilter = "todos" | "ativos" | "inativos";
+const SITUACOES = ["ativos", "inativos"] as const;
+type Situacao = (typeof SITUACOES)[number];
 
-const ACTIVE_VALUES: Readonly<Record<ActiveFilter, boolean | undefined>> = {
-  todos: undefined,
-  ativos: true,
-  inativos: false,
-};
+const SITUACAO_LABELS: Readonly<Record<Situacao, string>> = { ativos: "Ativos", inativos: "Inativos" };
+const ACTIVE_OF: Readonly<Record<Situacao, boolean>> = { ativos: true, inativos: false };
 
-const SELECT_CLASS =
-  "h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
+const situacaoCodec = codecs.oneOf(SITUACOES, "");
+const papelCodec = codecs.oneOf(ALL_ROLES, "");
 
-function toFilters(active: ActiveFilter, role: Role | ""): UsersListFilters {
+function toFilters(situacao: Situacao | "", papel: Role | ""): UsersListFilters {
   const filters: UsersListFilters = {};
-  const activeValue = ACTIVE_VALUES[active];
-  if (activeValue !== undefined) filters.active = activeValue;
-  if (role) filters.role = role;
+  if (situacao) filters.active = ACTIVE_OF[situacao];
+  if (papel) filters.role = papel;
   return filters;
 }
 
 export function UsersPage() {
-  const activeId = useId();
-  const roleId = useId();
-  const [active, setActive] = useState<ActiveFilter>("todos");
-  const [role, setRole] = useState<Role | "">("");
-  const query = useUsers(toFilters(active, role));
+  const [situacao, setSituacao] = useQueryState("situacao", situacaoCodec);
+  const [papel, setPapel] = useQueryState("papel", papelCodec);
+  const query = useUsers(toFilters(situacao, papel));
   const users = query.data?.pages.flatMap((page) => page.items) ?? [];
   const { context } = useSession();
   const sessionUserId = context?.user.id;
   const permissions = context?.permissions ?? [];
+  const canCreate = useCan("identity:user:create");
   const [creating, setCreating] = useState(false);
   const [openAction, setOpenAction] = useState<OpenAction | null>(null);
 
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-xl font-semibold">Usuários</h1>
-        <RequirePermission permission="identity:user:create" mode="action">
-          <Button onClick={() => setCreating(true)}>Novo usuário</Button>
-          <CreateUserDialog open={creating} onOpenChange={setCreating} />
-        </RequirePermission>
-      </div>
+  const activeCount = [situacao, papel].filter((value) => value !== "").length;
 
-      <div className="flex flex-wrap gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={activeId} className="text-sm font-medium">
-            Situação
-          </label>
-          <select
-            id={activeId}
-            className={SELECT_CLASS}
-            value={active}
-            onChange={(event) => setActive(event.target.value as ActiveFilter)}
-          >
-            <option value="todos">Todos</option>
-            <option value="ativos">Ativos</option>
-            <option value="inativos">Inativos</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor={roleId} className="text-sm font-medium">
-            Papel
-          </label>
-          <select
-            id={roleId}
-            className={SELECT_CLASS}
-            value={role}
-            onChange={(event) => setRole(event.target.value as Role | "")}
-          >
-            <option value="">Todos</option>
-            {ALL_ROLES.map((value) => (
-              <option key={value} value={value}>
-                {roleLabel(value)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+  function clearFilters() {
+    setSituacao("");
+    setPapel("");
+  }
 
-      {query.isPending ? (
-        <LoadingState />
-      ) : query.isError && !query.data ? (
-        <ErrorState error={query.error} catalog={usersCatalog} onRetry={() => void query.refetch()} />
-      ) : users.length === 0 ? (
-        <EmptyState title="Nenhum usuário encontrado." />
+  function content() {
+    if (query.isPending) return <LoadingState shape="table" />;
+    if (query.isError && !query.data) {
+      return <ErrorState error={query.error} catalog={usersCatalog} onRetry={() => void query.refetch()} />;
+    }
+    if (users.length === 0) {
+      return activeCount > 0 ? (
+        <EmptyState kind="no-results" description="Mude a situação ou o papel." onClear={clearFilters} />
       ) : (
-        <div className="flex flex-col gap-4">
-          <UsersTable
-            users={users}
-            actionsFor={(user) => availableActions(user, sessionUserId, permissions)}
-            onAction={(action, user) => setOpenAction({ action, user })}
+        <EmptyState
+          title="Nenhum usuário encontrado."
+          description="As pessoas cadastradas aparecem aqui, com a situação e os papéis de cada uma."
+        />
+      );
+    }
+    return (
+      <>
+        <UsersTable
+          users={users}
+          actionsFor={(user) => availableActions(user, sessionUserId, permissions)}
+          onAction={(action, user) => setOpenAction({ action, user })}
+        />
+        {query.isFetchNextPageError && isApiError(query.error) ? (
+          <ApiErrorAlert error={query.error} catalog={usersCatalog} onRetry={() => void query.fetchNextPage()} />
+        ) : null}
+        {query.hasNextPage ? (
+          <ShowMore
+            shown={users.length}
+            noun={["usuário", "usuários"]}
+            loading={query.isFetchingNextPage}
+            onShowMore={() => void query.fetchNextPage()}
           />
-          {query.isFetchNextPageError && isApiError(query.error) ? (
-            <ApiErrorAlert
-              error={query.error}
-              catalog={usersCatalog}
-              onRetry={() => void query.fetchNextPage()}
-            />
-          ) : null}
-          {query.hasNextPage ? (
-            <Button
-              variant="outline"
-              className="self-center"
-              disabled={query.isFetchingNextPage}
-              onClick={() => void query.fetchNextPage()}
-            >
-              {query.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+        ) : null}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Usuários"
+        description="Contas de acesso, situação, papéis e acesso administrativo."
+        actions={
+          canCreate ? (
+            <Button onClick={() => setCreating(true)}>
+              <PlusIcon aria-hidden="true" />
+              Novo usuário
             </Button>
-          ) : null}
-        </div>
-      )}
+          ) : undefined
+        }
+      />
+      {canCreate ? <CreateUserDialog open={creating} onOpenChange={setCreating} /> : null}
+
+      <div className="flex flex-col gap-4">
+        <FilterBar
+          activeCount={activeCount}
+          resultCount={users.length}
+          resultNoun={["usuário", "usuários"]}
+          onClear={clearFilters}
+        >
+          <Field>
+            <FieldLabel>Situação</FieldLabel>
+            <NativeSelect
+              name="situacao"
+              autoComplete="off"
+              value={situacao}
+              onChange={(event) => setSituacao(situacaoCodec.parse(event.target.value))}
+            >
+              <option value="">Todos</option>
+              {SITUACOES.map((value) => (
+                <option key={value} value={value}>
+                  {SITUACAO_LABELS[value]}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field>
+            <FieldLabel>Papel</FieldLabel>
+            <NativeSelect
+              name="papel"
+              autoComplete="off"
+              value={papel}
+              onChange={(event) => setPapel(papelCodec.parse(event.target.value))}
+            >
+              <option value="">Todos</option>
+              {ALL_ROLES.map((value) => (
+                <option key={value} value={value}>
+                  {roleLabel(value)}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </FilterBar>
+        {content()}
+      </div>
 
       {openAction ? (
         <ActionDialog
@@ -166,6 +194,6 @@ export function UsersPage() {
           onClose={() => setOpenAction(null)}
         />
       ) : null}
-    </div>
+    </>
   );
 }

@@ -137,6 +137,8 @@ Inclui criação, promoção, papéis, retirada de acesso, desativação, reativ
 ### WEB-D-005 — Desktop-first, utilizável em tablet e celular — **Aprovada (D5)**
 O layout é pensado para desktop. Em telas estreitas, a navegação vira menu recolhível e tabelas viram rolagem horizontal ou listas empilhadas. Nada fica inacessível, mas não há recurso específico de celular.
 
+**Revisão (2026-10-11, decisão de design do ciclo `web-design`):** o desktop continua sendo o layout de referência, mas o celular passa a ter padrão definido (uso real em operações rápidas, consulta, estoque e movimentações), a rolagem horizontal deixa de ser a saída padrão das tabelas e a navegação fixa passa a valer a partir de 1024 px, no lugar de 768 px. O último ponto revisa FND-05 AC2, que é reverificado naquele ciclo. Ver WDS-D-006, WDS-D-014 e WDS-D-019 em `.specs/features/web-design/STATE.md`. Nada muda no código da Web V1 até a execução daquele ciclo.
+
 ### WEB-D-006 — Testes da V1: unidade, componente e integração com MSW, mais checklist manual de smoke — **Aprovada (D6)**
 Playwright e E2E contra a stack real ficam fora da V1 (evolução registrada em "Fora do V1").
 

@@ -58,13 +58,17 @@ export function rowOf(text: string): HTMLElement {
 }
 
 /**
- * Textos das células de dados de uma linha (sem a coluna de ações). Inclui a
- * lista escondida da acessibilidade por um diálogo modal aberto.
+ * Textos das células de dados de uma linha (sem a coluna de ações, cujo
+ * cabeçalho é "Ações"). Inclui a lista escondida da acessibilidade por um
+ * diálogo modal aberto.
  */
 export function cellsOf(text: string): string[] {
-  return within(rowOf(text))
+  const row = rowOf(text);
+  const headers = [...(row.closest("table")?.querySelectorAll("thead th") ?? [])];
+  const actions = headers.findIndex((header) => header.textContent === "Ações");
+  return within(row)
     .getAllByRole("cell", { hidden: true })
-    .filter((cell) => cell.getAttribute("data-column") !== "acoes")
+    .filter((_, index) => index !== actions)
     .map((cell) => cell.textContent ?? "");
 }
 
@@ -75,10 +79,18 @@ export async function openRowMenu(name: string): Promise<string[]> {
   return screen.getAllByRole("menuitem").map((item) => item.textContent ?? "");
 }
 
+/**
+ * Nome acessível de um item do menu da linha: o texto visível seguido do nome
+ * da pessoa (DSP-05 AC10).
+ */
+export function menuItemName(label: string, name: string): string {
+  return `${label} ${name}`;
+}
+
 /** Abre o menu da linha e escolhe a ação. */
 export async function chooseAction(name: string, label: string) {
   await openRowMenu(name);
-  fireEvent.click(screen.getByRole("menuitem", { name: label }));
+  fireEvent.click(screen.getByRole("menuitem", { name: menuItemName(label, name) }));
 }
 
 /** Textos ligados ao campo por aria-describedby (dica e erro do campo). */

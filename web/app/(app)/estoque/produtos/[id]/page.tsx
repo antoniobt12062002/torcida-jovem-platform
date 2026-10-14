@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PageContainer } from "@/components/app/page-container";
 import { ProdutoDetail } from "@/features/estoque/produto-detail";
 
 export const metadata: Metadata = {
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
 export default async function EstoqueProdutoPage({ params }: PageProps<"/estoque/produtos/[id]">) {
   const { id } = await params;
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8">
+    <PageContainer>
       <ProdutoDetail id={id} />
-    </main>
+    </PageContainer>
   );
 }

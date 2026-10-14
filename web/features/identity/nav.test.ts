@@ -1,3 +1,4 @@
+import { UsersIcon } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 import { visibleItems } from "@/components/app/nav";
@@ -19,7 +20,13 @@ const IDENTITY_WITHOUT_READ = [
 describe("navegação de identity", () => {
   it("expõe o item Usuários com a permissão identity:user:read", () => {
     expect(identityNav).toEqual([
-      { label: "Usuários", href: "/admin/usuarios", permission: "identity:user:read" },
+      {
+        label: "Usuários",
+        href: "/admin/usuarios",
+        permission: "identity:user:read",
+        icon: UsersIcon,
+        description: "Contas de acesso, papéis e acesso administrativo.",
+      },
     ]);
     expect(identityNavSection).toEqual({ label: "Administração", items: identityNav });
   });

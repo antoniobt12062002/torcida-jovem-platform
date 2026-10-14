@@ -47,7 +47,7 @@ describe("saldo", () => {
   it("com estoque:saldo:read chama o saldo e mostra com a unidade", async () => {
     const { saldoState } = renderDetail([PERM.produtoRead, PERM.saldoRead], 12);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("12 UN");
+    expect(saldo.textContent).toBe("12 UN");
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByText("Saldo negativo")).toBeNull();
   });
@@ -55,7 +55,7 @@ describe("saldo", () => {
   it("saldo negativo é destacado", async () => {
     renderDetail([PERM.produtoRead, PERM.saldoRead], -3);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("-3 UN");
+    expect(saldo.textContent).toBe("-3 UN");
     expect(screen.getByText("Saldo negativo")).toBeTruthy();
     expect(saldo.getAttribute("data-negative")).toBe("true");
   });
@@ -63,7 +63,7 @@ describe("saldo", () => {
   it("saldo zero não é destacado", async () => {
     renderDetail([PERM.produtoRead, PERM.saldoRead], 0);
     const saldo = await screen.findByTestId("saldo-valor");
-    expect(saldo.textContent).toBe("0 UN");
+    expect(saldo.textContent).toBe("0 UN");
     expect(screen.queryByText("Saldo negativo")).toBeNull();
     expect(saldo.getAttribute("data-negative")).toBe("false");
   });
@@ -117,7 +117,7 @@ describe("isolamento das permissões de leitura", () => {
 
   it("estoque:saldo:read sozinha (com a rota) mostra o saldo e não chama o histórico", async () => {
     const { saldoState, movs } = renderDetail([PERM.produtoRead, PERM.saldoRead], 7);
-    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
     expect(screen.getByRole("heading", { name: "Saldo" })).toBeTruthy();
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
@@ -145,7 +145,7 @@ describe("isolamento das permissões de leitura", () => {
 
   it("todas as permissões menos estoque:movimentacao:read: sem histórico e sem chamá-lo", async () => {
     const { saldoState, movs } = renderDetail(allExcept(PERM.movRead), 7);
-    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
+    expect((await screen.findByTestId("saldo-valor")).textContent).toBe("7 UN");
     expect(saldoState.calls).toBe(1);
     expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
     expect(screen.queryByRole("table")).toBeNull();
@@ -160,5 +160,39 @@ describe("isolamento das permissões de leitura", () => {
     expect(screen.queryByRole("heading", { name: "Movimentações" })).toBeNull();
     expect(saldoState.calls).toBe(0);
     expect(movs.calls).toBe(0);
+  });
+});
+
+// DSM-04 AC1 e AC6, DSP-01: cabeçalho com trilha e saldo negativo por ícone e texto.
+describe("cabeçalho e saldo no design system", () => {
+  it("um único h1 com o nome e trilha de volta para Produtos", async () => {
+    renderDetail([PERM.produtoRead]);
+    await screen.findByRole("heading", { name: "Camisa oficial" });
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Camisa oficial"]);
+    const trilha = screen.getByRole("navigation", { name: "Trilha de navegação" });
+    expect(trilha.querySelector('a[href="/estoque/produtos"]')?.textContent).toContain("Produtos");
+  });
+
+  it("saldo e movimentações são seções h2", async () => {
+    renderDetail(READ_ONLY, 2);
+    await screen.findByTestId("saldo-valor");
+    expect(screen.getByRole("heading", { level: 2, name: "Saldo" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Movimentações" })).toBeTruthy();
+  });
+
+  it("saldo negativo tem ícone e texto, além da cor, e algarismos tabulares", async () => {
+    renderDetail([PERM.produtoRead, PERM.saldoRead], -3);
+    const saldo = await screen.findByTestId("saldo-valor");
+    expect(saldo.className).toContain("tabular-nums");
+    const badge = screen.getByText("Saldo negativo");
+    expect(badge.getAttribute("data-tone")).toBe("error");
+    expect(badge.querySelector("svg[aria-hidden='true']")).toBeTruthy();
+  });
+
+  it("produto fora da lista mantém o cabeçalho com a trilha", async () => {
+    renderDetail(READ_ONLY, 0, "00000000-0000-4000-8000-000000000999");
+    expect(await screen.findByText("Produto não encontrado.")).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("navigation", { name: "Trilha de navegação" })).toBeTruthy();
   });
 });

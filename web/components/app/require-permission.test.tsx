@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +10,7 @@ import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext } from "@/test/msw/fixtures";
 import { server } from "@/test/msw/server";
 
-import { RequirePermission } from "./require-permission";
+import { NoAccess, RequirePermission } from "./require-permission";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -118,5 +118,33 @@ describe("modo ação", () => {
       </RequirePermission>,
     );
     expect(await screen.findByRole("button", { name: "Nova conta" })).toBeTruthy();
+  });
+});
+
+// DSP-02 AC5 e DSP-06 AC4: o mesmo estado "Sem acesso" em todas as áreas.
+describe("NoAccess", () => {
+  it("tem um único h1, a orientação e o caminho de volta ao início", () => {
+    render(<NoAccess />);
+    const headings = screen.getAllByRole("heading");
+    expect(headings).toHaveLength(1);
+    expect(headings[0].tagName).toBe("H1");
+    expect(headings[0].textContent).toBe("Sem acesso");
+    expect(
+      screen.getByText("Você não tem permissão para acessar esta área. Se precisar dela, fale com a administração."),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Voltar ao início" }).getAttribute("href")).toBe("/inicio");
+  });
+
+  it("o hover do link de volta não reduz o contraste do texto", () => {
+    render(<NoAccess />);
+    const link = screen.getByRole("link", { name: "Voltar ao início" });
+    const names = (link.getAttribute("class") ?? "").split(/\s+/);
+    expect(names).toContain("hover:decoration-2");
+    expect(names.filter((name) => name.startsWith("hover:text-") && name !== "hover:text-foreground")).toEqual([]);
+  });
+
+  it("leva ícone decorativo, escondido de leitores de tela", () => {
+    const { container } = render(<NoAccess />);
+    expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 });

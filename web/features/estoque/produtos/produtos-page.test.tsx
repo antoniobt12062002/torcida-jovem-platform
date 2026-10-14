@@ -2,9 +2,10 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetNavigation } from "@/lib/session/navigation-mock";
+import { resetNavigation, setLocation } from "@/lib/session/navigation-mock";
 import { apiUrl, mockMe, renderWithSession } from "@/lib/session/test-utils";
 import { authContext, type Produto, problem, produto } from "@/test/msw/fixtures";
+import { mockViewport } from "@/test/media";
 import { server } from "@/test/msw/server";
 
 import {
@@ -18,7 +19,7 @@ import {
   type Recorded,
   type,
 } from "../test-helpers";
-import { ProdutosPage } from "./produtos-page";
+import { PRODUTOS_PAGE_SIZE, ProdutosPage } from "./produtos-page";
 
 vi.mock("next/navigation", async () =>
   (await import("@/lib/session/navigation-mock")).nextNavigationMock,
@@ -179,6 +180,28 @@ describe("criação de produto", () => {
     expect(describedByText(unidade)).toContain("Campo obrigatório.");
     expect(isInvalid(screen.getByLabelText("Código"))).toBe(false);
   });
+
+  // N2 (smoke T13): o botão de enviar fica desabilitado durante o envio; o foco
+  // vai ao primeiro campo inválido (DSP-04 AC3), na ordem do formulário.
+  it("erro de campo da API leva o foco ao primeiro campo inválido", async () => {
+    mockMe(authContext({ permissions: ALL }));
+    mockCreate([camisa], () =>
+      problem(422, "validation_failed", {
+        errors: [
+          { field: "unidade_medida", code: "required" },
+          { field: "nome", code: "too_large" },
+        ],
+      }),
+    );
+    renderWithSession(<ProdutosPage />);
+    await screen.findByText("Camisa oficial");
+    await openCreate();
+    fillCreate("X-1", "Nome", "UN");
+    screen.getByRole("button", { name: "Criar produto" }).focus();
+    submitCreate();
+    expect(await screen.findByText("Valor acima do máximo permitido.")).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Nome")));
+  });
 });
 
 // EWB-04 AC1.
@@ -234,6 +257,155 @@ describe("isolamento das permissões da lista", () => {
   ])("leituras + só %s: sem Novo produto", async (_name, permission) => {
     await renderPage([...READ_ONLY, permission]);
     await screen.findByText("Camisa oficial");
+    expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
+  });
+});
+
+// DSP-05 AC2 a AC4, DSM-04 AC2: o termo de busca fica na URL.
+describe("busca na URL", () => {
+  it("abre com a busca da URL aplicada e no campo", async () => {
+    setLocation("/estoque/produtos?busca=fai");
+    await renderPage([PERM.produtoRead]);
+    await screen.findByText("Faixa da torcida");
+    expect((screen.getByLabelText("Buscar por código ou nome") as HTMLInputElement).value).toBe("fai");
+    expect(rows().map(rowText)).toEqual([["FAI-002", "Faixa da torcida", "M"]]);
+    expect(screen.getByText("1 produto")).toBeTruthy();
+  });
+
+  it("digitar escreve na URL uma vez, depois da espera, sem criar entrada de histórico", async () => {
+    setLocation("/estoque/produtos");
+    await renderPage([PERM.produtoRead]);
+    await screen.findByText("Camisa oficial");
+    const push = vi.spyOn(window.history, "pushState");
+    const replace = vi.spyOn(window.history, "replaceState");
+    const search = screen.getByLabelText("Buscar por código ou nome");
+
+    for (const value of ["c", "ca", "cam"]) fireEvent.change(search, { target: { value } });
+    // A lista filtra na hora; a URL só muda depois da espera.
+    expect(rows().map(rowText)).toEqual([["CAM-001", "Camisa oficial", "UN"]]);
+    expect(window.location.search).toBe("");
+
+    await waitFor(() => expect(window.location.search).toBe("?busca=cam"));
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(push).not.toHaveBeenCalled();
+    push.mockRestore();
+    replace.mockRestore();
+  });
+
+  it("busca sem resultado oferece limpar, que volta a lista inteira e tira o parâmetro", async () => {
+    setLocation("/estoque/produtos?busca=nada");
+    await renderPage([PERM.produtoRead]);
+    expect(await screen.findByRole("heading", { name: "Nenhum produto encontrado para a busca." })).toBeTruthy();
+    expect(screen.getByText("0 produtos")).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Limpar filtros" })[0]);
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    await waitFor(() => expect(window.location.search).toBe(""));
+  });
+});
+
+// DSP-05 AC5 a AC7, DSM-04 AC1.
+describe("listagem responsiva", () => {
+  it("abaixo de 768 px mostra lista empilhada com nome, código e unidade", async () => {
+    mockViewport({ width: 390, coarse: true });
+    await renderPage([PERM.produtoRead]);
+    const list = await screen.findByRole("list", { name: "Produtos" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(within(items[1]).getByRole("link", { name: "Faixa da torcida" }).getAttribute("href")).toBe(
+      `/estoque/produtos/${faixa.id}`,
+    );
+    expect(items[1].textContent).toContain("FAI-002");
+    expect(items[1].textContent).toContain("Unidade de medida: M");
+  });
+
+  // Smoke da rodada 6, D2: o nome é o único alvo do item; com ponteiro de
+  // toque ele tem a altura do token `control-sm` (44 px em `pointer: coarse`).
+  it("o link do nome tem alvo de toque, centrado na altura", async () => {
+    mockViewport({ width: 390, coarse: true });
+    await renderPage([PERM.produtoRead]);
+    const list = await screen.findByRole("list", { name: "Produtos" });
+    const link = within(list).getByRole("link", { name: "Faixa da torcida" });
+    for (const name of ["min-h-control-sm", "items-center", "content-center", "touch-manipulation"]) {
+      expect(link.className.split(" ")).toContain(name);
+    }
+  });
+
+  // Verificação, iteração 3, D1 (mutante M28): o link do nome usa o anel de
+  // foco do kit (DSC-01 AC2), o mesmo do `Button` (`components/ui/actions.test.tsx`).
+  it("o link do nome tem o anel de foco do kit, nunca vermelho", async () => {
+    mockViewport({ width: 1024 });
+    await renderPage([PERM.produtoRead]);
+    const table = await screen.findByRole("table", { name: "Produtos" });
+    const names = within(table).getByRole("link", { name: "Faixa da torcida" }).className.split(/\s+/);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "outline-none",
+        "focus-visible:ring-2",
+        "focus-visible:ring-ring",
+        "focus-visible:ring-offset-2",
+        "focus-visible:ring-offset-ring-offset",
+      ])
+    );
+    expect(names.filter((name) => /focus-visible:.*(destructive|brand)/.test(name))).toEqual([]);
+  });
+
+  it("a partir de 768 px mostra a tabela", async () => {
+    mockViewport({ width: 1024 });
+    await renderPage([PERM.produtoRead]);
+    expect(await screen.findByRole("table", { name: "Produtos" })).toBeTruthy();
+  });
+
+  it(`mostra ${PRODUTOS_PAGE_SIZE} produtos por vez e "Mostrar mais" só quando há mais`, async () => {
+    const muitos = Array.from({ length: PRODUTOS_PAGE_SIZE + 3 }, (_, i) =>
+      produto({
+        id: `00000000-0000-4000-8000-${String(100000 + i).padStart(12, "0")}`,
+        codigo: `P-${String(i).padStart(3, "0")}`,
+        nome: `Produto ${i}`,
+      }),
+    );
+    await renderPage([PERM.produtoRead], muitos);
+    await screen.findByText("Produto 0");
+    expect(rows()).toHaveLength(PRODUTOS_PAGE_SIZE);
+    expect(screen.getByText(`Mostrando ${PRODUTOS_PAGE_SIZE} de ${PRODUTOS_PAGE_SIZE + 3} produtos`)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(rows()).toHaveLength(PRODUTOS_PAGE_SIZE + 3);
+    expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+  });
+
+  it(`com exatamente ${PRODUTOS_PAGE_SIZE} produtos não há "Mostrar mais"`, async () => {
+    const exatos = Array.from({ length: PRODUTOS_PAGE_SIZE }, (_, i) =>
+      produto({ id: `00000000-0000-4000-8000-${String(200000 + i).padStart(12, "0")}`, codigo: `Q-${i}`, nome: `Item ${i}` }),
+    );
+    await renderPage([PERM.produtoRead], exatos);
+    await screen.findByText("Item 0");
+    expect(rows()).toHaveLength(PRODUTOS_PAGE_SIZE);
+    expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    // O bloco inteiro some, não só o botão: nem a contagem "Mostrando…" aparece.
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
+  });
+});
+
+// DSP-02, DSM-04 AC1: cabeçalho e estado vazio com a ação de criar.
+describe("cabeçalho e estado vazio", () => {
+  it("um único h1 Produtos, no cabeçalho de página", async () => {
+    await renderPage([PERM.produtoRead]);
+    await screen.findByText("Camisa oficial");
+    expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual(["Produtos"]);
+  });
+
+  it("sem produtos, quem cria vê Novo produto só no estado vazio, e ele abre a criação", async () => {
+    await renderPage([PERM.produtoRead, PERM.produtoCreate], []);
+    expect(await screen.findByRole("heading", { name: "Nenhum produto cadastrado." })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Novo produto" })).toHaveLength(1);
+    expect(screen.queryByLabelText("Buscar por código ou nome")).toBeNull();
+    await openCreate();
+  });
+
+  it("sem produtos e sem estoque:produto:create, o estado vazio não tem ação", async () => {
+    await renderPage(READ_ONLY, []);
+    expect(await screen.findByRole("heading", { name: "Nenhum produto cadastrado." })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Novo produto" })).toBeNull();
   });
 });

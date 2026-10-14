@@ -1,11 +1,17 @@
 // Navegação da aplicação (FND-05 AC1, FND-04 AC3). A lista real de itens é
 // montada pela INT em nav-items.ts; aqui ficam só o formato e o filtro.
 
+import type { LucideIcon } from "lucide-react";
+
 export type NavItem = {
   label: string;
   href: string;
   /** Permissão efetiva exigida. Sem ela, o item vale para qualquer pessoa autenticada. */
   permission?: string;
+  /** Ícone do item na navegação do shell (DSS-01 AC3), definido por cada módulo. */
+  icon?: LucideIcon;
+  /** Frase que descreve a área no atalho da página inicial. */
+  description?: string;
 };
 
 /** Grupo de itens com um título (por exemplo "Financeiro"). */

@@ -1,162 +1,315 @@
 "use client";
 
-import Link from "next/link";
+import { EyeIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 
+import { type Column, DataList } from "@/components/app/data-list";
+import { FilterBar } from "@/components/app/filter-bar";
+import { formatDate, formatIdentifier } from "@/components/app/format";
+import { MoneyValue } from "@/components/app/money-value";
+import { PageHeader } from "@/components/app/page-header";
 import { RequirePermission } from "@/components/app/require-permission";
+import { RowActionButton } from "@/components/app/row-actions";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/states";
 import { StatusBadge } from "@/components/app/status-badge";
-import { formatDate } from "@/components/app/format";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatBRL } from "@/lib/money";
+import { NativeSelect } from "@/components/ui/native-select";
+import { ShowMore } from "@/components/ui/show-more";
+import { codecs, useQueryState } from "@/lib/url-state";
 
 import { LANCAMENTO_PERMISSIONS } from "./actions";
 import { lancamentosCatalog } from "./errors";
-import { EMPTY_FILTERS, filterLancamentos, type LancamentoFilters } from "./filters";
+import { filterLancamentos, type LancamentoFilters } from "./filters";
 import { useContaNome, useContasOptions, useCreateLancamento, useLancamentos } from "./hooks";
 import { LancamentoFormDialog, NEW_LANCAMENTO } from "./lancamento-form";
 import {
+  type Conta,
   FORMA_PAGAMENTO_LABEL,
-  STATUS_LABEL,
-  type StatusLancamento,
+  type Lancamento,
+  STATUS_DEF,
   STATUSES,
   TIPO_LABEL,
-  type TipoConta,
   TIPOS,
 } from "./labels";
-import { SelectField } from "./select-field";
 
 // Lista de lançamentos com filtros no cliente (FWB-03 AC1) e criação (AC2).
+// Os filtros vivem na URL (DSP-05 AC2 a AC4): um link copiado reproduz a
+// consulta. A lista mostra 50 por vez (DSP-05 AC12), e o filtro considera
+// todos os registros carregados (AC13).
+
+/** Lote do "Mostrar mais" (DSP-05 AC12). */
+export const PAGE_SIZE = 50;
+
+const tipoCodec = codecs.oneOf(TIPOS, "");
+const statusCodec = codecs.oneOf(STATUSES, "");
+const contaCodec = codecs.string();
+const dateCodec = codecs.isoDate();
+
+const NOUN = ["lançamento", "lançamentos"] as const;
+
+/** Identifica o lançamento nos nomes das ações de linha (DSP-05 AC10). */
+export function lancamentoRowLabel(l: Pick<Lancamento, "id" | "tipo">): string {
+  return `lançamento ${formatIdentifier(TIPO_LABEL[l.tipo], l.id).label}`;
+}
+
+/**
+ * Conta do filtro: uma conta que não existe mais na lista de contas é ignorada
+ * (caso de borda de DSP-05). Sem a lista carregada, vale o que veio da URL.
+ */
+function existingConta(contaId: string, contas: readonly Conta[] | undefined): string {
+  if (contaId === "" || contas === undefined) return contaId;
+  return contas.some((c) => c.id === contaId) ? contaId : "";
+}
+
+function useFilters(contas: readonly Conta[] | undefined) {
+  const [tipo, setTipo] = useQueryState("tipo", tipoCodec);
+  const [status, setStatus] = useQueryState("status", statusCodec);
+  const [conta, setConta] = useQueryState("conta", contaCodec);
+  const [de, setDe] = useQueryState("de", dateCodec);
+  const [ate, setAte] = useQueryState("ate", dateCodec);
+  const filters: LancamentoFilters = { tipo, status, contaId: existingConta(conta, contas), de, ate };
+  const activeCount = Object.values(filters).filter((value) => value !== "").length;
+  const clear = () => {
+    setTipo("");
+    setStatus("");
+    setConta("");
+    setDe("");
+    setAte("");
+  };
+  return { filters, activeCount, clear, setTipo, setStatus, setConta, setDe, setAte };
+}
 
 export function LancamentosPage() {
   const lancamentos = useLancamentos();
   const contas = useContasOptions();
   const contaNome = useContaNome();
-  const [filters, setFilters] = useState<LancamentoFilters>(EMPTY_FILTERS);
   const [creating, setCreating] = useState(false);
   const create = useCreateLancamento();
+  const { filters, activeCount, clear, setTipo, setStatus, setConta, setDe, setAte } = useFilters(contas.data?.items);
 
   const items = lancamentos.data?.items ?? [];
   const visible = filterLancamentos(items, filters);
-  const set = <K extends keyof LancamentoFilters>(key: K, value: LancamentoFilters[K]) =>
-    setFilters((current) => ({ ...current, [key]: value }));
+
+  // Cada mudança de filtro volta ao primeiro lote.
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const filtersKey = JSON.stringify(filters);
+  const [limitKey, setLimitKey] = useState(filtersKey);
+  if (limitKey !== filtersKey) {
+    setLimitKey(filtersKey);
+    setLimit(PAGE_SIZE);
+  }
+  const shown = visible.slice(0, limit);
+
+  const columns: Column<Lancamento>[] = [
+    {
+      id: "data",
+      header: "Criado em",
+      priority: 1,
+      inList: "field",
+      wrap: "nowrap",
+      cell: (l) => formatDate(l.criado_em),
+    },
+    { id: "tipo", header: "Tipo", priority: 2, inList: "field", cell: (l) => TIPO_LABEL[l.tipo] },
+    {
+      id: "conta",
+      header: "Conta",
+      priority: 1,
+      inList: "title",
+      // É a coluna que cede espaço quando o contêiner aperta (ao lado da
+      // navegação fixa): quebra por palavra e, se uma palavra não couber,
+      // dentro dela, em vez de alargar a tabela. Truncar esconderia o nome
+      // mesmo com espaço sobrando, porque a tabela dá a uma coluna truncada
+      // só o resto da largura.
+      wrap: "wrap",
+      cell: (l) => <span className="wrap-anywhere">{contaNome(l.conta_id)}</span>,
+    },
+    {
+      id: "bruto",
+      header: "Valor bruto",
+      numeric: true,
+      priority: 3,
+      inList: false,
+      cell: (l) => <MoneyValue cents={l.valor_bruto_cents} />,
+    },
+    {
+      id: "taxa",
+      header: "Taxa",
+      numeric: true,
+      priority: 3,
+      inList: false,
+      cell: (l) => <MoneyValue cents={l.taxa_cents} />,
+    },
+    {
+      id: "liquido",
+      header: "Valor líquido",
+      numeric: true,
+      priority: 1,
+      // Cancelado: o valor fica riscado (mapa de status do design).
+      cell: (l) => (
+        <MoneyValue cents={l.valor_liquido_cents} className={l.status === "CANCELADA" ? "line-through" : undefined} />
+      ),
+    },
+    {
+      id: "forma",
+      header: "Forma de pagamento",
+      // Prioridade 3, não 2 como na matriz do design: com ela, as colunas que
+      // ficam de 768 a 1023 px (contêiner de 720 px) não cabiam sem rolagem
+      // interna nem corte da ação "Detalhes" (smoke da rodada 6, D1).
+      priority: 3,
+      inList: false,
+      cell: (l) => FORMA_PAGAMENTO_LABEL[l.forma_pagamento],
+    },
+    {
+      id: "status",
+      header: "Status",
+      priority: 1,
+      inList: "meta",
+      cell: (l) => <StatusBadge status={STATUS_DEF[l.status]} />,
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Lançamentos</h1>
-        <RequirePermission permission={LANCAMENTO_PERMISSIONS.create} mode="action">
-          <Button onClick={() => setCreating(true)}>Novo lançamento</Button>
-          <LancamentoFormDialog
-            open={creating}
-            onOpenChange={setCreating}
-            title="Novo lançamento"
-            defaultValues={NEW_LANCAMENTO}
-            tipoEditable
-            submitLabel="Criar lançamento"
-            successMessage="Lançamento criado."
-            onSubmit={(values) => create.mutateAsync(values)}
-          />
-        </RequirePermission>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
-        <SelectField
-          label="Tipo"
-          value={filters.tipo}
-          onChange={(v) => set("tipo", v as TipoConta | "")}
-          placeholder="Todos"
-          options={TIPOS.map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-        />
-        <SelectField
-          label="Status"
-          value={filters.status}
-          onChange={(v) => set("status", v as StatusLancamento | "")}
-          placeholder="Todos"
-          options={STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }))}
-        />
-        <SelectField
-          label="Conta"
-          value={filters.contaId}
-          onChange={(v) => set("contaId", v)}
-          placeholder="Todas"
-          options={(contas.data?.items ?? []).map((c) => ({
-            value: c.id,
-            label: c.ativo ? c.nome : `${c.nome} (inativa)`,
-          }))}
-        />
-        <DateFilter label="Criado de" value={filters.de} onChange={(v) => set("de", v)} />
-        <DateFilter label="Criado até" value={filters.ate} onChange={(v) => set("ate", v)} />
-        <Button variant="outline" onClick={() => setFilters(EMPTY_FILTERS)}>
-          Limpar filtros
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        title="Lançamentos"
+        description="Receitas e despesas da torcida."
+        actions={
+          <RequirePermission permission={LANCAMENTO_PERMISSIONS.create} mode="action">
+            <Button onClick={() => setCreating(true)}>
+              <PlusIcon aria-hidden="true" />
+              Novo lançamento
+            </Button>
+            <LancamentoFormDialog
+              open={creating}
+              onOpenChange={setCreating}
+              title="Novo lançamento"
+              defaultValues={NEW_LANCAMENTO}
+              tipoEditable
+              submitLabel="Criar lançamento"
+              successMessage="Lançamento criado."
+              onSubmit={(values) => create.mutateAsync(values)}
+            />
+          </RequirePermission>
+        }
+      />
 
       {lancamentos.isPending ? (
-        <LoadingState />
+        <LoadingState shape="table" />
       ) : lancamentos.isError ? (
         <ErrorState error={lancamentos.error} catalog={lancamentosCatalog} onRetry={() => void lancamentos.refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="Nenhum lançamento registrado." />
-      ) : visible.length === 0 ? (
-        <EmptyState title="Nenhum lançamento corresponde aos filtros." />
+        <EmptyState title="Nenhum lançamento registrado." description="Os lançamentos criados aparecem aqui." />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Criado em</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Conta</TableHead>
-              <TableHead className="text-right">Valor bruto</TableHead>
-              <TableHead className="text-right">Taxa</TableHead>
-              <TableHead className="text-right">Valor líquido</TableHead>
-              <TableHead>Forma de pagamento</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>
-                <span className="sr-only">Detalhes</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visible.map((l) => (
-              <TableRow key={l.id} data-testid="lancamento-row">
-                <TableCell>{formatDate(l.criado_em)}</TableCell>
-                <TableCell>{TIPO_LABEL[l.tipo]}</TableCell>
-                <TableCell>{contaNome(l.conta_id)}</TableCell>
-                <TableCell className="text-right">{formatBRL(l.valor_bruto_cents)}</TableCell>
-                <TableCell className="text-right">{formatBRL(l.taxa_cents)}</TableCell>
-                <TableCell className="text-right">{formatBRL(l.valor_liquido_cents)}</TableCell>
-                <TableCell>{FORMA_PAGAMENTO_LABEL[l.forma_pagamento]}</TableCell>
-                <TableCell>
-                  <StatusBadge status={l.status} />
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/financeiro/lancamentos/${l.id}`}
-                    className="text-sm underline underline-offset-4 hover:text-foreground"
-                  >
-                    Detalhes
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </div>
-  );
-}
+        <div className="flex flex-col gap-4">
+          <FilterBar activeCount={activeCount} resultCount={visible.length} resultNoun={NOUN} onClear={clear}>
+            <Field>
+              <FieldLabel>Tipo</FieldLabel>
+              <NativeSelect
+                name="tipo"
+                autoComplete="off"
+                value={filters.tipo}
+                onChange={(event) => setTipo(tipoCodec.parse(event.target.value))}
+              >
+                <option value="">Todos</option>
+                {TIPOS.map((t) => (
+                  <option key={t} value={t}>
+                    {TIPO_LABEL[t]}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel>Status</FieldLabel>
+              <NativeSelect
+                name="status"
+                autoComplete="off"
+                value={filters.status}
+                onChange={(event) => setStatus(statusCodec.parse(event.target.value))}
+              >
+                <option value="">Todos</option>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_DEF[s].label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel>Conta</FieldLabel>
+              <NativeSelect
+                name="conta"
+                autoComplete="off"
+                value={filters.contaId}
+                onChange={(event) => setConta(event.target.value)}
+              >
+                <option value="">Todas</option>
+                {(contas.data?.items ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.ativo ? c.nome : `${c.nome} (inativa)`}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel>Criado de</FieldLabel>
+              <Input
+                type="date"
+                name="de"
+                autoComplete="off"
+                value={filters.de}
+                onChange={(event) => setDe(dateCodec.parse(event.target.value))}
+              />
+            </Field>
+            <Field>
+              <FieldLabel>Criado até</FieldLabel>
+              <Input
+                type="date"
+                name="ate"
+                autoComplete="off"
+                value={filters.ate}
+                onChange={(event) => setAte(dateCodec.parse(event.target.value))}
+              />
+            </Field>
+          </FilterBar>
 
-function DateFilter({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  const id = `filtro-${label.toLowerCase().replace(/\s+/g, "-")}`;
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      <Input id={id} type="date" value={value} onChange={(event) => onChange(event.target.value)} />
-    </div>
+          {visible.length === 0 ? (
+            <EmptyState
+              kind="no-results"
+              title="Nenhum lançamento corresponde aos filtros."
+              description="Mude ou limpe os filtros para ver outros lançamentos."
+              onClear={clear}
+            />
+          ) : (
+            <>
+              <DataList
+                label="Lançamentos"
+                columns={columns}
+                rows={shown}
+                rowKey={(l) => l.id}
+                rowLabel={lancamentoRowLabel}
+                primaryAction={(l) => (
+                  <RowActionButton
+                    label="Detalhes"
+                    rowLabel={lancamentoRowLabel(l)}
+                    icon={EyeIcon}
+                    href={`/financeiro/lancamentos/${l.id}`}
+                  />
+                )}
+              />
+              {visible.length > PAGE_SIZE ? (
+                <ShowMore
+                  shown={shown.length}
+                  total={visible.length}
+                  noun={NOUN}
+                  onShowMore={() => setLimit((current) => current + PAGE_SIZE)}
+                />
+              ) : null}
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 }

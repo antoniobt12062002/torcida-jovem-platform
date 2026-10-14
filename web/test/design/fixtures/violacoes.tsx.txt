@@ -1,0 +1,13 @@
+// Exemplo com um valor solto por linha. As linhas são conferidas pelo teste.
+export const A = "#D81E28";
+export const B = "rgb(17, 17, 17)";
+export const C = "text-red-500";
+export const D = "bg-black/50";
+export const E = "bg-[var(--tj-red)]";
+export const F = "text-[13px]";
+export const G = "p-[13px]";
+export const H = "rounded-[min(var(--radius-md),10px)]";
+export const I = "font-display";
+export const J = "uppercase";
+export const K = "transition-all";
+export const L = "hover:dark:bg-input";

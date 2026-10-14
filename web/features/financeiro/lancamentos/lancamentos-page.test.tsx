@@ -2,12 +2,14 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetNavigation } from "@/lib/session/navigation-mock";
+import { resetNavigation, setLocation } from "@/lib/session/navigation-mock";
 import { mockMe, renderWithSession } from "@/lib/session/test-utils";
-import { authContext, lancamento, problem } from "@/test/msw/fixtures";
+import { mockViewport } from "@/test/media";
+import { authContext, type Lancamento, lancamento, problem } from "@/test/msw/fixtures";
 
 import FinanceiroLancamentosPage from "@/app/(app)/financeiro/lancamentos/page";
 
+import { STATUS_DEF } from "./labels";
 import { LancamentosPage } from "./lancamentos-page";
 import {
   change,
@@ -74,8 +76,10 @@ async function renderPage(permissions = PERMISSOES_TESOURARIA, items = [RECEITA,
   return list;
 }
 
+// As linhas de dados da tabela "Lançamentos" (DataList), sem a do cabeçalho.
 function rows() {
-  return screen.queryAllByTestId("lancamento-row");
+  const table = screen.queryByRole("table", { name: "Lançamentos" });
+  return table ? within(table).getAllByRole("row").slice(1) : [];
 }
 
 function rowTexts() {
@@ -113,7 +117,8 @@ describe("lista", () => {
       "Paga",
       "Detalhes",
     ]);
-    const link = within(rows()[0]).getByRole("link", { name: "Detalhes" });
+    // DSP-05 AC10: o link "Detalhes" tem nome que identifica o lançamento.
+    const link = within(rows()[0]).getByRole("link", { name: `Detalhes lançamento Receita ${RECEITA.id.slice(0, 8)}` });
     expect(link.getAttribute("href")).toBe(`/financeiro/lancamentos/${RECEITA.id}`);
   });
 
@@ -329,5 +334,222 @@ describe("permissões", () => {
     await waitFor(() => expect(rows()).toHaveLength(1));
     expect(screen.queryByRole("heading", { name: "Sem acesso" })).toBeNull();
     expect(list.count).toBe(1);
+  });
+});
+
+// DSM-03 AC4 e DSP-05 AC2 a AC4: tipo, status, conta e período na URL.
+describe("filtros na URL", () => {
+  const params = () => Object.fromEntries(new URLSearchParams(window.location.search));
+
+  it("cada filtro vai para a query string, e Limpar filtros a esvazia", async () => {
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    await screen.findByRole("option", { name: "Mensalidades" });
+    change(screen.getByLabelText("Tipo"), "RECEITA");
+    change(screen.getByLabelText("Status"), "RECEBIDA");
+    change(screen.getByLabelText("Conta"), CONTA_RECEITA.id);
+    change(screen.getByLabelText("Criado de"), "2026-09-01");
+    change(screen.getByLabelText("Criado até"), "2026-09-30");
+    await waitFor(() =>
+      expect(params()).toEqual({
+        tipo: "RECEITA",
+        status: "RECEBIDA",
+        conta: CONTA_RECEITA.id,
+        de: "2026-09-01",
+        ate: "2026-09-30",
+      }),
+    );
+    expect(rowTexts().map((r) => r[0])).toEqual(["10/09/2026"]);
+    fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
+    await waitFor(() => expect(window.location.search).toBe(""));
+    expect(rows()).toHaveLength(3);
+  });
+
+  it("abre com os filtros da URL", async () => {
+    setLocation("/financeiro/lancamentos?tipo=RECEITA&status=RECEBIDA");
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(rowTexts()[0][7]).toBe("Recebida");
+    expect((screen.getByLabelText("Tipo") as HTMLSelectElement).value).toBe("RECEITA");
+    expect((screen.getByLabelText("Status") as HTMLSelectElement).value).toBe("RECEBIDA");
+    expect(screen.getByText("1 lançamento")).toBeTruthy();
+  });
+
+  it("abre com o período da URL", async () => {
+    setLocation("/financeiro/lancamentos?de=2026-09-05&ate=2026-09-30");
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(rowTexts()[0][0]).toBe("10/09/2026");
+    expect((screen.getByLabelText("Criado de") as HTMLInputElement).value).toBe("2026-09-05");
+  });
+
+  it("valor inválido na URL é ignorado, sem erro", async () => {
+    setLocation("/financeiro/lancamentos?tipo=OUTRO&status=ESTORNADA&de=2026-02-30");
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    expect((screen.getByLabelText("Tipo") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Status") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Criado de") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("button", { name: "Limpar filtros" })).toBeNull();
+  });
+
+  it("conta da URL que existe filtra a lista", async () => {
+    setLocation(`/financeiro/lancamentos?conta=${CONTA_RECEITA.id}`);
+    await renderPage();
+    await screen.findByRole("option", { name: "Mensalidades" });
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    expect((screen.getByLabelText("Conta") as HTMLSelectElement).value).toBe(CONTA_RECEITA.id);
+  });
+
+  it("conta da URL que não existe é ignorada", async () => {
+    setLocation("/financeiro/lancamentos?conta=00000000-0000-4000-8000-000000000999");
+    await renderPage();
+    await screen.findByRole("option", { name: "Mensalidades" });
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    expect((screen.getByLabelText("Conta") as HTMLSelectElement).value).toBe("");
+    expect(screen.queryByRole("button", { name: "Limpar filtros" })).toBeNull();
+    expect(screen.getByText("3 lançamentos")).toBeTruthy();
+  });
+});
+
+// DSM-03 AC3 e DD-3: status com rótulo e ícone distintos; CANCELADA neutra.
+describe("status", () => {
+  it("CRIADA, RECEBIDA, PAGA e CANCELADA têm rótulo e ícone distintos entre si", () => {
+    const defs = Object.values(STATUS_DEF);
+    expect(defs).toHaveLength(4);
+    expect(new Set(defs.map((d) => d.label)).size).toBe(4);
+    expect(new Set(defs.map((d) => d.icon)).size).toBe(4);
+    expect(STATUS_DEF.CANCELADA.tone).toBe("neutral");
+    expect(STATUS_DEF.CRIADA.tone).toBe("neutral");
+  });
+
+  it("a lista mostra cada status com rótulo, ícone e tom", async () => {
+    const CANCELADA = lancamento({ ...DESPESA_PAGA, id: "00000000-0000-4000-8000-000000000214", status: "CANCELADA" });
+    await renderPage(PERMISSOES_TESOURARIA, [RECEITA, RECEITA_RECEBIDA, DESPESA_PAGA, CANCELADA]);
+    await waitFor(() => expect(rows()).toHaveLength(4));
+    const badges = rows().map((r) => r.querySelector<HTMLElement>('[data-slot="badge"]'));
+    expect(badges.map((b) => b?.textContent)).toEqual(["Criada", "Recebida", "Paga", "Cancelada"]);
+    expect(badges.map((b) => b?.dataset.tone)).toEqual(["neutral", "success", "success", "neutral"]);
+    const icons = badges.map((b) => b?.querySelector("svg")?.getAttribute("class"));
+    for (const icon of icons) expect(icon).toBeTruthy();
+    expect(new Set(icons).size).toBe(4);
+  });
+});
+
+// DSP-05 AC12 e AC13: 50 por vez; o filtro considera todos os registros.
+describe("mostrar mais", () => {
+  /** `n` lançamentos de receita, do mais antigo (índice 0) ao mais novo. */
+  function many(n: number, overrides: (index: number) => Partial<Lancamento> = () => ({})): Lancamento[] {
+    return Array.from({ length: n }, (_, index) =>
+      lancamento({
+        id: `${String(index).padStart(8, "0")}-0000-4000-8000-000000000000`,
+        conta_id: CONTA_RECEITA.id,
+        criado_em: new Date(Date.UTC(2026, 0, 1) + index * 3_600_000).toISOString(),
+        ...overrides(index),
+      }),
+    );
+  }
+
+  it("com 51, mostra 50 e Mostrar mais acrescenta o restante", async () => {
+    await renderPage(PERMISSOES_TESOURARIA, many(51));
+    await waitFor(() => expect(rows()).toHaveLength(50));
+    expect(screen.getByText("Mostrando 50 de 51 lançamentos")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(rows()).toHaveLength(51);
+    expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+  });
+
+  it("com 120, acrescenta 50 por vez", async () => {
+    await renderPage(PERMISSOES_TESOURARIA, many(120));
+    await waitFor(() => expect(rows()).toHaveLength(50));
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(rows()).toHaveLength(100);
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar mais" }));
+    expect(rows()).toHaveLength(120);
+  });
+
+  it("com exatamente 50, o controle não aparece", async () => {
+    await renderPage(PERMISSOES_TESOURARIA, many(50));
+    await waitFor(() => expect(rows()).toHaveLength(50));
+    expect(screen.queryByRole("button", { name: "Mostrar mais" })).toBeNull();
+    // O bloco inteiro some, não só o botão: nem a contagem "Mostrando…" aparece.
+    expect(document.querySelector('[data-slot="show-more"]')).toBeNull();
+    expect(screen.queryByText(/^Mostrando /)).toBeNull();
+  });
+
+  it("o filtro considera todos os registros, não só os 50 visíveis", async () => {
+    // O mais antigo (fora dos 50 primeiros) é o único recebido.
+    await renderPage(PERMISSOES_TESOURARIA, many(60, (index) => (index === 0 ? { status: "RECEBIDA" } : {})));
+    await waitFor(() => expect(rows()).toHaveLength(50));
+    change(screen.getByLabelText("Status"), "RECEBIDA");
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(rowTexts()[0][7]).toBe("Recebida");
+    expect(screen.getByText("1 lançamento")).toBeTruthy();
+  });
+});
+
+// DSM-03 AC5 e DSP-05 AC7: abaixo de 768 px, itens empilhados.
+describe("tela estreita", () => {
+  it("cada item mostra data, tipo, conta, valor líquido e status", async () => {
+    mockViewport({ width: 390 });
+    await renderPage(PERMISSOES_TESOURARIA, [RECEITA]);
+    const list = await screen.findByRole("list", { name: "Lançamentos" });
+    expect(screen.queryByRole("table")).toBeNull();
+    const [item] = within(list).getAllByRole("listitem");
+    await waitFor(() => expect(item.querySelector('[data-slot="data-list-title"]')?.textContent).toBe("Mensalidades"));
+    const fields = Array.from(item.querySelectorAll('[data-slot="data-list-field"]')).map((f) => f.textContent);
+    expect(fields).toEqual(["Criado em: 04/10/2026", "Tipo: Receita"]);
+    expect(item.querySelector('[data-slot="data-list-value"]')?.textContent).toBe("Valor líquido: R$ 97,50");
+    expect(item.querySelector('[data-slot="data-list-meta"]')?.textContent).toBe("Criada");
+    const link = within(item).getByRole("link", { name: `Detalhes lançamento Receita ${RECEITA.id.slice(0, 8)}` });
+    expect(link.getAttribute("href")).toBe(`/financeiro/lancamentos/${RECEITA.id}`);
+  });
+});
+
+// DSP-05 AC10: nenhum link de detalhe repete o nome entre linhas.
+describe("nome do link de detalhe", () => {
+  it("identifica cada lançamento", async () => {
+    const items = [
+      lancamento({ ...RECEITA, id: "aaaaaaaa-0000-4000-8000-000000000001" }),
+      lancamento({ ...DESPESA_PAGA, id: "bbbbbbbb-0000-4000-8000-000000000002" }),
+    ];
+    await renderPage(PERMISSOES_TESOURARIA, items);
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    expect(rows().map((r) => within(r).getByRole("link").getAttribute("aria-label"))).toEqual([
+      "Detalhes lançamento Receita aaaaaaaa",
+      "Detalhes lançamento Despesa bbbbbbbb",
+    ]);
+  });
+});
+
+// Smoke da rodada 6, D1: de 768 a 1440 px a tabela cabe no contêiner. Forma de
+// pagamento sai junto com as colunas de prioridade 3, e a conta quebra (até
+// dentro da palavra) em vez de alargar a tabela.
+describe("colunas por largura", () => {
+  function header(name: string) {
+    const table = screen.getByRole("table", { name: "Lançamentos" });
+    return within(table).getByRole("columnheader", { name });
+  }
+
+  it("forma de pagamento, valor bruto e taxa são de prioridade 3; as demais ficam sempre", async () => {
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    for (const name of ["Forma de pagamento", "Valor bruto", "Taxa"]) {
+      expect(header(name).className).toContain("hidden");
+      expect(header(name).className).toContain("lg:table-cell");
+    }
+    for (const name of ["Criado em", "Tipo", "Conta", "Valor líquido", "Status"]) {
+      expect(header(name).className).not.toContain("hidden");
+    }
+  });
+
+  it("a conta quebra em qualquer ponto em vez de alargar a tabela, sem cortar o nome", async () => {
+    await renderPage();
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    const conta = await waitFor(() => within(rows()[0]).getByText("Mensalidades"));
+    expect(conta.className.split(" ")).toContain("wrap-anywhere");
+    const cell = conta.closest("td");
+    expect(cell?.className).not.toContain("truncate");
+    expect(cell?.className).not.toContain("whitespace-nowrap");
   });
 });
