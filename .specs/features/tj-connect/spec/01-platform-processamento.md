@@ -109,13 +109,14 @@ Transições:
 | `EM_EXECUCAO → CONCLUIDO` | Sucesso, com token válido |
 | `EM_EXECUCAO → PENDENTE` | Erro transitório com tentativas restantes, com novo `executar_em` |
 | `EM_EXECUCAO → FALHOU` | Erro permanente, ou tentativas esgotadas |
-| `EM_EXECUCAO → PENDENTE` | Concessão vencida, por recuperação automática (a tentativa conta como falha por "concessão vencida") |
+| `EM_EXECUCAO → PENDENTE` | Concessão vencida, por recuperação automática. **Não** conta como tentativa e volta com espera crescente |
+| `EM_EXECUCAO → FALHOU` | Só por decisão do runner com a concessão válida: erro permanente, ou tentativas esgotadas por erro, tempo esgotado ou `executor_travado`. Perda de concessão **nunca** leva a `FALHOU` |
 | `FALHOU → PENDENTE` | Reenfileiramento humano: novo ciclo de tentativas |
 | `FALHOU → ENCERRADO_MANUALMENTE` | Encerramento humano |
 
 ### Tentativa de job
 
-Cada execução gera um registro append-only: instância, início, fim, resultado (`sucesso`, `erro_transitorio`, `erro_permanente`, `tempo_esgotado`, `concessao_perdida`) e mensagem de erro **sanitizada**.
+Cada execução gera um registro append-only: instância, início, fim, resultado (`sucesso`, `erro_transitorio`, `erro_permanente`, `tempo_esgotado`, `concessao_perdida`, `executor_travado`), diagnóstico da perda de concessão (se a instância ainda gravava batimento, só para leitura humana) e mensagem de erro **sanitizada**.
 
 ### Evento
 
@@ -167,7 +168,7 @@ Cada execução gera um registro append-only: instância, início, fim, resultad
 
 ### F4 — Recuperação após queda ou reinício
 
-1. Toda instância, na partida e periodicamente, devolve a `PENDENTE` os jobs `EM_EXECUCAO` com `concessao_ate` vencida, registrando a tentativa como `concessao_perdida`.
+1. Toda instância, na partida e periodicamente, devolve a `PENDENTE` os jobs `EM_EXECUCAO` com `concessao_ate` vencida, registrando a tentativa como `concessao_perdida`, sem consumir tentativa e com espera crescente.
 2. Nenhum passo manual é necessário.
 
 ### F5 — Publicar e entregar evento
@@ -350,8 +351,14 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 4. WHEN the database is unavailable THEN the worker SHALL stop claiming, SHALL retry the connection with backoff and SHALL NOT mark any job as failed because of that unavailability.
 5. WHEN an instance receives a stop signal THEN it SHALL stop claiming new jobs and SHALL wait up to the grace period for running jobs before exiting.
 6. The platform SHALL require every job type to declare that its executor is idempotent, and SHALL refuse to register a type without that declaration.
+7. WHEN the recovery finds an expired lease THEN the platform SHALL return the job to `PENDENTE` without counting an attempt, SHALL NOT move it to `FALHOU` for that reason, SHALL retry it with a growing delay capped at 15 minutes and SHALL record the attempt as `concessao_perdida`, whatever the state of the owning instance.
+8. The platform SHALL count an attempt only when the runner that holds the valid lease identifies an executor failure (returned error, recovered panic, timeout or `executor_travado`), and SHALL use instance heartbeats only as diagnostic information, never to decide how a lost lease is treated.
+9. WHEN a job accumulates 5 consecutive lost leases THEN the platform SHALL emit the alert `job_suspeito_de_derrubar_worker` and SHALL keep retrying the job.
+10. WHILE a job whose type declares a business effect stays in `FALHOU` the platform SHALL emit the alert `obrigacao_em_falha` at least once a day, and `FALHOU` SHALL NOT mark the obligation as fulfilled or discarded.
+11. WHEN an executor panics THEN the worker SHALL recover, SHALL keep running and SHALL treat the panic as a transient error.
+12. IF an executor does not return within its timeout plus the configured grace THEN the worker SHALL stop renewing the lease and SHALL record the attempt as `executor_travado` before abandoning it, including before any self-termination of the instance.
 
-**Independent Test**: matar uma instância durante um job e ver outra concluí-lo; reiniciar o banco durante a execução e ver nenhum job marcado como falho por isso.
+**Independent Test**: matar uma instância durante um job e ver outra concluí-lo; reiniciar o banco durante a execução e ver nenhum job marcado como falho por isso; manter o executor bloqueado além do prazo e ver o runner gravar `executor_travado` e, esgotadas as tentativas, `FALHOU`; perder a concessão com a instância viva e ver o job voltar sem consumir tentativa; derrubar a instância 5 vezes no mesmo job e ver o alerta sem `FALHOU`.
 
 ---
 
@@ -401,14 +408,17 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 **Why P1**: Integra a spec `02` ao processamento.
 
 **Acceptance Criteria**:
-1. The platform SHALL require every job type and every event subscription to declare exactly one service account.
+1. The platform SHALL require every job type and every event subscription to declare exactly one service account; for event delivery jobs the account in effect SHALL be the subscription's, never an account of the platform, and the internal delivery steps (inbox, version row, fenced completion) SHALL be platform writes performed without any principal.
 2. IF the declared service account does not exist or is not of type `SERVICE` THEN the worker SHALL refuse to start.
 3. WHEN the worker runs a job THEN it SHALL invoke the executor with the principal of the declared service account, the job's `correlation_id` and `causation_id` equal to the job id.
 4. WHILE the declared service account is inactive the worker SHALL postpone the jobs of that type without consuming attempts, retrying after 60 seconds, and SHALL emit a structured log at level `warn` at most once per minute per job type.
 5. The platform SHALL NOT write an audit entry for each job attempt; business effects SHALL be audited by the module use cases with the service account as actor.
 6. WHEN a person re-enqueues or closes a failed job THEN the platform SHALL write an audit entry with the person as actor, the job id and the reason.
+7. The platform SHALL record the service account of each delivery job only from the subscription registry at publication time, and SHALL refuse any module request to enqueue the delivery job type.
+8. WHEN a delivery job runs THEN the worker SHALL revalidate, before opening the transaction, that its account equals the account currently declared by the subscription, is active, is of type `SERVICE` and belongs to the consumer's module; IF any check other than activity fails THEN the job SHALL fail permanently with `conta_de_entrega_invalida` without calling any handler.
+9. WHEN a delivery job runs THEN the handler SHALL receive only the principal of its subscription's account, never the principal of another consumer or a combination of accounts.
 
-**Independent Test**: um job de teste que chama um caso de uso auditado; ver a entrada com `actor_type` `service`, `causation_id` = job e `correlation_id` do fluxo; desativar a conta e ver o adiamento.
+**Independent Test**: um job de teste que chama um caso de uso auditado; ver a entrada com `actor_type` `service`, `causation_id` = job e `correlation_id` do fluxo; desativar a conta e ver o adiamento; dois consumidores de módulos diferentes no mesmo evento recebem cada um só o `Principal` da sua conta; linha de entrega adulterada → `conta_de_entrega_invalida`.
 
 ---
 
@@ -531,7 +541,10 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 | T-04c | Chamada externa repetida por A e B → mesma chave de idempotência; provedor falso registra um efeito | Integração | LEA-01 |
 | T-05 | Erros transitório, permanente e por tempo → estados e esperas corretos | Unidade com relógio do banco controlado | RTY-01 |
 | T-06 | Matar a instância no meio do job → outra conclui | Integração | REC-01 |
+| T-06b | Executor bloqueado além de `Timeout + WORKER_HUNG_GRACE` → runner grava `executor_travado` (conta tentativa); esgotadas, `FALHOU` e alerta `obrigacao_em_falha`. Concessão perdida com a instância viva (renovação pausada) → volta sem consumir tentativa | Integração (relógio do banco controlado) | REC-01 |
 | T-07 | Banco indisponível durante a execução → nenhum `FALHOU` por isso | Integração | REC-01 |
+| T-07b | Instância morta 5 vezes no mesmo job, e reinício gracioso → perdas de concessão sem consumir tentativa, espera crescente até 15 min, alerta `job_suspeito_de_derrubar_worker`, nunca `FALHOU` | Integração (relógio do banco controlado) | REC-01 |
+| T-07c | Panic no executor → instância continua, tentativa transitória | Integração | REC-01 |
 | T-08 | Publicar e confirmar / desfazer → jobs de entrega só no primeiro | Integração | OUT-01 |
 | T-09 | Inscrição numa seta proibida → partida falha | Unidade (composição) | OUT-01 |
 | T-10 | Mesmo evento 3 vezes → 1 efeito | Integração | INB-01 |
@@ -542,6 +555,8 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 | T-11e | Limpeza concorrente com reenfileiramento do mesmo evento → evento preservado | Integração (concorrência) | RET-01 |
 | T-12 | Conta de serviço inativa → adiamento sem gastar tentativas | Integração | SVX-01 |
 | T-13 | Entrada de auditoria do efeito com ator `service`, `causation_id` e `correlation_id` | Integração | SVX-01 |
+| T-13b | Dois consumidores de módulos diferentes inscritos no mesmo evento → cada tratador recebe só o `Principal` da sua conta; auditorias com contas distintas | Integração | SVX-01 |
+| T-13c | Linha de entrega com a conta de outro consumidor, ou inscrição removida → `conta_de_entrega_invalida`, nenhum tratador; `Enqueue` de `jobs.entregar_evento` por módulo → recusado | Integração | SVX-01, OUT-01 |
 | T-14 | Reenfileirar e encerrar com e sem permissões; job fora de `FALHOU` → `conflict` | Integração | DLQ-01 |
 | T-14b | Encerrar job portador de obrigação (ex. reembolso aprovado) sem resolução confirmada pelo módulo → `obrigacao_pendente`; com resolução confirmada → encerrado, e a obrigação não é marcada como cumprida pelo encerramento | Integração | DLQ-01 |
 | T-15 | 3 instâncias com agendamento → 1 execução por janela; janelas perdidas cobertas | Integração | SCH-01 |
@@ -580,20 +595,20 @@ A plataforma **não garante ordem** de entrega, nem global nem por agregado. Cad
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| JOB-01 | P1: Registro transacional de jobs | Specify | Pending |
-| LEA-01 | P1: Captura, concessão e token de cerca | Specify | Pending |
-| RTY-01 | P1: Tentativas, tempo máximo e falha definitiva | Specify | Pending |
-| REC-01 | P1: Recuperação após falhas e reinícios | Specify | Pending |
-| OUT-01 | P1: Outbox e entrega de eventos | Specify | Pending |
-| INB-01 | P1: Consumidores idempotentes e eventos fora de ordem | Specify | Pending |
-| SVX-01 | P1: Execução com conta de serviço e auditoria | Specify | Pending |
-| DLQ-01 | P1: Recuperação humana de falhas | Specify | Pending |
-| SCH-01 | P1: Agendamentos periódicos | Specify | Pending |
-| RET-01 | P1: Retenção sem perda de deduplicação | Specify | Pending |
-| OBS-01 | P1: Observabilidade e condições de operação | Specify | Pending |
-| ARQ-01 | P1: Limites arquiteturais verificados | Specify | Pending |
+| JOB-01 | P1: Registro transacional de jobs | Tasks | Mapped |
+| LEA-01 | P1: Captura, concessão e token de cerca | Tasks | Mapped |
+| RTY-01 | P1: Tentativas, tempo máximo e falha definitiva | Tasks | Mapped |
+| REC-01 | P1: Recuperação após falhas e reinícios | Tasks | Mapped |
+| OUT-01 | P1: Outbox e entrega de eventos | Tasks | Mapped |
+| INB-01 | P1: Consumidores idempotentes e eventos fora de ordem | Tasks | Mapped |
+| SVX-01 | P1: Execução com conta de serviço e auditoria | Tasks | Mapped |
+| DLQ-01 | P1: Recuperação humana de falhas | Tasks | Mapped |
+| SCH-01 | P1: Agendamentos periódicos | Tasks | Mapped |
+| RET-01 | P1: Retenção sem perda de deduplicação | Tasks | Mapped |
+| OBS-01 | P1: Observabilidade e condições de operação | Tasks | Mapped |
+| ARQ-01 | P1: Limites arquiteturais verificados | Tasks | Mapped |
 
-**Coverage:** 12 total, 0 mapped to tasks, 12 unmapped (Design não iniciado).
+**Coverage:** 12 total, 12 mapped to tasks, 0 unmapped (tasks em revisão; nenhuma implementada).
 
 ## Success Criteria
 

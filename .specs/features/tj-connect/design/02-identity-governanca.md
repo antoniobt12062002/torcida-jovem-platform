@@ -1,9 +1,9 @@
 # Identity e governança — Design
 
 **Spec**: `.specs/features/tj-connect/spec/02-identity-governanca.md` (aprovada em 2026-10-14)
-**Status**: Draft — aguardando revisão do mantenedor. Nada aqui foi implementado; nenhuma migration foi criada.
+**Status**: Approved com ajustes (2026-10-14): ajustes obrigatórios 1 (RBAC durante o deploy) e 3 (integridade das contas de serviço) incorporados em C5, C10 e na migration `000010`. Nada aqui foi implementado; nenhuma migration foi criada.
 **ADRs**: [013](../../../../docs/adr/013-contas-de-servico-e-autoria-de-processos.md), [016](../../../../docs/adr/016-permissoes-sensiveis-e-escopo-por-jogo.md), com [009](../../../../docs/adr/009-modelo-de-identidade-e-papeis-iniciais.md), [004](../../../../docs/adr/004-auditoria-e-imutabilidade-financeira.md), [006](../../../../docs/adr/006-armazenamento-de-documentos.md)
-**Decisões do mantenedor**: D-02-1, D-02-2, D-02-3, D-02-4 (2026-10-14)
+**Decisões do mantenedor**: D-02-1, D-02-2, D-02-3, D-02-4; concessão de `identity:conselho_fiscal:manage` ao `PRESIDENTE` (D-02-5) (2026-10-14)
 
 A escolha de abordagem (contas de serviço em `identity`, classes no catálogo, Conselho Fiscal por lista explícita) já foi feita e aprovada nas ADRs 013 e 016. Este documento detalha **como** implementá-la sobre o código atual.
 
@@ -42,10 +42,12 @@ graph TD
     IA[app: RegistrarNomeacaoCF / RegistrarDestituicaoCF]
     UA[app.UserActivation: exceção técnica de Covers]
     SP[app.ServicePrincipals: Principal de conta de serviço para o worker]
+    RV[app.MatrixVersion + infra.RBACVersionGate]
   end
   DOC[platform/documents]
   CMD[cmd/api e cmd/worker]
   CMD --> BM --> SY
+  SY --> RV
   BM --> AZ
   SS --> AZ
   IA --> AZ
@@ -57,7 +59,7 @@ graph TD
   AU -. resolve tipo do ator .-> SY
 ```
 
-A matriz agregada continua sendo construída uma vez por processo em `BuildMatrix` (falha de validação impede a partida) e sincronizada no banco por `RoleRepository.Sync`, agora também para classes, papéis de serviço e contas de serviço.
+A matriz agregada continua sendo construída uma vez por processo em `BuildMatrix` (falha de validação impede a partida) e sincronizada no banco por `RoleRepository.Sync`, agora também para classes, papéis de serviço e contas de serviço. A partir de I-3, a sincronização é condicionada à **versão da matriz** (C10): um binário só altera o RBAC do banco se a sua versão for maior que a gravada, e gatilhos recusam a escrita de binários antigos.
 
 ---
 
@@ -162,8 +164,28 @@ A matriz agregada continua sendo construída uma vez por processo em `BuildMatri
 - **Mudanças**:
   - `domain.User` ganha `Kind`. `Authenticator.check` trata `Kind != HUMAN` exatamente como usuário inativo: mesma `ErrInvalidCredentials`, mesmo trabalho (`BurnCycles`).
   - `RequestPasswordReset` responde como para qualquer endereço e não cria token.
-  - **Banco**: gatilho `sessions_require_human_user` (BEFORE INSERT em `sessions`) recusa `user_id` de conta `SERVICE` (AC8). Gatilho `user_roles_kind_consistency` recusa papel `SERVICE` a pessoa e papel humano a conta de serviço. Gatilho `admin_memberships_require_human` recusa vínculo administrativo a conta de serviço.
+  - **Banco (ajuste obrigatório 3)**: as regras valem para **todo caminho de escrita**, inclusive SQL direto com o papel `tj_app`, e não só para os casos de uso. Ver "Integridade das contas de serviço no banco" abaixo.
 - **Reuses**: o padrão de resposta uniforme já existente no login.
+
+#### Integridade das contas de serviço no banco
+
+O tipo da conta é **imutável** depois de criada. Nenhuma alteração posterior pode transformar uma pessoa em conta de serviço, ou o contrário. As restrições abaixo ficam na migration `000010` e cobrem `INSERT` e `UPDATE`:
+
+| Restrição | Tabela e evento | Recusa |
+|---|---|---|
+| `users_kind_immutable` | `users`, `BEFORE UPDATE` (qualquer coluna) | `NEW.kind IS DISTINCT FROM OLD.kind` |
+| `users_service_no_password` (`CHECK`) | `users` | `kind = 'SERVICE'` com `password_hash <> '!servico'` |
+| `users_service_has_account` (gatilho de restrição `DEFERRABLE INITIALLY DEFERRED`) | `users`, `AFTER INSERT` | conta `SERVICE` sem linha em `service_accounts` no fim da transação |
+| `service_accounts_require_service_user` | `service_accounts`, `BEFORE INSERT OR UPDATE` | `user_id` de conta `HUMAN`; mudança de `user_id` ou `name` depois de criada |
+| `roles_kind_immutable` | `roles`, `BEFORE UPDATE` | `NEW.kind IS DISTINCT FROM OLD.kind` |
+| `sessions_require_human_user` | `sessions`, `BEFORE INSERT OR UPDATE OF user_id` | `user_id` de conta `SERVICE` (AC8) |
+| `password_reset_tokens_require_human` | `password_reset_tokens`, `BEFORE INSERT OR UPDATE OF user_id` | token para conta `SERVICE` (AC7) |
+| `user_roles_kind_consistency` | `user_roles`, `BEFORE INSERT OR UPDATE` | papel `SERVICE` a pessoa; papel `HUMAN` a conta de serviço |
+| `admin_memberships_require_human` | `admin_memberships`, `BEFORE INSERT OR UPDATE` | vínculo administrativo a conta de serviço |
+
+Todas as funções levantam `RAISE EXCEPTION` com `ERRCODE = 'check_violation'` e mensagem que nomeia a regra, para que o teste confira o motivo. Como o tipo é imutável, verificar os vínculos só na criação e na troca de `user_id`/`role_id` basta: nenhuma alteração posterior do usuário ou do papel invalida um vínculo já aceito.
+
+Testes obrigatórios (integração, PostgreSQL real, executados como `tj_app`): `UPDATE users SET kind` nos dois sentidos; `UPDATE roles SET kind`; `INSERT` de usuário `SERVICE` sem conta; `INSERT` e `UPDATE OF user_id` em `sessions` e `password_reset_tokens` apontando para conta de serviço; `INSERT` e `UPDATE` em `user_roles` com papel incompatível nos dois sentidos; `INSERT` e `UPDATE` em `admin_memberships` para conta de serviço; `INSERT` em `service_accounts` para usuário `HUMAN`; e o caminho aceito de cada um.
 
 ### C6 — Auditoria: autoria e causalidade
 
@@ -186,12 +208,13 @@ A matriz agregada continua sendo construída uma vez por processo em `BuildMatri
   - `RegisterCFAppointment.Execute(ctx, {Actor, TargetID, Body, ActReference, ActDate, DocumentID, Reason})` e `RegisterCFRemoval.Execute(...)`.
   - Regras, nesta ordem:
     1. `Require(identity:conselho_fiscal:manage)`;
-    2. `ActReference`, `ActDate`, `Body` obrigatórios; `DocumentID` precisa existir em `documents` com `owner_type = "identity.ato_institucional"` (evidência verificável armazenada, D-02-4 limite 2);
+    2. `ActReference`, `ActDate`, `Body` obrigatórios; `Body` precisa estar em `domain.CompetentBodies` (configuração versionada, inicialmente só `ASSEMBLEIA_GERAL`; outra instância só por regra do estatuto aprovada pelo mantenedor), o que impede registrar como ato institucional uma escolha da Presidência ou de qualquer papel da plataforma; `ActDate` não pode ser futura; `DocumentID` precisa existir em `documents` com `owner_type = "identity.ato_institucional"` (evidência verificável armazenada, D-02-4 limite 2);
     3. `SeparateFrom(actor, target)` e recusa se o ator tem `CONSELHO_FISCAL` (INS-01 AC4);
     4. na nomeação: recusa se o alvo tem `PRESIDENTE` (AC8); exige `AdminMembership` do alvo (cria o vínculo com o motivo, como `PromoteToAdmin`);
     5. `CoversExcluding(actor, PermissionsOf([CONSELHO_FISCAL]), InstitutionalPermissions)` (AC2);
     6. na mesma transação: grava `institutional_acts`, altera `user_roles`, revoga sessões do alvo, audita `cf.appointment_registered`/`cf.removal_registered` com o id do ato.
-  - O ato é registrado como **ato externo** (campos `body`, `act_reference`, `act_date`, documento), nunca como decisão do registrador (AC3).
+  - O ato é registrado como **ato externo** (campos `body`, `act_reference`, `act_date`, documento), nunca como decisão do registrador (AC3). A auditoria grava `registered_by` como **registrador** e `body` como **autor da decisão**; nenhuma tela ou consulta apresenta o registrador como quem decidiu.
+  - **Limite da D-02-5**: `identity:conselho_fiscal:manage` só habilita estes dois casos de uso. Não existe caminho para alterar a composição do Conselho Fiscal sem um ato de instância competente com documento; um registro indevido é corrigido por novo ato (destituição) com o seu próprio documento, nunca por edição ou exclusão.
   - `AssignRoles`, `PromoteToAdmin` e `RevokeAdmin` passam a **recusar** qualquer alteração que inclua `CONSELHO_FISCAL`, com `ErrInstitutionalActRequired`, apontando para o caso de uso próprio. Isso fecha o desvio pelo caminho comum.
   - **Exceção técnica** (AC5): `UserActivation.change` (`deactivate_user.go:88`) usa `CoversExcluding(..., InstitutionalPermissions)` **somente** quando o alvo tem `CONSELHO_FISCAL`, mantendo `identity:user:update`. Bloquear ou desbloquear a conta não transfere nenhum poder ao ator.
   - **Sem exceção** (AC6): `AdminResetPassword` (`admin_reset_password.go:75`) mantém `Covers` integral, porque entrega a senha temporária ao ator (`admin_reset_password.go:46`). Isso permitiria entrar como conselheiro. A recuperação de acesso do conselheiro é só o autoatendimento por e-mail.
@@ -218,6 +241,49 @@ A matriz agregada continua sendo construída uma vez por processo em `BuildMatri
   - Execução: `UPDATE ... SET estado='EXECUTADA' WHERE id=$1 AND estado='APROVADA' AND <escopo confere>`, na transação do efeito; zero linhas = recusa auditada (SOD-01 AC5–7).
   - Execução por regra aprovada (permissão `servico` sem `RequiresDecision`): não toca tabela de decisão; a auditoria leva `regra` = `"<modulo>.<regra>@v<n>"` (SOD-01 AC10).
   - A primeira implementação real do contrato é a revisão de contingência (C4) e o ato institucional (C7).
+
+### C10 — Versão da matriz e compatibilidade do RBAC durante o deploy (ajuste obrigatório 1)
+
+- **Problema**: o `pg_advisory_xact_lock` (`role_repository.go:60`) só serializa as sincronizações; não decide **qual** matriz vence. Numa implantação gradual, uma instância antiga que reinicia depois da nova executa `Sync` com a matriz antiga e desfaz a nova: desativa permissões que não conhece (`identity:service_account:*`, `jobs:*`), remove vínculos e, depois de I-6, devolveria ao `PRESIDENTE` as permissões institucionais. Uma reversão (rollback) de binário causa o mesmo efeito. O lock não impede nada disso.
+- **Purpose**: garantir que só um binário igual ou mais novo altere o RBAC do banco, e que a reversão seja um ato explícito.
+- **Location**: novos `identity/app/matrix_version.go`, `identity/infra/rbac_version_gate.go`, `api/internal/composition/rbac.go`; alterados `identity/infra/role_repository.go`, `cmd/api`, `cmd/worker`, `cmd/bootstrap-admin`; migration `000010`.
+- **Interfaces**:
+  - `const MatrixVersion = 2` em `identity/app/matrix_version.go`. A versão `1` representa todo binário anterior a I-3.
+  - `Matrix.Hash() string` — SHA-256 de uma serialização canônica (ordenada) de definições com classe e `RequiresDecision`, papéis com tipo, concessões e contas de serviço.
+  - `composition.Contributions()` — lista única de contribuições usada por `cmd/api`, `cmd/worker` e `cmd/bootstrap-admin`, para que os três montem a mesma matriz.
+  - **Teste de versão** (`api/internal/composition/rbac_version_test.go`): compara `Matrix.Hash()` com `testdata/rbac_matrix_version.json` (`{versão, hash}`). Hash diferente com a mesma versão falha com a mensagem "a matriz mudou: incremente `MatrixVersion` e atualize o arquivo". Assim, toda mudança de matriz exige subir a versão no mesmo commit.
+- **Sincronização condicionada** (dentro da transação de `Sync`, depois do advisory lock):
+  1. `SET LOCAL tj.rbac_matrix_version = '<MatrixVersion>'`;
+  2. `SELECT version, matrix_hash FROM rbac_sync_state WHERE id = 1 FOR UPDATE`;
+  3. versão do binário **maior** que a gravada → aplica o diff e grava `version`, `matrix_hash`, `binary_version` e `synced_at`;
+  4. versão **igual** e hash igual → aplica o diff (corrige eventual deriva) sem mudar a versão;
+  5. versão **igual** e hash diferente → recusa a partida (`rbac_matrix_conflict`): dois builds com a mesma versão e matrizes diferentes;
+  6. versão **menor** → recusa a partida (`rbac_binary_obsolete`), sem escrever nada.
+  A recusa é registrada em log `error` e a instância não sobe. Nada é parcialmente aplicado (mesma transação).
+- **Barreira no banco** (contra binários que não conhecem o protocolo): gatilhos `BEFORE INSERT OR UPDATE OR DELETE` em `permissions`, `roles` e `role_permissions` comparam `coalesce(nullif(current_setting('tj.rbac_matrix_version', true), ''), '1')::int` com `rbac_sync_state.version` e recusam se for menor. O binário antigo não define a variável e conta como versão `1`.
+  - Logo depois da migration (versão gravada `1`), o binário antigo continua sincronizando como hoje.
+  - Quando a primeira instância nova grava a versão `2`, toda escrita de RBAC por um binário antigo passa a falhar. A instância antiga em execução continua atendendo (lê permissões do banco a cada requisição, `session_service.go:66-69`). Se ela reiniciar, a sincronização falha e a instância não sobe (fail-closed), em vez de reverter a matriz.
+  - `user_roles`, `sessions` e `admin_memberships` não entram nessa barreira: são atribuições feitas pelos casos de uso, não a matriz.
+- **Worker e bootstrap**: só a API sincroniza. O `cmd/worker` apenas **verifica**: lê `rbac_sync_state` e, se a versão gravada for menor que a sua, espera e tenta de novo até `WORKER_RBAC_WAIT` (padrão 5 min) e então recusa a partida; se for maior, ou igual com hash diferente, recusa imediatamente. O `cmd/bootstrap-admin` sincroniza pelo mesmo protocolo.
+- **Ordem de implantação**: migrations → instâncias novas da API (a primeira grava a versão) → `cmd/worker` → retirada das instâncias antigas. A ordem fica no runbook de implantação (tarefa de preparação, sem implantar).
+- **Monotonicidade no banco**: `tj_app` só tem `SELECT` e `UPDATE` em `rbac_sync_state` (sem `INSERT`/`DELETE`). O gatilho `rbac_sync_state_monotonic` recusa todo `UPDATE` que reduza `version`, salvo dentro da transação do comando de reversão (variável `tj.rbac_rollback_id` igual ao id de uma linha de `rbac_version_rollbacks` inserida na mesma transação). Cada sincronização versionada grava também `rbac_matrix_versions` (append-only: versão, hash, matriz canônica em JSON), e a versão `1` é gravada pelo primeiro binário novo a partir do snapshot de T1 das tasks (`matriz_pre_classificacao.json`, embutido no binário).
+- **Reversão (rollback) de binário, sem restauração silenciosa**: comando explícito `bootstrap-admin rbac-rollback --to-version N --reason "<motivo>" --confirm <n>`.
+  1. Lê a matriz da versão `N` em `rbac_matrix_versions` e calcula, contra o estado atual do banco, as concessões que a reversão **restauraria** e as que retiraria (ex.: a reversão de I-6 devolve `prestacao_contas:approve` e `parecer:opine` ao `PRESIDENTE`).
+  2. Imprime a lista e exige `--confirm` igual ao número de concessões restauradas; sem isso, nada é gravado.
+  3. Exige motivo com pelo menos 30 caracteres; insere `rbac_version_rollbacks` (versões, hashes, lista de concessões, motivo, operador do sistema operacional) e grava `rbac.version_rollback` (ação de sincronização do RBAC, AUT-01 AC5) com a mesma lista.
+  4. Só então reduz `version`. A sincronização seguinte do binário antigo também grava `rbac.sync` com o diff completo (comportamento atual de `role_repository.go:79-88`).
+  Sem esse comando, a reversão de binário falha na partida, que é o comportamento desejado. A reversão de I-6 exige, além do comando, decisão registrada do mantenedor (runbook).
+- **Reuses**: `RoleRepository.Sync`, `syncLockKey`, `audit.Recorder`, `database.WithTx`.
+- **Testes de regressão (PostgreSQL real)**:
+  - binário antigo (simulado por `Sync` sem a variável de sessão) logo depois da migration → sincroniza;
+  - binário novo e depois o antigo → o antigo é recusado pelo gatilho e a matriz nova permanece intacta;
+  - mesma versão com hash diferente → recusa a partida, nada escrito;
+  - versão menor → recusa a partida;
+  - API e worker partindo juntos → o worker espera a versão e sobe; duas APIs novas juntas → uma sincroniza, a outra encontra diff vazio;
+  - `UPDATE` que reduz a versão fora do comando → recusado pelo gatilho; `INSERT`/`DELETE` em `rbac_sync_state` → sem permissão;
+  - `rbac-rollback` sem `--confirm` correto → nada gravado; com ele → lista das concessões restauradas na auditoria, e só então o binário antigo volta a sincronizar;
+  - as escritas em `permissions`, `roles` e `role_permissions` por `INSERT`, `UPDATE` e `DELETE` são todas cobertas pelo gatilho (um teste por tabela e operação);
+  - teste de versão vermelho quando a matriz muda sem subir `MatrixVersion`.
 
 ---
 
@@ -279,7 +345,7 @@ CREATE TABLE institutional_acts (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   kind           text NOT NULL CHECK (kind IN ('CF_APPOINTMENT', 'CF_REMOVAL')),
   target_user_id uuid NOT NULL REFERENCES users (id),
-  body           text NOT NULL,          -- instância competente (ex.: Assembleia Geral)
+  body           text NOT NULL CHECK (body IN ('ASSEMBLEIA_GERAL')), -- instância competente; lista ampliada só por regra do estatuto
   act_reference  text NOT NULL,          -- identificação do ato (ex.: ata e número)
   act_date       date NOT NULL,
   document_id    uuid NOT NULL REFERENCES documents (id),
@@ -289,13 +355,54 @@ CREATE TABLE institutional_acts (
   CHECK (registered_by <> target_user_id)
 );
 
--- Guardas no banco (mesmo módulo, identity).
---   sessions_require_human_user      BEFORE INSERT ON sessions
---   user_roles_kind_consistency      BEFORE INSERT ON user_roles
---   admin_memberships_require_human  BEFORE INSERT ON admin_memberships
+-- Integridade das contas de serviço (C5, ajuste obrigatório 3).
+ALTER TABLE users ADD CONSTRAINT users_service_no_password
+  CHECK (kind <> 'SERVICE' OR password_hash = '!servico');
+--   users_kind_immutable                 BEFORE UPDATE ON users
+--   users_service_has_account            CONSTRAINT TRIGGER AFTER INSERT ON users DEFERRABLE INITIALLY DEFERRED
+--   service_accounts_require_service_user BEFORE INSERT OR UPDATE ON service_accounts
+--   roles_kind_immutable                 BEFORE UPDATE ON roles
+--   sessions_require_human_user          BEFORE INSERT OR UPDATE OF user_id ON sessions
+--   password_reset_tokens_require_human  BEFORE INSERT OR UPDATE OF user_id ON password_reset_tokens
+--   user_roles_kind_consistency          BEFORE INSERT OR UPDATE ON user_roles
+--   admin_memberships_require_human      BEFORE INSERT OR UPDATE ON admin_memberships
+
+-- Versão da matriz sincronizada (C10, ajuste obrigatório 1). Linha única.
+CREATE TABLE rbac_sync_state (
+  id             smallint PRIMARY KEY CHECK (id = 1),
+  version        integer NOT NULL CHECK (version >= 1),
+  matrix_hash    text,                 -- nulo até a primeira sincronização versionada
+  binary_version text,
+  synced_at      timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO rbac_sync_state (id, version) VALUES (1, 1);
+CREATE TABLE rbac_matrix_versions (      -- append-only
+  version      integer PRIMARY KEY,
+  matrix_hash  text NOT NULL,
+  matrix       jsonb NOT NULL,
+  recorded_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE rbac_version_rollbacks (    -- append-only
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_version     integer NOT NULL,
+  to_version       integer NOT NULL CHECK (to_version < from_version),
+  restored_grants  jsonb NOT NULL,
+  removed_grants   jsonb NOT NULL,
+  reason           text NOT NULL CHECK (length(btrim(reason)) >= 30),
+  operator         text NOT NULL,
+  occurred_at      timestamptz NOT NULL DEFAULT now()
+);
+--   rbac_sync_state_monotonic  BEFORE UPDATE ON rbac_sync_state
+--     recusa NEW.version < OLD.version, salvo se current_setting('tj.rbac_rollback_id', true)
+--     aponta para linha de rbac_version_rollbacks com to_version = NEW.version
+--   rbac_matrix_version_guard  BEFORE INSERT OR UPDATE OR DELETE ON permissions, roles, role_permissions
+--     recusa quando coalesce(nullif(current_setting('tj.rbac_matrix_version', true), ''), '1')::int
+--     < (SELECT version FROM rbac_sync_state WHERE id = 1)
 
 GRANT SELECT, INSERT ON service_accounts, service_account_events, institutional_acts TO tj_app;
 GRANT SELECT, INSERT, UPDATE ON service_account_contingency_reviews TO tj_app;
+GRANT SELECT, UPDATE ON rbac_sync_state TO tj_app;          -- sem INSERT nem DELETE
+GRANT SELECT, INSERT ON rbac_matrix_versions, rbac_version_rollbacks TO tj_app;
 ```
 
 ### `000011_audit_service_actor` (dona: `platform`)
@@ -317,8 +424,9 @@ O nome automático da restrição do `CHECK` inline (`audit_log_actor_type_check
 
 | Ponto | Verificação |
 |---|---|
-| `users`, `roles`, `permissions`, `sessions`, `user_roles`, `admin_memberships` (`000003`) | Só `ADD COLUMN ... NOT NULL DEFAULT` e gatilhos novos; nenhuma coluna existente muda. Todas as linhas atuais satisfazem os valores padrão (`HUMAN`, `normal`, `false`) e os gatilhos (só há contas humanas e papéis humanos) |
-| Gatilhos de `identity` | Funções `SECURITY INVOKER` que fazem `SELECT` em `users` e `roles`, que o `tj_app` já pode ler (`000003`); nenhuma permissão nova necessária para os gatilhos |
+| `users`, `roles`, `permissions`, `sessions`, `user_roles`, `admin_memberships` (`000003`), `password_reset_tokens` (`000004`) | Só `ADD COLUMN ... NOT NULL DEFAULT`, um `CHECK` novo e gatilhos novos; nenhuma coluna existente muda. Todas as linhas atuais satisfazem os valores padrão (`HUMAN`, `normal`, `false`), o `CHECK` (só há contas `HUMAN`) e os gatilhos (só há contas humanas e papéis humanos) |
+| Gatilhos de `identity` | Funções `SECURITY INVOKER` que fazem `SELECT` em `users`, `roles`, `service_accounts` e `rbac_sync_state`, que o `tj_app` pode ler (`000003` e os `GRANT` acima) |
+| Binário atual durante a migration | Com `rbac_sync_state.version = 1`, o gatilho de versão aceita a sincronização do binário atual (sem a variável de sessão), então aplicar `000010` antes da troca do binário não quebra a API em execução nem a sua reinicialização |
 | `institutional_acts.document_id → documents(id)` | `documents.id` é `uuid` (`000005`); `tj_app` tem `SELECT` em `documents` |
 | `audit_log` (`000002`) | `ADD CONSTRAINT` valida as linhas existentes sem alterá-las (o gatilho de imutabilidade só reage a `UPDATE`/`DELETE`/`TRUNCATE`). As linhas atuais têm `user` com id e `system`/`anonymous` sem id, então satisfazem a nova restrição. A restrição nomeada `audit_log_actor_consistent` existe; a do `actor_type` é inline (nome automático) |
 | `gen_random_uuid()` | Extensão `pgcrypto` já criada em `000001` |
@@ -336,7 +444,7 @@ Fonte do "antes": código atual (`FoundationContributions`, `financeiro.Contribu
 
 | Papel | Antes | Depois do G1 | Onde muda no código |
 |---|---|---|---|
-| `PRESIDENTE` | 30 (automáticas) | **32**: 28 das 30 (12 `normal` automáticas + 16 `sensivel` explícitas com justificativa); +`identity:service_account:read` (automática); +`:deactivate`, +`:reactivate`, +`jobs:job:read` (explícitas, D-02-1/D-01-1). **33** se aprovada a concessão de `identity:conselho_fiscal:manage` (pendente, ver "Pendências") | `FoundationContributions` (6 de `identity`, novas), `financeiro.Contribution` (10), `estoque.Contribution` (2), contribuição `jobs` |
+| `PRESIDENTE` | 30 (automáticas) | **33** ao fim do G1: 28 das 30 (12 `normal` automáticas + 16 `sensivel` explícitas com justificativa); +`identity:service_account:read` (automática); +`:deactivate`, +`:reactivate`, +`jobs:job:read` (explícitas, D-02-1/D-01-1); +`identity:conselho_fiscal:manage` (explícita, D-02-5, só a partir de I-6). De I-1 a I-5, as 30 atuais continuam (com as duas transitórias) | `FoundationContributions` (6 de `identity`, novas), `financeiro.Contribution` (10), `estoque.Contribution` (2), contribuição `jobs` |
 | `ADMIN_SISTEMA` | 8 | **13**: +`identity:service_account:read` (necessária para operar a D-02-1), `:deactivate`, `:reactivate`; +`jobs:job:read`, `jobs:job:retry` | `FoundationContributions`, contribuição `jobs` |
 | `CONSELHO_FISCAL` | 11 | 11 (lista explícita) | `conselhoFiscalAllowlist` |
 | `TESOURARIA` | 13 | 13 | Só a classe muda; concessão já explícita |
@@ -353,6 +461,8 @@ Fonte do "antes": código atual (`FoundationContributions`, `financeiro.Contribu
 - `estoque`: `movimentacao:create`, `movimentacao:adjust`.
 
 A justificativa fica num comentário estruturado ao lado de cada concessão e numa tabela do teste de snapshot.
+
+**Concessão de `identity:conselho_fiscal:manage` ao `PRESIDENTE` (D-02-5, aprovada em 2026-10-14)**: explícita, com a justificativa "registro de nomeações e destituições formalmente decididas pela instância competente (D-02-4); não confere competência para decidir a composição do Conselho Fiscal". A concessão só permite **registrar** um ato externo, com o documento do ato, instância, referência e data obrigatórios e auditoria (C7). Nenhum caso de uso deixa o `PRESIDENTE` nomear ou destituir sem esses dados. Entra no mesmo incremento que a D-02-3 (I-6). `jobs:job:close` continua sem concessão no G1.
 
 **Exceção aprovada (D-02-3)**: `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine` deixam o `PRESIDENTE`. Hoje **nenhum caso de uso verifica essas duas permissões** (FIN-D-014), então a retirada não interrompe nenhuma função em uso. Ela é aplicada **no mesmo incremento** que C7 (INS-01), para não criar o bloqueio de `Covers` descrito na spec.
 
@@ -437,14 +547,14 @@ Cada incremento é implantável sozinho, sem bloquear usuários atuais.
 
 | # | Incremento | Efeito para usuários atuais | Requisitos |
 |---|---|---|---|
-| I-1 | `authz.Class` + classificação das 30 + 16 concessões explícitas + `BuildMatrix` fail-closed + teste de snapshot, **sem** aplicar a D-02-3 | **Nenhum**: matriz efetiva idêntica (snapshot com zero exceções nesta etapa) | CLS-01, TRN-01 (AC1–5) |
+| I-1 | `authz.Class` + classificação das 30 + 16 concessões explícitas (mais `prestacao_contas:approve` e `parecer:opine` explícitas e marcadas como transitórias até I-6) + `BuildMatrix` fail-closed + teste de snapshot, **sem** aplicar a D-02-3 | **Nenhum**: matriz efetiva idêntica (snapshot com zero exceções nesta etapa) | CLS-01, TRN-01 (AC1–5) |
 | I-2 | Lista explícita do Conselho Fiscal | Nenhum: as 11 permissões continuam | CFS-01 |
-| I-3 | Migration `000010` + `kind` + guardas de login, sessão e recuperação + papel `FISCAL` + contas de serviço e sincronização + C4 | Nenhum: todas as contas viram `HUMAN`; `FISCAL` sem permissões | SVC-01, FIS-01, TRN-01 (AC6) |
+| I-3 | Migration `000010` + versão da matriz e barreira de deploy (C10) + `kind` e restrições de integridade + guardas de login, sessão e recuperação + papel `FISCAL` + contas de serviço e sincronização + `SeparateFrom` (C1, antecipado de I-5 porque C4 o usa) + C4 | Nenhum: todas as contas viram `HUMAN`; `FISCAL` sem permissões; instâncias antigas que reiniciarem depois da nova não sobem (fail-closed) | SVC-01, FIS-01, TRN-01 (AC6) |
 | I-4 | Migration `000011` + autoria `service`, chaves de contexto, resolvedor de tipo, filtro por `correlation_id`, guarda de `system` | Nenhum: entradas antigas intocadas; `system` só onde já é usado | AUT-01, TRN-01 (AC7) |
-| I-5 | `SeparateFrom`, contrato de decisão (C9) | Nenhum | SOD-01 |
-| I-6 | **D-02-3 + D-02-4 juntos**: C7, C8, exceções fechadas de `Covers`, retirada das duas permissões do `PRESIDENTE`, snapshot com a exceção aprovada | `PRESIDENTE` perde 2 permissões que **nenhum caso de uso usa hoje**; atribuir `CONSELHO_FISCAL` passa a exigir o caso de uso institucional; usuário com os dois papéis perde só os atos institucionais | INS-01, TRN-01 (AC8) |
+| I-5 | Contrato de decisão (C9), provado com módulo de teste | Nenhum | SOD-01 |
+| I-6 | **D-02-3 + D-02-4 + D-02-5 juntos**: C7, C8, exceções fechadas de `Covers`, retirada das duas permissões do `PRESIDENTE`, concessão de `identity:conselho_fiscal:manage` ao `PRESIDENTE`, `MatrixVersion` incrementada, snapshot com as exceções aprovadas | `PRESIDENTE` perde 2 permissões que **nenhum caso de uso usa hoje**; atribuir `CONSELHO_FISCAL` passa a exigir o caso de uso institucional; usuário com os dois papéis perde só os atos institucionais | INS-01, TRN-01 (AC8) |
 
-Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no momento da implantação**, senão nomeações ficam impossíveis. Ver "Pendências".
+Condição para I-6, satisfeita pela D-02-5: o `PRESIDENTE` recebe `identity:conselho_fiscal:manage` no mesmo incremento, então nomeações continuam possíveis. I-1 e I-2 não mudam a matriz efetiva, por isso podem conviver com instâncias antigas sem a barreira de versão. Toda mudança de matriz a partir de I-3 sobe `MatrixVersion`.
 
 ### Rollback
 
@@ -453,7 +563,8 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 | I-1, I-2, I-5 | Reverter o código | Nenhum dado gravado |
 | `000010` down | Remove gatilhos, tabelas e colunas novas | O `down` **recusa** (RAISE) se existir conta `SERVICE`, evento, revisão ou ato institucional. Dados de governança não são apagados; a correção passa a ser só para frente |
 | `000011` down | Restaura as restrições antigas | **Recusa** se existir linha `actor_type = 'service'` no `audit_log` (append-only, imutável); depois disso, só para frente |
-| I-6 | Reverter o código restaura a concessão automática | Os atos institucionais gravados permanecem (histórico) |
+| I-6 | Reverter o código exige antes `bootstrap-admin rbac-rollback` (C10), auditado; sem ele o binário anterior não sobe | Os atos institucionais gravados permanecem (histórico) |
+| Binário a partir de I-3 | Mesma regra: reversão só com `rbac-rollback` explícito | A tentativa sem o comando falha na partida, sem alterar a matriz |
 
 ---
 
@@ -470,6 +581,8 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 | Integração | Reativação comum, contingência com espera, revisão por outra pessoa, bloqueio enquanto aberta (T-22, T-23) | SVC-01 |
 | Integração | Nomeação com documento e `manage`; recusa sem documento, alvo `PRESIDENTE`, ator conselheiro; caminho comum recusado (T-25, T-26) | INS-01 |
 | Integração | Desativação técnica de conselheiro pelo `PRESIDENTE` aceita; `AdminResetPassword` de conselheiro recusado | INS-01 AC5–6 |
+| Integração (integridade, ajuste 3) | Cada restrição da tabela de C5 nos dois sentidos, com SQL direto como `tj_app`: alteração de tipo de usuário e de papel, sessão e token de recuperação para conta de serviço (criação e troca de `user_id`), vínculos de papéis incompatíveis, vínculo administrativo e conta de serviço sobre pessoa | SVC-01 |
+| Integração (deploy, ajuste 1) | Os sete cenários de C10: binário antigo, novo seguido de antigo, mesma versão com hash diferente, versão menor, API e worker concorrentes, duas APIs novas, `rbac-rollback` | TRN-01, SVC-01 |
 | Concorrência | Duas execuções da mesma decisão (T-12); duas reativações de contingência simultâneas; sincronização simultânea em duas instâncias | SOD-01, SVC-01 |
 | Regressão | Suítes atuais de `identity`, `financeiro`, `estoque`, `httpapi` e o e2e passam sem alteração de comportamento depois de I-1 a I-5 | TRN-01 |
 
@@ -485,7 +598,8 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 | `AdminResetPassword` devolve a senha temporária ao ator | `identity/app/admin_reset_password.go:46` | Uma exceção de `Covers` permitiria entrar como conselheiro | Sem exceção (INS-01 AC6); recuperação só por e-mail |
 | Provedor de e-mail atual é `log`/`disabled` | `platform/email/email.go` | Conselheiro sem senha não recupera acesso em produção | Provedor real já é pré-requisito de produção (STATE); registrado como dependência de I-6 |
 | Nome do `CHECK` inline do `audit_log` gerado automaticamente | `000002_audit_log.up.sql` | `DROP CONSTRAINT` com nome errado falha a migration | Confirmar o nome real e cobrir no teste de migration |
-| Dois processos (API e worker) sincronizando a matriz | `role_repository.go:60` | Corrida na sincronização | O advisory lock já serializa; a extensão usa o mesmo lock |
+| Instância antiga ou reversão de binário sobrescrevendo a matriz nova | `role_repository.go:56-91` (`Sync` aplica a matriz do binário, desativa o que não conhece) | O advisory lock só serializa; não impede que a última sincronização seja a de um binário antigo | Versão da matriz com barreira no banco (C10): só versão igual ou maior escreve; worker só verifica; reversão só por comando auditado |
+| `Save` do GORM regravando `kind` | `identity/infra/user_repository.go` | Caminho de escrita que mudaria o tipo sem passar por caso de uso | Gatilho `users_kind_immutable` compara valores, então regravar o mesmo valor passa e qualquer troca falha |
 | `ListUsers` hoje lista todas as contas | `identity/app/list_users.go` | Contas de serviço apareceriam na administração | Filtro `kind='HUMAN'` (SVC-01 AC14) |
 | Testes atuais montam `authz.Definition` sem classe e esperam a concessão total ao `PRESIDENTE` | `identity/app/roles_matrix_test.go:81`, `identity/infra/role_repository_test.go:416`, `financeiro/module_test.go:15` | Ficam vermelhos em I-1 | Ajuste desses testes faz parte de I-1, com o teste de snapshot provando que o comportamento efetivo não mudou |
 | Teste atual espera que promover a `CONSELHO_FISCAL` sem a permissão falhe por `Covers` | `identity/app/promote_admin_test.go:170` | Em I-6 o caminho comum passa a recusar com `ato_institucional_obrigatorio` | Teste reescrito em I-6 para o novo motivo, mais os testes de INS-01 |
@@ -503,6 +617,8 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 | Evidência do ato institucional | Documento obrigatório em `platform/documents` | "Referência verificável" (D-02-4 limite 2); reaproveita o armazenamento já obrigatório na API |
 | Senha de conta de serviço | Valor `'!servico'` em `password_hash` | Coluna é `NOT NULL`; o valor não é um hash Argon2 válido, então `Verify` falha sempre, além da recusa explícita por `kind` |
 | Papéis de serviço | Declarados em `role.go` com prefixo `SERVICO_` | Mantém a regra "um único arquivo soletra papéis" |
+| Compatibilidade do RBAC no deploy | Versão inteira da matriz no código, hash conferido por teste e barreira por gatilho com variável de sessão | O lock não ordena binários; a variável de sessão permite recusar binários que não conhecem o protocolo sem mudar o código atual |
+| Integridade do tipo de conta | Gatilhos e `CHECK` no banco, além das recusas nos casos de uso | Cobre todo caminho de escrita, inclusive SQL direto e repositórios futuros |
 
 ---
 
@@ -511,13 +627,13 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 | Requisito | Componentes | ADR / decisão |
 |---|---|---|
 | CLS-01 | C1, C2 | ADR-016 |
-| TRN-01 | C2, snapshot, I-1/I-6 | D-02-2, D-02-3 |
-| SVC-01 | C3, C4, C5, migration `000010` | ADR-013, D-02-1 |
+| TRN-01 | C2, C10, snapshot, I-1/I-6 | D-02-2, D-02-3, D-02-5, ajuste 1 |
+| SVC-01 | C3, C4, C5 (integridade no banco), C10, migration `000010` | ADR-013, D-02-1, ajustes 1 e 3 |
 | SOD-01 | C1 (`SeparateFrom`), C9 | ADR-013, ADR-016 |
 | AUT-01 | C6, migration `000011` | ADR-013 |
 | FIS-01 | C3 (`FISCAL`), consulta de elegibilidade em `identity/app` | ADR-016 |
 | CFS-01 | C2 (lista explícita), snapshot | ADR-016, parecer externo |
-| INS-01 | C1 (`CoversExcluding`), C7, C8 | D-02-3, D-02-4 |
+| INS-01 | C1 (`CoversExcluding`), C7, C8 | D-02-3, D-02-4, D-02-5 |
 
 ---
 
@@ -527,7 +643,7 @@ Condição para I-6: alguém precisa ter `identity:conselho_fiscal:manage` **no 
 
 **Bloqueiam só a implantação de I-6** (não as Tasks):
 
-- **Quem recebe `identity:conselho_fiscal:manage`**. Sem nenhuma concessão, a D-02-3 tornaria impossível nomear ou destituir conselheiros. Recomendação: `PRESIDENTE`, por concessão explícita, coerente com "registrar o ato da instância competente" (D-02-4 limite 2).
+- ~~Quem recebe `identity:conselho_fiscal:manage`~~ — **resolvida pela D-02-5** (2026-10-14): `PRESIDENTE`, por concessão explícita, limitada ao registro do ato da instância competente.
 - **Provedor de e-mail real** em produção, para a recuperação de acesso dos conselheiros.
 
 **Não bloqueiam**: lista adicional de papéis incompatíveis (só por regra do estatuto, D-02-4 limite 7).

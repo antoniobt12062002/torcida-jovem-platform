@@ -1,7 +1,7 @@
 # Platform e processamento — Design
 
 **Spec**: `.specs/features/tj-connect/spec/01-platform-processamento.md` (aprovada em 2026-10-14)
-**Status**: Draft — aguardando revisão do mantenedor. Nada aqui foi implementado; nenhuma migration foi criada.
+**Status**: Approved com ajustes (2026-10-14): ajustes obrigatórios 2 (identidade da entrega de eventos, P4) e 4 (recuperação de concessões, P3, revisado após a revisão das Tasks: perda de concessão é sempre recuperável) incorporados; o worker só verifica a versão do RBAC (design `02`, C10). Nada aqui foi implementado; nenhuma migration foi criada.
 **ADRs**: [011](../../../../docs/adr/011-mapa-de-modulos-do-tj-connect.md), [012](../../../../docs/adr/012-cobrancas-e-eventos-persistentes.md), [014](../../../../docs/adr/014-worker-e-processamento-persistente.md), com [013](../../../../docs/adr/013-contas-de-servico-e-autoria-de-processos.md)
 **Decisões do mantenedor**: D3, D-01-1, D-01-2 (2026-10-14)
 **Depende de**: design `02` (contas de serviço, `ServicePrincipals`, autoria `service`)
@@ -56,7 +56,7 @@ graph TD
 |---|---|---|
 | `database.WithTx`, `TxFrom` | `api/internal/platform/database/tx.go` | `Enqueue`/`Publish` exigem `TxFrom` (falham fora de transação, como o `audit.Recorder`); o runner abre a transação dos executores transacionais e o executor **entra** nela |
 | Padrão "exige transação" | `api/internal/platform/audit/recorder.go:46` | Mesmo comportamento e mesmo tipo de erro (`ErrNoTransaction`) |
-| `pg_advisory_xact_lock` | `api/internal/identity/infra/role_repository.go:60` | Serializa a sincronização da matriz também quando o worker parte (design `02`) |
+| `rbac_sync_state` e `MatrixVersion` | design `02`, C10 | O worker verifica a versão da matriz na partida; não sincroniza |
 | `logx` | `api/internal/platform/logx` | Logs estruturados do worker |
 | `config.Load` e helpers de ambiente | `api/internal/config/config.go:60` | `LoadWorker()` reaproveita a leitura de `DATABASE_URL`, `LOG_LEVEL` e acrescenta `WORKER_*` |
 | `audit.Recorder`, `audit.Register` | `api/internal/platform/audit` | Auditoria das ações humanas sobre jobs; ações `job.retry`, `job.close` |
@@ -160,21 +160,38 @@ graph TD
   Transitório com tentativas restantes: `estado='PENDENTE', executar_em = now() + espera`, com `espera = min(base·2^(t-1), máximo) × (1 ± 0,2 aleatório)`. Sem tentativas restantes: `FALHOU`, log `error` (AC7). Todas essas escritas são cercadas pelo token.
 - **Tentativas**: `INSERT INTO job_attempts` em transação própria a cada fim de execução, inclusive `concessao_perdida`. A mensagem é sanitizada (sem cabeçalhos, tokens nem corpo de resposta) e truncada em 2 KiB (RTY-01 AC5–6).
 - **Encerramento** (REC-01 AC5): no sinal, para de capturar, espera até `WORKER_SHUTDOWN_GRACE`, e sai. O que não terminou é recuperado pela concessão.
-- **Banco indisponível** (REC-01 AC4): erro de conexão na captura ou na conclusão não muda o estado de nenhum job. O runner faz espera exponencial na reconexão. A tentativa que não pôde ser concluída volta pela recuperação, marcada `concessao_perdida`, que **não conta** para `max_tentativas` (ver P3).
+- **Banco indisponível** (REC-01 AC4): erro de conexão na captura ou na conclusão não muda o estado de nenhum job. O runner faz espera exponencial na reconexão. A tentativa que não pôde ser concluída volta pela recuperação como perda de concessão, que **não conta** para `max_tentativas` (ver P3).
+- **Panic do executor** (REC-01 AC11): o runner recupera o `panic` com `recover`, registra a pilha no log e trata como erro transitório. Um panic nunca derruba a instância.
+- **Executor que não devolve o controle** (REC-01 AC7, AC12), única forma de travamento que consome tentativa, porque é **identificada pelo próprio runner**: a renovação da concessão só continua até `Timeout + WORKER_HUNG_GRACE` (padrão 15 s). Passado esse prazo com o executor ainda bloqueado, o runner para de renovar, grava a tentativa `executor_travado` e aplica a regra de falha com o token ainda válido (conta como tentativa). A goroutine bloqueada fica abandonada; se o número delas chegar a `WORKER_CONCURRENCY`, a instância registra o motivo no log e encerra para ser reiniciada, **depois** de gravar as tentativas.
 - **Reuses**: `database.WithTx`, `logx`.
 
 ### P3 — Recuperação de concessões vencidas
 
 - **Purpose**: retomar jobs de instâncias que caíram, sem passo manual (REC-01 AC1–3).
 - **Location**: `platform/jobs/worker/recovery.go`
-- **Comportamento**: na partida e a cada 30 s:
+- **Ajuste obrigatório 4 (revisado)**: a primeira versão levava a `FALHOU` todo job com 30 perdas de concessão, o que permitia que quedas de banco ou reinícios abandonassem uma obrigação financeira válida. Uma segunda versão classificava a perda pelo batimento da instância; ela foi **descartada** na revisão das Tasks, porque o batimento não prova a causa da perda (uma instância pode bater e ainda assim ter perdido a concessão por pausa de GC, rede parcial ou pool de conexões esgotado). `WORKER_MAX_LEASE_LOSSES` deixa de existir.
+- **Regra**: toda perda de concessão encontrada pela recuperação é **recuperável**:
+  - **não** consome tentativa e **nunca** leva a `FALHOU`;
+  - o job volta a `PENDENTE` com espera `min(30 s · 2^(n-1), WORKER_INFRA_BACKOFF_MAX = 15 min)`, com `n` = `perdas_concessao_consecutivas`;
+  - a tentativa é registrada como `concessao_perdida`, com o diagnóstico `instancia_viva` (batimento posterior ao vencimento) **só para leitura humana**, nunca para decidir o tratamento.
+- **O que consome tentativa** é só falha do executor efetivamente identificada pelo runner que ainda tem a concessão: erro devolvido, panic recuperado, tempo esgotado (`tempo_esgotado`) e executor que não devolve o controle dentro de `Timeout + WORKER_HUNG_GRACE` (`executor_travado`, P2). Nesses casos a decisão é gravada com o token válido, então não depende de inferência.
+- **Comando** (na partida e a cada 30 s), numa transação:
   ```sql
-  UPDATE jobs SET estado = 'PENDENTE', lease_token = NULL, locked_by = NULL, locked_until = NULL,
-         tentativas = tentativas - 1, perdas_concessao = perdas_concessao + 1, executar_em = now()
-   WHERE estado = 'EM_EXECUCAO' AND locked_until < now()
-  RETURNING id, ciclo;
+  UPDATE jobs j
+     SET estado = 'PENDENTE', lease_token = NULL, locked_by = NULL, locked_until = NULL,
+         tentativas = j.tentativas - 1,
+         perdas_concessao_consecutivas = j.perdas_concessao_consecutivas + 1,
+         executar_em = now() + least(make_interval(secs => 30 * power(2, j.perdas_concessao_consecutivas)),
+                                     make_interval(secs => $1))
+   WHERE j.estado = 'EM_EXECUCAO' AND j.locked_until < now()
+  RETURNING j.id, j.locked_by, j.perdas_concessao_consecutivas;
   ```
-  Cada linha gera uma tentativa `concessao_perdida`. A perda de concessão **não consome** tentativa, para que uma indisponibilidade do banco nunca leve a `FALHOU` (REC-01 AC4). Um job que derruba a instância repetidamente vai a `FALHOU` com o motivo `perdas_concessao_excedidas` quando `perdas_concessao` chega a `WORKER_MAX_LEASE_LOSSES` (padrão 30), para não haver laço infinito.
+  Cada linha gera uma tentativa `concessao_perdida`, com `instancia_viva` calculado por leitura de `worker_instancias` (diagnóstico).
+- **Zerar o contador**: toda tentativa decidida pelo runner com a concessão válida (sucesso, erro, tempo esgotado, `executor_travado`) zera `perdas_concessao_consecutivas`.
+- **Alertas** (sem silenciar e sem abandonar):
+  - `job_suspeito_de_derrubar_worker` (`error`, e campo no resumo de operação) quando `perdas_concessao_consecutivas` chega a `WORKER_SUSPECT_LOSSES` (5). O job **continua** sendo tentado com a espera máxima. Um job que derruba o processo a cada execução (falha fora do alcance do `recover`, como falta de memória) causa no máximo uma queda por janela de espera e fica visível até a correção;
+  - `obrigacao_em_falha` (`error`, diário, pelo agendamento `jobs.alerta_obrigacoes`, P5) para todo job `FALHOU` com `Effect != nenhum`. `FALHOU` não cumpre nem descarta a obrigação: ela continua no módulo dono e só sai por reenfileiramento (política do módulo) ou encerramento com obrigação resolvida (DLQ-01).
+- **Encerramento gracioso**: no sinal, a instância grava `encerrado_em` antes de sair. Os jobs que ficaram sem concluir voltam pela recuperação, como qualquer perda de concessão.
 
 ### P4 — `platform/outbox`: publicação, entrega, inbox e ordem
 
@@ -204,14 +221,20 @@ graph TD
   }
   type Handler interface { Handle(ctx context.Context, d Delivered, p authz.Principal) error } // só no worker
   ```
-- **Publicação** (na transação do produtor): `INSERT INTO outbox_events` e, para cada inscrição do tipo, um job `jobs.entregar_evento` com `evento_id`, `consumidor`, `chave_dedup = entrega:<consumidor>:<evento_id>` e a conta de serviço da inscrição (OUT-01 AC1–2). Recusa prefixo de outro módulo (AC4) e envelope incompleto (AC3).
+- **Publicação** (na transação do produtor): `INSERT INTO outbox_events` e, para cada inscrição do tipo, um job `jobs.entregar_evento` com `evento_id`, `consumidor`, `chave_dedup = entrega:<consumidor>:<evento_id>` e `conta_servico` = a conta **da inscrição** (OUT-01 AC1–2). Recusa prefixo de outro módulo (AC4) e envelope incompleto (AC3).
+- **Identidade da entrega (ajuste obrigatório 2)**. O tipo `jobs.entregar_evento` pertence à plataforma, mas cada entrega age com a conta do consumidor, nunca com uma conta da plataforma:
+  - **quem grava a conta**: só a plataforma, em `Publish`, a partir do registro de inscrições montado na partida (`Subscriptions`). O produtor não informa a conta, e `Enqueue` recusa o tipo `jobs.entregar_evento` vindo de um módulo (prefixo `jobs`, INV-P7);
+  - **quem a usa**: o runner, para o tipo `jobs.entregar_evento`, ignora a conta do tipo e **revalida** a da linha a cada execução, antes de abrir a transação. A conta precisa (a) ser exatamente a declarada hoje na inscrição `(consumidor, tipo do evento)`; (b) existir, ser `SERVICE` e estar ativa; (c) pertencer ao módulo do consumidor (prefixo `svc.<modulo>-` igual ao prefixo de `consumidor`). Falha em (a) ou (c), inclusive por linha adulterada ou inscrição removida, é **erro permanente** `conta_de_entrega_invalida` (`FALHOU`, log `error`): nada é executado. Conta inativa segue o adiamento de SVX-01 AC4;
+  - **passos internos sem `Principal`**: inbox, linha de versão e conclusão cercada são escritas da plataforma sobre as suas tabelas técnicas, como a captura e a conclusão de qualquer job. Não passam por autorização nem usam conta alguma;
+  - **o tratador recebe só o `Principal` da sua conta**, montado por `ServicePrincipals.For(conta)`, e o contexto leva `correlation_id` do evento e `causation_id` = id do job de entrega. Os efeitos de negócio auditados pelo tratador saem com essa conta (SVX-01 AC3);
+  - **isolamento**: uma entrega nunca recebe o `Principal` de outro consumidor, nem a união das contas inscritas no mesmo evento.
 - **Validação na partida** (OUT-01 AC5): toda inscrição precisa corresponder a uma seta `E` de `platform/modulegraph` (P7). `tolerante` sem `Convergent=true` impede a partida.
 - **Entrega** (executor transacional da plataforma), numa única transação:
   1. `INSERT INTO inbox (consumidor, evento_id, resultado) VALUES ($1,$2,'APLICADO') ON CONFLICT DO NOTHING`. Sem linha inserida: duplicata, conclui sem chamar o tratador (INB-01 AC1–2).
   2. Modos `estrita`/`tolerante`: `INSERT INTO versoes_aplicadas ... ON CONFLICT DO NOTHING` (versão 0) e `SELECT ultima_versao ... FOR UPDATE` (INB-01 AC4).
      - `tolerante` e `v <= ultima`: `UPDATE inbox SET resultado='OBSOLETO'` e conclui sem tratador (AC5).
      - `estrita` e `ultima != v-1`: devolve erro transitório; a transação inteira desfaz, inclusive a linha de inbox (AC6).
-  3. Chama o `Handler` com o `Principal` da conta de serviço da inscrição.
+  3. Chama o `Handler` com o `Principal` da conta de serviço da inscrição, revalidada antes da transação (ver "Identidade da entrega").
   4. `UPDATE versoes_aplicadas SET ultima_versao = v` (modos com versão).
   5. Conclusão cercada do job de entrega, na mesma transação (modo transacional).
 
@@ -231,7 +254,7 @@ graph TD
      AND estado IN ('PENDENTE','EM_EXECUCAO','FALHOU')
   ```
   Sem linha, insere a janela atual com `ON CONFLICT DO NOTHING` e loga `agendamento_recriado` (`warn`). Janelas perdidas não são recriadas uma a uma; o executor processa o estado pendente (AC6).
-- **Agendamentos da própria plataforma**: `jobs.limpeza` (diário), `jobs.alerta_contingencia` (diário, alerta das revisões de contingência abertas do design `02`). Os dois usam a conta `svc.jobs-manutencao`.
+- **Agendamentos da própria plataforma**: `jobs.limpeza` (diário), `jobs.alerta_contingencia` (diário, alerta das revisões de contingência abertas do design `02`) e `jobs.alerta_obrigacoes` (diário, `obrigacao_em_falha`, P3). Os três usam a conta `svc.jobs-manutencao`.
 
 ### P6 — Limpeza com deduplicação durável
 
@@ -283,8 +306,8 @@ graph TD
 
 - **Reenfileirar**: transação com `SELECT ... FOR UPDATE` do job; recusa fora de `FALHOU` (`conflict`); chama `Type.Retry` (D-01-1: o módulo dono confere idempotência, autorização e validade da obrigação). Se a política exige `ExtraPermission` e o ator não a tem, recusa com 403 auditado. Senão: `estado='PENDENTE'`, `ciclo = ciclo + 1`, `tentativas = 0`, `executar_em = now()`, mantendo `job_attempts` (AC2), e auditoria `job.retry` com o motivo.
 - **Encerrar**: além das permissões, `Type.Obligation` precisa confirmar que a obrigação foi resolvida por outro caminho; senão, `obrigacao_pendente` (409). O encerramento nunca marca a obrigação como cumprida (AC8). Auditoria `job.close`. **No G1 ninguém tem `jobs:job:close`** (D-01-1).
-- **Batimento** (OBS-01 AC2): `INSERT ... ON CONFLICT (id) DO UPDATE SET ultimo_batimento = now()` a cada 15 s, com id, início e versão do binário.
-- **Resumo** (AC3–4): contagens por estado e tipo, idade do `PENDENTE` mais antigo, número de `FALHOU`, instâncias e último batimento; `nenhum_worker_ativo` quando nenhum batimento tem menos de 60 s.
+- **Batimento** (OBS-01 AC2): `INSERT ... ON CONFLICT (id) DO UPDATE SET ultimo_batimento = now()` a cada 15 s, com id, início e versão do binário. O id de instância é único por processo (`hostname-pid-<aleatório>`), para que um processo reiniciado nunca herde o batimento do anterior. O batimento alimenta o resumo de operação e o diagnóstico das perdas (P3); não decide o tratamento.
+- **Resumo** (AC3–4): contagens por estado e tipo, idade do `PENDENTE` mais antigo, número de `FALHOU` (destacando os que carregam obrigação), jobs com `job_suspeito_de_derrubar_worker`, instâncias e último batimento; `nenhum_worker_ativo` quando nenhum batimento tem menos de 60 s.
 - **Logs** (`logx`): uma linha por tentativa (`job_id`, `tipo`, `tentativa`, `resultado`, `duracao_ms`, `correlation_id`) (AC1); `error` ao entrar em `FALHOU`; `warn` com o atraso do `PENDENTE` mais antigo acima de 5 min, no máximo 1 por minuto (AC5).
 - **Sem porta de entrada** no worker (AC7); falha de configuração ou banco inacessível na partida → código de saída diferente de zero, com a causa (AC6).
 
@@ -296,8 +319,8 @@ graph TD
   1. `config.LoadWorker()`;
   2. `database.Open`;
   3. `audit.NewRecorder(...).WithActorKinds(...)` (design `02`);
-  4. `BuildMatrix` com as **mesmas** contribuições do `cmd/api`, mais a contribuição `jobs`;
-  5. `RoleRepository.Sync` (idempotente, sob o advisory lock), garantindo que as contas de serviço existam antes do registro dos tipos;
+  4. `BuildMatrix` com `composition.Contributions()`, a mesma lista do `cmd/api` (design `02`, C10);
+  5. **verificação** da versão do RBAC (design `02`, C10): o worker **não** sincroniza. Lê `rbac_sync_state`; versão gravada menor que `MatrixVersion` → espera e tenta de novo até `WORKER_RBAC_WAIT`; maior, ou igual com hash diferente → recusa a partida. Só depois disso as contas de serviço do registro existem com certeza;
   6. `identity.NewServicePrincipals`;
   7. registro dos tipos, agendamentos e tratadores (no G1: só os da plataforma);
   8. `worker.Run(ctx)` até o sinal.
@@ -305,14 +328,17 @@ graph TD
 
   | Variável | Padrão |
   |---|---|
-  | `WORKER_INSTANCE_ID` | `hostname-pid` |
+  | `WORKER_INSTANCE_ID` | `hostname-pid-<aleatório>` |
   | `WORKER_CONCURRENCY` | 4 |
   | `WORKER_POLL_INTERVAL` | 1s |
   | `WORKER_LEASE` | 60s |
   | `WORKER_DEFAULT_TIMEOUT` | 45s (validado < concessão) |
   | `WORKER_MAX_ATTEMPTS` | 10 |
   | `WORKER_BACKOFF_BASE` / `WORKER_BACKOFF_MAX` | 5s / 15m |
-  | `WORKER_MAX_LEASE_LOSSES` | 30 |
+  | `WORKER_HUNG_GRACE` | 15s |
+  | `WORKER_INFRA_BACKOFF_MAX` | 15m |
+  | `WORKER_SUSPECT_LOSSES` | 5 |
+  | `WORKER_RBAC_WAIT` | 5m |
   | `WORKER_SHUTDOWN_GRACE` | 30s |
   | `WORKER_HEARTBEAT` | 15s |
   | `WORKER_SCHEDULE_CHECK` | 60s |
@@ -323,7 +349,8 @@ graph TD
   - `Dockerfile` ganha `go build -o /out/worker ./cmd/worker`, na mesma imagem;
   - `ENTRYPOINT` continua `/api`; o worker roda com `command: ["/worker"]`;
   - `docker-compose.yml` ganha o serviço `worker` no profile `worker`;
-  - mesmo papel de banco (`tj_app`) e mesmo `DATABASE_URL`.
+  - mesmo papel de banco (`tj_app`) e mesmo `DATABASE_URL`;
+  - ordem: migrations → API nova → worker → retirada das instâncias antigas (design `02`, C10).
 
 ---
 
@@ -353,7 +380,7 @@ CREATE TABLE jobs (
   executar_em       timestamptz NOT NULL DEFAULT now(),
   tentativas        int NOT NULL DEFAULT 0 CHECK (tentativas >= 0),
   max_tentativas    int NOT NULL CHECK (max_tentativas > 0),
-  perdas_concessao  int NOT NULL DEFAULT 0,
+  perdas_concessao_consecutivas int NOT NULL DEFAULT 0 CHECK (perdas_concessao_consecutivas >= 0),
   ciclo             int NOT NULL DEFAULT 1,
   lease_token       uuid,
   locked_by         text,
@@ -368,7 +395,8 @@ CREATE TABLE jobs (
   criado_em         timestamptz NOT NULL DEFAULT now(),
   atualizado_em     timestamptz NOT NULL DEFAULT now(),
   terminado_em      timestamptz,
-  CHECK ((estado = 'EM_EXECUCAO') = (lease_token IS NOT NULL AND locked_until IS NOT NULL))
+  CHECK ((estado = 'EM_EXECUCAO') = (lease_token IS NOT NULL AND locked_until IS NOT NULL)),
+  CHECK ((tipo = 'jobs.entregar_evento') = (evento_id IS NOT NULL AND consumidor IS NOT NULL))
 );
 CREATE INDEX jobs_prontos_idx ON jobs (executar_em) WHERE estado = 'PENDENTE';
 CREATE INDEX jobs_em_execucao_idx ON jobs (locked_until) WHERE estado = 'EM_EXECUCAO';
@@ -386,8 +414,10 @@ CREATE TABLE job_attempts (
   iniciou_em  timestamptz NOT NULL,
   terminou_em timestamptz NOT NULL,
   resultado   text NOT NULL CHECK (resultado IN
-                ('sucesso','erro_transitorio','erro_permanente','tempo_esgotado','concessao_perdida')),
-  erro        text CHECK (octet_length(erro) <= 2048)
+                ('sucesso','erro_transitorio','erro_permanente','tempo_esgotado','concessao_perdida','executor_travado')),
+  instancia_viva boolean,          -- diagnóstico de concessao_perdida; nunca decide o tratamento
+  erro        text CHECK (octet_length(erro) <= 2048),
+  CHECK (resultado = 'concessao_perdida' OR instancia_viva IS NULL)
 );
 CREATE INDEX job_attempts_job_idx ON job_attempts (job_id);
 
@@ -411,6 +441,7 @@ CREATE TABLE worker_instancias (
   id               text PRIMARY KEY,
   iniciado_em      timestamptz NOT NULL,
   ultimo_batimento timestamptz NOT NULL,
+  encerrado_em     timestamptz,
   versao           text NOT NULL
 );
 
@@ -427,6 +458,7 @@ GRANT USAGE, SELECT ON SEQUENCE job_attempts_id_seq TO tj_app;
 - `gen_random_uuid()` vem de `pgcrypto` (`000001`);
 - nenhuma coluna `real`, `numeric` ou `_cents` (guarda de schema `schema_guard_test.go`);
 - a restrição `(estado = 'EM_EXECUCAO') = (lease_token IS NOT NULL AND locked_until IS NOT NULL)` é respeitada porque toda saída de `EM_EXECUCAO` limpa a concessão (P2, P3);
+- `worker_instancias` não é limpa enquanto houver job `EM_EXECUCAO` com `locked_by` igual ao id (a limpeza diária remove só instâncias sem batimento há mais de 7 dias e sem concessão), para que o diagnóstico de P3 encontre a instância; a linha não influencia o tratamento da perda;
 - o bloco `DO $$ ... tj_app ... $$` das migrations atuais é mantido;
 - a numeração `000012` vem depois das duas migrations do design `02`.
 
@@ -450,6 +482,8 @@ Exemplo de referência (implementado nas specs `04` e `07` do Financeiro, mas ga
 | Evento `cobranca.paga.v1` entregue duas vezes | A segunda entrega encontra o par na inbox | `inbox` PK (P4) |
 | Instância "zumbi" no consumidor (modo transacional) | A conclusão cercada falha e desfaz **todo** o efeito da transação | Conclusão na mesma transação (P2) |
 | Limpeza antiga e reenfileiramento tardio | O evento com entrega `FALHOU` nunca é removido | RET-01 (P6) |
+| Quedas repetidas de banco ou reinícios durante a cobrança | Toda perda de concessão é recuperável: o job volta com espera e nunca vai a `FALHOU` por isso | P3 (ajuste 4); a obrigação nunca é abandonada |
+| Entrega com conta trocada na linha do job | Revalidação contra a inscrição antes da transação | `conta_de_entrega_invalida` (P4, ajuste 2) |
 | Tudo acima falhar ao mesmo tempo | A receita tem `chave_idempotencia = cobranca:<id>:receita` única | Restrição durável do Financeiro (ADR-017), independente da plataforma |
 
 ---
@@ -462,7 +496,10 @@ Exemplo de referência (implementado nas specs `04` e `07` do Financeiro, mas ga
 | Tipo ou evento de outro módulo, payload grande ou proibido | Erro imediato; a transação do caso de uso falha | Erro de programação |
 | Tipo mal declarado, inscrição fora da ADR-011, `tolerante` sem `Convergent` | A partida falha (API e worker) | Implantação recusada |
 | Conta de serviço inativa | Job adiado 60 s, sem gastar tentativa; `warn` 1/min por tipo | Atraso visível no resumo |
-| Concessão perdida | Tentativa `concessao_perdida`; no modo transacional, o efeito é desfeito | Nenhum efeito duplo |
+| Concessão perdida (qualquer causa) | Tentativa `concessao_perdida`, sem gastar tentativa, espera até 15 min; no modo transacional, o efeito é desfeito | Atraso; `job_suspeito_de_derrubar_worker` após 5 seguidas; nunca `FALHOU` |
+| Executor que não devolve o controle (detectado pelo runner) | Tentativa `executor_travado`, conta como tentativa | Pode chegar a `FALHOU`; alerta diário se houver obrigação |
+| Panic no executor | Recuperado, erro transitório | Nova tentativa |
+| Conta da entrega diferente da inscrição | Erro permanente `conta_de_entrega_invalida` | `FALHOU`, visível na operação |
 | Erro transitório | Nova tentativa com espera | Atraso |
 | Erro permanente ou tentativas esgotadas | `FALHOU`, log `error`, visível na operação | Exige ação humana auditada |
 | Banco indisponível | Captura suspensa com espera; nenhum job marcado como falho | Atraso |
@@ -483,10 +520,12 @@ Todos os testes de integração e concorrência rodam com PostgreSQL real (testc
 | Concorrência | 5 runners × 100 jobs: nenhuma captura dupla, cada job concluído uma vez (T-03) | LEA-01 |
 | Concorrência | Execução sobreposta com pausa injetada: um efeito, conclusão antiga rejeitada, contexto cancelado (T-04, T-04b); chamada externa repetida com a mesma chave (T-04c) | LEA-01 |
 | Integração | Erros transitório, permanente e de tempo (T-05); queda no meio do job (T-06); banco reiniciado (T-07) | RTY-01, REC-01 |
+| Integração (ajuste 4) | Executor bloqueado além de `Timeout + WORKER_HUNG_GRACE` → runner grava `executor_travado`, conta tentativa e chega a `FALHOU`; concessão perdida com a instância viva (pausa injetada na renovação), instância morta, banco parado e reinício → nunca `FALHOU`, espera crescente até 15 min; 5 perdas seguidas → `job_suspeito_de_derrubar_worker`; panic → transitório; `obrigacao_em_falha` diário (T-06b, T-07b, T-07c) | REC-01 |
 | Integração | Publicação com e sem rollback (T-08); inscrição fora da ADR-011 (T-09) | OUT-01 |
 | Concorrência | Evento repetido (T-10); fora de ordem (T-11); v2 e v3 simultâneos com barreira, 200 repetições (T-11b) | INB-01 |
 | Integração | Limpeza com `FALHOU` (T-11d); limpeza × reenfileiramento (T-11e) | RET-01 |
 | Integração | Conta inativa (T-12); auditoria do efeito com ator `service` (T-13) | SVX-01 |
+| Integração (ajuste 2) | Dois consumidores de módulos diferentes inscritos no mesmo evento: cada tratador recebe só o `Principal` da sua conta e a auditoria mostra contas distintas; linha de entrega adulterada para a conta do outro consumidor → `conta_de_entrega_invalida`, nenhum tratador chamado; `Enqueue` de `jobs.entregar_evento` por um módulo → recusado (T-13b, T-13c) | SVX-01, OUT-01 |
 | Integração | Reenfileirar e encerrar com e sem permissão, política e obrigação (T-14, T-14b) | DLQ-01 |
 | Integração | Agendamento com 3 runners (T-15); falha na transação de conclusão (T-15b); janela removida (T-15c) | SCH-01 |
 | Integração | Batimento e `nenhum_worker_ativo` (T-16) | OBS-01 |
@@ -503,8 +542,9 @@ Todos os testes de integração e concorrência rodam com PostgreSQL real (testc
 | Polling do banco | `jobs_prontos_idx` | Carga constante | Índice parcial, intervalo configurável, volume baixo |
 | Sobreposição no modo externo não é eliminada pela cerca | P2 | Efeito duplo se o executor não for idempotente | `Idempotent` obrigatório no registro, escrita condicional, chave externa gravada antes (LEA-01 AC7, AC9), teste de sobreposição em cada spec de módulo |
 | `versoes_aplicadas` cresce sem limpeza | P6 | Tabela grande no longo prazo | Uma linha pequena por (consumidor, agregado); revisão se o volume real justificar |
-| `perdas_concessao` não consome tentativas | P3 | Job "veneno" poderia repetir indefinidamente | Limite próprio (`WORKER_MAX_LEASE_LOSSES`) leva a `FALHOU` |
-| O worker reutiliza `RoleRepository.Sync` | `role_repository.go:56` | Duas origens de sincronização | Mesmo advisory lock; sincronização idempotente |
+| Perda de concessão não consome tentativas | P3 | Um job que derruba o processo repetiria indefinidamente | Espera crescente até 15 min (no máximo uma queda por janela), alerta `job_suspeito_de_derrubar_worker` após 5 e `recover` de panics; nunca `FALHOU`, para não abandonar obrigação |
+| Executor lento que perde a concessão sem travar | P2, P3 | Repetição indefinida com espera, sem consumir tentativas | Alerta `job_suspeito_de_derrubar_worker` após 5 perdas seguidas, visível no resumo; travamento real é identificado pelo runner (`executor_travado`) |
+| Worker com matriz diferente da API | `cmd/worker` | Sincronizações concorrentes revertendo a matriz | O worker não sincroniza; só verifica a versão (design `02`, C10) |
 | Nenhuma infraestrutura de métricas | — | Alertas só por log e resumo | Premissa aprovada (D-01-2); revisão quando houver monitoramento externo |
 
 ---
@@ -517,7 +557,8 @@ Todos os testes de integração e concorrência rodam com PostgreSQL real (testc
 | Dois modos de executor | `transacional` (padrão) e `externo` | Transacional elimina efeito de "zumbi"; externo é necessário para não segurar transação durante HTTP (ADR-012) |
 | Entrega de evento | Job comum (`jobs.entregar_evento`) com inbox e versão na mesma transação | Reaproveita fila, tentativas, falha e operação; nada novo para operar |
 | Fan-out na publicação | Um job por inscrição, criado na transação do produtor | Nenhum despachante intermediário que possa perder evento |
-| Perda de concessão | Não consome tentativa, com limite próprio | Indisponibilidade do banco nunca vira `FALHOU` (REC-01 AC4) sem permitir laço infinito |
+| Perda de concessão | Sempre recuperável (não conta, nunca `FALHOU`, espera até 15 min, alerta após 5 seguidas); o batimento é só diagnóstico | Ajuste 4 revisado: o batimento não prova a causa; só falha identificada pelo runner consome tentativa |
+| Conta da entrega | Gravada pela plataforma a partir da inscrição e revalidada a cada execução | Ajuste 2: a linha do job não é fonte de autoridade |
 | Setas permitidas | `platform/modulegraph` | Mesma fonte para o teste e para a validação na partida |
 | Tempo | Sempre `now()` do banco | Elimina deriva de relógio entre instâncias |
 | Nomes de colunas e estados | Refinam os nomes ilustrativos da ADR-014 (`run_at` → `executar_em`; estados em maiúsculas, iguais aos da spec `01`) | A spec aprovada é a fonte dos nomes; a ADR descreve o mecanismo, que não muda |
@@ -532,10 +573,10 @@ Todos os testes de integração e concorrência rodam com PostgreSQL real (testc
 | JOB-01 | P1, migration | ADR-014 |
 | LEA-01 | P2 | ADR-014, parecer externo |
 | RTY-01 | P2, P8 | ADR-014 |
-| REC-01 | P2, P3 | ADR-014, D3 |
+| REC-01 | P2, P3 | ADR-014, D3, ajuste 4 |
 | OUT-01 | P4, P7 | ADR-011, ADR-012 |
 | INB-01 | P4 | ADR-012, parecer externo |
-| SVX-01 | P2, P9, design `02` C4/C6 | ADR-013 |
+| SVX-01 | P2, P4 (identidade da entrega), P9, design `02` C4/C6/C10 | ADR-013, ajuste 2 |
 | DLQ-01 | P8 | D-01-1 |
 | SCH-01 | P5 | parecer externo |
 | RET-01 | P6 | D-01-2 |
@@ -552,9 +593,9 @@ Depende de I-3 e I-4 do design `02` (contas de serviço e autoria `service`).
 |---|---|---|
 | J-1 | `platform/modulegraph` + teste arquitetural estendido | Nenhum (só teste) |
 | J-2 | Migration `000012` + `platform/jobs` (enfileirar, registro) | Nenhum: nenhum módulo enfileira ainda |
-| J-3 | `cmd/worker` + runner, captura, cerca, tentativas, recuperação, batimento | Nenhum: só os tipos da plataforma |
-| J-4 | `platform/outbox` (publicação, entrega, inbox, ordem) | Nenhum: nenhum produtor ainda |
-| J-5 | Agendamentos + limpeza + alerta de contingência | Nenhum |
+| J-3 | `cmd/worker` + verificação da versão do RBAC + runner, captura, cerca, tentativas, recuperação de concessões, batimento | Nenhum: só os tipos da plataforma |
+| J-4 | `platform/outbox` (publicação, identidade da entrega, inbox, ordem) | Nenhum: nenhum produtor ainda |
+| J-5 | Agendamentos + limpeza + alertas de contingência e de obrigação em falha | Nenhum |
 | J-6 | Rotas operacionais + contribuição `jobs` (concessões da D-01-1) | `ADMIN_SISTEMA` e `PRESIDENTE` ganham a consulta; `ADMIN_SISTEMA`, o reenfileiramento |
 
 ---

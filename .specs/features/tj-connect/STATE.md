@@ -106,19 +106,39 @@ Atualização do Mercado Pago: o mantenedor confirmou na documentação o `confi
 | D-02-2 | Classificação das 30 permissões existentes | 02 | 18 `sensivel` e 12 `normal`; 16 concessões explícitas de transição ao `PRESIDENTE`, só para preservar acessos atuais, com justificativa individual e testes de compatibilidade; permissões sensíveis novas sem concessão automática | **Aprovada** |
 | D-02-3 | Retirar do `PRESIDENTE` os atos do Conselho Fiscal | 02 | Retirada de `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine`, junto com a D-02-4 (TRN-01 AC8) | **Aprovada**; a ser aplicada no incremento I-6 do design `02` |
 | D-02-4 | Nomeação e destituição institucional do Conselho Fiscal | 02 | Autorização específica (`identity:conselho_fiscal:manage`); referência verificável ao ato da instância competente (documento armazenado); exceção de `Covers` só nas operações listadas (nomeação/destituição e bloqueio técnico; **nunca** a redefinição administrativa de senha); `PRESIDENTE` × `CONSELHO_FISCAL` incompatíveis; usuário já irregular perde só os atos institucionais até regularizar; outras incompatibilidades só pelo estatuto (INS-01; design `02` C7/C8) | **Aprovada como direção arquitetural** |
+| D-02-5 | Quem registra os atos do Conselho Fiscal | 02 | Concessão explícita de `identity:conselho_fiscal:manage` ao `PRESIDENTE`, limitada ao **registro** de nomeações e destituições formalmente decididas pela instância competente, com evidência documental e auditoria. Não confere competência para decidir unilateralmente a composição do Conselho Fiscal. Aplicada com a D-02-3 (I-6; tasks `02` T29). `jobs:job:close` continua sem concessão | **Aprovada** (2026-10-14) |
 | D-01-1 | Operação de jobs | 01 | `ADMIN_SISTEMA` consulta e reenfileira; `PRESIDENTE` consulta por concessão explícita; jobs com efeito financeiro ou associativo exigem a política de reprocessamento do módulo dono (DLQ-01 AC9); `jobs:job:close` sem concessão no G1; encerramento nunca oculta obrigação (DLQ-01 AC6–8) | **Aprovada** |
 | D-01-2 | Parâmetros e retenção | 01 | Valores configuráveis; retenção só com deduplicação durável preservada (RET-01) | **Mantida** |
 | D-G1-1 | Proteção **versionada** contra a inclusão dos PDFs e de `docs/tj-connect/interno/` | — | `.gitignore` atualizado | **Resolvida** (commit `40b5165`) |
 
-**Pendências de concessão (bloqueiam só a implantação do incremento I-6, não as Tasks)**: quem recebe `identity:conselho_fiscal:manage` (recomendação: `PRESIDENTE`, por concessão explícita); provedor de e-mail real em produção (recuperação de acesso dos conselheiros, que deixa de ter redefinição administrativa).
+**Pendência que bloqueia só a implantação de I-6**: provedor de e-mail real em produção (recuperação de acesso dos conselheiros, que deixa de ter redefinição administrativa). A concessão de `manage` foi resolvida pela D-02-5.
 
+### Ajustes obrigatórios da aprovação do Design G1 (2026-10-14)
+
+| # | Ajuste | Onde foi tratado | Tasks |
+|---|---|---|---|
+| 1 | Sincronização de RBAC segura durante o deploy (o advisory lock só serializa; não decide qual matriz vence) | Design `02` C10 (versão da matriz, hash conferido por teste, barreira por gatilho, worker só verifica, ordem de implantação, `rbac-rollback` auditado); spec `02` TRN-01 AC9–12, T-28 | `02`: T10, T11, T12, T32; `01`: T13, T25, T27 |
+| 2 | Identidade da entrega de eventos | Design `01` P4 "Identidade da entrega" (conta gravada só pela plataforma a partir da inscrição, revalidada a cada execução, passos internos sem `Principal`, tratador só com a sua conta); spec `01` SVX-01 AC1, AC7–9, T-13b/T-13c | `01`: T5, T15, T17, T18 |
+| 3 | Integridade das contas de serviço (tipo imutável; restrições no banco em todos os caminhos de escrita) | Design `02` C5 "Integridade das contas de serviço no banco" e migration `000010`; spec `02` SVC-01 AC23–24, T-29 | `02`: T9 |
+| 4 | Recuperação de concessões: falha do executor × falha de infraestrutura, sem abandonar obrigações | Design `01` P2/P3, **revisado após a revisão das Tasks**: toda perda de concessão é recuperável (não consome tentativa, nunca `FALHOU`, espera até 15 min, alerta `job_suspeito_de_derrubar_worker`); só falha identificada pelo runner com concessão válida consome tentativa (erro, panic, `tempo_esgotado`, `executor_travado`); batimento só como diagnóstico; `obrigacao_em_falha` diário; `WORKER_MAX_LEASE_LOSSES` removido. Spec `01` REC-01 AC7–12, T-06b/T-07b/T-07c | `01`: T11, T12, T14, T21 |
+
+### Revisão preliminar das Tasks do G1 (2026-10-14)
+
+Estrutura aprovada preliminarmente (32 + 27 tarefas), condicionada à revisão externa dos arquivos completos. Correções feitas antes da publicação:
+
+| # | Ponto | Correção |
+|---|---|---|
+| 1 | D-02-5 sem decisão unilateral | Instância competente restrita a `CompetentBodies` (inicialmente só a Assembleia Geral; `CHECK` no banco), data não futura, documento obrigatório, registrador gravado como registrador e a instância como autora; nenhum outro caminho altera a composição (INS-01 AC12; tasks `02` T27, T29) |
+| 2 | Barreira de versão do RBAC | Monotonicidade no banco (`rbac_sync_state_monotonic`, `tj_app` sem `INSERT`/`DELETE`), histórico `rbac_matrix_versions`, gatilho testado nas três tabelas e três operações, rollback que mostra e exige confirmação das concessões restauradas e grava a lista (`rbac_version_rollbacks`) antes de reduzir a versão (TRN-01 AC12; tasks `02` T8, T11, T12) |
+| 3 | Recuperação de jobs | Classificação por batimento **descartada**: toda perda de concessão é recuperável (sem consumir tentativa, nunca `FALHOU`, espera até 15 min, alerta após 5); só falha identificada pelo runner com concessão válida consome tentativa (erro, panic, `tempo_esgotado`, `executor_travado`); batimento só como diagnóstico (REC-01 AC7–8; design `01` P3; tasks `01` T3, T11, T12) |
+| 4 | Avisos dos validadores | 35 avisos justificados um a um nas seções "Avisos do validador e justificativas"; seção "Compatibilidade entre código e banco ao longo da sequência" em cada arquivo de tasks |
 ### Matriz de permissões proposta (catálogo atual e permissões novas do G1)
 
-Legenda: **A** = decorre de decisão aprovada; **P** = concessão ainda pendente; "=" = sem mudança. Detalhe por permissão e local no código: design `02`, seção "Matriz de permissões: antes e depois".
+Legenda: **A** = decorre de decisão aprovada; "=" = sem mudança. Nenhuma concessão pendente desde a D-02-5. Detalhe por permissão e local no código: design `02`, seção "Matriz de permissões: antes e depois".
 
 | Papel | Hoje | Proposta | Mudanças |
 |---|---|---|---|
-| `PRESIDENTE` | 30 (todas automáticas) | **32** (33 se aprovada a concessão de `manage`): das 30 existentes, 28 (12 `normal` automáticas + 16 `sensivel` explícitas com justificativa); mais 4 novas | **A**: −`financeiro:prestacao_contas:approve`, −`financeiro:parecer:opine` (D-02-3, com a D-02-4); 16 concessões explícitas de transição (D-02-2); +`identity:service_account:deactivate`, +`:reactivate` (D-02-1); +`jobs:job:read` (D-01-1); +`identity:service_account:read` (normal, automática). **P**: `identity:conselho_fiscal:manage` |
+| `PRESIDENTE` | 30 (todas automáticas) | **33**: das 30 existentes, 28 (12 `normal` automáticas + 16 `sensivel` explícitas com justificativa); mais 5 novas | **A**: −`financeiro:prestacao_contas:approve`, −`financeiro:parecer:opine` (D-02-3, com a D-02-4); 16 concessões explícitas de transição (D-02-2); +`identity:service_account:deactivate`, +`:reactivate` (D-02-1); +`jobs:job:read` (D-01-1); +`identity:service_account:read` (normal, automática); +`identity:conselho_fiscal:manage` (D-02-5, só a partir de I-6). Até I-6, `approve` e `opine` ficam como concessões explícitas transitórias |
 | `ADMIN_SISTEMA` | 8 (`identity` ×7, `audit:log:read`) | **13** | **A**: +`identity:service_account:read`, +`:deactivate`, +`:reactivate` (D-02-1); +`jobs:job:read`, +`jobs:job:retry` (D-01-1) |
 | `CONSELHO_FISCAL` | 11 | **11** = | Agora na lista explícita (CFS-01); mantém `prestacao_contas:approve` e `parecer:opine` |
 | `TESOURARIA` | 13 | **13** = | 9 delas passam a `sensivel` (D-02-2); a concessão já é explícita no código |
@@ -197,6 +217,31 @@ O arquivo de requisitos é versionado apenas nesta versão sanitizada.
 | `02-identity-governanca` | CLS-01 (classes, fail-closed), TRN-01 (transição sem perda), SVC-01 (contas de serviço), SOD-01 (solicitação, decisão e execução), AUT-01 (autoria), FIS-01 (`FISCAL` e escopo por jogo), CFS-01 (Conselho Fiscal), INS-01 (nomeação institucional e papéis incompatíveis) | §11, §16; M-3, M-5, M-7, A-2; ADR-013, ADR-016 |
 | `01-platform-processamento` | JOB-01 (registro transacional), LEA-01 (concessão e cerca), RTY-01 (tentativas e falha definitiva), REC-01 (recuperação), OUT-01 (outbox), INB-01 (idempotência e ordem), SVX-01 (conta de serviço e auditoria), DLQ-01 (recuperação humana), SCH-01 (agendamento), RET-01 (retenção sem perda de deduplicação), OBS-01 (observabilidade), ARQ-01 (limites arquiteturais) | §16; D3; ADR-011, ADR-012, ADR-014 |
 
+### Requisito → design → tasks (G1)
+
+| Requisito | Design | Tasks |
+|---|---|---|
+| CLS-01 | `02` C1, C2 | `02`: T2–T6, T15 |
+| TRN-01 | `02` C2, C10, snapshot | `02`: T1, T3–T6, T8, T10–T13, T21, T29, T31, T32; `01`: T25 |
+| SVC-01 | `02` C3, C4, C5, C10 | `02`: T8, T9, T13–T16, T18–T20 |
+| SOD-01 | `02` C1, C9 | `02`: T2, T17, T24 |
+| AUT-01 | `02` C6 | `02`: T12, T21–T23 |
+| FIS-01 | `02` C3 | `02`: T13 |
+| CFS-01 | `02` C2 | `02`: T7 |
+| INS-01 | `02` C1, C7, C8 | `02`: T17, T25–T30 |
+| JOB-01 | `01` P1 | `01`: T3–T5, T25 |
+| LEA-01 | `01` P2 | `01`: T8, T9, T14 |
+| RTY-01 | `01` P2, P6 | `01`: T9, T20 |
+| REC-01 | `01` P2, P3 | `01`: T4, T9, T11, T12, T14, T21, T27 |
+| OUT-01 | `01` P4, P7 | `01`: T1, T15, T18 |
+| INB-01 | `01` P4 | `01`: T16, T18 |
+| SVX-01 | `01` P2, P4, P9; `02` C4, C6 | `01`: T4–T6, T10, T13, T15, T17, T23 |
+| DLQ-01 | `01` P8 | `01`: T4, T22–T24 |
+| SCH-01 | `01` P5 | `01`: T19 |
+| RET-01 | `01` P6 | `01`: T20 |
+| OBS-01 | `01` P8 | `01`: T7, T11, T13, T23, T27 |
+| ARQ-01 | `01` P7 | `01`: T1, T2, T13 |
+
 ---
 
 ## Decisões fechadas (TJC-D-NNN)
@@ -205,12 +250,13 @@ Nenhuma ainda. As decisões de arquitetura estão nas ADRs 011–018 (`Proposed`
 
 ## Handoff
 
-- **Fase**: Specify do G1 aprovado (2026-10-14); **Design do G1 escrito e parado para revisão**. Publicado na branch para revisão externa dos dois designs. Tasks, Execute e G2 não autorizados. ADRs continuam `Proposed`.
+- **Fase**: Design do G1 aprovado com quatro ajustes obrigatórios (2026-10-14), já incorporados; **Tasks do G1 escritas, aprovadas preliminarmente e publicadas para revisão externa**. Execute, G2, deploy e merge não autorizados. ADRs continuam `Proposed`.
 - **Branch**: `feature/tj-connect-discuss`, publicada para revisão externa (sem PR, sem merge na `develop`).
 - **Arquivos**:
   - `.specs/features/tj-connect/{context.md,STATE.md}`;
   - `docs/adr/011`–`018` e o índice em `docs/adr/README.md`;
   - nota de reconciliação no Handoff de `.specs/STATE.md`.
 - **Specs do G1**: `.specs/features/tj-connect/spec/02-identity-governanca.md` e `spec/01-platform-processamento.md` (atualizadas com os limites da D-02-4, a contingência da D-02-1 e a política de reprocessamento da D-01-1).
-- **Designs do G1**: `.specs/features/tj-connect/design/02-identity-governanca.md` e `design/01-platform-processamento.md`.
-- **Próximo passo**: revisão do Design do G1 pelo mantenedor; decisão sobre quem recebe `identity:conselho_fiscal:manage` (antes da implantação do incremento I-6); depois, com autorização, Tasks do G1.
+- **Designs do G1**: `.specs/features/tj-connect/design/02-identity-governanca.md` e `design/01-platform-processamento.md` (com os ajustes 1–4 e a D-02-5).
+- **Tasks do G1**: `.specs/features/tj-connect/tasks/02-identity-governanca.md` (32 tarefas, I-1 a I-6 + preparação) e `tasks/01-platform-processamento.md` (27 tarefas, J-1 a J-6 + preparação). Ordem: tasks `02` fases 1–4, depois tasks `01` (J-1 pode começar antes), depois tasks `02` fases 5–7 e tasks `01` fase 7.
+- **Próximo passo**: revisão das Tasks do G1 pelo mantenedor; depois, com autorização, Execute.

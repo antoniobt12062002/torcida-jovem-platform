@@ -197,7 +197,7 @@ Regras:
 | Quem recebe `identity:service_account:deactivate` e `:reactivate` | `ADMIN_SISTEMA` e `PRESIDENTE`, por concessão explícita, com reativação por pessoa diferente e procedimento de contingência (SVC-01 AC18–21) | **D-02-1 aprovada** em 2026-10-14; concessão ainda não aplicada no código | y |
 | Prazo de espera e revisão da reativação de contingência | 30 minutos desde a desativação; revisão posterior por outra pessoa com `identity:service_account:reactivate` ou pelo Conselho Fiscal (leitura da auditoria) | Evita bloqueio operacional sem anular a separação de funções; prazo configurável | n |
 | Lista explícita do Conselho Fiscal | As 11 permissões que o Conselho Fiscal tem hoje (tabela em CFS-01) | Preserva as autorizações legítimas atuais; todo acréscimo exige mudança revisada da lista | n |
-| Nomeação institucional do Conselho Fiscal (INS-01) | Regra da **D-02-4**, sem a qual a D-02-3 não pode ser aplicada; a lista de papéis incompatíveis além de `PRESIDENTE` fica sujeita ao estatuto | **D-02-4 aprovada como direção arquitetural** em 2026-10-14; a concessão de `identity:conselho_fiscal:manage` continua pendente | y |
+| Nomeação institucional do Conselho Fiscal (INS-01) | Regra da **D-02-4**, sem a qual a D-02-3 não pode ser aplicada; a lista de papéis incompatíveis além de `PRESIDENTE` fica sujeita ao estatuto | **D-02-4 aprovada como direção arquitetural** e **D-02-5 aprovada** (`identity:conselho_fiscal:manage` ao `PRESIDENTE`) em 2026-10-14 | y |
 | Separação de funções "se o regulamento exigir" | Regra ligada (mais estrita) por padrão | ADR-016 | y |
 | Ordem de chegada da classificação | A `02` define as classes e a transição; as permissões novas do TJ Connect são declaradas por cada spec de módulo | Cada módulo é dono das suas permissões | y |
 
@@ -264,6 +264,10 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 6. WHEN the `users` table receives the account type THEN every existing account SHALL be of type `HUMAN`.
 7. The system SHALL keep every existing audit entry unchanged, including entries whose `actor_type` is `system`.
 8. The system SHALL record the removal of `financeiro:prestacao_contas:approve` and `financeiro:parecer:opine` from `PRESIDENTE` (decision D-02-3, approved on 2026-10-14) as the only approved exception to the preservation of the previous matrix, and SHALL apply it only together with the institutional appointment rule of INS-01.
+9. The system SHALL hold a matrix version in code and SHALL fail its test suite when the aggregated matrix changes without a version increase.
+10. WHEN a process synchronizes the RBAC THEN the system SHALL apply the matrix only if the process's matrix version is greater than or equal to the stored version, SHALL refuse to start on a lower version or on an equal version with a different matrix, and SHALL reject at the database level any write to permissions, roles or role permissions made by a process that does not declare a version at least equal to the stored one.
+11. The worker SHALL NOT synchronize the RBAC; it SHALL verify the stored matrix version and SHALL refuse to start when it differs from its own after the configured wait.
+12. WHEN an operator needs to run an older binary THEN the system SHALL require an explicit rollback command that shows the grants the rollback would restore and remove, requires confirmation of that count and a reason of at least 30 characters, and writes an audit entry with the versions and the full list of grants before lowering the stored version; the database SHALL reject any decrease of the stored version outside that command.
 
 **Independent Test**: comparar o retrato versionado da matriz atual com a matriz classificada, papel a papel; criar uma permissão `sensivel` nova e ver nenhum papel com ela.
 
@@ -298,6 +302,8 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 20. The system SHALL allow the independent-review item to be closed only by a person different from the one who reactivated who holds `identity:service_account:reactivate` or `identity:service_account:deactivate`.
 21. WHILE an independent-review item opened by a person is still open the system SHALL refuse a new contingency reactivation by that same person, and SHALL repeat the alert once per day.
 22. The system SHALL NOT allow a contingency reactivation of a service account whose deactivation was performed by the synchronization because the account was removed from code.
+23. The system SHALL keep the type of an account (`HUMAN` or `SERVICE`) and the type of a role immutable after creation, and SHALL reject at the database level any update that changes them.
+24. The system SHALL reject at the database level, on insert and on update, any session, password recovery token, administrative membership or role assignment that is incompatible with the account type, and any service account record that points to a `HUMAN` account, regardless of the code path that writes it.
 
 **Independent Test**: declarar uma conta de serviço de teste, partir, ver a conta criada; tentar login, recuperação e sessão e ver as recusas; desativar e ver um caso de uso recusado com o `Principal` dela.
 
@@ -418,6 +424,7 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 9. WHILE an existing user holds both `PRESIDENTE` and `CONSELHO_FISCAL` the system SHALL keep every historical record, SHALL report the user as an irregularity on every start and in the identity administration, and SHALL deny that user the institutional permissions until the irregularity is resolved by removing one of the roles.
 10. The system SHALL evaluate every separation-of-duties rule by user identity over the union of all the user's roles, so that holding several roles never bypasses a rule.
 11. The system SHALL hold the list of incompatible role pairs as versioned configuration that initially contains only `PRESIDENTE` × `CONSELHO_FISCAL`; any other pair SHALL be added only from a rule of the statute approved by the maintainer.
+12. The system SHALL accept an appointment or removal only when the deciding body belongs to a versioned list of competent bodies (initially only the General Assembly), the act date is not in the future and the act document exists, SHALL record the registering person as registrar and the body as the author of the decision, and SHALL provide no path that changes the composition of the Conselho Fiscal without such an act.
 
 **Independent Test**: com a matriz após a D-02-3, mostrar que atribuir `CONSELHO_FISCAL` pelo caminho comum (`AssignRoles`/`PromoteToAdmin`) é recusado com `ato_institucional_obrigatorio`; que o caso de uso institucional sem `identity:conselho_fiscal:manage` é recusado; que com a permissão, o documento do ato e o motivo, passa; que com o próprio ator como alvo, falha; que o bloqueio técnico pelo `PRESIDENTE` passa e a redefinição administrativa de senha do conselheiro é recusada; e que uma pessoa com `PRESIDENTE` + `CONSELHO_FISCAL` é recusada na atribuição e, se já existir, perde só os atos institucionais e aparece como irregularidade.
 
@@ -464,6 +471,8 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 | T-25 | Atribuir `CONSELHO_FISCAL` pelo caminho comum → `ato_institucional_obrigatorio`; caso de uso institucional sem `identity:conselho_fiscal:manage` → `forbidden`; com a permissão, documento e motivo → passa; alvo = ator → `separacao_de_funcoes` | Integração | INS-01 |
 | T-26 | Usuário com `PRESIDENTE` recebendo `CONSELHO_FISCAL` → recusado; usuário existente com os dois → pendência na partida, sem revogação | Integração | INS-01 |
 | T-27 | Usuário com dois papéis, sendo um o autor de um ato anterior incompatível → separação recusada pela identidade, não pelo papel | Unidade | INS-01, SOD-01 |
+| T-28 | Binário antigo depois do novo, mesma versão com hash diferente, versão menor, API e worker concorrentes, `rbac-rollback` → matriz nova preservada e recusas corretas | Integração (PostgreSQL) | TRN-01 |
+| T-29 | Alterar tipo de usuário ou de papel; sessão, token de recuperação, vínculo administrativo e papel incompatíveis por INSERT e UPDATE, em SQL direto como `tj_app` → recusados pelo banco | Integração (PostgreSQL) | SVC-01 |
 
 ---
 
@@ -487,7 +496,9 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 - **D-02-1 — aprovada**: `ADMIN_SISTEMA` e `PRESIDENTE` recebem `identity:service_account:deactivate` e `:reactivate` por concessão explícita. A reativação exige pessoa diferente de quem desativou; a contingência (espera configurável, inicial 30 min, motivo, emergência, auditoria, alerta e revisão independente que quem reativou não pode fechar) cobre o caso de uma única pessoa habilitada (SVC-01 AC16–22).
 - **D-02-2 — aprovada**: 18 sensíveis e 12 normais; 16 concessões explícitas de transição ao `PRESIDENTE`, com justificativa individual e testes de compatibilidade.
 - **D-02-3 — aprovada**: retirada de `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine` do `PRESIDENTE`, registrada como única exceção à preservação da matriz (TRN-01 AC8). **Só pode ser aplicada junto com a D-02-4**, senão ninguém mais consegue nomear ou retirar membros do Conselho Fiscal.
-- **D-02-4 — aprovada como direção arquitetural**: autorização institucional específica, referência verificável ao ato, exceção de `Covers` só nas operações listadas, nomeação separada do bloqueio técnico, incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade, irregularidades preservadas e bloqueadas até regularização, outras incompatibilidades só pelo estatuto (INS-01). **Pendente**: quem recebe `identity:conselho_fiscal:manage` (bloqueia só a implantação da D-02-3).
+- **D-02-4 — aprovada como direção arquitetural**: autorização institucional específica, referência verificável ao ato, exceção de `Covers` só nas operações listadas, nomeação separada do bloqueio técnico, incompatibilidade `PRESIDENTE` × `CONSELHO_FISCAL` por identidade, irregularidades preservadas e bloqueadas até regularização, outras incompatibilidades só pelo estatuto (INS-01).
+- **D-02-5 — aprovada** (2026-10-14): concessão explícita de `identity:conselho_fiscal:manage` ao `PRESIDENTE`, limitada ao **registro** de nomeações e destituições formalmente decididas pela instância competente, com evidência documental e auditoria. Não confere competência para decidir unilateralmente a composição do Conselho Fiscal. Aplicada no mesmo incremento que a D-02-3. `jobs:job:close` continua sem concessão no G1.
+- **Ajustes obrigatórios do Design (2026-10-14)**: compatibilidade do RBAC durante o deploy (TRN-01 AC9–12) e integridade das contas de serviço no banco (SVC-01 AC23–24).
 
 ---
 
@@ -495,21 +506,21 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 
 | Requirement ID | Story | Phase | Status |
 |---|---|---|---|
-| CLS-01 | P1: Classe obrigatória e fail-closed | Specify | Pending |
-| TRN-01 | P1: Transição sem perda nem escalonamento | Specify | Pending |
-| SVC-01 | P1: Contas de serviço não interativas | Specify | Pending |
-| SOD-01 | P1: Solicitação, decisão e execução separadas | Specify | Pending |
-| AUT-01 | P1: Autoria e rastreabilidade | Specify | Pending |
-| FIS-01 | P1: Papel FISCAL e contrato de escopo por jogo | Specify | Pending |
-| CFS-01 | P1: Conselho Fiscal fail-closed | Specify | Pending |
-| INS-01 | P1: Nomeação institucional do Conselho Fiscal e papéis incompatíveis | Specify | Pending |
+| CLS-01 | P1: Classe obrigatória e fail-closed | Tasks | Mapped |
+| TRN-01 | P1: Transição sem perda nem escalonamento | Tasks | Mapped |
+| SVC-01 | P1: Contas de serviço não interativas | Tasks | Mapped |
+| SOD-01 | P1: Solicitação, decisão e execução separadas | Tasks | Mapped |
+| AUT-01 | P1: Autoria e rastreabilidade | Tasks | Mapped |
+| FIS-01 | P1: Papel FISCAL e contrato de escopo por jogo | Tasks | Mapped |
+| CFS-01 | P1: Conselho Fiscal fail-closed | Tasks | Mapped |
+| INS-01 | P1: Nomeação institucional do Conselho Fiscal e papéis incompatíveis | Tasks | Mapped |
 
-**Coverage:** 8 total, 0 mapped to tasks, 8 unmapped (Design não iniciado).
+**Coverage:** 8 total, 8 mapped to tasks, 0 unmapped (tasks em revisão; nenhuma implementada).
 
 ## Success Criteria
 
 - [ ] A matriz efetiva dos 8 papéis atuais é idêntica antes e depois, salvo a exceção aprovada D-02-3 (teste de retrato verde com a diferença registrada).
 - [ ] Depois da D-02-3, continua possível nomear e retirar membros do Conselho Fiscal (INS-01), e ninguém acumula `PRESIDENTE` e `CONSELHO_FISCAL`.
-- [ ] Nenhuma permissão sensível nova está concedida a nenhum papel ao fim desta spec.
+- [ ] Nenhuma permissão sensível nova está concedida a nenhum papel ao fim desta spec, salvo as concessões aprovadas D-02-1, D-01-1 e D-02-5.
 - [ ] Toda entrada de auditoria nova tem autor identificável; `system` só no bootstrap e na sincronização.
 - [ ] Uma conta de serviço não consegue sessão por nenhum caminho (aplicação e banco).
