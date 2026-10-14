@@ -19,3 +19,7 @@ graphify-out/
 
 # Playwright MCP: capturas e snapshots locais (nao versionar)
 .playwright-mcp/
+
+# TJ Connect: documentos internos e PDFs estrategicos (repositorio publico; nao versionar)
+docs/tj-connect/*.pdf
+docs/tj-connect/interno/
