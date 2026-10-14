@@ -106,6 +106,7 @@ Atualização do Mercado Pago: o mantenedor confirmou na documentação o `confi
 | D-02-2 | Classificação das 30 permissões existentes | 02 | 18 `sensivel` e 12 `normal`; 16 concessões explícitas de transição ao `PRESIDENTE`, só para preservar acessos atuais, com justificativa individual e testes de compatibilidade; permissões sensíveis novas sem concessão automática | **Aprovada** |
 | D-02-3 | Retirar do `PRESIDENTE` os atos do Conselho Fiscal | 02 | Retirada de `financeiro:prestacao_contas:approve` e `financeiro:parecer:opine`, junto com a D-02-4 (TRN-01 AC8) | **Aprovada**; a ser aplicada no incremento I-6 do design `02` |
 | D-02-4 | Nomeação e destituição institucional do Conselho Fiscal | 02 | Autorização específica (`identity:conselho_fiscal:manage`); referência verificável ao ato da instância competente (documento armazenado); exceção de `Covers` só nas operações listadas (nomeação/destituição e bloqueio técnico; **nunca** a redefinição administrativa de senha); `PRESIDENTE` × `CONSELHO_FISCAL` incompatíveis; usuário já irregular perde só os atos institucionais até regularizar; outras incompatibilidades só pelo estatuto (INS-01; design `02` C7/C8) | **Aprovada como direção arquitetural** |
+| D-02-6 | Quem autoriza a reversão de versão do RBAC | 02 | Permissão nova `identity:rbac:rollback_authorize` (`sensivel`); concessão proposta explícita a `ADMIN_SISTEMA`. A decisão humana (autorização pela API, `actor_type = user`) é separada da execução técnica (`system`, com referência à pessoa). Reversão que restaure permissões institucionais exige decisão expressa do mantenedor com documento, registrada antes (design `02` C10; TRN-01 AC12–13) | **Proposta**, pendente; sem concessão até a decisão (fail-closed). Não bloqueia I-1 nem I-2 |
 | D-02-5 | Quem registra os atos do Conselho Fiscal | 02 | Concessão explícita de `identity:conselho_fiscal:manage` ao `PRESIDENTE`, limitada ao **registro** de nomeações e destituições formalmente decididas pela instância competente, com evidência documental e auditoria. Não confere competência para decidir unilateralmente a composição do Conselho Fiscal. Aplicada com a D-02-3 (I-6; tasks `02` T29). `jobs:job:close` continua sem concessão | **Aprovada** (2026-10-14) |
 | D-01-1 | Operação de jobs | 01 | `ADMIN_SISTEMA` consulta e reenfileira; `PRESIDENTE` consulta por concessão explícita; jobs com efeito financeiro ou associativo exigem a política de reprocessamento do módulo dono (DLQ-01 AC9); `jobs:job:close` sem concessão no G1; encerramento nunca oculta obrigação (DLQ-01 AC6–8) | **Aprovada** |
 | D-01-2 | Parâmetros e retenção | 01 | Valores configuráveis; retenção só com deduplicação durável preservada (RET-01) | **Mantida** |
@@ -132,6 +133,7 @@ Estrutura aprovada preliminarmente (32 + 27 tarefas), condicionada à revisão e
 | 2 | Barreira de versão do RBAC | Monotonicidade no banco (`rbac_sync_state_monotonic`, `tj_app` sem `INSERT`/`DELETE`), histórico `rbac_matrix_versions`, gatilho testado nas três tabelas e três operações, rollback que mostra e exige confirmação das concessões restauradas e grava a lista (`rbac_version_rollbacks`) antes de reduzir a versão (TRN-01 AC12; tasks `02` T8, T11, T12) |
 | 3 | Recuperação de jobs | Classificação por batimento **descartada**: toda perda de concessão é recuperável (sem consumir tentativa, nunca `FALHOU`, espera até 15 min, alerta após 5); só falha identificada pelo runner com concessão válida consome tentativa (erro, panic, `tempo_esgotado`, `executor_travado`); batimento só como diagnóstico (REC-01 AC7–8; design `01` P3; tasks `01` T3, T11, T12) |
 | 4 | Avisos dos validadores | 35 avisos justificados um a um nas seções "Avisos do validador e justificativas"; seção "Compatibilidade entre código e banco ao longo da sequência" em cada arquivo de tasks |
+| 5 | Revisão externa das Tasks (2026-10-14) | Dependência `01/T22` → `02/T29` e ordem consolidada corrigidas; `jobs:job:read` como `sensivel` com concessões explícitas; `rbac-rollback` em três passos (plano, autorização humana auditada, execução técnica), confirmação pelo `plan_hash` completo, decisão do mantenedor para reverter a D-02-3; variável de sessão documentada como barreira de compatibilidade, não autenticação |
 ### Matriz de permissões proposta (catálogo atual e permissões novas do G1)
 
 Legenda: **A** = decorre de decisão aprovada; "=" = sem mudança. Nenhuma concessão pendente desde a D-02-5. Detalhe por permissão e local no código: design `02`, seção "Matriz de permissões: antes e depois".
@@ -258,5 +260,14 @@ Nenhuma ainda. As decisões de arquitetura estão nas ADRs 011–018 (`Proposed`
   - nota de reconciliação no Handoff de `.specs/STATE.md`.
 - **Specs do G1**: `.specs/features/tj-connect/spec/02-identity-governanca.md` e `spec/01-platform-processamento.md` (atualizadas com os limites da D-02-4, a contingência da D-02-1 e a política de reprocessamento da D-01-1).
 - **Designs do G1**: `.specs/features/tj-connect/design/02-identity-governanca.md` e `design/01-platform-processamento.md` (com os ajustes 1–4 e a D-02-5).
-- **Tasks do G1**: `.specs/features/tj-connect/tasks/02-identity-governanca.md` (32 tarefas, I-1 a I-6 + preparação) e `tasks/01-platform-processamento.md` (27 tarefas, J-1 a J-6 + preparação). Ordem: tasks `02` fases 1–4, depois tasks `01` (J-1 pode começar antes), depois tasks `02` fases 5–7 e tasks `01` fase 7.
-- **Próximo passo**: revisão das Tasks do G1 pelo mantenedor; depois, com autorização, Execute.
+- **Tasks do G1**: `.specs/features/tj-connect/tasks/02-identity-governanca.md` (32 tarefas, I-1 a I-6 + preparação) e `tasks/01-platform-processamento.md` (27 tarefas, J-1 a J-6 + preparação).
+- **Ordem consolidada (corrigida em 2026-10-14)**:
+  1. `01` T1–T2 (J-1; sem dependências, a qualquer momento);
+  2. `02` T1–T6 (I-1) e T7 (I-2);
+  3. `02` T8–T20 (I-3);
+  4. `02` T21–T23 (I-4);
+  5. `02` T24 (I-5) e T25–T30 (I-6: D-02-3, D-02-4, D-02-5);
+  6. `01` T3–T24 (J-2 a J-6). **`01/T22` depende de `02/T29`**, porque verifica a matriz final de permissões;
+  7. `02` T31–T32 e `01` T25–T27 (verificação final e preparação, sem implantar).
+- **Execute autorizado (2026-10-14)** só para J-1 (`01` T1–T2) e I-1 (`02` T1–T6), na branch `feature/tj-connect-g1-execute`, com commits locais sem push. I-1 preserva integralmente a matriz efetiva atual, inclusive as concessões transitórias de `approve`/`opine` ao `PRESIDENTE`.
+- **Próximo passo**: revisão de J-1 e I-1 pelo mantenedor antes da fase seguinte.

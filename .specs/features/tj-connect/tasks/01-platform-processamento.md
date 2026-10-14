@@ -14,7 +14,10 @@ Implementar com a skill `tlc-spec-driven`: ativar pelo nome e seguir o fluxo de 
 
 **Pré-requisitos** (tasks `02-identity-governanca`):
 - fase 1 (J-1): nenhum;
-- fases 2 a 7: T10, T11, T13, T15 e T18 (versão da matriz, contas de serviço e `ServicePrincipals`) e T21–T22 (autoria `service`) das tasks `02`.
+- fases 2 a 7: T10, T11, T13, T15 e T18 (versão da matriz, contas de serviço e `ServicePrincipals`) e T21–T22 (autoria `service`) das tasks `02`;
+- fase 6 (T22 em diante): **toda** a fase 6 das tasks `02` (T25–T30), porque T22 verifica a matriz final de permissões.
+
+**Ordem consolidada do G1 (59 tarefas)**: `01` T1–T2 (a qualquer momento) → `02` T1–T7 → `02` T8–T20 → `02` T21–T23 → `02` T24 → `02` T25–T30 → `01` T3–T24 → `02` T31–T32 e `01` T25–T27.
 
 Esses pré-requisitos ficam declarados em cada tarefa como "Pré-requisito externo", porque o validador só cruza dependências dentro deste arquivo.
 
@@ -600,9 +603,10 @@ T26 → T27
 
 #### T22: Permissões `jobs` e concessões da D-01-1
 
-**What**: definições `jobs:job:read` (normal), `jobs:job:retry` e `jobs:job:close` (sensíveis) na contribuição `jobs`; concessões: `ADMIN_SISTEMA` read e retry, `PRESIDENTE` read (explícita); `jobs:job:close` **sem concessão**; `MatrixVersion` sobe; snapshot "Depois do G1" conferido.
+**What**: definições `jobs:job:read`, `jobs:job:retry` e `jobs:job:close`, **todas `sensivel`** (spec `01`, tabela de permissões; D-01-1), na contribuição `jobs`; concessões **explícitas**: `ADMIN_SISTEMA` read e retry, `PRESIDENTE` read — nenhuma chega por concessão automática de permissões `normal`; `jobs:job:close` **sem concessão**; `MatrixVersion` sobe; snapshot "Depois do G1" conferido.
 **Where**: `api/internal/composition/jobs_contribution.go`
 **Depends on**: T6
+**Pré-requisito externo**: tasks `02` **T29** (matriz final de identity: D-02-3, D-02-5 e a permissão `identity:rbac:rollback_authorize`). Esta tarefa verifica a matriz final de permissões; executá-la antes de `02/T29` faria a verificação falhar.
 **Reuses**: regras de classe de `BuildMatrix`.
 **Requirement**: D-01-1; DLQ-01 AC1–3.
 **Impacto**: `ADMIN_SISTEMA` 11 → 13; `PRESIDENTE` +1 (33 ao fim do G1, com a D-02-5).
@@ -610,6 +614,7 @@ T26 → T27
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
+- [ ] As três permissões têm classe `sensivel`; retirar a concessão explícita de `jobs:job:read` do `PRESIDENTE` num teste faz ele perder a permissão (prova de que não é automática)
 - [ ] Snapshot confere as contagens finais (`PRESIDENTE` 33, `ADMIN_SISTEMA` 13) e `jobs:job:close` sem papel
 - [ ] Gate check passes
 

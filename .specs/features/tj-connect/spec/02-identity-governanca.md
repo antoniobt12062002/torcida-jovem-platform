@@ -267,7 +267,8 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 9. The system SHALL hold a matrix version in code and SHALL fail its test suite when the aggregated matrix changes without a version increase.
 10. WHEN a process synchronizes the RBAC THEN the system SHALL apply the matrix only if the process's matrix version is greater than or equal to the stored version, SHALL refuse to start on a lower version or on an equal version with a different matrix, and SHALL reject at the database level any write to permissions, roles or role permissions made by a process that does not declare a version at least equal to the stored one.
 11. The worker SHALL NOT synchronize the RBAC; it SHALL verify the stored matrix version and SHALL refuse to start when it differs from its own after the configured wait.
-12. WHEN an operator needs to run an older binary THEN the system SHALL require an explicit rollback command that shows the grants the rollback would restore and remove, requires confirmation of that count and a reason of at least 30 characters, and writes an audit entry with the versions and the full list of grants before lowering the stored version; the database SHALL reject any decrease of the stored version outside that command.
+12. WHEN an operator needs to run an older binary THEN the system SHALL require a rollback authorized beforehand by an identified person through an authenticated use case with a specific permission, bound to the target version and to the complete sets of grants the rollback restores and removes, and SHALL record the authorizing person as the author of the decision (`actor_type` `user`) and the technical execution separately, referencing that person, before lowering the stored version; the database SHALL reject any decrease of the stored version outside an authorized execution.
+13. IF a rollback plan restores any institutional permission THEN the system SHALL refuse its authorization unless the maintainer's express decision and its document are recorded with it, and SHALL refuse authorization by a person who would receive any of the restored grants.
 
 **Independent Test**: comparar o retrato versionado da matriz atual com a matriz classificada, papel a papel; criar uma permissão `sensivel` nova e ver nenhum papel com ela.
 
@@ -471,7 +472,8 @@ Total: 30 permissões. **18 `sensivel`**: 6 de `identity`, 3 de conta, 5 de lan�
 | T-25 | Atribuir `CONSELHO_FISCAL` pelo caminho comum → `ato_institucional_obrigatorio`; caso de uso institucional sem `identity:conselho_fiscal:manage` → `forbidden`; com a permissão, documento e motivo → passa; alvo = ator → `separacao_de_funcoes` | Integração | INS-01 |
 | T-26 | Usuário com `PRESIDENTE` recebendo `CONSELHO_FISCAL` → recusado; usuário existente com os dois → pendência na partida, sem revogação | Integração | INS-01 |
 | T-27 | Usuário com dois papéis, sendo um o autor de um ato anterior incompatível → separação recusada pela identidade, não pelo papel | Unidade | INS-01, SOD-01 |
-| T-28 | Binário antigo depois do novo, mesma versão com hash diferente, versão menor, API e worker concorrentes, `rbac-rollback` → matriz nova preservada e recusas corretas | Integração (PostgreSQL) | TRN-01 |
+| T-28 | Binário antigo depois do novo, mesma versão com hash diferente, versão menor, API e worker concorrentes, `rbac-rollback` sem autorização, com plano alterado e com autorização válida → matriz nova preservada, recusas corretas e autoria humana registrada | Integração (PostgreSQL) | TRN-01 |
+| T-28b | Autorização de rollback que restaura permissões institucionais sem decisão do mantenedor e documento, ou feita por quem ganharia as concessões → recusada | Integração | TRN-01, INS-01 |
 | T-29 | Alterar tipo de usuário ou de papel; sessão, token de recuperação, vínculo administrativo e papel incompatíveis por INSERT e UPDATE, em SQL direto como `tj_app` → recusados pelo banco | Integração (PostgreSQL) | SVC-01 |
 
 ---

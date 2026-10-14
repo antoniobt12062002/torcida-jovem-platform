@@ -260,19 +260,20 @@ Testes obrigatórios (integração, PostgreSQL real, executados como `tj_app`): 
   5. versão **igual** e hash diferente → recusa a partida (`rbac_matrix_conflict`): dois builds com a mesma versão e matrizes diferentes;
   6. versão **menor** → recusa a partida (`rbac_binary_obsolete`), sem escrever nada.
   A recusa é registrada em log `error` e a instância não sobe. Nada é parcialmente aplicado (mesma transação).
-- **Barreira no banco** (contra binários que não conhecem o protocolo): gatilhos `BEFORE INSERT OR UPDATE OR DELETE` em `permissions`, `roles` e `role_permissions` comparam `coalesce(nullif(current_setting('tj.rbac_matrix_version', true), ''), '1')::int` com `rbac_sync_state.version` e recusam se for menor. O binário antigo não define a variável e conta como versão `1`.
+- **Barreira no banco** (contra binários que não conhecem o protocolo): gatilhos `BEFORE INSERT OR UPDATE OR DELETE` em `permissions`, `roles` e `role_permissions` comparam `coalesce(nullif(current_setting('tj.rbac_matrix_version', true), ''), '1')::int` com `rbac_sync_state.version` e recusam se for menor. O binário antigo não define a variável e conta como versão `1`. **A variável de sessão é uma barreira de compatibilidade entre binários, não um mecanismo de autenticação**: qualquer código com o papel `tj_app` poderia defini-la. Ela impede que um binário que não conhece o protocolo reverta a matriz; a autorização humana de uma reversão é feita pelo fluxo de rollback abaixo, com sessão, permissão e auditoria.
   - Logo depois da migration (versão gravada `1`), o binário antigo continua sincronizando como hoje.
   - Quando a primeira instância nova grava a versão `2`, toda escrita de RBAC por um binário antigo passa a falhar. A instância antiga em execução continua atendendo (lê permissões do banco a cada requisição, `session_service.go:66-69`). Se ela reiniciar, a sincronização falha e a instância não sobe (fail-closed), em vez de reverter a matriz.
   - `user_roles`, `sessions` e `admin_memberships` não entram nessa barreira: são atribuições feitas pelos casos de uso, não a matriz.
 - **Worker e bootstrap**: só a API sincroniza. O `cmd/worker` apenas **verifica**: lê `rbac_sync_state` e, se a versão gravada for menor que a sua, espera e tenta de novo até `WORKER_RBAC_WAIT` (padrão 5 min) e então recusa a partida; se for maior, ou igual com hash diferente, recusa imediatamente. O `cmd/bootstrap-admin` sincroniza pelo mesmo protocolo.
 - **Ordem de implantação**: migrations → instâncias novas da API (a primeira grava a versão) → `cmd/worker` → retirada das instâncias antigas. A ordem fica no runbook de implantação (tarefa de preparação, sem implantar).
-- **Monotonicidade no banco**: `tj_app` só tem `SELECT` e `UPDATE` em `rbac_sync_state` (sem `INSERT`/`DELETE`). O gatilho `rbac_sync_state_monotonic` recusa todo `UPDATE` que reduza `version`, salvo dentro da transação do comando de reversão (variável `tj.rbac_rollback_id` igual ao id de uma linha de `rbac_version_rollbacks` inserida na mesma transação). Cada sincronização versionada grava também `rbac_matrix_versions` (append-only: versão, hash, matriz canônica em JSON), e a versão `1` é gravada pelo primeiro binário novo a partir do snapshot de T1 das tasks (`matriz_pre_classificacao.json`, embutido no binário).
-- **Reversão (rollback) de binário, sem restauração silenciosa**: comando explícito `bootstrap-admin rbac-rollback --to-version N --reason "<motivo>" --confirm <n>`.
-  1. Lê a matriz da versão `N` em `rbac_matrix_versions` e calcula, contra o estado atual do banco, as concessões que a reversão **restauraria** e as que retiraria (ex.: a reversão de I-6 devolve `prestacao_contas:approve` e `parecer:opine` ao `PRESIDENTE`).
-  2. Imprime a lista e exige `--confirm` igual ao número de concessões restauradas; sem isso, nada é gravado.
-  3. Exige motivo com pelo menos 30 caracteres; insere `rbac_version_rollbacks` (versões, hashes, lista de concessões, motivo, operador do sistema operacional) e grava `rbac.version_rollback` (ação de sincronização do RBAC, AUT-01 AC5) com a mesma lista.
-  4. Só então reduz `version`. A sincronização seguinte do binário antigo também grava `rbac.sync` com o diff completo (comportamento atual de `role_repository.go:79-88`).
-  Sem esse comando, a reversão de binário falha na partida, que é o comportamento desejado. A reversão de I-6 exige, além do comando, decisão registrada do mantenedor (runbook).
+- **Monotonicidade no banco**: `tj_app` só tem `SELECT` e `UPDATE` em `rbac_sync_state` (sem `INSERT`/`DELETE`). O gatilho `rbac_sync_state_monotonic` recusa todo `UPDATE` que reduza `version`, salvo dentro da transação de execução de uma reversão autorizada (variável `tj.rbac_rollback_id` igual ao id de uma linha de `rbac_version_rollbacks` inserida na mesma transação e ligada a uma autorização válida). Como a variável de versão, `tj.rbac_rollback_id` é uma barreira contra escrita acidental, não uma credencial. Cada sincronização versionada grava também `rbac_matrix_versions` (append-only: versão, hash, matriz canônica em JSON), e a versão `1` é gravada pelo primeiro binário novo a partir do snapshot de T1 das tasks (`matriz_pre_classificacao.json`, embutido no binário).
+- **Reversão (rollback) de binário, sem restauração silenciosa** (revisada após a revisão externa das Tasks). A **decisão** humana e a **execução** técnica são atos separados, com autores distintos na auditoria:
+  1. **Plano** (`bootstrap-admin rbac-rollback plan --to-version N`, só leitura): lê a matriz da versão `N` em `rbac_matrix_versions` e calcula, contra o estado atual do banco, o conjunto completo de concessões que a reversão **restauraria** e **retiraria** (ex.: a reversão de I-6 devolve `prestacao_contas:approve` e `parecer:opine` ao `PRESIDENTE` e retira `conselho_fiscal:manage`). Imprime o plano e o seu `plan_hash` (SHA-256 da serialização canônica de: versão de origem, versão de destino, hash da matriz de destino, concessões restauradas, concessões retiradas). Não grava nada.
+  2. **Autorização** (ato humano, pela API autenticada): `POST /api/v1/rbac/rollback-authorizations` com `{plan_hash, to_version, motivo}`, executado por uma pessoa com sessão, CSRF e a permissão `identity:rbac:rollback_authorize` (`sensivel`). O caso de uso `AuthorizeRBACRollback` recalcula o plano no servidor e recusa se o `plan_hash` não conferir; recusa motivo com menos de 30 caracteres; recusa (`separacao_de_funcoes`) quem ganharia alguma das concessões restauradas, por ter o papel que as recebe. Grava `rbac_rollback_authorizations` (pessoa, plano completo, hash, motivo, validade de 24 h) e a auditoria `rbac.rollback_authorized` com `actor_type = user`.
+     - **Reversão da D-02-3**: se o plano restaurar qualquer permissão de `InstitutionalPermissions`, a autorização exige também `decisao_mantenedor` (referência) e `documento_id` da decisão expressa do mantenedor, armazenado em `platform/documents` (`owner_type = identity.decisao_mantenedor`), registrados **antes** da execução. Sem eles, a autorização é recusada.
+  3. **Execução** (técnica): `bootstrap-admin rbac-rollback execute --authorization <id>`. Recalcula o plano e só prossegue se o `plan_hash` for igual ao autorizado (a confirmação cobre a versão de destino e os dois conjuntos completos, não uma contagem), se a autorização estiver dentro da validade e nunca tiver sido usada. Na mesma transação: insere `rbac_version_rollbacks` ligada à autorização, marca a autorização como usada, grava `rbac.version_rollback` com `actor_type = system` (a execução técnica) e, no contexto, `authorized_by_user_id`, `authorization_id`, `plan_hash`, operador do sistema operacional e as duas listas, e só então reduz `version`. A sincronização seguinte do binário antigo também grava `rbac.sync` com o diff completo (`role_repository.go:79-88`).
+  Assim, a autoria da decisão de reverter privilégios é sempre uma pessoa identificada (`actor_type = user` na autorização); `system` representa apenas a execução técnica e aponta para essa pessoa. Sem autorização válida, a reversão de binário falha na partida, que é o comportamento desejado.
+  - **Quem pode autorizar**: `identity:rbac:rollback_authorize` é uma permissão nova, sem concessão automática. A concessão proposta é explícita a `ADMIN_SISTEMA` (**D-02-6, proposta, pendente de decisão do mantenedor**). Enquanto não houver concessão, nenhuma reversão pode ser autorizada (fail-closed); isso não afeta nenhuma fase anterior a I-3.
 - **Reuses**: `RoleRepository.Sync`, `syncLockKey`, `audit.Recorder`, `database.WithTx`.
 - **Testes de regressão (PostgreSQL real)**:
   - binário antigo (simulado por `Sync` sem a variável de sessão) logo depois da migration → sincroniza;
@@ -281,7 +282,8 @@ Testes obrigatórios (integração, PostgreSQL real, executados como `tj_app`): 
   - versão menor → recusa a partida;
   - API e worker partindo juntos → o worker espera a versão e sobe; duas APIs novas juntas → uma sincroniza, a outra encontra diff vazio;
   - `UPDATE` que reduz a versão fora do comando → recusado pelo gatilho; `INSERT`/`DELETE` em `rbac_sync_state` → sem permissão;
-  - `rbac-rollback` sem `--confirm` correto → nada gravado; com ele → lista das concessões restauradas na auditoria, e só então o binário antigo volta a sincronizar;
+  - autorização com `plan_hash` divergente, motivo curto, sem a permissão, ou por quem ganharia as concessões → recusada; execução sem autorização, com autorização vencida, já usada ou com plano alterado depois da autorização → nada gravado; com autorização válida → `rbac.rollback_authorized` (`user`) e `rbac.version_rollback` (`system`, com `authorized_by_user_id`) gravados, e só então o binário antigo volta a sincronizar;
+  - plano que restaura permissões institucionais (reversão da D-02-3) sem decisão do mantenedor e documento → autorização recusada;
   - as escritas em `permissions`, `roles` e `role_permissions` por `INSERT`, `UPDATE` e `DELETE` são todas cobertas pelo gatilho (um teste por tabela e operação);
   - teste de versão vermelho quando a matriz muda sem subir `MatrixVersion`.
 
@@ -382,8 +384,24 @@ CREATE TABLE rbac_matrix_versions (      -- append-only
   matrix       jsonb NOT NULL,
   recorded_at  timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE rbac_rollback_authorizations (   -- decisão humana; usada uma única vez
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  authorized_by       uuid NOT NULL REFERENCES users (id),
+  from_version        integer NOT NULL,
+  to_version          integer NOT NULL CHECK (to_version < from_version),
+  plan_hash           text NOT NULL,
+  plan                jsonb NOT NULL,         -- concessões restauradas e retiradas, completas
+  reason              text NOT NULL CHECK (length(btrim(reason)) >= 30),
+  maintainer_decision text,                   -- obrigatório quando restaura permissões institucionais
+  decision_document_id uuid REFERENCES documents (id),
+  expires_at          timestamptz NOT NULL,
+  used_at             timestamptz,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  CHECK ((maintainer_decision IS NULL) = (decision_document_id IS NULL))
+);
 CREATE TABLE rbac_version_rollbacks (    -- append-only
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  authorization_id uuid NOT NULL UNIQUE REFERENCES rbac_rollback_authorizations (id),
   from_version     integer NOT NULL,
   to_version       integer NOT NULL CHECK (to_version < from_version),
   restored_grants  jsonb NOT NULL,
@@ -403,6 +421,7 @@ GRANT SELECT, INSERT ON service_accounts, service_account_events, institutional_
 GRANT SELECT, INSERT, UPDATE ON service_account_contingency_reviews TO tj_app;
 GRANT SELECT, UPDATE ON rbac_sync_state TO tj_app;          -- sem INSERT nem DELETE
 GRANT SELECT, INSERT ON rbac_matrix_versions, rbac_version_rollbacks TO tj_app;
+GRANT SELECT, INSERT, UPDATE (used_at) ON rbac_rollback_authorizations TO tj_app;
 ```
 
 ### `000011_audit_service_actor` (dona: `platform`)
@@ -522,6 +541,7 @@ Todas na cadeia autenticada (sessão, CSRF, contrato). Nenhuma pública.
 | `POST /api/v1/service-accounts/contingency-reviews/{id}/close` | `identity.yaml` | `CloseContingencyReview` |
 | `POST /api/v1/conselho-fiscal/nomeacoes` e `/destituicoes` | `identity.yaml` | C7 |
 | `GET /api/v1/audit-logs?correlation_id=` | `platform.yaml` | `audit.Query` (parâmetro novo) |
+| `POST /api/v1/rbac/rollback-authorizations` | `identity.yaml` | `AuthorizeRBACRollback` (C10) |
 
 Novos códigos de erro em problem+json: `separacao_de_funcoes` (403), `ato_sobre_si_mesmo` (403), `ato_institucional_obrigatorio` (422), `papeis_incompativeis` (409), `contingencia_indisponivel` (409, com o motivo: espera, revisão aberta, outra pessoa habilitada).
 
@@ -563,8 +583,8 @@ Condição para I-6, satisfeita pela D-02-5: o `PRESIDENTE` recebe `identity:con
 | I-1, I-2, I-5 | Reverter o código | Nenhum dado gravado |
 | `000010` down | Remove gatilhos, tabelas e colunas novas | O `down` **recusa** (RAISE) se existir conta `SERVICE`, evento, revisão ou ato institucional. Dados de governança não são apagados; a correção passa a ser só para frente |
 | `000011` down | Restaura as restrições antigas | **Recusa** se existir linha `actor_type = 'service'` no `audit_log` (append-only, imutável); depois disso, só para frente |
-| I-6 | Reverter o código exige antes `bootstrap-admin rbac-rollback` (C10), auditado; sem ele o binário anterior não sobe | Os atos institucionais gravados permanecem (histórico) |
-| Binário a partir de I-3 | Mesma regra: reversão só com `rbac-rollback` explícito | A tentativa sem o comando falha na partida, sem alterar a matriz |
+| I-6 | Reverter o código exige antes plano, autorização humana com decisão expressa do mantenedor (a reversão restaura permissões institucionais) e execução do `rbac-rollback` (C10); sem isso o binário anterior não sobe | Os atos institucionais gravados permanecem (histórico) |
+| Binário a partir de I-3 | Mesma regra: reversão só com plano, autorização humana e execução do `rbac-rollback` | A tentativa sem o comando falha na partida, sem alterar a matriz |
 
 ---
 
@@ -640,6 +660,8 @@ Condição para I-6, satisfeita pela D-02-5: o `PRESIDENTE` recebe `identity:con
 ## Pendências
 
 **Bloqueiam o Design: nenhuma.**
+
+**Proposta pendente de decisão (não bloqueia I-1 nem I-2)**: D-02-6 — concessão de `identity:rbac:rollback_authorize` a `ADMIN_SISTEMA`. Sem ela, a reversão de versão fica indisponível (fail-closed).
 
 **Bloqueiam só a implantação de I-6** (não as Tasks):
 

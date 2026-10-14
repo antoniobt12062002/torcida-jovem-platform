@@ -76,7 +76,9 @@ T7
 ```
 T8 → T9
 T8 → T11 → T12
+T17 → T12
 T10 → T11 → T15 → T18 → T19 → T20
+T12 → T20
 T8 → T13 → T14
 T13 → T15
 T13 → T16 → T18
@@ -279,7 +281,7 @@ T31 → T32
 
 #### T8: Migration `000010_identity_governanca` — estrutura
 
-**What**: criar `000010` (up e down) com: `users.kind`, `roles.kind`, `permissions.class`, `permissions.requires_decision`, `service_accounts`, `service_account_events`, `service_account_contingency_reviews`, `institutional_acts` (com `CHECK` de `body`), `rbac_sync_state` (linha `version = 1`; `tj_app` sem `INSERT`/`DELETE`), `rbac_matrix_versions`, `rbac_version_rollbacks`, grants e o bloco `DO $$ ... tj_app ... $$`. `down` recusa (RAISE) se houver conta `SERVICE`, evento, revisão ou ato institucional. Gatilhos e o `CHECK` de integridade ficam para T9 e T11.
+**What**: criar `000010` (up e down) com: `users.kind`, `roles.kind`, `permissions.class`, `permissions.requires_decision`, `service_accounts`, `service_account_events`, `service_account_contingency_reviews`, `institutional_acts` (com `CHECK` de `body`), `rbac_sync_state` (linha `version = 1`; `tj_app` sem `INSERT`/`DELETE`), `rbac_matrix_versions`, `rbac_rollback_authorizations`, `rbac_version_rollbacks`, grants e o bloco `DO $$ ... tj_app ... $$`. `down` recusa (RAISE) se houver conta `SERVICE`, evento, revisão ou ato institucional. Gatilhos e o `CHECK` de integridade ficam para T9 e T11.
 **Where**: `api/migrations/000010_identity_governanca.up.sql`, `.down.sql`, `api/internal/platform/database/identity_governanca_migration_test.go`
 **Depends on**: T6
 **Reuses**: padrão dos testes `*_migration_test.go`; `platform/testutil/postgres.go`.
@@ -376,28 +378,29 @@ T31 → T32
 
 ---
 
-#### T12: Comando auditado `rbac-rollback`
+#### T12: Reversão de versão do RBAC com autorização humana e execução técnica separadas
 
-**What**: subcomando `bootstrap-admin rbac-rollback --to-version N --reason "..." --confirm <n>`: calcula, a partir de `rbac_matrix_versions`, as concessões que a reversão restauraria e retiraria; imprime a lista; exige `--confirm` igual ao número de concessões restauradas e motivo com ≥ 30 caracteres; grava `rbac_version_rollbacks` e `rbac.version_rollback` (ação de sincronização do RBAC, ator `system`) com a lista completa, e só então reduz a versão.
-**Where**: `api/cmd/bootstrap-admin/rbac_rollback.go` (novo), `api/cmd/bootstrap-admin/rbac_rollback_test.go`
-**Depends on**: T11
-**Reuses**: `audit.Recorder`, composição atual do `bootstrap-admin`.
-**Requirement**: TRN-01 AC12; AUT-01 AC5.
-**Impacto**: `cmd/bootstrap-admin`: novo subcomando; o comportamento atual não muda.
+**What**: (a) plano somente leitura `bootstrap-admin rbac-rollback plan --to-version N` com `plan_hash` sobre versão de origem, versão de destino, hash da matriz de destino e os conjuntos completos de concessões restauradas e retiradas; (b) permissão `identity:rbac:rollback_authorize` (`sensivel`, **sem concessão** até a D-02-6) e caso de uso `AuthorizeRBACRollback` (recalcula o plano, confere o hash, motivo ≥ 30, `SeparateFrom` contra quem ganharia concessões, decisão do mantenedor e documento obrigatórios quando restaura `InstitutionalPermissions`, validade de 24 h, auditoria `rbac.rollback_authorized` com `actor_type = user`); (c) `bootstrap-admin rbac-rollback execute --authorization <id>` (recalcula o plano, exige hash igual, autorização válida e não usada; grava `rbac_version_rollbacks`, marca a autorização como usada e grava `rbac.version_rollback` com `actor_type = system` e `authorized_by_user_id` no contexto, na mesma transação, antes de reduzir a versão). A rota HTTP da autorização entra em T20.
+**Where**: `api/internal/identity/app/rbac_rollback.go` (novo), `api/cmd/bootstrap-admin/rbac_rollback.go` (novo)
+**Depends on**: T11, T17
+**Reuses**: `audit.Recorder`, `SeparateFrom`, `documents` (decisão do mantenedor), composição atual do `bootstrap-admin`.
+**Requirement**: TRN-01 AC12–13; AUT-01 AC5; T-28, T-28b.
+**Impacto**: `cmd/bootstrap-admin`: novos subcomandos; matriz: permissão nova sem concessão (`MatrixVersion` sobe); nenhum acesso muda.
 
-**Tools**: MCP: NONE · Skill: NONE
+**Tools**: MCP: NONE · Skill: security-best-practices
 
 **Done when**:
-- [ ] Sem motivo ou com motivo curto → recusa, nada gravado
-- [ ] `--confirm` ausente ou diferente da contagem → nada gravado
-- [ ] Com motivo e confirmação → lista de concessões restauradas e retiradas na auditoria e em `rbac_version_rollbacks`, versão reduzida; o binário antigo simulado volta a sincronizar e grava `rbac.sync` com o diff
-- [ ] Reversão simulada de I-6 lista exatamente `PRESIDENTE +prestacao_contas:approve`, `+parecer:opine` e `−conselho_fiscal:manage`
+- [ ] `plan` não grava nada e produz o mesmo `plan_hash` para o mesmo estado
+- [ ] Autorização: sem a permissão → `forbidden`; `plan_hash` divergente ou motivo curto → `validation_failed`; autorizador que ganharia concessões → `separacao_de_funcoes`; plano que restaura permissões institucionais sem decisão do mantenedor e documento → recusada (T-28b); válida → linha gravada e `rbac.rollback_authorized` com `actor_type = user`
+- [ ] Execução: sem autorização, vencida, já usada ou com plano alterado depois da autorização → nada gravado, versão intacta
+- [ ] Execução válida: `rbac_version_rollbacks` ligada à autorização, `rbac.version_rollback` com `actor_type = system` e `authorized_by_user_id`, versão reduzida; o binário antigo simulado volta a sincronizar e grava `rbac.sync`
+- [ ] Reversão simulada de I-6: plano lista exatamente `PRESIDENTE +prestacao_contas:approve`, `+parecer:opine` e `−conselho_fiscal:manage`, e exige a decisão do mantenedor
 - [ ] `--to-version` maior ou igual à atual → recusa
 - [ ] Gate check passes
 
 **Tests**: integration
 **Gate**: Full
-**Commit**: `feat(identity): comando auditado de reversao da versao do rbac`
+**Commit**: `feat(identity): reversao do rbac com autorizacao humana auditada`
 
 ---
 
@@ -565,9 +568,9 @@ T31 → T32
 
 #### T20: Contrato e rotas de contas de serviço
 
-**What**: rotas `GET /api/v1/service-accounts`, `POST .../{name}/deactivate`, `.../{name}/reactivate`, `.../contingency-reviews/{id}/close` em `identity.yaml` (contract-first) e handlers na cadeia autenticada; códigos `separacao_de_funcoes`, `contingencia_indisponivel`.
+**What**: rotas `GET /api/v1/service-accounts`, `POST .../{name}/deactivate`, `.../{name}/reactivate`, `.../contingency-reviews/{id}/close` e `POST /api/v1/rbac/rollback-authorizations` (T12) em `identity.yaml` (contract-first) e handlers na cadeia autenticada; códigos `separacao_de_funcoes`, `contingencia_indisponivel`.
 **Where**: `api/openapi/identity.yaml`, `api/internal/identity/http/service_accounts.go` (novo)
-**Depends on**: T19
+**Depends on**: T19, T12
 **Reuses**: handlers de `identity/http`, `httpx.WriteProblem`.
 **Requirement**: SVC-01 AC11–22 (exposição HTTP); AD-010/012/013.
 **Impacto**: `web`: só tipos gerados mudam; nenhuma tela neste grupo.
@@ -846,7 +849,7 @@ T31 → T32
 
 #### T32: Runbook de implantação da parte de identity (sem implantar)
 
-**What**: documento de operação com: pré-requisitos (provedor de e-mail real; existência de pessoa com `PRESIDENTE` ativa antes de I-6; relatório de usuários com papéis em conflito); ordem (migrations `000010`/`000011` → API nova → worker → retirada das antigas); consultas **somente leitura** de verificação antes e depois (`rbac_sync_state`, contagens de concessões por papel, contas `SERVICE`); reversão com `rbac-rollback` e limites dos `down`; sinais de alerta. Não executa nada.
+**What**: documento de operação com: pré-requisitos (provedor de e-mail real; existência de pessoa com `PRESIDENTE` ativa antes de I-6; relatório de usuários com papéis em conflito); ordem (migrations `000010`/`000011` → API nova → worker → retirada das antigas); consultas **somente leitura** de verificação antes e depois (`rbac_sync_state`, contagens de concessões por papel, contas `SERVICE`); reversão em três passos (plano, autorização humana pela API, execução técnica), com a decisão expressa do mantenedor registrada antes de qualquer reversão que restaure permissões institucionais, e limites dos `down`; sinais de alerta. Não executa nada.
 **Where**: `docs/operations/g1-identity-implantacao.md` (novo)
 **Depends on**: T31
 **Reuses**: design `02` C10, "Rollback".
@@ -873,7 +876,8 @@ T31 → T32
 
 | Categoria | Tarefas | Justificativa concreta |
 | --- | --- | --- |
-| `Where` cita o código e o seu próprio teste ou dados de teste | T1, T12, T28 | O teste é a evidência da tarefa (tests-first). T1 é só teste e dados; T12 e T28 têm um arquivo de produção cada |
+| `Where` cita o código e o seu próprio teste ou dados de teste | T1, T28 | O teste é a evidência da tarefa (tests-first). T1 é só teste e dados; T28 tem um arquivo de produção |
+| Decisão humana e execução técnica do mesmo plano | T12 | O caso de uso de autorização e o comando de execução recalculam o mesmo plano; separá-los deixaria um commit com execução sem autorização ou autorização sem uso |
 | `Where` cita `up`, `down` e o teste de migration | T8, T9, T21 | Padrão do repositório (`000001`–`000009`): uma migration é o par `up`/`down` e o seu teste em `platform/database`. T9 é separada de T8 para que as restrições de integridade (ajuste 3) tenham critérios próprios |
 | Mesma mudança mecânica em vários arquivos | T14 (2), T16 (6) | Uma única regra ("conta de serviço é recusada") aplicada a cada caso de uso que a exige. Dividir criaria commits intermediários em que parte dos caminhos aceita conta de serviço. Cada arquivo tem o seu caso de teste no critério de conclusão |
 | Contrato e handler juntos (contract-first) | T20, T23, T30 | AD-010/012: o contrato e o handler gerado/implementado mudam no mesmo commit, senão o gate `Contract` falha ou fica uma rota sem implementação |
@@ -902,6 +906,7 @@ T31 → T32
 | T8, T9, T21 | migration + teste de migration | ✅ Aceitável (padrão do repositório) |
 | T10 | pacote novo + troca mecânica nos dois `cmd` | ✅ Aceitável |
 | T11 | barreira (gatilho + verificação no `Sync`) — os dois lados de uma mesma regra | ✅ Aceitável |
+| T12 | caso de uso de autorização + comando de plano e execução — a decisão e a execução precisam do mesmo cálculo de plano | ✅ Aceitável |
 | T13 | domínio + repositório do mesmo conceito (`kind`) | ✅ Aceitável |
 | T16 | mesma recusa mecânica em seis casos de uso | ✅ Aceitável |
 | T18, T19, T27 | um caso de uso coeso com repositório | ✅ Aceitável |
@@ -922,7 +927,7 @@ T31 → T32
 | T9 | T8 | T8 | ✅ Match |
 | T10 | T7 (fase anterior) | — | ✅ Match |
 | T11 | T8, T10 | T8, T10 | ✅ Match |
-| T12 | T11 | T11 | ✅ Match |
+| T12 | T11, T17 | T11, T17 | ✅ Match |
 | T13 | T8 | T8 | ✅ Match |
 | T14 | T13 | T13 | ✅ Match |
 | T15 | T11, T13 | T11, T13 | ✅ Match |
@@ -930,7 +935,7 @@ T31 → T32
 | T17 | None | — | ✅ Match |
 | T18 | T15, T16 | T15, T16 | ✅ Match |
 | T19 | T17, T18 | T17, T18 | ✅ Match |
-| T20 | T19 | T19 | ✅ Match |
+| T20 | T19, T12 | T19, T12 | ✅ Match |
 | T21 | T8 (fase anterior) | — | ✅ Match |
 | T22 | T21, T13 (fase anterior) | T21 | ✅ Match |
 | T23 | T22 | T22 | ✅ Match |
@@ -972,6 +977,7 @@ T31 → T32
 | SVC-01 | T8, T9, T13, T14, T15, T16, T18, T19, T20 |
 | SOD-01 | T2, T17, T24 |
 | AUT-01 | T12, T21, T22, T23 |
+| TRN-01 AC12–13 (rollback autorizado) | T8, T12, T20, T32 |
 | FIS-01 | T13 |
 | CFS-01 | T7 |
 | INS-01 | T17, T25, T26, T27, T28, T29, T30 |
